@@ -50,7 +50,7 @@ Welcome to the Ollama Workbench! This application is a comprehensive tool for ma
 
 3. **Run the application**
     ```bash
-    streamlit run main.py
+    streamlit run main-workbench.py
     ```
 
 ## Usage
@@ -58,7 +58,7 @@ Welcome to the Ollama Workbench! This application is a comprehensive tool for ma
 ### Launching the Application
 After installation, you can start the application using the following command:
 ```bash
-streamlit run main.py
+streamlit run main-workbench.py
 ```
 
 ### Using the Sidebar
