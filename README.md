@@ -4,7 +4,7 @@
 
 Welcome to the Ollama Workbench! This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models.
 
-## Table of Contents
+** Table of Contents **
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
