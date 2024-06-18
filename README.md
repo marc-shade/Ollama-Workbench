@@ -4,8 +4,6 @@
 
 Welcome to the Ollama Workbench! This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-18-at-12.27.34 PM.png" />
-
 ## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
@@ -27,6 +25,8 @@ Welcome to the Ollama Workbench! This application is a comprehensive tool for ma
 - **Model Comparison by Response Quality**: Compare the response quality of multiple models for a given prompt.
 - **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts.
 - **Vision Model Comparison**: Compare the performance of vision models using the same test image.
+
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-18-at-12.27.34 PM.png" />
 
 ## Installation
 
