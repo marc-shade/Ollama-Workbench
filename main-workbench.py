@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import base64
-import ollama  # Import the ollama library
+import ollama
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":
