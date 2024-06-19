@@ -10,8 +10,11 @@ import io
 import base64
 import ollama  # Import the ollama library
 
-# Set plot style for a black background
-plt.style.use('dark_background')
+# Set plot style based on Streamlit theme
+if st.get_option("theme.base") == "light":
+    plt.style.use('default')  # Use default white background for light mode
+else:
+    plt.style.use('dark_background')  # Use dark background for dark mode
 
 OLLAMA_URL = "http://localhost:11434/api"
 
@@ -205,15 +208,13 @@ def model_comparison_test():
         results = performance_test(selected_models, prompt, temperature, max_tokens, presence_penalty, frequency_penalty)
         
         # Prepare data for visualization
-        models = list(results.keys())
+        models = list(results.keys())  # Get models from results
         times = [results[model][1] for model in models]
 
-        # Plot the results
-        fig, ax = plt.subplots()
-        ax.barh(models, times, color=plt.cm.Paired(range(len(models))))
-        ax.set_xlabel('Time (seconds)')
-        ax.set_title('Model Response Time Comparison')
-        st.pyplot(fig)
+        df = pd.DataFrame({"Model": models, "Time (seconds)": times})
+
+        # Plot the results using st.bar_chart
+        st.bar_chart(df, x="Model", y="Time (seconds)")
         
         for model, (result, elapsed_time) in results.items():
             st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds):")
@@ -245,13 +246,12 @@ def contextual_response_test():
             st.subheader(f"Prompt: {prompt} (Time taken: {elapsed_time:.2f} seconds)")
             st.write(f"Response: {result}")
 
-        # Plot the results
-        fig, ax = plt.subplots()
-        ax.plot(prompt_list, times, marker='o', linestyle='-', color='cyan')
-        ax.set_xlabel('Prompts')
-        ax.set_ylabel('Time (seconds)')
-        ax.set_title('Contextual Response Time by Prompt')
-        st.pyplot(fig)
+        # Prepare data for visualization
+        data = {"Prompt": prompt_list, "Time (seconds)": times}
+        df = pd.DataFrame(data)
+
+        # Plot the results using st.bar_chart
+        st.bar_chart(df, x="Prompt", y="Time (seconds)")
         
         st.write("JSON Handling Capability: ", "✅" if check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
         st.write("Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
@@ -272,34 +272,32 @@ def feature_test():
         st.markdown(f"### JSON Handling Capability: {'✅ Success!' if json_result else '❌ Failure!'}")
         st.markdown(f"### Function Calling Capability: {'✅ Success!' if function_result else '❌ Failure!'}")
 
-        # Plot the results
-        fig, ax = plt.subplots()
-        features = ['JSON Handling', 'Function Calling']
-        results = [json_result, function_result]
-        ax.barh(features, results, color=['green' if r else 'red' for r in results])
-        ax.set_xlabel('Capability')
-        ax.set_title('Model Feature Test Results')
-        st.pyplot(fig)
+        # Prepare data for visualization
+        data = {"Feature": ['JSON Handling', 'Function Calling'], "Result": [json_result, function_result]}
+        df = pd.DataFrame(data)
+
+        # Plot the results using st.bar_chart
+        st.bar_chart(df, x="Feature", y="Result")
 
 def vision_comparison_test():
     st.header("Vision Model Comparison")
     available_models = get_available_models()
-    # Ensure 'llava' is in available models before setting it as default
     default_models = ['llava'] if 'llava' in available_models else []
     selected_models = st.multiselect("Select the models you want to compare:", available_models, default=default_models)
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
     presence_penalty = st.number_input("Presence penalty:", value=0.0)
     frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
     if st.button("Compare Vision Models", key="compare_vision_models") and uploaded_file is not None:
         image_data = uploaded_file.read()
 
-        # Convert to JPEG if necessary
-        if uploaded_file.type != "image/jpeg":
+        # Convert PNG images to JPEG format
+        if uploaded_file.type == "image/png":
             image = Image.open(io.BytesIO(image_data))
             buffer = io.BytesIO()
+            image = image.convert("RGB")  # Convert RGBA to RGB
             image.save(buffer, format="JPEG")
             image_data = buffer.getvalue()
 
@@ -316,13 +314,10 @@ def vision_comparison_test():
         # Prepare data for visualization (after displaying responses)
         models = list(results.keys())
         times = [results[model][1] for model in models]
+        df = pd.DataFrame({"Model": models, "Time (seconds)": times})
 
         # Plot the results
-        fig, ax = plt.subplots()
-        ax.barh(models, times, color=plt.cm.Paired(range(len(models))))
-        ax.set_xlabel('Time (seconds)')
-        ax.set_title('Vision Model Response Time Comparison')
-        st.pyplot(fig)
+        st.bar_chart(df, x="Model", y="Time (seconds)")
 
 def list_models():
     st.header("List Local Models")
@@ -382,7 +377,7 @@ def remove_model_ui():
             st.write(result["message"])
             # Update the list of available models
             st.session_state.available_models = get_available_models()
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Please select a model.")
 
@@ -397,7 +392,9 @@ def main():
             "</div>",
             unsafe_allow_html=True,
         )
+
         st.subheader("Maintain")
+        st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
         if st.button("List Local Models", key="button_list_models"):
             st.session_state.selected_test = "List Local Models"
         if st.button("Show Model Information", key="button_show_model_info"):
@@ -408,6 +405,7 @@ def main():
             st.session_state.selected_test = "Remove a Model"
         
         st.subheader("Test")
+        st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
         if st.button("Model Feature Test", key="button_feature_test"):
             st.session_state.selected_test = "Model Feature Test"
         if st.button("Model Comparison by Response Quality", key="button_model_comparison"):
