@@ -9,6 +9,7 @@ from PIL import Image
 import io
 import base64
 import ollama  # Import the ollama library
+import os
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":
@@ -402,9 +403,17 @@ def remove_model_ui():
             st.write(result["message"])
             # Update the list of available models
             st.session_state.available_models = get_available_models()
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Please select a model.")
+
+def save_chat_history(chat_history, filename="chat_history.json"):
+    with open(filename, "w") as f:
+        json.dump(chat_history, f)
+
+def load_chat_history(filename):
+    with open(filename, "r") as f:
+        return json.load(f)
 
 def chat_interface():
     st.header("Chat with a Model")
@@ -420,10 +429,25 @@ def chat_interface():
     presence_penalty = st.number_input("Presence Penalty:", value=0.0)
     frequency_penalty = st.number_input("Frequency Penalty:", value=0.0)
 
+    # Save chat history
+    if st.button("Save Chat"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"chat_history_{timestamp}.json"
+        save_chat_history(st.session_state.chat_history, filename)
+        st.success(f"Chat history saved to {filename}")
+
+    # Load chat history
+    st.sidebar.subheader("Saved Chats")
+    saved_chats = [f for f in os.listdir() if f.startswith("chat_history_")]
+    for chat in saved_chats:
+        if st.sidebar.button(chat):
+            st.session_state.chat_history = load_chat_history(chat)
+            st.experimental_rerun()  # Rerun the app to display the loaded chat
+
     # Display chat history
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])  # Use st.markdown for chat history
+            st.markdown(message["content"])
 
     # Get user input
     if prompt := st.chat_input("Enter your message"):
@@ -437,7 +461,7 @@ def chat_interface():
             full_response = ""
             for response in call_ollama(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, stream=True):
                 full_response = response
-                response_placeholder.markdown(full_response)  # Use st.markdown for AI response
+                response_placeholder.markdown(full_response)
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
 def main():
