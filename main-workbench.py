@@ -432,17 +432,52 @@ def chat_interface():
     # Save chat history
     if st.button("Save Chat"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"chat_history_{timestamp}.json"
-        save_chat_history(st.session_state.chat_history, filename)
-        st.success(f"Chat history saved to {filename}")
+        default_filename = f"chat_history_{timestamp}.json"
+        chat_name = st.text_input("Enter a name for the chat:", value=default_filename)
+        if chat_name:
+            save_chat_history(st.session_state.chat_history, chat_name)
+            st.success(f"Chat history saved to {chat_name}")
 
-    # Load chat history
+    # Load/Rename/Delete chat history
     st.sidebar.subheader("Saved Chats")
-    saved_chats = [f for f in os.listdir() if f.startswith("chat_history_")]
+    saved_chats = [f for f in os.listdir() if f.endswith(".json")]
+
+    # State variable to track which chat is being renamed
+    if "rename_chat" not in st.session_state:
+        st.session_state.rename_chat = None
+
     for chat in saved_chats:
-        if st.sidebar.button(chat):
-            st.session_state.chat_history = load_chat_history(chat)
-            st.experimental_rerun()  # Rerun the app to display the loaded chat
+        col1, col2, col3 = st.sidebar.columns([3, 1, 1])
+        with col1:
+            # Display chat name without .json extension
+            chat_name = os.path.splitext(chat)[0] 
+            if st.button(chat_name):
+                st.session_state.chat_history = load_chat_history(chat)
+                st.rerun()
+        with col2:
+            if st.button("✏️", key=f"rename_{chat}"):
+                st.session_state.rename_chat = chat  # Set chat to be renamed
+                st.rerun()
+        with col3:
+            if st.button("🗑️", key=f"delete_{chat}"):
+                os.remove(chat)
+                st.success(f"Chat {chat} deleted.")
+                st.rerun()
+
+    # Text input for renaming (outside the loop)
+    if st.session_state.rename_chat:
+        # Display current name without .json extension
+        current_name = os.path.splitext(st.session_state.rename_chat)[0]
+        new_name = st.text_input("Rename chat:", value=current_name)
+        if new_name:
+            # Add .json extension to the new name
+            new_name = new_name + ".json" 
+            if new_name != st.session_state.rename_chat:
+                os.rename(st.session_state.rename_chat, new_name)
+                st.success(f"Chat renamed to {new_name}")
+                st.session_state.rename_chat = None  # Reset rename_chat
+                st.cache_resource.clear()
+                st.rerun()
 
     # Display chat history
     for message in st.session_state.chat_history:
@@ -450,7 +485,7 @@ def chat_interface():
             st.markdown(message["content"])
 
     # Get user input
-    if prompt := st.chat_input("Enter your message"):
+    if prompt := st.chat_input("What is up my person?"):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
