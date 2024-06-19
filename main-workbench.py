@@ -4,6 +4,14 @@ import pandas as pd
 from datetime import datetime
 import json
 import time
+import matplotlib.pyplot as plt
+from PIL import Image
+import io
+import base64
+import ollama  # Import the ollama library
+
+# Set plot style for a black background
+plt.style.use('dark_background')
 
 OLLAMA_URL = "http://localhost:11434/api"
 
@@ -18,32 +26,53 @@ def get_available_models():
     return models
 
 def call_ollama(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
-    payload = {
-        "model": model,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "presence_penalty": presence_penalty,
-        "frequency_penalty": frequency_penalty,
-        "context": context if context is not None else [],
-    }
-    if prompt:
-        payload["prompt"] = prompt
     if image:
-        files = {"image": image}
-        response = requests.post(f"{OLLAMA_URL}/generate", data=payload, files=files, stream=True)
+        response = ollama.chat(
+            model=model,
+            messages=[
+                {
+                    'role': 'user',
+                    'content': 'Describe this image:',
+                    'images': [image]
+                }
+            ]
+        )
+        response_text = response['message']['content']
     else:
-        response = requests.post(f"{OLLAMA_URL}/generate", json=payload, stream=True)
-    try:
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        return f"An error occurred: {str(e)}", None
-    response_parts = []
-    for line in response.iter_lines():
-        part = json.loads(line)
-        response_parts.append(part.get("response", ""))
-        if part.get("done", False):
-            break
-    return "".join(response_parts), part.get("context", None)
+        payload = {
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "presence_penalty": presence_penalty,
+            "frequency_penalty": frequency_penalty,
+            "context": context if context is not None else [],
+        }
+
+        if prompt:
+            payload["prompt"] = prompt
+
+        headers = {}
+        headers["Content-Type"] = "application/json"
+
+        response = requests.post(f"{OLLAMA_URL}/generate", json=payload, headers=headers, stream=True)
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {str(e)}")
+            return f"An error occurred: {str(e)}", None
+
+        response_text = ""
+        for line in response.iter_lines():
+            if line:
+                decoded_line = line.decode('utf-8')
+                try:
+                    response_part = json.loads(decoded_line)
+                    response_text += response_part.get("response", "")
+                except json.JSONDecodeError:
+                    print(f"Error decoding line: {decoded_line}")
+
+    return response_text, None
 
 def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
@@ -56,11 +85,15 @@ def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_p
         time.sleep(0.1)
     return results
 
-def vision_test(models, image, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def vision_test(models, image_data, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
     for model in models:
         start_time = time.time()
-        result, _ = call_ollama(model, image=image, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+        try:
+            result, _ = call_ollama(model, image=image_data, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+            print(f"Model: {model}, Result: {result}")  # Debug statement
+        except Exception as e:
+            result = f"An error occurred: {str(e)}"
         end_time = time.time()
         elapsed_time = end_time - start_time
         results[model] = (result, elapsed_time)
@@ -170,6 +203,18 @@ def model_comparison_test():
 
     if st.button("Compare Models", key="compare_models"):
         results = performance_test(selected_models, prompt, temperature, max_tokens, presence_penalty, frequency_penalty)
+        
+        # Prepare data for visualization
+        models = list(results.keys())
+        times = [results[model][1] for model in models]
+
+        # Plot the results
+        fig, ax = plt.subplots()
+        ax.barh(models, times, color=plt.cm.Paired(range(len(models))))
+        ax.set_xlabel('Time (seconds)')
+        ax.set_title('Model Response Time Comparison')
+        st.pyplot(fig)
+        
         for model, (result, elapsed_time) in results.items():
             st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds):")
             st.write(result)
@@ -189,13 +234,25 @@ def contextual_response_test():
     if st.button("Start Contextual Test", key="start_contextual_test"):
         prompt_list = [p.strip() for p in prompts.split("\n")]
         context = []
+        times = []
+
         for prompt in prompt_list:
             start_time = time.time()
             result, context = call_ollama(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
             end_time = time.time()
             elapsed_time = end_time - start_time
+            times.append(elapsed_time)
             st.subheader(f"Prompt: {prompt} (Time taken: {elapsed_time:.2f} seconds)")
             st.write(f"Response: {result}")
+
+        # Plot the results
+        fig, ax = plt.subplots()
+        ax.plot(prompt_list, times, marker='o', linestyle='-', color='cyan')
+        ax.set_xlabel('Prompts')
+        ax.set_ylabel('Time (seconds)')
+        ax.set_title('Contextual Response Time by Prompt')
+        st.pyplot(fig)
+        
         st.write("JSON Handling Capability: ", "✅" if check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
         st.write("Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
 
@@ -215,21 +272,57 @@ def feature_test():
         st.markdown(f"### JSON Handling Capability: {'✅ Success!' if json_result else '❌ Failure!'}")
         st.markdown(f"### Function Calling Capability: {'✅ Success!' if function_result else '❌ Failure!'}")
 
+        # Plot the results
+        fig, ax = plt.subplots()
+        features = ['JSON Handling', 'Function Calling']
+        results = [json_result, function_result]
+        ax.barh(features, results, color=['green' if r else 'red' for r in results])
+        ax.set_xlabel('Capability')
+        ax.set_title('Model Feature Test Results')
+        st.pyplot(fig)
+
 def vision_comparison_test():
     st.header("Vision Model Comparison")
     available_models = get_available_models()
-    selected_models = st.multiselect("Select the models you want to compare:", available_models)
+    # Ensure 'llava' is in available models before setting it as default
+    default_models = ['llava'] if 'llava' in available_models else []
+    selected_models = st.multiselect("Select the models you want to compare:", available_models, default=default_models)
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
     presence_penalty = st.number_input("Presence penalty:", value=0.0)
     frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
-    uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
 
     if st.button("Compare Vision Models", key="compare_vision_models") and uploaded_file is not None:
-        results = vision_test(selected_models, uploaded_file, temperature, max_tokens, presence_penalty, frequency_penalty)
+        image_data = uploaded_file.read()
+
+        # Convert to JPEG if necessary
+        if uploaded_file.type != "image/jpeg":
+            image = Image.open(io.BytesIO(image_data))
+            buffer = io.BytesIO()
+            image.save(buffer, format="JPEG")
+            image_data = buffer.getvalue()
+
+        # Display the uploaded image
+        st.image(image_data, caption="Uploaded Image", use_column_width=True)
+
+        results = vision_test(selected_models, image_data, temperature, max_tokens, presence_penalty, frequency_penalty)
+
+        # Display the LLM response text and time taken
         for model, (result, elapsed_time) in results.items():
             st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds):")
             st.write(result)
+
+        # Prepare data for visualization (after displaying responses)
+        models = list(results.keys())
+        times = [results[model][1] for model in models]
+
+        # Plot the results
+        fig, ax = plt.subplots()
+        ax.barh(models, times, color=plt.cm.Paired(range(len(models))))
+        ax.set_xlabel('Time (seconds)')
+        ax.set_title('Vision Model Response Time Comparison')
+        st.pyplot(fig)
 
 def list_models():
     st.header("List Local Models")
