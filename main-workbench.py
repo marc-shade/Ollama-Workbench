@@ -511,29 +511,34 @@ def main():
             unsafe_allow_html=True,
         )
 
-        st.subheader("Maintain")
+        st.subheader("Chat") # Chat Section
         st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
-        if st.button("List Local Models", key="button_list_models"):
-            st.session_state.selected_test = "List Local Models"
-        if st.button("Show Model Information", key="button_show_model_info"):
-            st.session_state.selected_test = "Show Model Information"
-        if st.button("Pull a Model", key="button_pull_model"):
-            st.session_state.selected_test = "Pull a Model"
-        if st.button("Remove a Model", key="button_remove_model"):
-            st.session_state.selected_test = "Remove a Model"
-        
-        st.subheader("Test")
-        st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
-        if st.button("Model Feature Test", key="button_feature_test"):
-            st.session_state.selected_test = "Model Feature Test"
-        if st.button("Model Comparison by Response Quality", key="button_model_comparison"):
-            st.session_state.selected_test = "Model Comparison by Response Quality"
-        if st.button("Contextual Response Test by Model", key="button_contextual_response"):
-            st.session_state.selected_test = "Contextual Response Test by Model"
-        if st.button("Vision Model Comparison", key="button_vision_model_comparison"):
-            st.session_state.selected_test = "Vision Model Comparison"
         if st.button("Chat", key="button_chat"):
             st.session_state.selected_test = "Chat"
+
+        # Maintain Section (Collapsible)
+        with st.expander("Maintain", expanded=False):
+            st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
+            if st.button("List Local Models", key="button_list_models"):
+                st.session_state.selected_test = "List Local Models"
+            if st.button("Show Model Information", key="button_show_model_info"):
+                st.session_state.selected_test = "Show Model Information"
+            if st.button("Pull a Model", key="button_pull_model"):
+                st.session_state.selected_test = "Pull a Model"
+            if st.button("Remove a Model", key="button_remove_model"):
+                st.session_state.selected_test = "Remove a Model"
+
+        # Test Section (Collapsible)
+        with st.expander("Test", expanded=False):
+            st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
+            if st.button("Model Feature Test", key="button_feature_test"):
+                st.session_state.selected_test = "Model Feature Test"
+            if st.button("Model Comparison by Response Quality", key="button_model_comparison"):
+                st.session_state.selected_test = "Model Comparison by Response Quality"
+            if st.button("Contextual Response Test by Model", key="button_contextual_response"):
+                st.session_state.selected_test = "Contextual Response Test by Model"
+            if st.button("Vision Model Comparison", key="button_vision_model_comparison"):
+                st.session_state.selected_test = "Vision Model Comparison"
 
     if st.session_state.selected_test == "Model Comparison by Response Quality":
         model_comparison_test()
