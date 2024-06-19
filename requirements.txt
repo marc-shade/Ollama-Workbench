@@ -1,3 +1,7 @@
 streamlit
 requests
 pandas
+matplotlib
+Pillow
+base64
+ollama
