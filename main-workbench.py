@@ -28,19 +28,42 @@ def get_available_models():
     ]
     return models
 
-def call_ollama(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def call_ollama(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None, stream=False):
     if image:
-        response = ollama.chat(
-            model=model,
-            messages=[
-                {
-                    'role': 'user',
-                    'content': 'Describe this image:',
-                    'images': [image]
-                }
-            ]
-        )
-        response_text = response['message']['content']
+        # Read image data into BytesIO
+        image_bytesio = io.BytesIO(image.read())
+
+        # Send image data using multipart/form-data
+        files = {"file": ("image.jpg", image_bytesio, "image/jpeg")}
+        data = {
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "presence_penalty": presence_penalty,
+            "frequency_penalty": frequency_penalty,
+            "context": context if context is not None else [],
+        }
+        response = requests.post(f"{OLLAMA_URL}/generate", data=data, files=files, stream=True)
+        
+        try:
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {str(e)}")
+            return f"An error occurred: {str(e)}", None
+
+        response_text = ""
+        for line in response.iter_lines():
+            if line:
+                decoded_line = line.decode('utf-8')
+                try:
+                    response_part = json.loads(decoded_line)
+                    if "message" in response_part and "content" in response_part["message"]:
+                        response_text += response_part["message"]["content"]
+                    else:
+                        response_text += response_part.get("response", "")
+                except json.JSONDecodeError:
+                    print(f"Error decoding line: {decoded_line}")
+        return response_text, None
     else:
         payload = {
             "model": model,
@@ -57,25 +80,34 @@ def call_ollama(model, prompt=None, image=None, temperature=0.5, max_tokens=150,
         headers = {}
         headers["Content-Type"] = "application/json"
 
-        response = requests.post(f"{OLLAMA_URL}/generate", json=payload, headers=headers, stream=True)
+        if stream:
+            response = requests.post(f"{OLLAMA_URL}/generate", json=payload, headers=headers, stream=True)
 
-        try:
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {str(e)}")
-            return f"An error occurred: {str(e)}", None
+            try:
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                print(f"Request failed: {str(e)}")
+                return f"An error occurred: {str(e)}", None
 
-        response_text = ""
-        for line in response.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8')
-                try:
-                    response_part = json.loads(decoded_line)
-                    response_text += response_part.get("response", "")
-                except json.JSONDecodeError:
-                    print(f"Error decoding line: {decoded_line}")
-
-    return response_text, None
+            response_text = ""
+            for line in response.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    try:
+                        response_part = json.loads(decoded_line)
+                        response_text += response_part.get("response", "")
+                        yield response_text
+                    except json.JSONDecodeError:
+                        print(f"Error decoding line: {decoded_line}")
+        else:
+            response = requests.post(f"{OLLAMA_URL}/generate", json=payload, headers=headers)
+            try:
+                response.raise_for_status()
+                response_text = response.json()['response']
+            except requests.exceptions.RequestException as e:
+                print(f"Request failed: {str(e)}")
+                return f"An error occurred: {str(e)}", None
+            return response_text, None
 
 def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
@@ -88,12 +120,12 @@ def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_p
         time.sleep(0.1)
     return results
 
-def vision_test(models, image_data, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
     for model in models:
         start_time = time.time()
         try:
-            result, _ = call_ollama(model, image=image_data, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+            result, _ = call_ollama(model, image=image_file, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
             print(f"Model: {model}, Result: {result}")  # Debug statement
         except Exception as e:
             result = f"An error occurred: {str(e)}"
@@ -282,29 +314,22 @@ def feature_test():
 def vision_comparison_test():
     st.header("Vision Model Comparison")
     available_models = get_available_models()
+    # Ensure 'llava' is in available models before setting it as default
     default_models = ['llava'] if 'llava' in available_models else []
     selected_models = st.multiselect("Select the models you want to compare:", available_models, default=default_models)
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
     presence_penalty = st.number_input("Presence penalty:", value=0.0)
     frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
 
     if st.button("Compare Vision Models", key="compare_vision_models") and uploaded_file is not None:
         image_data = uploaded_file.read()
 
-        # Convert PNG images to JPEG format
-        if uploaded_file.type == "image/png":
-            image = Image.open(io.BytesIO(image_data))
-            buffer = io.BytesIO()
-            image = image.convert("RGB")  # Convert RGBA to RGB
-            image.save(buffer, format="JPEG")
-            image_data = buffer.getvalue()
-
         # Display the uploaded image
         st.image(image_data, caption="Uploaded Image", use_column_width=True)
 
-        results = vision_test(selected_models, image_data, temperature, max_tokens, presence_penalty, frequency_penalty)
+        results = vision_test(selected_models, uploaded_file, temperature, max_tokens, presence_penalty, frequency_penalty)
 
         # Display the LLM response text and time taken
         for model, (result, elapsed_time) in results.items():
@@ -377,9 +402,43 @@ def remove_model_ui():
             st.write(result["message"])
             # Update the list of available models
             st.session_state.available_models = get_available_models()
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("Please select a model.")
+
+def chat_interface():
+    st.header("Chat with a Model")
+    available_models = get_available_models()
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = available_models[0] if available_models else None
+
+    selected_model = st.selectbox("Select a model:", available_models, key="selected_model")
+    temperature = st.slider("Temperature:", min_value=0.0, max_value=1.0, value=0.5)
+    max_tokens = st.number_input("Max Tokens:", value=150)
+    presence_penalty = st.number_input("Presence Penalty:", value=0.0)
+    frequency_penalty = st.number_input("Frequency Penalty:", value=0.0)
+
+    # Display chat history
+    for message in st.session_state.chat_history:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    # Get user input
+    if prompt := st.chat_input("Enter your message"):
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+
+        # Generate response
+        with st.chat_message("assistant"):
+            response_placeholder = st.empty()
+            full_response = ""
+            for response in call_ollama(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, stream=True):
+                full_response = response
+                response_placeholder.write(full_response)  # Use st.write for wrapping
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
 def main():
     if 'selected_test' not in st.session_state:
@@ -414,6 +473,8 @@ def main():
             st.session_state.selected_test = "Contextual Response Test by Model"
         if st.button("Vision Model Comparison", key="button_vision_model_comparison"):
             st.session_state.selected_test = "Vision Model Comparison"
+        if st.button("Chat", key="button_chat"):
+            st.session_state.selected_test = "Chat"
 
     if st.session_state.selected_test == "Model Comparison by Response Quality":
         model_comparison_test()
@@ -431,6 +492,8 @@ def main():
         remove_model_ui()
     elif st.session_state.selected_test == "Vision Model Comparison":
         vision_comparison_test()
+    elif st.session_state.selected_test == "Chat":
+        chat_interface()
     else:
         st.write("""
             ### Welcome to the Ollama Workbench!
@@ -447,6 +510,7 @@ def main():
             - **Model Comparison by Response Quality**: Compare the response quality of multiple models for a given prompt.
             - **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts.
             - **Vision Model Comparison**: Compare the performance of vision models using the same test image.
+            - **Chat**: Engage in a real-time chat with a selected model.
         """)
 
 if __name__ == "__main__":
