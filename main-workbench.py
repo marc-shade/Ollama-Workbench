@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import base64
-import ollama
+import ollama  # Import the ollama library
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":
@@ -423,13 +423,13 @@ def chat_interface():
     # Display chat history
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
-            st.write(message["content"])
+            st.markdown(message["content"])  # Use st.markdown for chat history
 
     # Get user input
     if prompt := st.chat_input("Enter your message"):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
-            st.write(prompt)
+            st.markdown(prompt)
 
         # Generate response
         with st.chat_message("assistant"):
@@ -437,7 +437,7 @@ def chat_interface():
             full_response = ""
             for response in call_ollama(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, stream=True):
                 full_response = response
-                response_placeholder.write(full_response)  # Use st.write for wrapping
+                response_placeholder.markdown(full_response)  # Use st.markdown for AI response
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
 def main():
