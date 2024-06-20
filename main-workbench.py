@@ -29,92 +29,47 @@ def get_available_models():
     ]
     return models
 
-def call_ollama(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None, stream=False):
+def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+    payload = {
+        "model": model,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "presence_penalty": presence_penalty,
+        "frequency_penalty": frequency_penalty,
+        "context": context if context is not None else [],
+    }
+    if prompt:
+        payload["prompt"] = prompt
     if image:
         # Read image data into BytesIO
         image_bytesio = io.BytesIO(image.read())
 
+        # Determine image format and filename
+        image_format = "image/jpeg" if image.type == "image/jpeg" else "image/png"
+        filename = "image.jpg" if image.type == "image/jpeg" else "image.png"
+
         # Send image data using multipart/form-data
-        files = {"file": ("image.jpg", image_bytesio, "image/jpeg")}
-        data = {
-            "model": model,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "presence_penalty": presence_penalty,
-            "frequency_penalty": frequency_penalty,
-            "context": context if context is not None else [],
-        }
-        response = requests.post(f"{OLLAMA_URL}/generate", data=data, files=files, stream=True)
-        
-        try:
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {str(e)}")
-            return f"An error occurred: {str(e)}", None
-
-        response_text = ""
-        for line in response.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8')
-                try:
-                    response_part = json.loads(decoded_line)
-                    if "message" in response_part and "content" in response_part["message"]:
-                        response_text += response_part["message"]["content"]
-                    else:
-                        response_text += response_part.get("response", "")
-                except json.JSONDecodeError:
-                    print(f"Error decoding line: {decoded_line}")
-        return response_text, None
+        files = {"file": (filename, image_bytesio, image_format)}
+        response = requests.post(f"{OLLAMA_URL}/generate", data=payload, files=files, stream=True)
     else:
-        payload = {
-            "model": model,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "presence_penalty": presence_penalty,
-            "frequency_penalty": frequency_penalty,
-            "context": context if context is not None else [],
-        }
-
-        if prompt:
-            payload["prompt"] = prompt
-
-        headers = {}
-        headers["Content-Type"] = "application/json"
-
-        if stream:
-            response = requests.post(f"{OLLAMA_URL}/generate", json=payload, headers=headers, stream=True)
-
-            try:
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                print(f"Request failed: {str(e)}")
-                return f"An error occurred: {str(e)}", None
-
-            response_text = ""
-            for line in response.iter_lines():
-                if line:
-                    decoded_line = line.decode('utf-8')
-                    try:
-                        response_part = json.loads(decoded_line)
-                        response_text += response_part.get("response", "")
-                        yield response_text
-                    except json.JSONDecodeError:
-                        print(f"Error decoding line: {decoded_line}")
-        else:
-            response = requests.post(f"{OLLAMA_URL}/generate", json=payload, headers=headers)
-            try:
-                response.raise_for_status()
-                response_text = response.json()['response']
-            except requests.exceptions.RequestException as e:
-                print(f"Request failed: {str(e)}")
-                return f"An error occurred: {str(e)}", None
-            return response_text, None
+        response = requests.post(f"{OLLAMA_URL}/generate", json=payload, stream=True)
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        return f"An error occurred: {str(e)}", None
+    response_parts = []
+    for line in response.iter_lines():
+        part = json.loads(line)
+        response_parts.append(part.get("response", ""))
+        if part.get("done", False):
+            break
+    return "".join(response_parts), part.get("context", None)
 
 def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
     for model in models:
         start_time = time.time()
-        result, _ = call_ollama(model, prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+        result, _ = call_ollama_endpoint(model, prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
         end_time = time.time()
         elapsed_time = end_time - start_time
         results[model] = (result, elapsed_time)
@@ -126,7 +81,8 @@ def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_pe
     for model in models:
         start_time = time.time()
         try:
-            result, _ = call_ollama(model, image=image_file, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+            # Pass the original image_file object to call_ollama_endpoint
+            result, _ = call_ollama_endpoint(model, image=image_file, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
             print(f"Model: {model}, Result: {result}")  # Debug statement
         except Exception as e:
             result = f"An error occurred: {str(e)}"
@@ -138,7 +94,7 @@ def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_pe
 
 def check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Return the following data in JSON format: name: John, age: 30, city: New York"
-    result, _ = call_ollama(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
+    result, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     try:
         json.loads(result)
         return True
@@ -147,7 +103,7 @@ def check_json_handling(model, temperature, max_tokens, presence_penalty, freque
 
 def check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Define a function named 'add' that takes two numbers and returns their sum. Then call the function with arguments 5 and 3."
-    result, _ = call_ollama(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
+    result, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     return "8" in result
 
 def list_local_models():
@@ -269,14 +225,13 @@ def contextual_response_test():
         prompt_list = [p.strip() for p in prompts.split("\n")]
         context = []
         times = []
-
-        for prompt in prompt_list:
+        for i, prompt in enumerate(prompt_list):
             start_time = time.time()
-            result, context = call_ollama(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+            result, context = call_ollama_endpoint(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
             end_time = time.time()
             elapsed_time = end_time - start_time
             times.append(elapsed_time)
-            st.subheader(f"Prompt: {prompt} (Time taken: {elapsed_time:.2f} seconds)")
+            st.subheader(f"Prompt {i+1}: {prompt} (Time taken: {elapsed_time:.2f} seconds)")
             st.write(f"Response: {result}")
 
         # Prepare data for visualization
@@ -285,7 +240,7 @@ def contextual_response_test():
 
         # Plot the results using st.bar_chart
         st.bar_chart(df, x="Prompt", y="Time (seconds)")
-        
+
         st.write("JSON Handling Capability: ", "✅" if check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
         st.write("Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
 
@@ -325,12 +280,32 @@ def vision_comparison_test():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
 
     if st.button("Compare Vision Models", key="compare_vision_models") and uploaded_file is not None:
-        image_data = uploaded_file.read()
-
         # Display the uploaded image
-        st.image(image_data, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-        results = vision_test(selected_models, uploaded_file, temperature, max_tokens, presence_penalty, frequency_penalty)
+        results = {}
+        for model in selected_models:
+            start_time = time.time()
+            try:
+                # Use ollama.chat for vision tests
+                response = ollama.chat(
+                    model=model,
+                    messages=[
+                        {
+                            'role': 'user',
+                            'content': 'Describe this image:',
+                            'images': [uploaded_file]
+                        }
+                    ]
+                )
+                result = response['message']['content']
+                print(f"Model: {model}, Result: {result}")  # Debug statement
+            except Exception as e:
+                result = f"An error occurred: {str(e)}"
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            results[model] = (result, elapsed_time)
+            time.sleep(0.1)
 
         # Display the LLM response text and time taken
         for model, (result, elapsed_time) in results.items():
@@ -490,14 +465,14 @@ def chat_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Generate response
+        # Generate response using ollama library
         with st.chat_message("assistant"):
             response_placeholder = st.empty()
             full_response = ""
-            for response in call_ollama(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, stream=True):
-                full_response = response
+            for response_chunk in ollama.generate(selected_model, prompt, stream=True):
+                full_response += response_chunk["response"]
                 response_placeholder.markdown(full_response)
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+            st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
 def main():
     if 'selected_test' not in st.session_state:
