@@ -1,7 +1,7 @@
 streamlit
 requests
+ollama
 pandas
 matplotlib
 Pillow
 base64
-ollama
