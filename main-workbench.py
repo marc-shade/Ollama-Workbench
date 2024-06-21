@@ -56,23 +56,36 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
     try:
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        return f"An error occurred: {str(e)}", None
+        return f"An error occurred: {str(e)}", None, None, None  # Return None for eval_count and eval_duration
+
     response_parts = []
+    eval_count = None
+    eval_duration = None
     for line in response.iter_lines():
         part = json.loads(line)
         response_parts.append(part.get("response", ""))
         if part.get("done", False):
+            eval_count = part.get("eval_count", None)
+            eval_duration = part.get("eval_duration", None)
             break
-    return "".join(response_parts), part.get("context", None)
+    return "".join(response_parts), part.get("context", None), eval_count, eval_duration
 
 def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
     for model in models:
         start_time = time.time()
-        result, _ = call_ollama_endpoint(model, prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+        result, _, eval_count, eval_duration = call_ollama_endpoint(
+            model,
+            prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
+            context=context,
+        )
         end_time = time.time()
         elapsed_time = end_time - start_time
-        results[model] = (result, elapsed_time)
+        results[model] = (result, elapsed_time, eval_count, eval_duration)
         time.sleep(0.1)
     return results
 
@@ -81,20 +94,29 @@ def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_pe
     for model in models:
         start_time = time.time()
         try:
-            # Pass the original image_file object to call_ollama_endpoint
-            result, _ = call_ollama_endpoint(model, image=image_file, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+            # Read image data into BytesIO
+            image_bytesio = io.BytesIO(image_file.read())
+            result, _, eval_count, eval_duration = call_ollama_endpoint(
+                model,
+                image=image_bytesio,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                context=context,
+            )
             print(f"Model: {model}, Result: {result}")  # Debug statement
         except Exception as e:
             result = f"An error occurred: {str(e)}"
         end_time = time.time()
         elapsed_time = end_time - start_time
-        results[model] = (result, elapsed_time)
+        results[model] = (result, elapsed_time, eval_count, eval_duration)
         time.sleep(0.1)
     return results
 
 def check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Return the following data in JSON format: name: John, age: 30, city: New York"
-    result, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
+    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     try:
         json.loads(result)
         return True
@@ -103,7 +125,7 @@ def check_json_handling(model, temperature, max_tokens, presence_penalty, freque
 
 def check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Define a function named 'add' that takes two numbers and returns their sum. Then call the function with arguments 5 and 3."
-    result, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
+    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     return "8" in result
 
 def list_local_models():
@@ -199,14 +221,18 @@ def model_comparison_test():
         # Prepare data for visualization
         models = list(results.keys())  # Get models from results
         times = [results[model][1] for model in models]
+        tokens_per_second = [
+            results[model][2] / (results[model][3] / (10**9)) if results[model][2] and results[model][3] else 0
+            for model in models
+        ]
 
-        df = pd.DataFrame({"Model": models, "Time (seconds)": times})
+        df = pd.DataFrame({"Model": models, "Time (seconds)": times, "Tokens/second": tokens_per_second})
 
         # Plot the results using st.bar_chart
-        st.bar_chart(df, x="Model", y="Time (seconds)", color="#4CAF50")
+        st.bar_chart(df, x="Model", y=["Time (seconds)", "Tokens/second"], color=["#4CAF50", "#FFC107"])  # Green and amber
         
-        for model, (result, elapsed_time) in results.items():
-            st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds):")
+        for model, (result, elapsed_time, eval_count, eval_duration) in results.items():
+            st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds, Tokens/second: {tokens_per_second[models.index(model)]:.2f}):")
             st.write(result)
             st.write("JSON Handling Capability: ", "✅" if check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
             st.write("Function Calling Capability: ", "✅" if check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
@@ -225,21 +251,32 @@ def contextual_response_test():
         prompt_list = [p.strip() for p in prompts.split("\n")]
         context = []
         times = []
+        tokens_per_second_list = []
         for i, prompt in enumerate(prompt_list):
             start_time = time.time()
-            result, context = call_ollama_endpoint(selected_model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty, context=context)
+            result, context, eval_count, eval_duration = call_ollama_endpoint(
+                selected_model,
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                context=context,
+            )
             end_time = time.time()
             elapsed_time = end_time - start_time
             times.append(elapsed_time)
-            st.subheader(f"Prompt {i+1}: {prompt} (Time taken: {elapsed_time:.2f} seconds)")
+            tokens_per_second = eval_count / (eval_duration / (10**9)) if eval_count and eval_duration else 0
+            tokens_per_second_list.append(tokens_per_second)
+            st.subheader(f"Prompt {i+1}: {prompt} (Time taken: {elapsed_time:.2f} seconds, Tokens/second: {tokens_per_second:.2f}):")
             st.write(f"Response: {result}")
 
         # Prepare data for visualization
-        data = {"Prompt": prompt_list, "Time (seconds)": times}
+        data = {"Prompt": prompt_list, "Time (seconds)": times, "Tokens/second": tokens_per_second_list}
         df = pd.DataFrame(data)
 
         # Plot the results using st.bar_chart
-        st.bar_chart(df, x="Prompt", y="Time (seconds)", color="#4CAF50")
+        st.bar_chart(df, x="Prompt", y=["Time (seconds)", "Tokens/second"], color=["#4CAF50", "#FFC107"])  # Green and amber
 
         st.write("JSON Handling Capability: ", "✅" if check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
         st.write("Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
@@ -285,6 +322,9 @@ def vision_comparison_test():
 
         results = {}
         for model in selected_models:
+            # Reset file pointer to the beginning
+            uploaded_file.seek(0)  # Add this line
+
             start_time = time.time()
             try:
                 # Use ollama.chat for vision tests
