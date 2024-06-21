@@ -29,6 +29,24 @@ def get_available_models():
     ]
     return models
 
+def get_model_hash(model_name):
+    """Gets the hash of a model using the ollama.show endpoint."""
+    payload = {"name": model_name}
+    response = requests.post(f"{OLLAMA_URL}/show", json=payload)
+    response.raise_for_status()
+    model_info = response.json()
+    return model_info.get("hash", None)
+
+def get_latest_model_hash(model_name):
+    """Gets the latest hash of a model from the ollama.tags endpoint."""
+    response = requests.get(f"{OLLAMA_URL}/tags")
+    response.raise_for_status()
+    tags_info = response.json()
+    for model in tags_info.get("models", []):
+        if model["name"] == model_name:
+            return model.get("hash", None)
+    return None
+
 def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     payload = {
         "model": model,
@@ -422,6 +440,21 @@ def remove_model_ui():
         else:
             st.error("Please select a model.")
 
+def update_models():
+    st.header("Update Local Models")
+    available_models = get_available_models()
+    if st.button("Update All Models"):
+        for model_name in available_models:
+            local_hash = get_model_hash(model_name)
+            latest_hash = get_latest_model_hash(model_name)
+
+            if local_hash != latest_hash:
+                st.write(f"Updating model: `{model_name}`")
+                pull_model(model_name)
+            else:
+                st.write(f"Model `{model_name}` is already up to date.")
+        st.success("All models checked for updates.")
+
 def save_chat_history(chat_history, filename="chat_history.json"):
     with open(filename, "w") as f:
         json.dump(chat_history, f)
@@ -542,6 +575,9 @@ def main():
                 st.session_state.selected_test = "Pull a Model"
             if st.button("Remove a Model", key="button_remove_model"):
                 st.session_state.selected_test = "Remove a Model"
+            # Add Update Models button
+            if st.button("Update Models", key="button_update_models"):
+                st.session_state.selected_test = "Update Models"
 
         # Test Section (Collapsible)
         with st.expander("Test", expanded=False):
@@ -573,6 +609,8 @@ def main():
         vision_comparison_test()
     elif st.session_state.selected_test == "Chat":
         chat_interface()
+    elif st.session_state.selected_test == "Update Models":
+        update_models()
     else:
         st.write("""
             ### Welcome to the Ollama Workbench!
