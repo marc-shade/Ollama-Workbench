@@ -30,12 +30,14 @@ def get_available_models():
     return models
 
 def get_model_hash(model_name):
-    """Gets the hash of a model using the ollama.show endpoint."""
-    payload = {"name": model_name}
-    response = requests.post(f"{OLLAMA_URL}/show", json=payload)
+    """Gets the hash of a model using the ollama.list endpoint."""
+    response = requests.get(f"{OLLAMA_URL}/list")
     response.raise_for_status()
-    model_info = response.json()
-    return model_info.get("hash", None)
+    models_info = response.json()
+    for model in models_info.get("models", []):
+        if model["name"] == model_name:
+            return model.get("hash", None)
+    return None
 
 def get_latest_model_hash(model_name):
     """Gets the latest hash of a model from the ollama.tags endpoint."""
