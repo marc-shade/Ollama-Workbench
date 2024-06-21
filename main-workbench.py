@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import base64
-import ollama  # Import the ollama library
+import ollama
 import os
 
 # Set plot style based on Streamlit theme
@@ -28,26 +28,6 @@ def get_available_models():
         if "embed" not in model["name"]
     ]
     return models
-
-def get_model_hash(model_name):
-    """Gets the hash of a model using the ollama.list endpoint."""
-    response = requests.get(f"{OLLAMA_URL}/list")
-    response.raise_for_status()
-    models_info = response.json()
-    for model in models_info.get("models", []):
-        if model["name"] == model_name:
-            return model.get("hash", None)
-    return None
-
-def get_latest_model_hash(model_name):
-    """Gets the latest hash of a model from the ollama.tags endpoint."""
-    response = requests.get(f"{OLLAMA_URL}/tags")
-    response.raise_for_status()
-    tags_info = response.json()
-    for model in tags_info.get("models", []):
-        if model["name"] == model_name:
-            return model.get("hash", None)
-    return None
 
 def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     payload = {
@@ -227,8 +207,23 @@ def remove_model(model_name):
 
 def model_comparison_test():
     st.header("Model Comparison by Response Quality")
+    
+    # Refresh available_models list
     available_models = get_available_models()
-    selected_models = st.multiselect("Select the models you want to compare:", available_models)
+
+    # Initialize selected_models in session state if it doesn't exist
+    if "selected_models" not in st.session_state:
+        st.session_state.selected_models = []
+
+    selected_models = st.multiselect(
+        "Select the models you want to compare:", 
+        available_models, 
+        default=st.session_state.selected_models
+    )
+
+    # Update the session state with the selected models
+    st.session_state.selected_models = selected_models
+
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
     presence_penalty = st.number_input("Presence penalty:", value=0.0)
@@ -259,8 +254,31 @@ def model_comparison_test():
 
 def contextual_response_test():
     st.header("Contextual Response Test by Model")
+
+    # Refresh available_models list
     available_models = get_available_models()
-    selected_model = st.selectbox("Select the model you want to test:", available_models)
+
+    # Initialize selected_model in session state if it doesn't exist
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = available_models[0] if available_models else None
+
+    # Use a separate key for the selectbox
+    selectbox_key = "contextual_test_model_selector"
+
+    # Update selected_model when selectbox changes
+    if selectbox_key in st.session_state:
+        st.session_state.selected_model = st.session_state[selectbox_key]
+
+    selected_model = st.selectbox(
+        "Select the model you want to test:", 
+        available_models, 
+        key=selectbox_key,
+        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+    )
+
+    # Display the currently selected model
+    st.write(f"Currently selected model: {selected_model}")
+
     prompts = st.text_area("Enter the prompts (one per line):", value="Hi, how are you?\nWhat's your name?\nTell me a joke.")
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
@@ -303,8 +321,31 @@ def contextual_response_test():
 
 def feature_test():
     st.header("Model Feature Test")
+    
+    # Refresh available_models list
     available_models = get_available_models()
-    selected_model = st.selectbox("Select the model you want to test:", available_models)
+
+    # Initialize selected_model in session state if it doesn't exist
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = available_models[0] if available_models else None
+
+    # Use a separate key for the selectbox
+    selectbox_key = "feature_test_model_selector"
+
+    # Update selected_model when selectbox changes
+    if selectbox_key in st.session_state:
+        st.session_state.selected_model = st.session_state[selectbox_key]
+
+    selected_model = st.selectbox(
+        "Select the model you want to test:", 
+        available_models, 
+        key=selectbox_key,
+        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+    )
+
+    # Display the currently selected model
+    st.write(f"Currently selected model: {selected_model}")
+
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
     presence_penalty = st.number_input("Presence penalty:", value=0.0)
@@ -326,10 +367,23 @@ def feature_test():
 
 def vision_comparison_test():
     st.header("Vision Model Comparison")
+    
+    # Refresh available_models list
     available_models = get_available_models()
-    # Ensure 'llava' is in available models before setting it as default
-    default_models = ['llava'] if 'llava' in available_models else []
-    selected_models = st.multiselect("Select the models you want to compare:", available_models, default=default_models)
+
+    # Initialize selected_models in session state if it doesn't exist
+    if "selected_models" not in st.session_state:
+        st.session_state.selected_models = []
+
+    selected_models = st.multiselect(
+        "Select the models you want to compare:", 
+        available_models, 
+        default=st.session_state.selected_models
+    )
+
+    # Update the session state with the selected models
+    st.session_state.selected_models = selected_models
+
     temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max tokens:", value=150)
     presence_penalty = st.number_input("Presence penalty:", value=0.0)
@@ -420,16 +474,59 @@ def pull_models():
 
 def show_model_details():
     st.header("Show Model Information")
+    
+    # Refresh available_models list
     available_models = get_available_models()
-    selected_model = st.selectbox("Select the model you want to show details for:", available_models)
+
+    # Initialize selected_model in session state if it doesn't exist
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = available_models[0] if available_models else None
+
+    # Use a separate key for the selectbox
+    selectbox_key = "show_model_details_model_selector"
+
+    # Update selected_model when selectbox changes
+    if selectbox_key in st.session_state:
+        st.session_state.selected_model = st.session_state[selectbox_key]
+
+    selected_model = st.selectbox(
+        "Select the model you want to show details for:", 
+        available_models, 
+        key=selectbox_key,
+        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+    )
+
+    # Display the currently selected model
+    st.write(f"Currently selected model: {selected_model}")
+
     if st.button("Show Model Information", key="show_model_information"):
         details = show_model_info(selected_model)
         st.json(details)
 
 def remove_model_ui():
     st.header("Remove a Model")
+    
+    # Refresh available_models list
     available_models = get_available_models()
-    selected_model = st.selectbox("Select the model you want to remove:", available_models)
+
+    # Initialize selected_model in session state if it doesn't exist
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = available_models[0] if available_models else None
+
+    # Use a separate key for the selectbox
+    selectbox_key = "remove_model_ui_model_selector"
+
+    # Update selected_model when selectbox changes
+    if selectbox_key in st.session_state:
+        st.session_state.selected_model = st.session_state[selectbox_key]
+
+    selected_model = st.selectbox(
+        "Select the model you want to remove:", 
+        available_models, 
+        key=selectbox_key,
+        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+    )
+
     confirm_label = f"❌ Confirm removal of model `{selected_model}`"
     confirm = st.checkbox(confirm_label)
     if st.button("Remove Model", key="remove_model") and confirm:
@@ -438,6 +535,9 @@ def remove_model_ui():
             st.write(result["message"])
             # Update the list of available models
             st.session_state.available_models = get_available_models()
+            # Update selected_model if it was removed
+            if selected_model not in st.session_state.available_models:
+                st.session_state.selected_model = st.session_state.available_models[0] if st.session_state.available_models else None
             st.rerun()
         else:
             st.error("Please select a model.")
@@ -465,13 +565,33 @@ def load_chat_history(filename):
 
 def chat_interface():
     st.header("Chat with a Model")
-    available_models = get_available_models()
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+
+    # Refresh available_models list
+    available_models = get_available_models()
+
+    # Initialize selected_model in session state if it doesn't exist
     if "selected_model" not in st.session_state:
         st.session_state.selected_model = available_models[0] if available_models else None
 
-    selected_model = st.selectbox("Select a model:", available_models, key="selected_model")
+    # Use a separate key for the selectbox
+    selectbox_key = "chat_model_selector"
+
+    # Update selected_model when selectbox changes
+    if selectbox_key in st.session_state:
+        st.session_state.selected_model = st.session_state[selectbox_key]
+
+    selected_model = st.selectbox(
+        "Select a model:", 
+        available_models, 
+        key=selectbox_key,
+        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+    )
+
+    # Display the currently selected model
+    st.write(f"Currently selected model: {selected_model}")
+
     temperature = st.slider("Temperature:", min_value=0.0, max_value=1.0, value=0.5)
     max_tokens = st.number_input("Max Tokens:", value=150)
     presence_penalty = st.number_input("Presence Penalty:", value=0.0)
@@ -538,14 +658,19 @@ def chat_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Generate response using ollama library
         with st.chat_message("assistant"):
             response_placeholder = st.empty()
             full_response = ""
-            for response_chunk in ollama.generate(selected_model, prompt, stream=True):
+            for response_chunk in ollama.generate(st.session_state.selected_model, prompt, stream=True):
                 full_response += response_chunk["response"]
                 response_placeholder.markdown(full_response)
             st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+
+def pull_models_from_library():
+    st.header("Pull a Model from Ollama Library")
+    response = requests.get("https://ollama.ai/api/library")  # Corrected URL
+    response.raise_for_status()
+    library_models = response.json().get("models", [])
 
 def main():
     if 'selected_test' not in st.session_state:
@@ -575,7 +700,6 @@ def main():
                 st.session_state.selected_test = "Pull a Model"
             if st.button("Remove a Model", key="button_remove_model"):
                 st.session_state.selected_test = "Remove a Model"
-            # Add Update Models button
             if st.button("Update Models", key="button_update_models"):
                 st.session_state.selected_test = "Update Models"
 
