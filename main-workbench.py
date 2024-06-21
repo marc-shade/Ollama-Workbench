@@ -446,14 +446,14 @@ def update_models():
     if st.button("Update All Models"):
         for model_name in available_models:
             local_hash = get_model_hash(model_name)
-            latest_hash = get_latest_model_hash(model_name)
 
-            if local_hash != latest_hash:
+            # Check if the model is legitimate (has a valid hash)
+            if local_hash:
                 st.write(f"Updating model: `{model_name}`")
-                pull_model(model_name)
+                pull_model(model_name)  # Pull the model regardless of hash match
             else:
-                st.write(f"Model `{model_name}` is already up to date.")
-        st.success("All models checked for updates.")
+                st.write(f"Skipping model with invalid hash: `{model_name}`")
+        st.success("All models updated.")
 
 def save_chat_history(chat_history, filename="chat_history.json"):
     with open(filename, "w") as f:
