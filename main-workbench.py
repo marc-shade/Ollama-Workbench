@@ -1,3 +1,5 @@
+# filename: ollama_workbench.py
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -72,22 +74,25 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
 
 def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
-    for model in models:
-        start_time = time.time()
-        result, _, eval_count, eval_duration = call_ollama_endpoint(
-            model,
-            prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            presence_penalty=presence_penalty,
-            frequency_penalty=frequency_penalty,
-            context=context,
-        )
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        results[model] = (result, elapsed_time, eval_count, eval_duration)
-        time.sleep(0.1)
-    return results
+    if models:  # Check if any models are selected
+        for model in models:
+            start_time = time.time()
+            result, _, eval_count, eval_duration = call_ollama_endpoint(
+                model,
+                prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                context=context,
+            )
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            results[model] = (result, elapsed_time, eval_count, eval_duration)
+            time.sleep(0.1)
+        return results
+    else:
+        return {}  # Return an empty dictionary if no models are selected
 
 def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
@@ -207,7 +212,7 @@ def remove_model(model_name):
 
 def model_comparison_test():
     st.header("Model Comparison by Response Quality")
-    
+
     # Refresh available_models list
     available_models = get_available_models()
 
@@ -215,42 +220,52 @@ def model_comparison_test():
     if "selected_models" not in st.session_state:
         st.session_state.selected_models = []
 
-    selected_models = st.multiselect(
-        "Select the models you want to compare:", 
-        available_models, 
-        default=st.session_state.selected_models
-    )
+    # Create a form to encapsulate the multiselect widget
+    with st.form(key="model_comparison_form"):
+        # Pass the session state variable as the default for st.multiselect
+        selected_models = st.multiselect(
+            "Select the models you want to compare:",
+            available_models,
+            default=st.session_state.selected_models,  # Use session state for default
+            key="model_comparison_models"  # Unique key for this multiselect
+        )
 
-    # Update the session state with the selected models
-    st.session_state.selected_models = selected_models
+        temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
+        max_tokens = st.number_input("Max tokens:", value=150)
+        presence_penalty = st.number_input("Presence penalty:", value=0.0)
+        frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
+        prompt = st.text_area("Enter the prompt:", value="Write a short story about a brave knight.")
 
-    temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max tokens:", value=150)
-    presence_penalty = st.number_input("Presence penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
-    prompt = st.text_area("Enter the prompt:", value="Write a short story about a brave knight.")
+        # Submit button for the form
+        submitted = st.form_submit_button(label='Compare Models')
 
-    if st.button("Compare Models", key="compare_models"):
-        results = performance_test(selected_models, prompt, temperature, max_tokens, presence_penalty, frequency_penalty)
-        
-        # Prepare data for visualization
-        models = list(results.keys())  # Get models from results
-        times = [results[model][1] for model in models]
-        tokens_per_second = [
-            results[model][2] / (results[model][3] / (10**9)) if results[model][2] and results[model][3] else 0
-            for model in models
-        ]
+        # Check for submission and selected models within the form block
+        if submitted:
+            st.session_state.selected_models = selected_models  # Update session state here
+            if selected_models:  # Check moved inside the if submitted block
+                # Session state is automatically updated by st.multiselect
+                results = performance_test(selected_models, prompt, temperature, max_tokens, presence_penalty, frequency_penalty)
 
-        df = pd.DataFrame({"Model": models, "Time (seconds)": times, "Tokens/second": tokens_per_second})
+                # Prepare data for visualization
+                models = list(results.keys())  # Get models from results
+                times = [results[model][1] for model in models]
+                tokens_per_second = [
+                    results[model][2] / (results[model][3] / (10**9)) if results[model][2] and results[model][3] else 0
+                    for model in models
+                ]
 
-        # Plot the results using st.bar_chart
-        st.bar_chart(df, x="Model", y=["Time (seconds)", "Tokens/second"], color=["#4CAF50", "#FFC107"])  # Green and amber
-        
-        for model, (result, elapsed_time, eval_count, eval_duration) in results.items():
-            st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds, Tokens/second: {tokens_per_second[models.index(model)]:.2f}):")
-            st.write(result)
-            st.write("JSON Handling Capability: ", "✅" if check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
-            st.write("Function Calling Capability: ", "✅" if check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+                df = pd.DataFrame({"Model": models, "Time (seconds)": times, "Tokens/second": tokens_per_second})
+
+                # Plot the results using st.bar_chart
+                st.bar_chart(df, x="Model", y=["Time (seconds)", "Tokens/second"], color=["#4CAF50", "#FFC107"])  # Green and amber
+
+                for model, (result, elapsed_time, eval_count, eval_duration) in results.items():
+                    st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds, Tokens/second: {tokens_per_second[models.index(model)]:.2f}):")
+                    st.write(result)
+                    st.write("JSON Handling Capability: ", "✅" if check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+                    st.write("Function Calling Capability: ", "✅" if check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+            else:
+                st.warning("Please select at least one model.")
 
 def contextual_response_test():
     st.header("Contextual Response Test by Model")
@@ -367,72 +382,82 @@ def feature_test():
 
 def vision_comparison_test():
     st.header("Vision Model Comparison")
-    
+
     # Refresh available_models list
     available_models = get_available_models()
 
     # Initialize selected_models in session state if it doesn't exist
-    if "selected_models" not in st.session_state:
-        st.session_state.selected_models = []
+    if "selected_vision_models" not in st.session_state:
+        st.session_state.selected_vision_models = []
 
-    selected_models = st.multiselect(
-        "Select the models you want to compare:", 
-        available_models, 
-        default=st.session_state.selected_models
-    )
+    # Create a form to encapsulate the multiselect widget
+    with st.form(key='vision_comparison_form'):
+        # Pass the session state variable as the default for st.multiselect
+        selected_models = st.multiselect(
+            "Select the models you want to compare:",
+            available_models,
+            default=st.session_state.selected_vision_models,  # Use session state for default
+            key="vision_comparison_models"  # Unique key for this multiselect
+        )
+        temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
+        max_tokens = st.number_input("Max tokens:", value=150)
+        presence_penalty = st.number_input("Presence penalty:", value=0.0)
+        frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+        submit_button = st.form_submit_button(label='Compare Vision Models')
 
-    # Update the session state with the selected models
-    st.session_state.selected_models = selected_models
+        # Check if the form has been submitted
+        if submit_button:
+            st.session_state.selected_vision_models = selected_models  # Update session state here
+            if uploaded_file is not None:
+                if selected_models:  # Check moved inside the if submit_button block
+                    # Session state is automatically updated by st.multiselect
+                    # Display the uploaded image
+                    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-    temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max tokens:", value=150)
-    presence_penalty = st.number_input("Presence penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+                    results = {}
+                    for model in selected_models:
+                        # Reset file pointer to the beginning
+                        uploaded_file.seek(0)
 
-    if st.button("Compare Vision Models", key="compare_vision_models") and uploaded_file is not None:
-        # Display the uploaded image
-        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+                        start_time = time.time()
+                        try:
+                            # Use ollama.chat for vision tests
+                            response = ollama.chat(
+                                model=model,
+                                messages=[
+                                    {
+                                        'role': 'user',
+                                        'content': 'Describe this image:',
+                                        'images': [uploaded_file]
+                                    }
+                                ]
+                            )
+                            result = response['message']['content']
+                            print(f"Model: {model}, Result: {result}")  # Debug statement
+                        except Exception as e:
+                            result = f"An error occurred: {str(e)}"
+                        end_time = time.time()
+                        elapsed_time = end_time - start_time
+                        results[model] = (result, elapsed_time)
+                        time.sleep(0.1)
 
-        results = {}
-        for model in selected_models:
-            # Reset file pointer to the beginning
-            uploaded_file.seek(0)  # Add this line
+                    # Display the LLM response text and time taken
+                    for model, (result, elapsed_time) in results.items():
+                        st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds):")
+                        st.write(result)
 
-            start_time = time.time()
-            try:
-                # Use ollama.chat for vision tests
-                response = ollama.chat(
-                    model=model,
-                    messages=[
-                        {
-                            'role': 'user',
-                            'content': 'Describe this image:',
-                            'images': [uploaded_file]
-                        }
-                    ]
-                )
-                result = response['message']['content']
-                print(f"Model: {model}, Result: {result}")  # Debug statement
-            except Exception as e:
-                result = f"An error occurred: {str(e)}"
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            results[model] = (result, elapsed_time)
-            time.sleep(0.1)
+                    # Prepare data for visualization (after displaying responses)
+                    models = list(results.keys())
+                    times = [results[model][1] for model in models]
+                    df = pd.DataFrame({"Model": models, "Time (seconds)": times})
 
-        # Display the LLM response text and time taken
-        for model, (result, elapsed_time) in results.items():
-            st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds):")
-            st.write(result)
-
-        # Prepare data for visualization (after displaying responses)
-        models = list(results.keys())
-        times = [results[model][1] for model in models]
-        df = pd.DataFrame({"Model": models, "Time (seconds)": times})
-
-        # Plot the results
-        st.bar_chart(df, x="Model", y="Time (seconds)", color="#4CAF50")
+                    # Plot the results
+                    st.bar_chart(df, x="Model", y="Time (seconds)", color="#4CAF50")
+                else:
+                    st.warning("Please select at least one model.")
+            else:
+                st.warning("Please upload an image.")
 
 def list_models():
     st.header("List Local Models")
@@ -675,6 +700,12 @@ def pull_models_from_library():
 def main():
     if 'selected_test' not in st.session_state:
         st.session_state.selected_test = None
+
+    # Initialize selected_models and selected_model
+    if "selected_models" not in st.session_state:
+        st.session_state.selected_models = []
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = None
 
     with st.sidebar:
         st.markdown(
