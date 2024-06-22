@@ -2,7 +2,7 @@
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
 
-This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models. It also features a chat interface for real-time interaction with selected models.
+This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models. It also features a chat interface for real-time interaction with selected models, including a workspace for saving and managing code and text generated during chat sessions.
 
 **Table of Contents**
 - [Features](#features)
@@ -29,6 +29,10 @@ This application is a comprehensive tool for managing and testing various models
 
 ### Chat
 - **Chat**: Engage in a real-time chat with a selected model.
+- **Workspace**: Save and manage code and text generated during chat sessions.
+
+### Document
+- **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-7.57.16 AM.png" />
 
@@ -65,16 +69,16 @@ After installation, you can start the application using the following command:
 ```bash
 streamlit run main.py
 ```
-
 ### Using the Sidebar
 - Navigate through different functionalities using the sidebar.
-- Select the desired test or maintenance function.
+- Select the desired test, chat, document, or maintenance function.
 
 ### Model Management
 - **List Local Models**: Select to view available models.
 - **Show Model Information**: Choose a model to view its detailed information.
 - **Pull a Model**: Enter the name of the model you wish to download.
 - **Remove a Model**: Select a model and confirm removal.
+- **Update Models**: Update all local models.
 
 ### Testing
 - **Model Feature Test**: Test models for JSON handling and function calling capabilities.
@@ -83,10 +87,13 @@ streamlit run main.py
 - **Vision Model Comparison**: Compare vision models by uploading an image.
 
 ### Chat
-- **Chat**: Select a model and start chatting!
+- **Chat**: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
+- **Workspace**: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
 
-## Contributing
+### Document
+- **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
 
+### Contributing
 Contributions are welcome! Please follow these steps to contribute:
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature-branch`).
@@ -97,15 +104,10 @@ Contributions are welcome! Please follow these steps to contribute:
 
 For detailed guidelines, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## License
-
+### License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Acknowledgements
-
+### Acknowledgements
 Special thanks to the contributors and the community for their support and feedback.
 
----
-
 Enjoy using the Ollama Workbench! If you encounter any issues, feel free to open an issue or submit a pull request. Happy testing and model management!
-
