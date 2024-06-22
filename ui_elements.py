@@ -386,6 +386,10 @@ def remove_model_ui():
         if selected_model:
             result = remove_model(selected_model)
             st.write(result["message"])
+
+            # Clear the cache of get_available_models
+            get_available_models.clear()
+
             # Update the list of available models
             st.session_state.available_models = get_available_models()
             # Update selected_model if it was removed
