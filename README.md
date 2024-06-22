@@ -35,6 +35,7 @@ This application is a comprehensive tool for managing and testing various models
 - **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-7.57.16 AM.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-1.30.15 PM.png" />
 
 ## Installation
 
