@@ -3,6 +3,7 @@ import streamlit as st
 from ollama_utils import *
 from model_tests import *
 from ui_elements import model_comparison_test, contextual_response_test, feature_test, list_local_models, pull_models, show_model_details, remove_model_ui, vision_comparison_test, chat_interface, update_models
+from repo_docs import main as repo_docs_main
 
 def main():
     # Initialize session state variables if they don't exist
@@ -52,6 +53,12 @@ def main():
             if st.button("Vision Model Comparison", key="button_vision_model_comparison"):
                 st.session_state.selected_test = "Vision Model Comparison"
 
+        # Document Section (Collapsible)
+        with st.expander("Document", expanded=False):
+            st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
+            if st.button("Repository Analyzer", key="button_repo_analyzer"):
+                st.session_state.selected_test = "Repository Analyzer"
+
     # Main content area based on selected_test
     if st.session_state.selected_test == "Model Comparison by Response Quality":
         model_comparison_test()
@@ -73,23 +80,31 @@ def main():
         chat_interface()
     elif st.session_state.selected_test == "Update Models":
         update_models()
+    elif st.session_state.selected_test == "Repository Analyzer":
+        repo_docs_main()
     else:
         st.write("""
             ### Welcome to the Ollama Workbench!
-            Use the sidebar to select a test or maintenance function.
+            This application provides tools for managing and testing your Ollama models.
 
-            #### Maintain
+            #### **Chat**
+            Engage in a real-time chat with a selected model.
+
+            #### **Maintain**
             - **List Local Models**: View a list of all locally available models, including their size and last modified date.
             - **Show Model Information**: Display detailed information about a selected model.
             - **Pull a Model**: Download a new model from the Ollama library.
             - **Remove a Model**: Delete a selected model from the local storage.
+            - **Update Models**: Update all local models.
 
-            #### Test
+            #### **Test**
             - **Model Feature Test**: Test a model's capability to handle JSON and function calls.
-            - **Model Comparison by Response Quality**: Compare the response quality of multiple models for a given prompt.
+            - **Model Comparison by Response Quality**: Compare the response quality and performance of multiple models for a given prompt.
             - **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts.
             - **Vision Model Comparison**: Compare the performance of vision models using the same test image.
-            - **Chat**: Engage in a real-time chat with a selected model.
+
+            #### **Document**
+            - **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
         """)
 
 if __name__ == "__main__":
