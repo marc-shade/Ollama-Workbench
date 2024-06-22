@@ -77,10 +77,16 @@ def model_comparison_test():
         key="model_comparison_models"  # Unique key for this multiselect
     )
 
-    temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max tokens:", value=150)
-    presence_penalty = st.number_input("Presence penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    with col2:
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
+    with col3:
+        presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+    with col4:
+        frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+
     prompt = st.text_area("Enter the prompt:", value="Write a short story about a brave knight.")
 
     # Check if the button is clicked
@@ -117,10 +123,17 @@ def vision_comparison_test():
         default=st.session_state.selected_vision_models,  # Use session state for default
         key="vision_comparison_models"  # Unique key for this multiselect
     )
-    temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max tokens:", value=150)
-    presence_penalty = st.number_input("Presence penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    with col2:
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
+    with col3:
+        presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+    with col4:
+        frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
 
     # Check if the button is clicked
@@ -202,10 +215,16 @@ def contextual_response_test():
     st.write(f"Currently selected model: {selected_model}")
 
     prompts = st.text_area("Enter the prompts (one per line):", value="Hi, how are you?\nWhat's your name?\nTell me a joke.")
-    temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max tokens:", value=150)
-    presence_penalty = st.number_input("Presence penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    with col2:
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100)
+    with col3:
+        presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+    with col4:
+        frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
 
     if st.button("Start Contextual Test", key="start_contextual_test"):
         prompt_list = [p.strip() for p in prompts.split("\n")]
@@ -268,10 +287,15 @@ def feature_test():
     # Display the currently selected model
     st.write(f"Currently selected model: {selected_model}")
 
-    temperature = st.slider("Select the temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max tokens:", value=150)
-    presence_penalty = st.number_input("Presence penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency penalty:", value=0.0)
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    with col2:
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100)
+    with col3:
+        presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+    with col4:
+        frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
 
     if st.button("Run Feature Test", key="run_feature_test"):
         json_result = check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
@@ -441,10 +465,15 @@ def chat_interface():
     # Display the currently selected model
     st.write(f"Currently selected model: {selected_model}")
 
-    temperature = st.slider("Temperature:", min_value=0.0, max_value=1.0, value=0.5)
-    max_tokens = st.number_input("Max Tokens:", value=150)
-    presence_penalty = st.number_input("Presence Penalty:", value=0.0)
-    frequency_penalty = st.number_input("Frequency Penalty:", value=0.0)
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    with col2:
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100)
+    with col3:
+        presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+    with col4:
+        frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
 
     # Save chat history
     if st.button("Save Chat"):
