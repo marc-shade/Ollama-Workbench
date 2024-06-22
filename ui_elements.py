@@ -222,7 +222,7 @@ def contextual_response_test():
     with col1:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
     with col3:
         presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
     with col4:
@@ -293,7 +293,7 @@ def feature_test():
     with col1:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
     with col3:
         presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
     with col4:
@@ -446,34 +446,45 @@ def chat_interface():
         st.session_state.chat_history = []
     if "workspace_items" not in st.session_state:
         st.session_state.workspace_items = []
-
+    if "agent_type" not in st.session_state:
+        st.session_state.agent_type = "None"  # Initialize to "None" to avoid KeyError
+    if "selected_model" not in st.session_state:
+        available_models = get_available_models()
+        st.session_state.selected_model = available_models[0] if available_models else None
+    
     # Create tabs for Chat and Workspace
     chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
 
     with chat_tab:
         # Existing chat interface code
         available_models = get_available_models()
-        if "selected_model" not in st.session_state:
-            st.session_state.selected_model = available_models[0] if available_models else None
-
-        selectbox_key = "chat_model_selector"
-        if selectbox_key in st.session_state:
-            st.session_state.selected_model = st.session_state[selectbox_key]
-
+        
         selected_model = st.selectbox(
             "Select a model:", 
             available_models, 
-            key=selectbox_key,
+            key="selected_model",
             index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
         )
 
         st.write(f"Currently selected model: {selected_model}")
 
+        # Add Agent Type selection
+        agent_types = ["None", "Coder", "Analyst", "Creative Writer", "Scientist"]
+        agent_type = st.selectbox("Select Agent Type:", agent_types, key="agent_type")
+
+        # Agent type prompts
+        agent_prompts = {
+            "Coder": "You are an expert programmer with extensive knowledge of various programming languages and software development practices. Your responses should focus on providing code solutions, explaining programming concepts, and offering best practices in software development.",
+            "Analyst": "You are a data analyst with strong skills in statistics, data visualization, and business intelligence. Your responses should focus on interpreting data, providing insights, and explaining analytical methods.",
+            "Creative Writer": "You are a creative writer with a flair for storytelling and a deep understanding of literary techniques. Your responses should be imaginative, descriptive, and showcase various writing styles.",
+            "Scientist": "You are a scientist with broad knowledge across multiple scientific disciplines. Your responses should be based on scientific facts, explain complex concepts in simple terms, and discuss recent advancements in science."
+        }
+
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
         with col2:
-            max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100, key="max_tokens_slider_chat")
+            max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100, key="max_tokens_slider_chat")
         with col3:
             presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
         with col4:
@@ -502,6 +513,14 @@ def chat_interface():
             with st.chat_message("assistant"):
                 response_placeholder = st.empty()
                 full_response = ""
+
+                # Prepend agent type prompt if selected
+                if agent_type != "None":
+                    agent_prompt = agent_prompts.get(agent_type, "")
+                    # Include chat history for context
+                    chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+                    prompt = f"{agent_prompt}\n\n{chat_history}\n\nUser: {prompt}"
+
                 for response_chunk in ollama.generate(st.session_state.selected_model, prompt, stream=True):
                     full_response += response_chunk["response"]
                     response_placeholder.markdown(full_response)
