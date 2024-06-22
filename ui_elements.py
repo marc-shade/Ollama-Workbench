@@ -2,11 +2,13 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import json
 import os
 import ollama
 from ollama_utils import *
 from model_tests import *
 import requests
+import re
 
 def list_local_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
@@ -438,108 +440,171 @@ def update_models():
 
 def chat_interface():
     st.header("Chat with a Model")
+    
+    # Initialize session state variables
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+    if "workspace_items" not in st.session_state:
+        st.session_state.workspace_items = []
 
-    # Refresh available_models list
-    available_models = get_available_models()
+    # Create tabs for Chat and Workspace
+    chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
 
-    # Initialize selected_model in session state if it doesn't exist
-    if "selected_model" not in st.session_state:
-        st.session_state.selected_model = available_models[0] if available_models else None
+    with chat_tab:
+        # Existing chat interface code
+        available_models = get_available_models()
+        if "selected_model" not in st.session_state:
+            st.session_state.selected_model = available_models[0] if available_models else None
 
-    # Use a separate key for the selectbox
-    selectbox_key = "chat_model_selector"
+        selectbox_key = "chat_model_selector"
+        if selectbox_key in st.session_state:
+            st.session_state.selected_model = st.session_state[selectbox_key]
 
-    # Update selected_model when selectbox changes
-    if selectbox_key in st.session_state:
-        st.session_state.selected_model = st.session_state[selectbox_key]
+        selected_model = st.selectbox(
+            "Select a model:", 
+            available_models, 
+            key=selectbox_key,
+            index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+        )
 
-    selected_model = st.selectbox(
-        "Select a model:", 
-        available_models, 
-        key=selectbox_key,
-        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
-    )
+        st.write(f"Currently selected model: {selected_model}")
 
-    # Display the currently selected model
-    st.write(f"Currently selected model: {selected_model}")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
+        with col2:
+            max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100, key="max_tokens_slider_chat")
+        with col3:
+            presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
+        with col4:
+            frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-    with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=150, step=100)
-    with col3:
-        presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
-    with col4:
-        frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+        # Display chat history
+        for message in st.session_state.chat_history:
+            with st.chat_message(message["role"]):
+                if message["role"] == "assistant":
+                    # Automatically detect and display code blocks
+                    code_blocks = extract_code_blocks(message["content"])
+                    for code_block in code_blocks:
+                        st.code(code_block)
+                    non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
+                    for part in non_code_parts:
+                        st.markdown(part.strip())
+                else:
+                    st.markdown(message["content"])
 
-    # Save chat history
-    if st.button("Save Chat"):
+        # Get user input
+        if prompt := st.chat_input("What is up my person?", key="chat_input"):
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant"):
+                response_placeholder = st.empty()
+                full_response = ""
+                for response_chunk in ollama.generate(st.session_state.selected_model, prompt, stream=True):
+                    full_response += response_chunk["response"]
+                    response_placeholder.markdown(full_response)
+                st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+
+            # Automatically detect and save code to workspace
+            code_blocks = extract_code_blocks(full_response)
+            for code_block in code_blocks:
+                st.session_state.workspace_items.append({
+                    "type": "code",
+                    "content": code_block,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            if code_blocks:
+                st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
+
+    with workspace_tab:
+        st.subheader("Workspace")
+        
+        # Display workspace items
+        for index, item in enumerate(st.session_state.workspace_items):
+            with st.expander(f"Item {index + 1} - {item['timestamp']}"):
+                if item['type'] == 'code':
+                    st.code(item['content'])
+                else:
+                    st.write(item['content'])
+                if st.button(f"Remove Item {index + 1}"):
+                    st.session_state.workspace_items.pop(index)
+                    st.rerun()
+
+        # Option to add a new workspace item manually
+        new_item = st.text_area("Add a new item to the workspace:")
+        if st.button("Add to Workspace"):
+            if new_item:
+                st.session_state.workspace_items.append({
+                    "type": "text",
+                    "content": new_item,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+                st.success("New item added to Workspace")
+                st.rerun()
+
+    # Save chat and workspace
+    if st.button("Save Chat and Workspace"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_filename = f"chat_history_{timestamp}.json"
-        chat_name = st.text_input("Enter a name for the chat:", value=default_filename)
+        default_filename = f"chat_and_workspace_{timestamp}"
+        chat_name = st.text_input("Enter a name for the save:", value=default_filename)
         if chat_name:
-            save_chat_history(st.session_state.chat_history, chat_name)
-            st.success(f"Chat history saved to {chat_name}")
+            save_data = {
+                "chat_history": st.session_state.chat_history,
+                "workspace_items": st.session_state.workspace_items
+            }
+            with open(chat_name + ".json", "w") as f:
+                json.dump(save_data, f)
+            st.success(f"Chat and Workspace saved to {chat_name}")
 
-    # Load/Rename/Delete chat history
-    st.sidebar.subheader("Saved Chats")
-    saved_chats = [f for f in os.listdir() if f.endswith(".json")]
+    # Load/Rename/Delete chat and workspace
+    st.sidebar.subheader("Saved Chats and Workspaces")
+    saved_files = [f for f in os.listdir() if f.endswith(".json")]
 
-    # State variable to track which chat is being renamed
-    if "rename_chat" not in st.session_state:
-        st.session_state.rename_chat = None
+    # State variable to track which file is being renamed
+    if "rename_file" not in st.session_state:
+        st.session_state.rename_file = None
 
-    for chat in saved_chats:
+    for file in saved_files:
         col1, col2, col3 = st.sidebar.columns([3, 1, 1])
         with col1:
-            # Display chat name without .json extension
-            chat_name = os.path.splitext(chat)[0] 
-            if st.button(chat_name):
-                st.session_state.chat_history = load_chat_history(chat)
+            # Display file name without .json extension
+            file_name = os.path.splitext(file)[0]
+            if st.button(file_name):
+                with open(file, "r") as f:
+                    loaded_data = json.load(f)
+                st.session_state.chat_history = loaded_data.get("chat_history", [])
+                st.session_state.workspace_items = loaded_data.get("workspace_items", [])
+                st.success(f"Loaded {file_name}")
                 st.rerun()
         with col2:
-            if st.button("✏️", key=f"rename_{chat}"):
-                st.session_state.rename_chat = chat  # Set chat to be renamed
+            if st.button("✏️", key=f"rename_{file}"):
+                st.session_state.rename_file = file  # Set file to be renamed
                 st.rerun()
         with col3:
-            if st.button("🗑️", key=f"delete_{chat}"):
-                os.remove(chat)
-                st.success(f"Chat {chat} deleted.")
+            if st.button("🗑️", key=f"delete_{file}"):
+                os.remove(file)
+                st.success(f"File {file_name} deleted.")
                 st.rerun()
 
     # Text input for renaming (outside the loop)
-    if st.session_state.rename_chat:
+    if st.session_state.rename_file:
         # Display current name without .json extension
-        current_name = os.path.splitext(st.session_state.rename_chat)[0]
-        new_name = st.text_input("Rename chat:", value=current_name)
+        current_name = os.path.splitext(st.session_state.rename_file)[0]
+        new_name = st.text_input("Rename file:", value=current_name)
         if new_name:
             # Add .json extension to the new name
-            new_name = new_name + ".json" 
-            if new_name != st.session_state.rename_chat:
-                os.rename(st.session_state.rename_chat, new_name)
-                st.success(f"Chat renamed to {new_name}")
-                st.session_state.rename_chat = None  # Reset rename_chat
+            new_name = new_name + ".json"
+            if new_name != st.session_state.rename_file:
+                os.rename(st.session_state.rename_file, new_name)
+                st.success(f"File renamed to {new_name}")
+                st.session_state.rename_file = None  # Reset rename_file
                 st.cache_resource.clear()
                 st.rerun()
 
-    # Display chat history
-    for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Get user input
-    if prompt := st.chat_input("What is up my person?"):
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            response_placeholder = st.empty()
-            full_response = ""
-            for response_chunk in ollama.generate(st.session_state.selected_model, prompt, stream=True):
-                full_response += response_chunk["response"]
-                response_placeholder.markdown(full_response)
-            st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+def extract_code_blocks(text):
+    # Simple regex to extract code blocks (text between triple backticks)
+    code_blocks = re.findall(r'```[\s\S]*?```', text)
+    # Remove the backticks
+    return [block.strip('`').strip() for block in code_blocks]
