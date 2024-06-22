@@ -213,9 +213,6 @@ def contextual_response_test():
         index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
     )
 
-    # Display the currently selected model
-    st.write(f"Currently selected model: {selected_model}")
-
     prompts = st.text_area("Enter the prompts (one per line):", value="Hi, how are you?\nWhat's your name?\nTell me a joke.")
 
     col1, col2, col3, col4 = st.columns(4)
@@ -285,9 +282,6 @@ def feature_test():
         key=selectbox_key,
         index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
     )
-
-    # Display the currently selected model
-    st.write(f"Currently selected model: {selected_model}")
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -375,9 +369,6 @@ def show_model_details():
         index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
     )
 
-    # Display the currently selected model
-    st.write(f"Currently selected model: {selected_model}")
-
     if st.button("Show Model Information", key="show_model_information"):
         details = show_model_info(selected_model)
         st.json(details)
@@ -447,7 +438,9 @@ def chat_interface():
     if "workspace_items" not in st.session_state:
         st.session_state.workspace_items = []
     if "agent_type" not in st.session_state:
-        st.session_state.agent_type = "None"  # Initialize to "None" to avoid KeyError
+        st.session_state.agent_type = "None"
+    if "metacognitive_type" not in st.session_state:
+        st.session_state.metacognitive_type = "None"
     if "selected_model" not in st.session_state:
         available_models = get_available_models()
         st.session_state.selected_model = available_models[0] if available_models else None
@@ -456,28 +449,40 @@ def chat_interface():
     chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
 
     with chat_tab:
-        # Existing chat interface code
         available_models = get_available_models()
         
         selected_model = st.selectbox(
-            "Select a model:", 
+            "Select a Model:", 
             available_models, 
             key="selected_model",
             index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
         )
 
-        st.write(f"Currently selected model: {selected_model}")
-
         # Add Agent Type selection
-        agent_types = ["None", "Coder", "Analyst", "Creative Writer", "Scientist"]
+        agent_types = ["None", "Coder", "Analyst", "Creative Writer", "Scientist", "Project Manager", "Code Debugger"]
         agent_type = st.selectbox("Select Agent Type:", agent_types, key="agent_type")
 
-        # Agent type prompts
+        # Add Metacognitive Type selection
+        metacognitive_types = ["None", "Visualization of Thought", "Chain of Thought", "Tree of Thought"]
+        metacognitive_type = st.selectbox("Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
+
+        # Agent type prompts (existing code)
         agent_prompts = {
-            "Coder": "You are an expert programmer with extensive knowledge of various programming languages and software development practices. Your responses should focus on providing code solutions, explaining programming concepts, and offering best practices in software development.",
-            "Analyst": "You are a data analyst with strong skills in statistics, data visualization, and business intelligence. Your responses should focus on interpreting data, providing insights, and explaining analytical methods.",
-            "Creative Writer": "You are a creative writer with a flair for storytelling and a deep understanding of literary techniques. Your responses should be imaginative, descriptive, and showcase various writing styles.",
-            "Scientist": "You are a scientist with broad knowledge across multiple scientific disciplines. Your responses should be based on scientific facts, explain complex concepts in simple terms, and discuss recent advancements in science."
+            "Coder": "You are an expert programmer with extensive knowledge...",
+            "Analyst": "You are a proficient data analyst with strong skills...",
+            "Creative Writer": "You are a creative writer with a talent for storytelling...",
+            "Scientist": "You are a knowledgeable scientist with expertise...",
+            "Project Manager": "You are an experienced project manager with a strong background...",
+            "Code Debugger": "You are an expert in debugging and troubleshooting code...",
+        }
+
+        # Metacognitive type prompts
+        metacognitive_prompts = {
+            "Visualization of Thought": """As you process this request, create a mental image or diagram of the concepts involved. Describe this visualization step by step, explaining how different elements connect and interact. Use spatial reasoning and visual metaphors to break down complex ideas into more understandable components. After describing your visualization, provide your response based on this visual thinking process.""",
+            
+            "Chain of Thought": """Approach this request by breaking it down into a series of logical steps. For each step, explain your reasoning, assumptions, and how it leads to the next step. Show your work, including any calculations or intermediate conclusions. After walking through your chain of thought, summarize your final response based on this step-by-step reasoning process.""",
+            
+            "Tree of Thought": """Consider this request by exploring multiple possibilities or approaches simultaneously. Start with a main idea, then branch out into different sub-ideas or alternative scenarios. For each branch, briefly explore its implications and potential outcomes. After mapping out this tree of possibilities, evaluate the most promising paths and explain which one(s) you think are best and why. Finally, provide your response based on this branching exploration of ideas."""
         }
 
         col1, col2, col3, col4 = st.columns(4)
@@ -490,11 +495,10 @@ def chat_interface():
         with col4:
             frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
 
-        # Display chat history
+        # Display chat history (existing code)
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
                 if message["role"] == "assistant":
-                    # Automatically detect and display code blocks
                     code_blocks = extract_code_blocks(message["content"])
                     for code_block in code_blocks:
                         st.code(code_block)
@@ -514,19 +518,23 @@ def chat_interface():
                 response_placeholder = st.empty()
                 full_response = ""
 
-                # Prepend agent type prompt if selected
+                # Combine agent type and metacognitive type prompts
+                combined_prompt = ""
                 if agent_type != "None":
-                    agent_prompt = agent_prompts.get(agent_type, "")
-                    # Include chat history for context
-                    chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
-                    prompt = f"{agent_prompt}\n\n{chat_history}\n\nUser: {prompt}"
+                    combined_prompt += agent_prompts.get(agent_type, "") + "\n\n"
+                if metacognitive_type != "None":
+                    combined_prompt += metacognitive_prompts.get(metacognitive_type, "") + "\n\n"
 
-                for response_chunk in ollama.generate(st.session_state.selected_model, prompt, stream=True):
+                # Include chat history for context
+                chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+                final_prompt = f"{combined_prompt}{chat_history}\n\nUser: {prompt}"
+
+                for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
                     full_response += response_chunk["response"]
                     response_placeholder.markdown(full_response)
                 st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
-            # Automatically detect and save code to workspace
+            # Automatically detect and save code to workspace (existing code)
             code_blocks = extract_code_blocks(full_response)
             for code_block in code_blocks:
                 st.session_state.workspace_items.append({
@@ -537,6 +545,7 @@ def chat_interface():
             if code_blocks:
                 st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
 
+    # Workspace tab (existing code)
     with workspace_tab:
         st.subheader("Workspace")
         
@@ -563,7 +572,7 @@ def chat_interface():
                 st.success("New item added to Workspace")
                 st.rerun()
 
-    # Save chat and workspace
+    # Save chat and workspace (existing code)
     if st.button("Save Chat and Workspace"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         default_filename = f"chat_and_workspace_{timestamp}"
@@ -577,18 +586,16 @@ def chat_interface():
                 json.dump(save_data, f)
             st.success(f"Chat and Workspace saved to {chat_name}")
 
-    # Load/Rename/Delete chat and workspace
+    # Load/Rename/Delete chat and workspace (existing code)
     st.sidebar.subheader("Saved Chats and Workspaces")
     saved_files = [f for f in os.listdir() if f.endswith(".json")]
 
-    # State variable to track which file is being renamed
     if "rename_file" not in st.session_state:
         st.session_state.rename_file = None
 
     for file in saved_files:
         col1, col2, col3 = st.sidebar.columns([3, 1, 1])
         with col1:
-            # Display file name without .json extension
             file_name = os.path.splitext(file)[0]
             if st.button(file_name):
                 with open(file, "r") as f:
@@ -599,7 +606,7 @@ def chat_interface():
                 st.rerun()
         with col2:
             if st.button("✏️", key=f"rename_{file}"):
-                st.session_state.rename_file = file  # Set file to be renamed
+                st.session_state.rename_file = file
                 st.rerun()
         with col3:
             if st.button("🗑️", key=f"delete_{file}"):
@@ -607,18 +614,15 @@ def chat_interface():
                 st.success(f"File {file_name} deleted.")
                 st.rerun()
 
-    # Text input for renaming (outside the loop)
     if st.session_state.rename_file:
-        # Display current name without .json extension
         current_name = os.path.splitext(st.session_state.rename_file)[0]
         new_name = st.text_input("Rename file:", value=current_name)
         if new_name:
-            # Add .json extension to the new name
             new_name = new_name + ".json"
             if new_name != st.session_state.rename_file:
                 os.rename(st.session_state.rename_file, new_name)
                 st.success(f"File renamed to {new_name}")
-                st.session_state.rename_file = None  # Reset rename_file
+                st.session_state.rename_file = None
                 st.cache_resource.clear()
                 st.rerun()
 
