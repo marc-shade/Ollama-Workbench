@@ -2,7 +2,7 @@
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
 
-This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models.
+This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models. It also features a chat interface for real-time interaction with selected models.
 
 **Table of Contents**
 - [Features](#features)
@@ -19,6 +19,7 @@ This application is a comprehensive tool for managing and testing various models
 - **Show Model Information**: Display detailed information about a selected model.
 - **Pull a Model**: Download a new model from the Ollama library.
 - **Remove a Model**: Delete a selected model from the local storage.
+- **Update Models**: Update all local models.
 
 ### Testing
 - **Model Feature Test**: Test a model's capability to handle JSON and function calls.
@@ -26,7 +27,10 @@ This application is a comprehensive tool for managing and testing various models
 - **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts.
 - **Vision Model Comparison**: Compare the performance of vision models using the same test image.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-18-at-12.27.34 PM.png" />
+### Chat
+- **Chat**: Engage in a real-time chat with a selected model.
+
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-7.57.16 AM.png" />
 
 ## Installation
 
@@ -35,6 +39,7 @@ This application is a comprehensive tool for managing and testing various models
 - [Streamlit](https://streamlit.io/)
 - [requests](https://pypi.org/project/requests/)
 - [pandas](https://pandas.pydata.org/)
+- [ollama](https://pypi.org/project/ollama/)
 
 ### Steps
 1. **Clone the repository**
@@ -50,7 +55,7 @@ This application is a comprehensive tool for managing and testing various models
 
 3. **Run the application**
     ```bash
-    streamlit run main-workbench.py
+    streamlit run main.py
     ```
 
 ## Usage
@@ -58,7 +63,7 @@ This application is a comprehensive tool for managing and testing various models
 ### Launching the Application
 After installation, you can start the application using the following command:
 ```bash
-streamlit run main-workbench.py
+streamlit run main.py
 ```
 
 ### Using the Sidebar
@@ -76,6 +81,9 @@ streamlit run main-workbench.py
 - **Model Comparison by Response Quality**: Compare the responses of multiple models to a given prompt.
 - **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
 - **Vision Model Comparison**: Compare vision models by uploading an image.
+
+### Chat
+- **Chat**: Select a model and start chatting!
 
 ## Contributing
 
