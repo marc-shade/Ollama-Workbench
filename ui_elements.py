@@ -453,42 +453,51 @@ def chat_interface():
     chat_tab, workspace_tab, files_tab_ui = st.tabs(["Chat", "Workspace", "Files"])
 
     with chat_tab:
-        available_models = get_available_models()
-        
-        selected_model = st.selectbox(
-            "Select a Model:", 
-            available_models, 
-            key="selected_model",
-            index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
-        )
+        # Settings (Collapsible, open by default)
+        with st.expander("Settings", expanded=True):
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                available_models = get_available_models()
+                selected_model = st.selectbox(
+                    "Select a Model:", 
+                    available_models, 
+                    key="selected_model",
+                    index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+                )
+            with col2:
+                # Add Agent Type selection
+                agent_types = ["None", "Coder", "Analyst", "Creative Writer", "Scientist", "Project Manager", "Code Debugger"]
+                agent_type = st.selectbox("Select Agent Type:", agent_types, key="agent_type")
+            with col3:
+                # Add Metacognitive Type selection
+                metacognitive_types = ["None", "Visualization of Thought", "Chain of Thought", "Tree of Thought"]
+                metacognitive_type = st.selectbox("Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
+            with col4:
+                # Add Corpus selection
+                corpus_options = ["None"] + [f for f in os.listdir("files") if os.path.isfile(os.path.join("files", f))]
+                selected_corpus = st.selectbox("Select Corpus:", corpus_options, key="selected_corpus")
 
-        # Add Agent Type selection
-        agent_types = ["None", "Coder", "Analyst", "Creative Writer", "Scientist", "Project Manager", "Code Debugger"]
-        agent_type = st.selectbox("Select Agent Type:", agent_types, key="agent_type")
-
-        # Add Metacognitive Type selection
-        metacognitive_types = ["None", "Visualization of Thought", "Chain of Thought", "Tree of Thought"]
-        metacognitive_type = st.selectbox("Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
-
-        # Add Corpus selection
-        corpus_options = ["None"] + [f for f in os.listdir("files") if os.path.isfile(os.path.join("files", f))]
-        selected_corpus = st.selectbox("Select Corpus:", corpus_options, key="selected_corpus")
+        # Advanced Settings (Collapsible, collapsed by default)
+        with st.expander("Advanced Settings", expanded=False):
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
+            with col2:
+                max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100, key="max_tokens_slider_chat")
+            with col3:
+                presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
+            with col4:
+                frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
 
         # Agent type prompts
         agent_prompts = {
-            "Coder": """You are an expert programmer with extensive knowledge of various programming languages and software development practices. Your role is to provide detailed and efficient code solutions, explain programming concepts clearly, and offer best practices in software development. Ensure that your responses are technically accurate, concise, and include code examples when applicable.""",
-            
-            "Analyst": """You are a proficient data analyst with strong skills in statistics, data visualization, and business intelligence. Your role is to interpret data, provide insightful analyses, and explain analytical methods comprehensively. Focus on delivering data-driven insights and visualizations that are clear and actionable, supporting your conclusions with relevant data.""",
-            
-            "Creative Writer": """You are a creative writer with a talent for storytelling and a deep understanding of literary techniques. Your role is to craft imaginative and engaging content, whether it be fiction, poetry, or other forms of creative writing. Your responses should be descriptive, showcasing various writing styles and techniques to captivate the reader's interest.""",
-            
-            "Scientist": """You are a knowledgeable scientist with expertise across multiple scientific disciplines. Your role is to provide fact-based explanations, clarify complex scientific concepts, and discuss recent advancements in science. Ensure that your responses are accurate, accessible, and grounded in scientific evidence, making complex information understandable to a broad audience.""",
-            
-            "Project Manager": """You are an experienced project manager with a strong background in project planning, execution, and team coordination. Your role is to provide strategic guidance on project management practices, create detailed project plans, and offer solutions to manage risks and meet deadlines. Your responses should focus on effective communication, leadership, and project management methodologies to ensure successful project outcomes.""",
-            
-            "Code Debugger": """You are an expert in debugging and troubleshooting code with a deep understanding of various programming languages and debugging tools. Your role is to diagnose issues in code, provide clear and actionable debugging steps, and offer solutions to fix errors. Ensure your responses are precise, detailed, and include examples of common debugging scenarios and best practices.""",
+            "Coder": "You are an expert programmer with extensive knowledge...",
+            "Analyst": "You are a proficient data analyst with strong skills...",
+            "Creative Writer": "You are a creative writer with a talent for storytelling...",
+            "Scientist": "You are a knowledgeable scientist with expertise...",
+            "Project Manager": "You are an experienced project manager with a strong background...",
+            "Code Debugger": "You are an expert in debugging and troubleshooting code...",
         }
-
 
         # Metacognitive type prompts
         metacognitive_prompts = {
@@ -498,16 +507,6 @@ def chat_interface():
             
             "Tree of Thought": """Consider this request by exploring multiple possibilities or approaches simultaneously. Start with a main idea, then branch out into different sub-ideas or alternative scenarios. For each branch, briefly explore its implications and potential outcomes. After mapping out this tree of possibilities, evaluate the most promising paths and explain which one(s) you think are best and why. Finally, provide your response based on this branching exploration of ideas."""
         }
-
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
-        with col2:
-            max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100, key="max_tokens_slider_chat")
-        with col3:
-            presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
-        with col4:
-            frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
 
         # Display chat history
         for message in st.session_state.chat_history:
