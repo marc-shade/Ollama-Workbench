@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import streamlit as st
 from fpdf import FPDF
 import tempfile
+import queue
 
 class PDF(FPDF):
     def header(self):
@@ -83,7 +84,7 @@ def get_available_models():
         st.error(f"Error fetching available models: {e}")
         return []
 
-def generate_documentation(file_content, task_type, model, temperature, max_tokens):
+def generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
     if task_type == "documentation":
         prompt = f"""
 You are an expert in Python programming and technical writing. Your task is to generate comprehensive documentation and insightful commentary for the provided Python code. 
@@ -141,8 +142,27 @@ INSTRUCTION: Use appropriate Markdown formatting to make the README visually app
 {file_content}
 """
 
-    result, _, _, _ = call_ollama_endpoint(model, prompt, temperature=temperature, max_tokens=max_tokens)
-    return result
+    url = "http://localhost:11434/api/generate"
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+    headers = {"Content-Type": "application/json"}
+
+    with requests.post(url, json=payload, headers=headers, stream=True) as response:
+        response.raise_for_status()
+        for line in response.iter_lines():
+            if line:
+                decoded_line = line.decode('utf-8')
+                try:
+                    json_response = json.loads(decoded_line)
+                    if 'response' in json_response:
+                        yield json_response['response']
+                except json.JSONDecodeError:
+                    print(f"Skipping invalid JSON line: {decoded_line}")
 
 def run_pylint(file_path):
     result = subprocess.run(['pylint', file_path], capture_output=True, text=True)
@@ -156,11 +176,20 @@ def get_all_code_files(root_dir):
                 code_files.append(os.path.join(subdir, file))
     return code_files
 
-def process_file(file_path, task_type, model, temperature, max_tokens):
+def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, progress_bar, status_text, output_area):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
-        documentation = generate_documentation(file_content, task_type, model, temperature, max_tokens)
+        
+        # Update status
+        status_text.text(f"Processing: {file_path}")
+        
+        # Generate documentation with real-time updates
+        documentation = ""
+        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
+            documentation += chunk
+            output_area.text(documentation)
+        
         pylint_report = run_pylint(file_path) if task_type == "debug" else ""
         return file_path, documentation, pylint_report, file_content
     except UnicodeDecodeError:
@@ -184,6 +213,26 @@ def generate_pdf(results, output_path, task_type):
         pdf.add_chapter(chapter_title, chapter_body)
 
     pdf.output(output_path, 'F')
+
+def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            file_content = file.read()
+        
+        # Update status
+        update_queue.put(("status", f"Processing: {file_path}"))
+        
+        # Generate documentation with real-time updates
+        documentation = ""
+        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
+            documentation += chunk
+            update_queue.put(("output", documentation))
+        
+        pylint_report = run_pylint(file_path) if task_type == "debug" else ""
+        return file_path, documentation, pylint_report, file_content
+    except UnicodeDecodeError:
+        print(f"Error reading file {file_path}: UnicodeDecodeError")
+        return file_path, f"Error reading file: UnicodeDecodeError", "", ""
 
 def main():
     st.title("Repository Analyzer")
@@ -212,15 +261,30 @@ def main():
         results = []
         progress_bar = st.progress(0)
         status_text = st.empty()
+        output_area = st.empty()
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {executor.submit(process_file, file_path, task_type, model, temperature, max_tokens): file_path for file_path in code_files}
+        update_queue = queue.Queue()
+
+        def update_ui():
+            while True:
+                try:
+                    update_type, content = update_queue.get(block=False)
+                    if update_type == "status":
+                        status_text.text(content)
+                    elif update_type == "output":
+                        output_area.text(content)
+                    update_queue.task_done()
+                except queue.Empty:
+                    break
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            futures = {executor.submit(process_file_with_updates, file_path, task_type, model, temperature, max_tokens, update_queue): file_path for file_path in code_files}
             for i, future in enumerate(as_completed(futures)):
                 file_path, documentation, pylint_report, file_content = future.result()
                 results.append((file_path, documentation, pylint_report, file_content))
                 progress = (i + 1) / len(code_files)
                 progress_bar.progress(progress)
-                status_text.text(f"Processed {i+1}/{len(code_files)} files")
+                update_ui()
 
         progress_bar.empty()
         status_text.empty()
