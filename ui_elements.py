@@ -340,6 +340,7 @@ def list_models():
 
 def pull_models():
     st.header("Pull a Model from Ollama Library")
+    st.write("Enter the exact name of the model you want to pull from the Ollama library. You can just paste the whole model snippet from the model library page like 'ollama run llava-phi3' or you can just enter the model name like 'llava-phi3' and then click 'Pull Model' to begin the download. The progress of the download will be displayed below.")
     model_name = st.text_input("Enter the name of the model you want to pull:")
     if st.button("Pull Model", key="pull_model"):
         if model_name:
