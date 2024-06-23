@@ -5,7 +5,7 @@ from model_tests import *
 from ui_elements import (
     model_comparison_test, contextual_response_test, feature_test,
     list_local_models, pull_models, show_model_details, remove_model_ui,
-    vision_comparison_test, chat_interface, update_models, files_tab
+    vision_comparison_test, chat_interface, update_models, files_tab, manage_prompts
 )
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
@@ -69,6 +69,8 @@ def main():
                 st.session_state.selected_test = "Web to Corpus"
             if st.button("Manage Files", key="button_files_tab"):
                 st.session_state.selected_test = "Files"
+            if st.button("Manage Prompts", key="button_manage_prompts"):
+                st.session_state.selected_test = "Prompts"
 
     # Main content area based on selected_test
     if st.session_state.selected_test == "Model Comparison by Response Quality":
@@ -97,6 +99,8 @@ def main():
         web_to_corpus_main()
     elif st.session_state.selected_test == "Files":
         files_tab()
+    elif st.session_state.selected_test == "Prompts":
+        manage_prompts()
     else:
         st.write("""
             ### Welcome to the Ollama Workbench!
@@ -122,6 +126,7 @@ def main():
             - **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
             - **Web to Corpus**: Convert web content into a corpus for analysis or training.
             - **Manage Files**: Upload, view, edit, and delete files.
+            - **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type and Metacognitive Type.
         """)
 
 if __name__ == "__main__":
