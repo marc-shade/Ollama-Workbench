@@ -2,8 +2,13 @@
 import streamlit as st
 from ollama_utils import *
 from model_tests import *
-from ui_elements import model_comparison_test, contextual_response_test, feature_test, list_local_models, pull_models, show_model_details, remove_model_ui, vision_comparison_test, chat_interface, update_models
+from ui_elements import (
+    model_comparison_test, contextual_response_test, feature_test,
+    list_local_models, pull_models, show_model_details, remove_model_ui,
+    vision_comparison_test, chat_interface, update_models, files_tab
+)
 from repo_docs import main as repo_docs_main
+from web_to_corpus import main as web_to_corpus_main
 
 def main():
     # Initialize session state variables if they don't exist
@@ -22,7 +27,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-        st.subheader("Chat")
         st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
         if st.button("Chat", key="button_chat"):
             st.session_state.selected_test = "Chat"
@@ -58,6 +62,10 @@ def main():
             st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
             if st.button("Repository Analyzer", key="button_repo_analyzer"):
                 st.session_state.selected_test = "Repository Analyzer"
+            if st.button("Web to Corpus", key="button_web_to_corpus"):
+                st.session_state.selected_test = "Web to Corpus"
+            if st.button("Manage Files", key="button_files_tab"):
+                st.session_state.selected_test = "Files"
 
     # Main content area based on selected_test
     if st.session_state.selected_test == "Model Comparison by Response Quality":
@@ -82,6 +90,10 @@ def main():
         update_models()
     elif st.session_state.selected_test == "Repository Analyzer":
         repo_docs_main()
+    elif st.session_state.selected_test == "Web to Corpus":
+        web_to_corpus_main()
+    elif st.session_state.selected_test == "Files":
+        files_tab()
     else:
         st.write("""
             ### Welcome to the Ollama Workbench!
@@ -105,6 +117,8 @@ def main():
 
             #### **Document**
             - **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
+            - **Web to Corpus**: Convert web content into a corpus for analysis or training.
+            - **Manage Files**: Upload, view, edit, and delete files.
         """)
 
 if __name__ == "__main__":
