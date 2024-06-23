@@ -493,13 +493,13 @@ def chat_interface():
         with st.expander("Advanced Settings", expanded=False):
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
+                temperature = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
             with col2:
-                max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100, key="max_tokens_slider_chat")
+                max_tokens = st.slider("📊 Max Tokens", min_value=100, max_value=32000, value=4000, step=100, key="max_tokens_slider_chat")
             with col3:
-                presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
+                presence_penalty = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
             with col4:
-                frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
+                frequency_penalty = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
 
         # Display chat history
         for message in st.session_state.chat_history:
