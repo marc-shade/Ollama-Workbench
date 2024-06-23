@@ -343,9 +343,16 @@ def pull_models():
     model_name = st.text_input("Enter the name of the model you want to pull:")
     if st.button("Pull Model", key="pull_model"):
         if model_name:
+            # Strip off "ollama run" or "ollama pull" from the beginning
+            model_name = model_name.replace("ollama run ", "").replace("ollama pull ", "").strip()
+
             result = pull_model(model_name)
-            for status in result:
-                st.write(status)
+            if any("error" in status for status in result):
+                st.warning(f"Model '{model_name}' not found. Please make sure you've entered the correct model name. "
+                           f"Model names often include a ':' to specify the variant. For example: 'mistral:instruct'")
+            else:
+                for status in result:
+                    st.write(status)
         else:
             st.error("Please enter a model name.")
 
