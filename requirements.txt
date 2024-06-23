@@ -27,3 +27,4 @@ urllib3
 validators
 webdriver-manager
 Werkzeug
+selenium
