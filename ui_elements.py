@@ -13,6 +13,7 @@ from langchain.embeddings import OllamaEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
+from prompts import get_agent_prompt, get_metacognitive_prompt, manage_prompts
 
 def list_local_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
@@ -474,11 +475,11 @@ def chat_interface():
                 )
             with col2:
                 # Add Agent Type selection
-                agent_types = ["None", "Coder", "Analyst", "Creative Writer", "Scientist", "Project Manager", "Code Debugger"]
+                agent_types = ["None"] + list(get_agent_prompt().keys())
                 agent_type = st.selectbox("Select Agent Type:", agent_types, key="agent_type")
             with col3:
                 # Add Metacognitive Type selection
-                metacognitive_types = ["None", "Visualization of Thought", "Chain of Thought", "Tree of Thought"]
+                metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
                 metacognitive_type = st.selectbox("Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
             with col4:
                 # Add Corpus selection
@@ -496,25 +497,6 @@ def chat_interface():
                 presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
             with col4:
                 frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
-
-        # Agent type prompts
-        agent_prompts = {
-            "Coder": """You are an expert programmer with extensive knowledge of various programming languages and software development practices. Your role is to provide detailed and efficient code solutions, explain programming concepts clearly, and offer best practices in software development. Ensure that your responses are technically accurate, concise, and include code examples when applicable.""",
-            "Analyst": """You are a proficient data analyst with strong skills in statistics, data visualization, and business intelligence. Your role is to interpret data, provide insightful analyses, and explain analytical methods comprehensively. Focus on delivering data-driven insights and visualizations that are clear and actionable, supporting your conclusions with relevant data.""",
-            "Creative Writer": """You are a creative writer with a talent for storytelling and a deep understanding of literary techniques. Your role is to craft imaginative and engaging content, whether it be fiction, poetry, or other forms of creative writing. Your responses should be descriptive, showcasing various writing styles and techniques to captivate the reader's interest.""",
-            "Scientist": """You are a knowledgeable scientist with expertise across multiple scientific disciplines. Your role is to provide fact-based explanations, clarify complex scientific concepts, and discuss recent advancements in science. Ensure that your responses are accurate, accessible, and grounded in scientific evidence, making complex information understandable to a broad audience.""",
-            "Project Manager": """You are an experienced project manager with a strong background in project planning, execution, and team coordination. Your role is to provide strategic guidance on project management practices, create detailed project plans, and offer solutions to manage risks and meet deadlines. Your responses should focus on effective communication, leadership, and project management methodologies to ensure successful project outcomes.""",
-            "Code Debugger": """You are an expert in debugging and troubleshooting code with a deep understanding of various programming languages and debugging tools. Your role is to diagnose issues in code, provide clear and actionable debugging steps, and offer solutions to fix errors. Ensure your responses are precise, detailed, and include examples of common debugging scenarios and best practices.""",
-        }
-
-        # Metacognitive type prompts
-        metacognitive_prompts = {
-            "Visualization of Thought": """As you process this request, create a mental image or diagram of the concepts involved. Describe this visualization step by step, explaining how different elements connect and interact. Use spatial reasoning and visual metaphors to break down complex ideas into more understandable components. After describing your visualization, provide your response based on this visual thinking process.""",
-            
-            "Chain of Thought": """Approach this request by breaking it down into a series of logical steps. For each step, explain your reasoning, assumptions, and how it leads to the next step. Show your work, including any calculations or intermediate conclusions. After walking through your chain of thought, summarize your final response based on this step-by-step reasoning process.""",
-            
-            "Tree of Thought": """Consider this request by exploring multiple possibilities or approaches simultaneously. Start with a main idea, then branch out into different sub-ideas or alternative scenarios. For each branch, briefly explore its implications and potential outcomes. After mapping out this tree of possibilities, evaluate the most promising paths and explain which one(s) you think are best and why. Finally, provide your response based on this branching exploration of ideas."""
-        }
 
         # Display chat history
         for message in st.session_state.chat_history:
@@ -542,14 +524,14 @@ def chat_interface():
                 # Combine agent type and metacognitive type prompts
                 combined_prompt = ""
                 if agent_type != "None":
-                    combined_prompt += agent_prompts.get(agent_type, "") + "\n\n"
+                    combined_prompt += get_agent_prompt()[agent_type] + "\n\n"
                 if metacognitive_type != "None":
-                    combined_prompt += metacognitive_prompts.get(metacognitive_type, "") + "\n\n"
+                    combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\n\n"
 
                 # Include chat history and corpus context
                 chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
                 if selected_corpus != "None":
-                    corpus_context = get_corpus_context(selected_corpus, prompt) # Pass prompt instead of final_prompt
+                    corpus_context = get_corpus_context(selected_corpus, prompt)
                     final_prompt = f"{combined_prompt}{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}"
                 else:
                     final_prompt = f"{combined_prompt}{chat_history}\n\nUser: {prompt}"
