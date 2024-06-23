@@ -9,8 +9,8 @@ from ollama_utils import *
 from model_tests import *
 import requests
 import re
-from langchain.embeddings import OllamaEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_community.embeddings import OllamaEmbeddings # Updated import
+from langchain_community.vectorstores import Chroma # Updated import
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
 from prompts import get_agent_prompt, get_metacognitive_prompt, manage_prompts
