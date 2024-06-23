@@ -736,8 +736,11 @@ def extract_code_blocks(text):
 
 def get_corpus_context(corpus_file, query):
     # Load and split the corpus file
+    files_folder = "files"
+    if not os.path.exists(files_folder):
+        os.makedirs(files_folder)
     try:
-        with open(os.path.join("files", corpus_file), "r", encoding='utf-8') as f:
+        with open(os.path.join(files_folder, corpus_file), "r", encoding='utf-8') as f:
             corpus_text = f.read()
     except UnicodeDecodeError:
         return "Error: Unable to decode the corpus file. Please ensure it's a text file."
