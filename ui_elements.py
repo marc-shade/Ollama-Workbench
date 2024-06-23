@@ -483,7 +483,10 @@ def chat_interface():
                 metacognitive_type = st.selectbox("Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
             with col4:
                 # Add Corpus selection
-                corpus_options = ["None"] + [f for f in os.listdir("files") if os.path.isfile(os.path.join("files", f))]
+                files_folder = "files"
+                if not os.path.exists(files_folder):
+                    os.makedirs(files_folder)
+                corpus_options = ["None"] + [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f))]
                 selected_corpus = st.selectbox("Select Corpus:", corpus_options, key="selected_corpus")
 
         # Advanced Settings (Collapsible, collapsed by default)
