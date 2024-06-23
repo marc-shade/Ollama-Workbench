@@ -10,6 +10,9 @@ from ui_elements import (
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
 
+# Set page config for wide layout
+st.set_page_config(layout="wide") 
+
 def main():
     # Initialize session state variables if they don't exist
     if 'selected_test' not in st.session_state:
