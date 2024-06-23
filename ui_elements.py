@@ -468,7 +468,7 @@ def chat_interface():
             with col1:
                 available_models = get_available_models()
                 selected_model = st.selectbox(
-                    "Select a Model:", 
+                    "📦 Select a Model:", 
                     available_models, 
                     key="selected_model",
                     index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
@@ -476,18 +476,18 @@ def chat_interface():
             with col2:
                 # Add Agent Type selection
                 agent_types = ["None"] + list(get_agent_prompt().keys())
-                agent_type = st.selectbox("Select Agent Type:", agent_types, key="agent_type")
+                agent_type = st.selectbox("🧑‍💼 Select Agent Type:", agent_types, key="agent_type")
             with col3:
                 # Add Metacognitive Type selection
                 metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
-                metacognitive_type = st.selectbox("Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
+                metacognitive_type = st.selectbox("🧠 Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
             with col4:
                 # Add Corpus selection
                 files_folder = "files"
                 if not os.path.exists(files_folder):
                     os.makedirs(files_folder)
                 corpus_options = ["None"] + [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f))]
-                selected_corpus = st.selectbox("Select Corpus:", corpus_options, key="selected_corpus")
+                selected_corpus = st.selectbox("📚 Select Corpus:", corpus_options, key="selected_corpus")
 
         # Advanced Settings (Collapsible, collapsed by default)
         with st.expander("Advanced Settings", expanded=False):
