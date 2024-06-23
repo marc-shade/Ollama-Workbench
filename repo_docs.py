@@ -187,7 +187,7 @@ def generate_pdf(results, output_path, task_type):
 
 def main():
     st.title("Repository Analyzer")
-
+    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, or readme) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository folder. If you chose the 'readme' task type, a README.md file will also be created in the repository folder.")
     repo_path = st.text_input("Enter the path to your repository:")
     task_type = st.selectbox("Select task type", ["documentation", "debug", "readme"])
 
