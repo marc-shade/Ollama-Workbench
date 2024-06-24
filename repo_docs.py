@@ -114,7 +114,7 @@ Generate a comprehensive and neatly formatted debug report for the following cod
 
 {file_content}
 """
-    else:  # README
+    elif task_type == "readme":
         prompt = f"""
 You are an expert writer and programmer, skilled at writing README.md content for GitHub. 
 Create a comprehensive README.md file for a GitHub repository containing the following code. 
@@ -141,6 +141,8 @@ INSTRUCTION: Use appropriate Markdown formatting to make the README visually app
 
 {file_content}
 """
+    elif task_type == "requirements":
+        return None
 
     url = "http://localhost:11434/api/generate"
     payload = {
@@ -234,11 +236,30 @@ def process_file_with_updates(file_path, task_type, model, temperature, max_toke
         print(f"Error reading file {file_path}: UnicodeDecodeError")
         return file_path, f"Error reading file: UnicodeDecodeError", "", ""
 
+def generate_requirements_file(repo_path):
+    requirements = set()
+    code_files = get_all_code_files(repo_path)
+    for code_file in code_files:
+        with open(code_file, 'r') as file:
+            for line in file:
+                if line.startswith('import ') or line.startswith('from '):
+                    parts = line.split()
+                    if parts[0] == 'import':
+                        requirements.add(parts[1].split('.')[0])
+                    elif parts[0] == 'from':
+                        requirements.add(parts[1].split('.')[0])
+
+    requirements_path = os.path.join(repo_path, 'requirements.txt')
+    with open(requirements_path, 'w') as req_file:
+        for requirement in sorted(requirements):
+            req_file.write(requirement + '\n')
+    return requirements_path
+
 def main():
     st.title("Repository Analyzer")
-    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, or readme) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository folder. If you chose the 'readme' task type, a README.md file will also be created in the repository folder.")
+    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, or requirements) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository folder. If you chose the 'readme' task type, a README.md file will also be created in the repository folder.")
     repo_path = st.text_input("Enter the path to your repository:")
-    task_type = st.selectbox("Select task type", ["documentation", "debug", "readme"])
+    task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements"])
 
     available_models = get_available_models()
     model = st.selectbox(f"Select model for {task_type} task", available_models)
@@ -250,6 +271,11 @@ def main():
     if st.button("Analyze Repository"):
         if not repo_path or not os.path.isdir(repo_path):
             st.error("Please enter a valid repository path.")
+            return
+
+        if task_type == "requirements":
+            requirements_path = generate_requirements_file(repo_path)
+            st.success(f"requirements.txt file has been created at {requirements_path}")
             return
 
         code_files = get_all_code_files(repo_path)
