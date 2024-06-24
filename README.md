@@ -44,7 +44,7 @@ This application is a comprehensive tool for managing and testing various models
 - **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
 - **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type and Metacognitive Type. You can also download and upload prompt JSON files for easy sharing and backup.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-1.30.15 PM.png" />
+<img src="[https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-1.30.15 PM.png](https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-24-at-6.37.26 AM-2.png)" />
 
 ## Installation
 
