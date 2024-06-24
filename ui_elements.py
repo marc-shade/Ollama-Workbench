@@ -14,6 +14,8 @@ from langchain_community.vectorstores import Chroma # Updated import
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
 from prompts import get_agent_prompt, get_metacognitive_prompt, manage_prompts
+from web_to_corpus import WebsiteCrawler  # Import WebsiteCrawler
+import shutil
 
 def list_local_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
@@ -483,10 +485,10 @@ def chat_interface():
                 metacognitive_type = st.selectbox("🧠 Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
             with col4:
                 # Add Corpus selection
-                files_folder = "files"
-                if not os.path.exists(files_folder):
-                    os.makedirs(files_folder)
-                corpus_options = ["None"] + [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f))]
+                corpus_folder = "corpus"
+                if not os.path.exists(corpus_folder):
+                    os.makedirs(corpus_folder)
+                corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
                 selected_corpus = st.selectbox("📚 Select Corpus:", corpus_options, key="selected_corpus")
 
         # Advanced Settings (Collapsible, collapsed by default)
@@ -534,7 +536,7 @@ def chat_interface():
                 # Include chat history and corpus context
                 chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
                 if selected_corpus != "None":
-                    corpus_context = get_corpus_context(selected_corpus, prompt)
+                    corpus_context = get_corpus_context_from_db(corpus_folder, selected_corpus, prompt)  # Use new function
                     final_prompt = f"{combined_prompt}{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}"
                 else:
                     final_prompt = f"{combined_prompt}{chat_history}\n\nUser: {prompt}"
@@ -555,6 +557,71 @@ def chat_interface():
             if code_blocks:
                 st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
 
+        # Save chat and workspace (existing code)
+        if st.button("Save Chat and Workspace"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            default_filename = f"chat_and_workspace_{timestamp}"
+            chat_name = st.text_input("Enter a name for the save:", value=default_filename, key="save_chat_name")
+            if chat_name:
+                save_data = {
+                    "chat_history": st.session_state.chat_history,
+                    "workspace_items": st.session_state.workspace_items
+                }
+                # Create the 'sessions' folder if it doesn't exist
+                sessions_folder = "sessions"
+                if not os.path.exists(sessions_folder):
+                    os.makedirs(sessions_folder)
+                file_path = os.path.join(sessions_folder, chat_name + ".json")
+                with open(file_path, "w") as f:
+                    json.dump(save_data, f)
+                st.success(f"Chat and Workspace saved to {chat_name}")
+
+        # Load/Rename/Delete chat and workspace (existing code)
+        st.sidebar.subheader("Saved Chats and Workspaces")
+        sessions_folder = "sessions"
+        if not os.path.exists(sessions_folder):
+            os.makedirs(sessions_folder)
+        saved_files = [f for f in os.listdir(sessions_folder) if f.endswith(".json")]
+
+        if "rename_file" not in st.session_state:
+            st.session_state.rename_file = None
+
+        for file in saved_files:
+            col1, col2, col3 = st.sidebar.columns([3, 1, 1])
+            with col1:
+                file_name = os.path.splitext(file)[0]
+                if st.button(file_name):
+                    file_path = os.path.join(sessions_folder, file)
+                    with open(file_path, "r") as f:
+                        loaded_data = json.load(f)
+                    st.session_state.chat_history = loaded_data.get("chat_history", [])
+                    st.session_state.workspace_items = loaded_data.get("workspace_items", [])
+                    st.success(f"Loaded {file_name}")
+                    st.rerun()
+            with col2:
+                if st.button("✏️", key=f"rename_{file}"):
+                    st.session_state.rename_file = file
+                    st.rerun()
+            with col3:
+                if st.button("🗑️", key=f"delete_{file}"):
+                    file_path = os.path.join(sessions_folder, file)
+                    os.remove(file_path)
+                    st.success(f"File {file_name} deleted.")
+                    st.rerun()
+
+        if st.session_state.rename_file:
+            current_name = os.path.splitext(st.session_state.rename_file)[0]
+            new_name = st.text_input("Rename file:", value=current_name, key="rename_file_input")
+            if new_name:
+                old_file_path = os.path.join(sessions_folder, st.session_state.rename_file)
+                new_file_path = os.path.join(sessions_folder, new_name + ".json")
+                if new_file_path != old_file_path:
+                    os.rename(old_file_path, new_file_path)
+                    st.success(f"File renamed to {new_name}")
+                    st.session_state.rename_file = None
+                    st.cache_resource.clear()
+                    st.rerun()
+
     # Workspace tab
     with workspace_tab:
         st.subheader("Workspace")
@@ -571,7 +638,7 @@ def chat_interface():
                     st.rerun()
 
         # Option to add a new workspace item manually
-        new_item = st.text_area("Add a new item to the workspace:")
+        new_item = st.text_area("Add a new item to the workspace:", key="new_workspace_item")
         if st.button("Add to Workspace"):
             if new_item:
                 st.session_state.workspace_items.append({
@@ -591,7 +658,8 @@ def files_tab():
     files_folder = "files"
     if not os.path.exists(files_folder):
         os.makedirs(files_folder)
-    files = [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f))]
+    allowed_extensions = ['.json', '.txt', '.pdf', '.gif', '.jpg', '.jpeg', '.png']
+    files = [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f)) and os.path.splitext(f)[1].lower() in allowed_extensions]
 
     for file in files:
         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
@@ -658,78 +726,13 @@ def files_tab():
     
 
    # File upload section
-    uploaded_file = st.file_uploader("Upload a file", type=['txt', 'pdf', 'json'])
+    uploaded_file = st.file_uploader("Upload a file", type=['txt', 'pdf', 'json', 'gif', 'jpg', 'jpeg', 'png'])
     if uploaded_file is not None:
         file_path = os.path.join(files_folder, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         st.success(f"File {uploaded_file.name} uploaded successfully!")
         st.experimental_rerun()
-
-    # Save chat and workspace (existing code)
-    if st.button("Save Chat and Workspace"):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_filename = f"chat_and_workspace_{timestamp}"
-        chat_name = st.text_input("Enter a name for the save:", value=default_filename)
-        if chat_name:
-            save_data = {
-                "chat_history": st.session_state.chat_history,
-                "workspace_items": st.session_state.workspace_items
-            }
-            # Create the 'sessions' folder if it doesn't exist
-            sessions_folder = "sessions"
-            if not os.path.exists(sessions_folder):
-                os.makedirs(sessions_folder)
-            file_path = os.path.join(sessions_folder, chat_name + ".json")
-            with open(file_path, "w") as f:
-                json.dump(save_data, f)
-            st.success(f"Chat and Workspace saved to {chat_name}")
-
-    # Load/Rename/Delete chat and workspace (existing code)
-    st.sidebar.subheader("Saved Chats and Workspaces")
-    sessions_folder = "sessions"
-    if not os.path.exists(sessions_folder):
-        os.makedirs(sessions_folder)
-    saved_files = [f for f in os.listdir(sessions_folder) if f.endswith(".json")]
-
-    if "rename_file" not in st.session_state:
-        st.session_state.rename_file = None
-
-    for file in saved_files:
-        col1, col2, col3 = st.sidebar.columns([3, 1, 1])
-        with col1:
-            file_name = os.path.splitext(file)[0]
-            if st.button(file_name):
-                file_path = os.path.join(sessions_folder, file)
-                with open(file_path, "r") as f:
-                    loaded_data = json.load(f)
-                st.session_state.chat_history = loaded_data.get("chat_history", [])
-                st.session_state.workspace_items = loaded_data.get("workspace_items", [])
-                st.success(f"Loaded {file_name}")
-                st.rerun()
-        with col2:
-            if st.button("✏️", key=f"rename_{file}"):
-                st.session_state.rename_file = file
-                st.rerun()
-        with col3:
-            if st.button("🗑️", key=f"delete_{file}"):
-                file_path = os.path.join(sessions_folder, file)
-                os.remove(file_path)
-                st.success(f"File {file_name} deleted.")
-                st.rerun()
-
-    if st.session_state.rename_file:
-        current_name = os.path.splitext(st.session_state.rename_file)[0]
-        new_name = st.text_input("Rename file:", value=current_name)
-        if new_name:
-            old_file_path = os.path.join(sessions_folder, st.session_state.rename_file)
-            new_file_path = os.path.join(sessions_folder, new_name + ".json")
-            if new_file_path != old_file_path:
-                os.rename(old_file_path, new_file_path)
-                st.success(f"File renamed to {new_name}")
-                st.session_state.rename_file = None
-                st.cache_resource.clear()
-                st.rerun()
 
 def extract_code_blocks(text):
     # Simple regex to extract code blocks (text between triple backticks)
@@ -775,4 +778,96 @@ def get_corpus_context(corpus_file, query):
     st.info("Performing similarity search...")
     results = db.similarity_search(query, k=3)
     st.info("Done!")
+    return "\n".join([doc.page_content for doc in results])
+
+def manage_corpus():
+    st.header("Manage Corpus")
+
+    # Corpus folder
+    corpus_folder = "corpus"
+    if not os.path.exists(corpus_folder):
+        os.makedirs(corpus_folder)
+
+    # List existing corpus
+    corpus_list = [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
+    st.subheader("Existing Corpus")
+    if corpus_list:
+        for corpus in corpus_list:
+            col1, col2, col3 = st.columns([2, 1, 1])  # Add a column for renaming
+            with col1:
+                st.write(corpus)
+            with col2:
+                if st.button("✏️", key=f"rename_corpus_{corpus}"):
+                    st.session_state.rename_corpus = corpus
+                    st.experimental_rerun()
+            with col3:
+                if st.button("🗑️", key=f"delete_corpus_{corpus}"):
+                    shutil.rmtree(os.path.join(corpus_folder, corpus))
+                    st.success(f"Corpus '{corpus}' deleted.")
+                    st.experimental_rerun()
+    else:
+        st.write("No existing corpus found.")
+
+    # Handle renaming corpus
+    if "rename_corpus" in st.session_state and st.session_state.rename_corpus:
+        corpus_to_rename = st.session_state.rename_corpus
+        new_corpus_name = st.text_input(f"Rename corpus '{corpus_to_rename}' to:", value=corpus_to_rename, key=f"rename_corpus_input_{corpus_to_rename}")
+        if st.button("Confirm Rename", key=f"confirm_rename_{corpus_to_rename}"):
+            if new_corpus_name:
+                os.rename(os.path.join(corpus_folder, corpus_to_rename), os.path.join(corpus_folder, new_corpus_name))
+                st.success(f"Corpus renamed to '{new_corpus_name}'")
+                st.session_state.rename_corpus = None
+                st.experimental_rerun()
+            else:
+                st.error("Please enter a new corpus name.")
+
+    st.subheader("Create New Corpus")
+    # Create corpus from files
+    st.write("**From Files:**")
+    files_folder = "files"
+    allowed_extensions = ['.json', '.txt']
+    files = [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f)) and os.path.splitext(f)[1].lower() in allowed_extensions]
+    selected_files = st.multiselect("Select files to create corpus:", files, key="create_corpus_files")
+    corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name")
+    if st.button("Create Corpus from Files", key="create_corpus_button"):
+        if selected_files and corpus_name:
+            create_corpus_from_files(corpus_folder, corpus_name, files_folder, selected_files)
+            st.success(f"Corpus '{corpus_name}' created from selected files.")
+            st.experimental_rerun()
+        else:
+            st.error("Please select files and enter a corpus name.")
+
+def create_corpus_from_files(corpus_folder, corpus_name, files_folder, selected_files):
+    corpus_path = os.path.join(corpus_folder, corpus_name)
+    os.makedirs(corpus_path, exist_ok=True)
+    
+    # Combine all selected file content into one text
+    all_text = ""
+    for file in selected_files:
+        file_path = os.path.join(files_folder, file)
+        with open(file_path, "r", encoding='utf-8') as f:
+            file_content = f.read()
+        all_text += file_content + "\n\n"
+
+    create_corpus_from_text(corpus_folder, corpus_name, all_text)
+
+def create_corpus_from_text(corpus_folder, corpus_name, corpus_text):
+    corpus_path = os.path.join(corpus_folder, corpus_name)
+    os.makedirs(corpus_path, exist_ok=True)
+
+    # Create Langchain documents
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    texts = text_splitter.split_text(corpus_text)
+    docs = [Document(page_content=t) for t in texts]
+
+    # Create and load the vector database
+    embeddings = OllamaEmbeddings()
+    db = Chroma.from_documents(docs, embeddings, persist_directory=corpus_path)
+    db.persist()
+
+def get_corpus_context_from_db(corpus_folder, corpus_name, query):
+    corpus_path = os.path.join(corpus_folder, corpus_name)
+    embeddings = OllamaEmbeddings()
+    db = Chroma(persist_directory=corpus_path, embedding_function=embeddings)
+    results = db.similarity_search(query, k=3)
     return "\n".join([doc.page_content for doc in results])
