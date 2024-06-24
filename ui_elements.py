@@ -110,8 +110,8 @@ def model_comparison_test():
             for model, (result, elapsed_time, eval_count, eval_duration) in results.items():
                 st.subheader(f"Results for {model} (Time taken: {elapsed_time:.2f} seconds, Tokens/second: {tokens_per_second[models.index(model)]:.2f}):")
                 st.write(result)
-                st.write("JSON Handling Capability: ", "✅" if check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
-                st.write("Function Calling Capability: ", "✅" if check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+                st.write("📦 JSON Handling Capability: ", "✅" if check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+                st.write("⚙️ Function Calling Capability: ", "✅" if check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
         else:
             st.warning("Please select at least one model.")
 
@@ -263,8 +263,8 @@ def contextual_response_test():
         # Plot the results using st.bar_chart
         st.bar_chart(df, x="Prompt", y=["Time (seconds)", "Tokens/second"], color=["#4CAF50", "#FFC107"])  # Green and amber
 
-        st.write("JSON Handling Capability: ", "✅" if check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
-        st.write("Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+        st.write("📦 JSON Handling Capability: ", "✅" if check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
+        st.write("⚙️ Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
 
 def feature_test():
     st.header("Model Feature Test")
@@ -304,15 +304,9 @@ def feature_test():
         json_result = check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
         function_result = check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
 
-        st.markdown(f"### JSON Handling Capability: {'✅ Success!' if json_result else '❌ Failure!'}")
-        st.markdown(f"### Function Calling Capability: {'✅ Success!' if function_result else '❌ Failure!'}")
+        st.markdown(f"### 📦 JSON Handling Capability: {'✅ Success!' if json_result else '❌ Failure!'}")
+        st.markdown(f"### ⚙️ Function Calling Capability: {'✅ Success!' if function_result else '❌ Failure!'}")
 
-        # Prepare data for visualization
-        data = {"Feature": ['JSON Handling', 'Function Calling'], "Result": [json_result, function_result]}
-        df = pd.DataFrame(data)
-
-        # Plot the results using st.bar_chart
-        st.bar_chart(df, x="Feature", y="Result", color="#4CAF50")
 
 def list_models():
     st.header("List Local Models")
