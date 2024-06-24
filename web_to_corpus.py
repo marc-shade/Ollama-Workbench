@@ -15,6 +15,9 @@ import shutil
 from PyPDF2 import PdfMerger
 import json
 
+# Get the directory of the current script
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class WebsiteCrawler:
     def __init__(self, root_url, output_format):
         self.root_url = root_url
@@ -22,7 +25,7 @@ class WebsiteCrawler:
         self.visited_links = set()
         self.to_visit_links = set([root_url])
         self.domain_name = urlparse(root_url).netloc
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = tempfile.mkdtemp(dir=SCRIPT_DIR)
         self.crawled_data = []
 
         chrome_options = Options()
@@ -80,7 +83,7 @@ class WebsiteCrawler:
         if not path:
             path = "index"
         # Create the 'files' folder if it doesn't exist
-        files_folder = "files"
+        files_folder = os.path.join(SCRIPT_DIR, "files")
         if not os.path.exists(files_folder):
             os.makedirs(files_folder)
         return os.path.join(files_folder, f"{path}.{extension}")
@@ -139,12 +142,13 @@ class WebsiteCrawler:
         )
 
     def generate_output(self, output_filename):
+        output_path = os.path.join(SCRIPT_DIR, "files", output_filename)
         if self.output_format == "PDF":
-            self.merge_pdfs(output_filename)
+            self.merge_pdfs(output_path)
         elif self.output_format == "JSON":
-            self.save_as_json(output_filename)
+            self.save_as_json(output_path)
         else:  # TXT
-            self.save_as_txt(output_filename)
+            self.save_as_txt(output_path)
 
     def merge_pdfs(self, output_filename):
         merger = PdfMerger()
@@ -187,7 +191,8 @@ def main():
             
             st.success(f"{output_format} generation completed! File saved as {output_filename}")
             
-            with open(output_filename, "rb") as file:
+            output_path = os.path.join(SCRIPT_DIR, "files", output_filename)
+            with open(output_path, "rb") as file:
                 st.download_button(
                     label=f"Download {output_format} File",
                     data=file,
