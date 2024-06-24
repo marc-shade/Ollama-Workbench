@@ -9,13 +9,14 @@ from ollama_utils import *
 from model_tests import *
 import requests
 import re
-from langchain_community.embeddings import OllamaEmbeddings # Updated import
-from langchain_community.vectorstores import Chroma # Updated import
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
 from prompts import get_agent_prompt, get_metacognitive_prompt, manage_prompts
-from web_to_corpus import WebsiteCrawler  # Import WebsiteCrawler
+from web_to_corpus import WebsiteCrawler
 import shutil
+import tiktoken
 
 def list_local_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
@@ -453,13 +454,15 @@ def chat_interface():
     if "selected_model" not in st.session_state:
         available_models = get_available_models()
         st.session_state.selected_model = available_models[0] if available_models else None
+    if "total_tokens" not in st.session_state:
+        st.session_state.total_tokens = 0
     
     # Create tabs for Chat, Workspace, and Files
     chat_tab, workspace_tab, files_tab_ui = st.tabs(["Chat", "Workspace", "Files"])
 
     with chat_tab:
         # Settings (Collapsible, open by default)
-        with st.expander("Settings", expanded=True):
+        with st.expander("⚙️ Settings", expanded=True):
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 available_models = get_available_models()
@@ -486,7 +489,7 @@ def chat_interface():
                 selected_corpus = st.selectbox("📚 Select Corpus:", corpus_options, key="selected_corpus")
 
         # Advanced Settings (Collapsible, collapsed by default)
-        with st.expander("Advanced Settings", expanded=False):
+        with st.expander("🛠️ Advanced Settings", expanded=False):
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 temperature = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
@@ -496,6 +499,9 @@ def chat_interface():
                 presence_penalty = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
             with col4:
                 frequency_penalty = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
+
+        # Display total token count
+        st.write(f"Total Token Count: {st.session_state.total_tokens}")
 
         # Display chat history
         for message in st.session_state.chat_history:
@@ -516,6 +522,9 @@ def chat_interface():
             with st.chat_message("user"):
                 st.markdown(prompt)
 
+            # Update token count for user input
+            st.session_state.total_tokens += count_tokens(prompt)
+
             with st.chat_message("assistant"):
                 response_placeholder = st.empty()
                 full_response = ""
@@ -530,15 +539,24 @@ def chat_interface():
                 # Include chat history and corpus context
                 chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
                 if selected_corpus != "None":
-                    corpus_context = get_corpus_context_from_db(corpus_folder, selected_corpus, prompt)  # Use new function
+                    corpus_context = get_corpus_context_from_db(corpus_folder, selected_corpus, prompt)
                     final_prompt = f"{combined_prompt}{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}"
                 else:
                     final_prompt = f"{combined_prompt}{chat_history}\n\nUser: {prompt}"
 
+                # Update token count for the entire prompt
+                st.session_state.total_tokens += count_tokens(final_prompt)
+
                 for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
                     full_response += response_chunk["response"]
                     response_placeholder.markdown(full_response)
+                    # Update token count for each chunk of the response
+                    st.session_state.total_tokens += count_tokens(response_chunk["response"])
+
                 st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+
+            # Update the total token count display
+            st.write(f"Total Token Count: {st.session_state.total_tokens}")
 
             # Automatically detect and save code to workspace
             code_blocks = extract_code_blocks(full_response)
@@ -559,7 +577,8 @@ def chat_interface():
             if chat_name:
                 save_data = {
                     "chat_history": st.session_state.chat_history,
-                    "workspace_items": st.session_state.workspace_items
+                    "workspace_items": st.session_state.workspace_items,
+                    "total_tokens": st.session_state.total_tokens
                 }
                 # Create the 'sessions' folder if it doesn't exist
                 sessions_folder = "sessions"
@@ -590,6 +609,7 @@ def chat_interface():
                         loaded_data = json.load(f)
                     st.session_state.chat_history = loaded_data.get("chat_history", [])
                     st.session_state.workspace_items = loaded_data.get("workspace_items", [])
+                    st.session_state.total_tokens = loaded_data.get("total_tokens", 0)
                     st.success(f"Loaded {file_name}")
                     st.rerun()
             with col2:
@@ -646,6 +666,10 @@ def chat_interface():
     # Files tab
     with files_tab_ui:
         files_tab()
+
+def count_tokens(text):
+    encoding = tiktoken.get_encoding("cl100k_base")
+    return len(encoding.encode(text))
 
 def files_tab():
     st.subheader("Files")
