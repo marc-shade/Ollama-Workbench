@@ -169,8 +169,8 @@ class WebsiteCrawler:
                 f.write("-" * 80 + "\n\n")
 
 def main():
-    st.title("Website Crawler Corpus Generator")
-    st.write("Enter the website URL you want to crawl in the box below. Choose your preferred output format (PDF, JSON, or TXT) from the dropdown menu. Click 'Start Crawling' to begin. Once complete, the generated file will be saved to the 'files' folder within the Ollama Workbench framework. You can access and manage this file in the 'Files' tab under the 'Chat' section or through the 'Document' section. You can then load this file as a corpus for an agent in the 'Chat' section, enabling the agent to use the information from the crawled website in its responses.")
+    st.title("Website Crawler Corpus File Generator")
+    st.write("Enter the website URL you want to crawl in the box below. Choose your preferred output format (PDF, JSON, or TXT) from the dropdown menu. Click 'Start Crawling' to begin. Once complete, the generated file will be saved to the 'files' folder. You can access and manage this file in the 'Files' tab under the 'Chat' section or through the 'Document' section.")
     root_url = st.text_input("Enter the root URL to crawl:")
     
     output_format = st.selectbox(
