@@ -28,11 +28,21 @@ This application is a comprehensive tool for managing and testing various models
 - **Vision Model Comparison**: Compare the performance of vision models using the same test image.
 
 ### Chat
-- **Chat**: Engage in a real-time chat with a selected model.
+- **Chat**: Engage in a real-time chat with a selected model, enhanced with various features:
+    - **Agent Types:** Choose from a variety of predefined agent types, each with specific prompts to guide the model's behavior (e.g., Coder, Analyst, Creative Writer). You can also create and manage your own custom agent type prompts.
+    - **Metacognitive Types:** Enhance the model's reasoning abilities by selecting a metacognitive type (e.g., Visualization of Thought, Chain of Thought). You can also create and manage your own custom metacognitive type prompts.
+    - **Corpus Integration:** Load a corpus of text from the 'Files' section to provide contextual information to the model, improving its responses.
+    - **Advanced Settings:** Fine-tune the model's output by adjusting parameters like temperature, max tokens, presence penalty, and frequency penalty.
+    - **Workspace:** Save and manage code snippets and other text generated during your chat sessions.
+    - **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
+- **Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
 - **Workspace**: Save and manage code and text generated during chat sessions.
 
 ### Document
-- **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
+- **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file. The output will stream in real-time in the UI.
+- **Web to Corpus**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
+- **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
+- **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type and Metacognitive Type. You can also download and upload prompt JSON files for easy sharing and backup.
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-7.57.16 AM.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-22-at-1.30.15 PM.png" />
