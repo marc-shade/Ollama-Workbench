@@ -21,6 +21,7 @@ requests
 six
 soupsieve
 streamlit
+streamlit-extras
 toml
 typing_extensions
 urllib3
