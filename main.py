@@ -6,7 +6,8 @@ from model_tests import *
 from ui_elements import (
     model_comparison_test, contextual_response_test, feature_test,
     list_local_models, pull_models, show_model_details, remove_model_ui,
-    vision_comparison_test, chat_interface, update_models, files_tab, manage_prompts
+    vision_comparison_test, chat_interface, update_models, files_tab, manage_prompts,
+    manage_corpus  # Add manage_corpus import
 )
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
@@ -35,6 +36,7 @@ SIDEBAR_SECTIONS = {
         ("Web to Corpus", "Web to Corpus"),
         ("Manage Files", "Files"),
         ("Manage Prompts", "Prompts"),
+        ("Manage Corpus", "Manage Corpus"),  # Add Manage Corpus button
     ],
 }
 
@@ -110,6 +112,8 @@ def main_content():
         files_tab()
     elif st.session_state.selected_test == "Prompts":
         manage_prompts()
+    elif st.session_state.selected_test == "Manage Corpus":  # Add condition for Manage Corpus
+        manage_corpus()
     else:
         display_welcome_message()
 
@@ -146,6 +150,7 @@ def display_welcome_message():
         - **Web to Corpus**: Convert web content into a corpus for analysis or training.
         - **Manage Files**: Upload, view, edit, and delete files.
         - **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type and Metacognitive Type.
+        - **Manage Corpus**: Create, edit, and delete corpus from files or URLs.
     """)
 
 def main():
