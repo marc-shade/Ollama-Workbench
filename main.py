@@ -33,7 +33,7 @@ SIDEBAR_SECTIONS = {
     ],
     "Document": [
         ("Repository Analyzer", "Repository Analyzer"),
-        ("Web to Corpus", "Web to Corpus"),
+        ("Web to Corpus File", "Web to Corpus File"),
         ("Manage Files", "Files"),
         ("Manage Prompts", "Prompts"),
         ("Manage Corpus", "Manage Corpus"),  # Add Manage Corpus button
@@ -106,7 +106,7 @@ def main_content():
         update_models()
     elif st.session_state.selected_test == "Repository Analyzer":
         repo_docs_main()
-    elif st.session_state.selected_test == "Web to Corpus":
+    elif st.session_state.selected_test == "Web to Corpus File":
         web_to_corpus_main()
     elif st.session_state.selected_test == "Files":
         files_tab()
@@ -147,7 +147,7 @@ def display_welcome_message():
 
         #### **Document**
         - **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
-        - **Web to Corpus**: Convert web content into a corpus for analysis or training.
+        - **Web to Corpus File**: Convert web content into a corpus for analysis or training.
         - **Manage Files**: Upload, view, edit, and delete files.
         - **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type and Metacognitive Type.
         - **Manage Corpus**: Create, edit, and delete corpus from files or URLs.
