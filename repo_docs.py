@@ -214,27 +214,9 @@ def generate_pdf(results, output_path, task_type):
             chapter_body = documentation
         pdf.add_chapter(chapter_title, chapter_body)
 
+    # Create 'files' directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     pdf.output(output_path, 'F')
-
-def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue):
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            file_content = file.read()
-        
-        # Update status
-        update_queue.put(("status", f"Processing: {file_path}"))
-        
-        # Generate documentation with real-time updates
-        documentation = ""
-        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
-            documentation += chunk
-            update_queue.put(("output", documentation))
-        
-        pylint_report = run_pylint(file_path) if task_type == "debug" else ""
-        return file_path, documentation, pylint_report, file_content
-    except UnicodeDecodeError:
-        print(f"Error reading file {file_path}: UnicodeDecodeError")
-        return file_path, f"Error reading file: UnicodeDecodeError", "", ""
 
 def generate_requirements_file(repo_path):
     requirements = set()
@@ -245,11 +227,19 @@ def generate_requirements_file(repo_path):
                 if line.startswith('import ') or line.startswith('from '):
                     parts = line.split()
                     if parts[0] == 'import':
-                        requirements.add(parts[1].split('.')[0])
+                        module = parts[1].split('.')[0]
+                        if '_' not in module:
+                            requirements.add(module)
                     elif parts[0] == 'from':
-                        requirements.add(parts[1].split('.')[0])
+                        module = parts[1].split('.')[0]
+                        if '_' not in module:
+                            requirements.add(module)
 
-    requirements_path = os.path.join(repo_path, 'requirements.txt')
+    # Create 'files' directory if it doesn't exist
+    files_dir = os.path.join(repo_path, 'files')
+    os.makedirs(files_dir, exist_ok=True)
+    
+    requirements_path = os.path.join(files_dir, 'requirements.txt')
     with open(requirements_path, 'w') as req_file:
         for requirement in sorted(requirements):
             req_file.write(requirement + '\n')
@@ -257,14 +247,13 @@ def generate_requirements_file(repo_path):
 
 def main():
     st.title("Repository Analyzer")
-    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, or requirements) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository folder. If you chose the 'readme' task type, a README.md file will also be created in the repository folder.")
+    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, or requirements) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder.")
     repo_path = st.text_input("Enter the path to your repository:")
     task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements"])
 
     available_models = get_available_models()
     model = st.selectbox(f"Select model for {task_type} task", available_models)
 
-    # Add temperature and max tokens sliders
     temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2, step=0.1)
     max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
 
@@ -272,6 +261,10 @@ def main():
         if not repo_path or not os.path.isdir(repo_path):
             st.error("Please enter a valid repository path.")
             return
+
+        # Create 'files' directory if it doesn't exist
+        files_dir = os.path.join(repo_path, 'files')
+        os.makedirs(files_dir, exist_ok=True)
 
         if task_type == "requirements":
             requirements_path = generate_requirements_file(repo_path)
@@ -305,7 +298,7 @@ def main():
 
         with ThreadPoolExecutor(max_workers=1) as executor:
             futures = {executor.submit(process_file_with_updates, file_path, task_type, model, temperature, max_tokens, update_queue): file_path for file_path in code_files}
-            for i, future in enumerate(as_completed(futures)):
+            for i, future in enumerate(as_completed(futures)):               
                 file_path, documentation, pylint_report, file_content = future.result()
                 results.append((file_path, documentation, pylint_report, file_content))
                 progress = (i + 1) / len(code_files)
@@ -315,19 +308,19 @@ def main():
         progress_bar.empty()
         status_text.empty()
 
-        # Generate and save PDF report
+        # Generate and save PDF report in the 'files' folder
         pdf_filename = f"repository_{task_type}_report.pdf"
-        pdf_path = os.path.join(repo_path, pdf_filename)
+        pdf_path = os.path.join(files_dir, pdf_filename)
         generate_pdf(results, pdf_path, task_type)
         
-        st.success(f"Analysis complete! PDF report saved as {pdf_filename} in the repository folder.")
+        st.success(f"Analysis complete! PDF report saved as {pdf_filename} in the repository's 'files' folder.")
 
         if task_type == "readme":
             readme_content = results[0][1] if results else "No content generated"
-            readme_path = os.path.join(repo_path, "README.md")
+            readme_path = os.path.join(files_dir, "README.md")
             with open(readme_path, "w") as readme_file:
                 readme_file.write(readme_content)
-            st.success(f"README.md file has been created in the repository folder.")
+            st.success(f"README.md file has been created in the repository's 'files' folder.")
             st.markdown("## Generated README.md")
             st.markdown(readme_content)
 
