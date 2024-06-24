@@ -1,5 +1,5 @@
-# main.py
 import os
+import json
 import streamlit as st
 from ollama_utils import *
 from model_tests import *
@@ -40,6 +40,13 @@ SIDEBAR_SECTIONS = {
     ],
 }
 
+def check_secret_key(file_path, expected_key):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            return data.get('secret_key') == expected_key
+    return False
+
 def initialize_session_state():
     """Initialize session state variables if they don't exist."""
     if 'selected_test' not in st.session_state:
@@ -69,18 +76,32 @@ def create_sidebar():
                     if st.button(button_text, key=f"button_{test_name.lower().replace(' ', '_')}"):
                         st.session_state.selected_test = test_name
 
-        # Add Buy Me a Coffee button to the bottom of the sidebar
-        st.markdown("---")  # Add a separator
-        st.markdown("If you find this tool useful, consider supporting its development:")
-        button(
-            username=os.getenv("BUYMEACOFFEE_USERNAME", "marcshade"),
-            floating=False,
-            width=221,
-            text="Support Marc",
-            emoji="☕",
-            bg_color="#FF5F5F",
-            font_color="#FFFFFF",
-        )
+        # Check if the secret key JSON file exists and has the correct key
+        secret_key_file = 'secret_key_off.json'
+        secret_key_value = 'I_am_an_honest_person'
+        if not check_secret_key(secret_key_file, secret_key_value):
+            # Add Buy Me a Coffee button and image in a 2-column layout
+            st.markdown("---")  # Add a separator
+            
+
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.markdown(
+                    '<a href="https://github.com/marc-shade" target="_blank"><img src="https://2acrestudios.com/wp-content/uploads/2024/06/marc-cyberpunk.png" '
+                    'style="border-radius: 50%; max-width: 70px; object-fit: cover;" /></a>',
+                    unsafe_allow_html=True,
+                )
+            with col2:
+                button(
+                    username=os.getenv("BUYMEACOFFEE_USERNAME", "marcshade"),
+                    floating=False,
+                    text="Support Marc",
+                    emoji="☕",
+                    bg_color="#FF5F5F",
+                    font_color="#FFFFFF",
+                )
+            st.markdown('<span style="font-size:17px; font-weight:normal; font-family:Courier;">Find this tool useful? Your support means a lot! Give a donation of $10 or more to remove this notice.</span>',
+                    unsafe_allow_html=True,)
 
 def main_content():
     """Display the main content based on the selected test."""
