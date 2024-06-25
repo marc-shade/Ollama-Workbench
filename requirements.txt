@@ -16,6 +16,8 @@ streamlit-extras
 tensorflow
 tiktoken
 webdriver-manager
-torch
-# torch==1.10.0+cu118 torchvision==0.11.2+cu118 torchaudio===0.10.0+cu118 -f https://download.pytorch.org/whl/cu118/torch_stable.html
+torch; sys_platform == 'darwin'
+torch==1.10.0+cu118; sys_platform == 'win32'
+torchvision==0.11.2+cu118; sys_platform == 'win32' 
+torchaudio===0.10.0+cu118; sys_platform == 'win32'
 transformers
