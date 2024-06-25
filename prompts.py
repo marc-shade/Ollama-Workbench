@@ -31,17 +31,23 @@ def get_agent_prompt():
 def get_metacognitive_prompt():
     return load_prompts("metacognitive")
 
+def get_voice_prompt(): # Add function to get voice prompts
+    return load_prompts("voice")
+
 def manage_prompts():
     st.header("Manage Prompts")
-    prompt_types = ["Agent", "Metacognitive"]
+    prompt_types = ["Agent", "Metacognitive", "Voice"] # Add "Voice" to prompt types
     selected_prompt_type = st.selectbox("Select Prompt Type:", prompt_types)
 
     if selected_prompt_type == "Agent":
         prompts = get_agent_prompt()
         prompt_type = "agent"
-    else:
+    elif selected_prompt_type == "Metacognitive":
         prompts = get_metacognitive_prompt()
         prompt_type = "metacognitive"
+    else: # Handle "Voice" prompt type
+        prompts = get_voice_prompt()
+        prompt_type = "voice"
 
     # Use st.markdown to inject CSS for 100% width
     st.markdown("""
