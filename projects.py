@@ -76,14 +76,16 @@ def get_corpus_context_from_db(corpus_folder, corpus, user_input):
     return "Sample context from the corpus database."
 
 # Function to define AI agents
-def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corpus, temperature, max_tokens): # Add voice_type as a parameter
+from ollama_utils import call_ollama_endpoint  # Import the correct function
+
+def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corpus, temperature, max_tokens):
     # Combine agent type, metacognitive type, and voice type prompts
     combined_prompt = ""
     if agent_type != "None":
         combined_prompt += get_agent_prompt()[agent_type] + "\n\n"
     if metacognitive_type != "None":
         combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\n\n"
-    if voice_type != "None": # Include voice prompt if selected
+    if voice_type != "None":
         combined_prompt += get_voice_prompt()[voice_type] + "\n\n"
 
     # Include corpus context if selected
@@ -93,10 +95,10 @@ def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corp
     else:
         final_prompt = f"{combined_prompt}User: {user_input}"
 
-    # Generate response using Ollama
-    response = ollama.generate(model, final_prompt, temperature=temperature, max_tokens=max_tokens)
-    
-    return response['response']
+    # Generate response using call_ollama_endpoint
+    response, _, _, _ = call_ollama_endpoint(model, prompt=final_prompt, temperature=temperature, max_tokens=max_tokens)
+
+    return response
 
 # Function to define agent parameters
 def define_agent_block(name):
