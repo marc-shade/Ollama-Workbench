@@ -87,38 +87,58 @@ After installation, you can start the application using the following command:
 ```bash
 streamlit run main.py
 ```
-Using the Sidebar
-Navigate through different functionalities using the sidebar.
-Select the desired test, chat, document, or maintenance function.
-Model Management
-List Local Models: Select to view available models.
-Show Model Information: Choose a model to view its detailed information.
-Pull a Model: Enter the name of the model you wish to download.
-Remove a Model: Select a model and confirm removal.
-Update Models: Update all local models.
-Testing
-Model Feature Test: Test models for JSON handling and function calling capabilities.
-Model Comparison by Response Quality: Compare the responses of multiple models to a given prompt.
-Contextual Response Test by Model: Test the contextual understanding of a model through a series of prompts.
-Vision Model Comparison: Compare vision models by uploading an image.
-Chat
-Chat: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
-Workspace: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
-Document
-Repository Analyzer: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
-Workflow
-Manage Projects: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
-Contributing
+## Using the Sidebar
+
+- Navigate through different functionalities using the sidebar.
+- Select the desired test, chat, document, or maintenance function.
+
+## Model Management
+
+- **List Local Models**: Select to view available models.
+- **Show Model Information**: Choose a model to view its detailed information.
+- **Pull a Model**: Enter the name of the model you wish to download.
+- **Remove a Model**: Select a model and confirm removal.
+- **Update Models**: Update all local models.
+
+## Testing
+
+- **Model Feature Test**: Test models for JSON handling and function calling capabilities.
+- **Model Comparison by Response Quality**: Compare the responses of multiple models to a given prompt.
+- **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
+- **Vision Model Comparison**: Compare vision models by uploading an image.
+
+## Chat
+
+- **Chat**: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
+- **Workspace**: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
+
+## Document
+
+- **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
+
+## Workflow
+
+- **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
+
+## Contributing
+
 Contributions are welcome! Please follow these steps to contribute:
-Fork the repository.
-Create a new branch (git checkout -b feature-branch).
-Make your changes.
-Commit your changes (git commit -m 'Add some feature').
-Push to the branch (git push origin feature-branch).
-Open a pull request.
-For detailed guidelines, refer to CONTRIBUTING.md.
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
-Acknowledgements
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Make your changes.
+4. Commit your changes (`git commit -m 'Add some feature'`).
+5. Push to the branch (`git push origin feature-branch`).
+6. Open a pull request.
+
+For detailed guidelines, refer to [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgements
+
 Special thanks to the contributors and the community for their support and feedback.
+
 Enjoy using the Ollama Workbench! If you encounter any issues, feel free to open an issue or submit a pull request. Happy testing and model management!
