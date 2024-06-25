@@ -1,4 +1,3 @@
-PyPDF2
 bs4
 datetime
 flax
@@ -7,8 +6,8 @@ langchain
 matplotlib
 ollama
 pandas
+PyPDF2
 pdfkit
-prompts
 requests
 selenium
 streamlit
