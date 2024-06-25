@@ -1,6 +1,7 @@
 PyPDF2
 bs4
 datetime
+flax
 fpdf
 langchain
 matplotlib
@@ -12,6 +13,9 @@ requests
 selenium
 streamlit
 streamlit-extras
-transformers
+tensorflow
 tiktoken
 webdriver-manager
+torch
+# torch==1.10.0+cu118 torchvision==0.11.2+cu118 torchaudio===0.10.0+cu118 -f https://download.pytorch.org/whl/cu118/torch_stable.html
+transformers
