@@ -106,7 +106,7 @@ streamlit run main.py
 - **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
 - **Web to Corpus**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
 - **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
-- 
+
 ### Maintain
 - **List Local Models**: Select to view available models.
 - **Show Model Information**: Choose a model to view its detailed information.
