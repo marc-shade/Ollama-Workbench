@@ -12,5 +12,4 @@ selenium
 streamlit
 streamlit-extras
 tiktoken
-urllib
 webdriver-manager
