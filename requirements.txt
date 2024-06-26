@@ -1,6 +1,5 @@
 PyPDF2
 bs4
-concurrent
 datetime
 fpdf
 io
