@@ -7,7 +7,6 @@ matplotlib
 ollama
 pandas
 pdfkit
-re
 requests
 selenium
 shutil
