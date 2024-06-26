@@ -102,7 +102,12 @@ streamlit run main.py
 - **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
 - **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
 
-### Model Management
+### Document
+- **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
+- **Web to Corpus**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
+- **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
+- 
+### Maintain
 - **List Local Models**: Select to view available models.
 - **Show Model Information**: Choose a model to view its detailed information.
 - **Pull a Model**: Enter the name of the model you wish to download.
@@ -114,11 +119,6 @@ streamlit run main.py
 - **Model Comparison by Response Quality**: Compare the responses of multiple models to a given prompt.
 - **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
 - **Vision Model Comparison**: Compare vision models by uploading an image.
-
-### Document
-- **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
-- **Web to Corpus**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
-- **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.39 PM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.54 PM-2.png" />
