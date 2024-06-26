@@ -11,7 +11,6 @@ requests
 selenium
 streamlit
 streamlit-extras
-subprocess
 tempfile
 time
 tiktoken
