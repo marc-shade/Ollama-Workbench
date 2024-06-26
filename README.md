@@ -14,7 +14,7 @@ This application is a comprehensive tool for managing and testing various models
 
 ## Features
 
-### 💬 Chat
+### 🧑 Chat
 Engage in a real-time chat with a selected model, enhanced with various features:
 - 🧑‍🔧 **Agent Types:** Choose from a variety of predefined agent types, each with specific prompts to guide the model's behavior (e.g., Coder, Analyst, Creative Writer). You can also create and manage your own custom agent type prompts.
 - 🧠 **Metacognitive Types:** Enhance the model's reasoning abilities by selecting a metacognitive type (e.g., Visualization of Thought, Chain of Thought). You can also create and manage your own custom metacognitive type prompts.
@@ -93,6 +93,15 @@ streamlit run main.py
 - Navigate through different functionalities using the sidebar.
 - Select the desired test, chat, document, workflow, or maintenance function.
 
+### Chat
+- **Chat**: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
+- **Workspace**: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
+- **Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
+
+### Workflow
+- **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
+- **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
+
 ### Model Management
 - **List Local Models**: Select to view available models.
 - **Show Model Information**: Choose a model to view its detailed information.
@@ -106,19 +115,10 @@ streamlit run main.py
 - **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
 - **Vision Model Comparison**: Compare vision models by uploading an image.
 
-### Chat
-- **Chat**: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
-- **Workspace**: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
-- **Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
-
 ### Document
 - **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
 - **Web to Corpus**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
 - **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
-- **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
-
-### Workflow
-- **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.39 PM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.54 PM-2.png" />
