@@ -178,20 +178,20 @@ def get_all_code_files(root_dir):
                 code_files.append(os.path.join(subdir, file))
     return code_files
 
-def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, progress_bar, status_text, output_area):
+def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
-        
+
         # Update status
-        status_text.text(f"Processing: {file_path}")
+        update_queue.put(("status", f"Processing: {file_path}"))
         
         # Generate documentation with real-time updates
         documentation = ""
         for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
             documentation += chunk
-            output_area.text(documentation)
-        
+            update_queue.put(("output", documentation))
+
         pylint_report = run_pylint(file_path) if task_type == "debug" else ""
         return file_path, documentation, pylint_report, file_content
     except UnicodeDecodeError:
@@ -297,7 +297,7 @@ def main():
                     break
 
         with ThreadPoolExecutor(max_workers=1) as executor:
-            futures = {executor.submit(process_file_with_updates, file_path, task_type, model, temperature, max_tokens, update_queue): file_path for file_path in code_files}
+            futures = {executor.submit(process_file_with_updates, file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area): file_path for file_path in code_files}
             for i, future in enumerate(as_completed(futures)):               
                 file_path, documentation, pylint_report, file_content = future.result()
                 results.append((file_path, documentation, pylint_report, file_content))
