@@ -2,7 +2,6 @@ PyPDF2
 bs4
 datetime
 fpdf
-io
 json
 langchain
 matplotlib
