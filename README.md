@@ -120,15 +120,14 @@ streamlit run main.py
 ### Workflow
 - **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.15.41 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.34 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.29 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.22 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.14 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.59 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.54 PM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.39 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-24-at-11.00.19 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.54 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.59 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.14 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.22 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.29 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.34 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.15.41 PM-2.png" />
 
 ### Contributing
 Contributions are welcome! Please follow these steps to contribute:
