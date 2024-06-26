@@ -11,8 +11,6 @@ requests
 selenium
 streamlit
 streamlit-extras
-tempfile
-time
 tiktoken
 urllib
 webdriver-manager
