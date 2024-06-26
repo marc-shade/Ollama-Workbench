@@ -9,7 +9,6 @@ pandas
 pdfkit
 requests
 selenium
-shutil
 streamlit
 streamlit-extras
 subprocess
