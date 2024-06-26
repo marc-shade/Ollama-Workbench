@@ -56,6 +56,15 @@ Engage in a real-time chat with a selected model, enhanced with various features
 - [pandas](https://pandas.pydata.org/)
 - [ollama](https://pypi.org/project/ollama/)
 
+Create virtual environment (optional but nice):
+```bash
+conda create --name ollamaworkbench python=3.11
+```
+
+```bash
+conda activate ollamaworkbench
+```
+
 ### Steps
 1. **Clone the repository**
     ```bash
