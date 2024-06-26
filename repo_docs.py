@@ -246,7 +246,7 @@ def generate_requirements_file(repo_path):
     return requirements_path
 
 def main():
-    st.title("Repository Analyzer")
+    st.title("✔️ Repository Analyzer")
     st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, or requirements) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder.")
     repo_path = st.text_input("Enter the path to your repository:")
     task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements"])
@@ -257,7 +257,7 @@ def main():
     temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2, step=0.1)
     max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
 
-    if st.button("Analyze Repository"):
+    if st.button("🔍 Analyze Repository"):
         if not repo_path or not os.path.isdir(repo_path):
             st.error("Please enter a valid repository path.")
             return

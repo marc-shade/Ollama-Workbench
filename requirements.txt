@@ -1,22 +1,27 @@
+PyPDF2
 bs4
+concurrent
 datetime
-flax
 fpdf
+io
+json
 langchain
 matplotlib
 ollama
+os
 pandas
-PyPDF2
 pdfkit
+prompts
+queue
+re
 requests
 selenium
+shutil
 streamlit
 streamlit-extras
-tensorflow
+subprocess
+tempfile
+time
 tiktoken
+urllib
 webdriver-manager
-torch; sys_platform == 'darwin'
-torch==1.10.0+cu118; sys_platform == 'win32'
-torchvision==0.11.2+cu118; sys_platform == 'win32' 
-torchaudio===0.10.0+cu118; sys_platform == 'win32'
-transformers
