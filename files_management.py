@@ -3,7 +3,7 @@ import streamlit as st
 import os
 
 def files_tab():
-    st.subheader("Files")
+    st.subheader("📂 Files")
     files_folder = "files"
     if not os.path.exists(files_folder):
         os.makedirs(files_folder)
@@ -80,5 +80,5 @@ def files_tab():
         file_path = os.path.join(files_folder, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-        st.success(f"File {uploaded_file.name} uploaded successfully!")
+        st.success(f"🟢 File {uploaded_file.name} uploaded successfully!")
         st.experimental_rerun()

@@ -12,7 +12,7 @@ from files_management import files_tab  # Import from files_management.py
 from streamlit_extras.bottom_container import bottom  # Correct import
 
 def chat_interface():
-    st.header("Chat with a Model")
+    st.header("🧑 Chat With a Custom Agent")
 
     # Initialize session state variables
     if "chat_history" not in st.session_state:
@@ -48,7 +48,7 @@ def chat_interface():
                 )
             with col2:
                 agent_types = ["None"] + list(get_agent_prompt().keys())
-                agent_type = st.selectbox("🧑‍💼 Select Agent Type:", agent_types, key="agent_type")
+                agent_type = st.selectbox("🧑‍🔧 Select Agent Type:", agent_types, key="agent_type")
             with col3:
                 metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
                 metacognitive_type = st.selectbox("🧠 Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
@@ -96,7 +96,7 @@ def chat_interface():
 
     # Chat input at the bottom using bottom_container
     with bottom():
-        prompt = st.chat_input("What is up my person?", key="chat_input")
+        prompt = st.chat_input("🧐 What is up my person❔", key="chat_input")
 
     # Process the user input and generate response outside the bottom container
     if prompt:
@@ -160,7 +160,7 @@ def chat_interface():
             st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
 
     # Save chat and workspace button (outside the bottom container)
-    if st.button("Save Chat and Workspace"):
+    if st.button("📥 Save Chat and Workspace"):
         save_chat_and_workspace()
 
     # Load/Rename/Delete chat and workspace
@@ -168,7 +168,7 @@ def chat_interface():
 
     # Workspace tab
     with workspace_tab:
-        st.subheader("Workspace")
+        st.subheader("📜 Workspace")
         
         # Display workspace items
         for index, item in enumerate(st.session_state.workspace_items):

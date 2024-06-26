@@ -116,10 +116,10 @@ def projects_main():
     projects = load_projects()
 
     # App title
-    st.title("Projects")
+    st.title("🚀 Projects")
 
     # Display task statistics at the top
-    st.subheader("Task Statistics")
+    st.subheader("📈 Task Statistics")
     if projects:
         total_tasks = 0
         completed_tasks = 0
@@ -142,14 +142,14 @@ def projects_main():
         st.info("No projects available for statistics.")
 
     # Project selection
-    selected_project = st.selectbox("Select Project", projects)
+    selected_project = st.selectbox("🚀 Select Project", projects)
 
     if selected_project:
         # Load tasks for the selected project
         tasks = load_tasks(selected_project)
 
         # Display and manage tasks
-        st.subheader(f"Tasks for {selected_project}")
+        st.subheader(f"📋 Tasks for {selected_project}")
 
         if tasks:
             df = pd.DataFrame(tasks)
@@ -185,7 +185,7 @@ def projects_main():
             st.info(f"No tasks found for {selected_project}. Add a task to get started!")
 
         # Task input form
-        st.subheader(f"Add New Task to {selected_project}")
+        st.subheader(f"📌 Add New Task to {selected_project}")
         task_name = st.text_input("Task Name")
         task_description = st.text_area("Task Description")
         
@@ -202,7 +202,7 @@ def projects_main():
         num_agents = st.session_state.get('num_agents', 1)
         task_agent = st.selectbox("AI Agent", ["None"] + [f"Agent {i+1}" for i in range(num_agents)])
 
-        if st.button("Add Task"):
+        if st.button("📌 Add Task"):
             deadline = pd.Timestamp(datetime.combine(task_deadline, task_time))
             if pd.notna(deadline):
                 task = {
@@ -221,17 +221,17 @@ def projects_main():
                 st.error("Invalid deadline. Please select a valid date and time.")
 
         # Define AI agents
-        st.subheader("AI Agents")
+        st.subheader("🧑 AI Agents")
         num_agents = st.number_input("Number of Agents", min_value=1, max_value=10, value=st.session_state.get('num_agents', 1))
         st.session_state.num_agents = num_agents
 
         agents = []
         for i in range(num_agents):
-            with st.expander(f"Agent {i+1} Parameters"):
+            with st.expander(f"🧑 Agent {i+1} Parameters"):
                 agents.append(define_agent_block(f"Agent {i+1}"))
 
         # Run AI agents on tasks
-        if st.button("Run AI Agents on Tasks"):
+        if st.button("🏃‍♂️🏃‍♀️💨 Run AI Agents on Tasks"):
             for task in tasks:
                 if task['agent'] != "None" and not task['completed']:
                     agent_index = int(task['agent'].split()[1]) - 1
@@ -244,10 +244,9 @@ def projects_main():
                         st.warning(f"Agent {agent_index + 1} not defined. Please define the agent before running.")
 
     # Project management
-    with st.expander("Add New Project"):
-        st.subheader("Project Management")
+    with st.expander("🚀 Add New Project"):
         new_project = st.text_input("New Project Name")
-        if st.button("Add Project"):
+        if st.button("🚀 Add Project"):
             if new_project and new_project not in projects:
                 projects.append(new_project)
                 save_projects(projects)
@@ -259,8 +258,7 @@ def projects_main():
                 st.warning("Please enter a project name.")
 
     # File upload and download
-    with st.expander("Import/Export Tasks"):
-        st.subheader("Import/Export Tasks")
+    with st.expander("📦 Import/Export Tasks"):
 
         uploaded_file = st.file_uploader("Upload Tasks JSON", type="json")
         if uploaded_file is not None:
@@ -275,7 +273,7 @@ def projects_main():
             except json.JSONDecodeError:
                 st.error("Error: Invalid JSON file. Please upload a valid JSON file.")
 
-        if st.button("Download Tasks"):
+        if st.button("📥 Download Tasks"):
             json_str = json.dumps(tasks, cls=DateTimeEncoder)
             b64 = base64.b64encode(json_str.encode()).decode()
             href = f'<a href="data:file/json;base64,{b64}" download="{selected_project}_tasks.json">Download JSON file</a>'

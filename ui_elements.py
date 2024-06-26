@@ -71,7 +71,7 @@ def run_comparison(selected_models, prompt, temperature, max_tokens, presence_pe
     return results, df, tokens_per_second, models  # Return models
 
 def model_comparison_test():
-    st.header("Model Comparison by Response Quality")
+    st.header("🎯 Model Comparison by Response Quality")
 
     # Refresh available_models list
     available_models = get_available_models()
@@ -118,7 +118,7 @@ def model_comparison_test():
             st.warning("Please select at least one model.")
 
 def vision_comparison_test():
-    st.header("Vision Model Comparison")
+    st.header("👁️ Vision Model Comparison")
 
     # Refresh available_models list
     available_models = get_available_models()
@@ -199,7 +199,7 @@ def vision_comparison_test():
             st.warning("Please upload an image.")
 
 def contextual_response_test():
-    st.header("Contextual Response Test by Model")
+    st.header("💬 Contextual Response Test by Model")
 
     # Refresh available_models list
     available_models = get_available_models()
@@ -269,7 +269,7 @@ def contextual_response_test():
         st.write("⚙️ Function Calling Capability: ", "✅" if check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty) else "❌")
 
 def feature_test():
-    st.header("Model Feature Test")
+    st.header("🧪 Model Feature Test")
     
     # Refresh available_models list
     available_models = get_available_models()
@@ -338,7 +338,7 @@ def list_models():
         st.dataframe(df, use_container_width=True, height=height, hide_index=True)
 
 def pull_models():
-    st.header("Pull a Model from Ollama Library")
+    st.header("⬇ Pull a Model from Ollama Library")
     st.write("Enter the exact name of the model you want to pull from the Ollama library. You can just paste the whole model snippet from the model library page like 'ollama run llava-phi3' or you can just enter the model name like 'llava-phi3' and then click 'Pull Model' to begin the download. The progress of the download will be displayed below.")
     model_name = st.text_input("Enter the name of the model you want to pull:")
     if st.button("Pull Model", key="pull_model"):
@@ -357,7 +357,7 @@ def pull_models():
             st.error("Please enter a model name.")
 
 def show_model_details():
-    st.header("Show Model Information")
+    st.header("🦙 Show Model Information")
     
     # Refresh available_models list
     available_models = get_available_models()
@@ -385,7 +385,7 @@ def show_model_details():
         st.json(details)
 
 def remove_model_ui():
-    st.header("Remove a Model")
+    st.header("🗑️ Remove a Model")
     
     # Refresh available_models list
     available_models = get_available_models()
@@ -428,9 +428,9 @@ def remove_model_ui():
             st.error("Please select a model.")
 
 def update_models():
-    st.header("Update Local Models")
+    st.header("🔄 Update Local Models")
     available_models = get_available_models()
-    if st.button("Update All Models"):
+    if st.button("⚡ Update All Models Now!"):
         for model_name in available_models:
             # Skip custom models (those with a ':' in the name)
             if 'gpt' in model_name:
@@ -445,7 +445,7 @@ def count_tokens(text):
     return len(encoding.encode(text))
 
 def files_tab():
-    st.subheader("Files")
+    st.subheader("📂 Files")
     files_folder = "files"
     if not os.path.exists(files_folder):
         os.makedirs(files_folder)
@@ -572,7 +572,7 @@ def get_corpus_context(corpus_file, query):
     return "\n".join([doc.page_content for doc in results])
 
 def manage_corpus():
-    st.header("Manage Corpus")
+    st.header("🗂 Manage Corpus")
 
     # Corpus folder
     corpus_folder = "corpus"
@@ -581,7 +581,7 @@ def manage_corpus():
 
     # List existing corpus
     corpus_list = [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-    st.subheader("Existing Corpus")
+    st.subheader("⚫ Existing Corpus")
     if corpus_list:
         for corpus in corpus_list:
             col1, col2, col3 = st.columns([2, 1, 1])  # Add a column for renaming
@@ -612,7 +612,7 @@ def manage_corpus():
             else:
                 st.error("Please enter a new corpus name.")
 
-    st.subheader("Create New Corpus")
+    st.subheader("➕ Create New Corpus")
     # Create corpus from files
     st.write("**From Files:**")
     files_folder = "files"

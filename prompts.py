@@ -35,9 +35,9 @@ def get_voice_prompt(): # Add function to get voice prompts
     return load_prompts("voice")
 
 def manage_prompts():
-    st.header("Manage Prompts")
+    st.header("✨ Manage Prompts")
     prompt_types = ["Agent", "Metacognitive", "Voice"] # Add "Voice" to prompt types
-    selected_prompt_type = st.selectbox("Select Prompt Type:", prompt_types)
+    selected_prompt_type = st.selectbox("✨ Select Prompt Type:", prompt_types)
 
     if selected_prompt_type == "Agent":
         prompts = get_agent_prompt()
@@ -67,7 +67,7 @@ def manage_prompts():
 
     # Download prompts
     st.download_button(
-        label=f"Download {selected_prompt_type} Prompts",
+        label=f"📥 Download {selected_prompt_type} Prompts",
         data=json.dumps(edited_prompts, indent=4),
         file_name=f"{prompt_type}_prompts.json",
         mime="application/json",
