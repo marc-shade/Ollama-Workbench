@@ -1,3 +1,5 @@
+## <a href="https://2acrestudios.com/teamforgeai/" target="_blank">DONATE TO THIS PROJECT</a>
+
 # Ollama Workbench
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
@@ -62,6 +64,15 @@ This application is a comprehensive tool for managing and testing various models
 - [requests](https://pypi.org/project/requests/)
 - [pandas](https://pandas.pydata.org/)
 - [ollama](https://pypi.org/project/ollama/)
+
+Create virtual environment (optional):
+```bash
+conda create --name ollamaworkbench python=3.11
+```
+
+```bash
+conda activate ollamaworkbench
+```
 
 ### Steps
 1. **Clone the repository**
