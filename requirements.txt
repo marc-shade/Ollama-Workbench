@@ -7,7 +7,6 @@ matplotlib
 ollama
 pandas
 pdfkit
-queue
 re
 requests
 selenium
