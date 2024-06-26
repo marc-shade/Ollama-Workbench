@@ -20,28 +20,28 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 
 # Define constants
 SIDEBAR_SECTIONS = {
-    "Workflow": [
-        ("Manage Projects", "Manage Projects"),
-        ("Manage Agent Prompts", "Prompts"),
+    "⚙️ Workflow": [
+        ("🚀 Manage Projects", "Manage Projects"),
+        ("✨ Manage Agent Prompts", "Prompts"),
     ],
-    "Document": [
-        ("Manage Corpus", "Manage Corpus"),
-        ("Web to Corpus File", "Web to Corpus File"),
-        ("Manage Files", "Files"),
-        ("Repository Analyzer", "Repository Analyzer"),
+    "📄 Document": [
+        ("📚 Manage Corpus", "Manage Corpus"),
+        ("🌐 Web to Corpus File", "Web to Corpus File"),
+        ("📂 Manage Files", "Files"),
+        ("🔍 Repository Analyzer", "Repository Analyzer"),
     ],
-    "Maintain": [
-        ("List Local Models", "List Local Models"),
-        ("Show Model Information", "Show Model Information"),
-        ("Pull a Model", "Pull a Model"),
-        ("Remove a Model", "Remove a Model"),
-        ("Update Models", "Update Models"),
+    "🛠️ Maintain": [
+        ("📋 List Local Models", "List Local Models"),
+        ("ℹ️ Show Model Information", "Show Model Information"),
+        ("⬇️ Pull a Model", "Pull a Model"),
+        ("🗑️ Remove a Model", "Remove a Model"),
+        ("🔄 Update Models", "Update Models"),
     ],
-    "Test": [
-        ("Model Feature Test", "Model Feature Test"),
-        ("Model Comparison by Response Quality", "Model Comparison by Response Quality"),
-        ("Contextual Response Test by Model", "Contextual Response Test by Model"),
-        ("Vision Model Comparison", "Vision Model Comparison"),
+    "🧪 Test": [
+        ("🧪 Model Feature Test", "Model Feature Test"),
+        ("📊 Model Comparison by Response Quality", "Model Comparison by Response Quality"),
+        ("💬 Contextual Response Test by Model", "Contextual Response Test by Model"),
+        ("👁️ Vision Model Comparison", "Vision Model Comparison"),
     ],
 }
 
@@ -72,7 +72,7 @@ def create_sidebar():
         )
 
         st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
-        if st.button("Chat", key="button_chat"):
+        if st.button("💬 Chat", key="button_chat"):
             st.session_state.selected_test = "Chat"
 
         for section, buttons in SIDEBAR_SECTIONS.items():
