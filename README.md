@@ -1,4 +1,3 @@
-```markdown
 # Ollama Workbench
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
@@ -141,4 +140,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 Special thanks to the contributors and the community for their support and feedback.
 
 Enjoy using the Ollama Workbench! If you encounter any issues, feel free to open an issue or submit a pull request. Happy testing and model management!
-```
