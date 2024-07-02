@@ -13,4 +13,5 @@ selenium
 streamlit
 streamlit-extras
 tiktoken
+visjs_component
 webdriver-manager
