@@ -49,9 +49,6 @@ Engage in a real-time chat with a selected model, enhanced with various features
 
 ## Installation
 
-### Prerequisites
-- [ollama](https://pypi.org/project/ollama/)
-
 Create virtual environment (optional but nice):
 ```bash
 conda create --name ollamaworkbench python=3.11
