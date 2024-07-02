@@ -437,43 +437,8 @@ def projects_main():
                 else:
                     st.error("Failed to generate tasks.")
 
-        # Display and manage tasks
-        st.subheader(f"📋 Tasks for {selected_project}")
-
-        if tasks:
-            df = pd.DataFrame([task.__dict__ for task in tasks])  # Convert Task objects to dictionaries
-            df['deadline'] = pd.to_datetime(df['deadline'], errors='coerce')
-            df = df[['name', 'description', 'deadline', 'priority', 'completed', 'agent', 'result']]
-
-            # Convert the DataFrame to a Streamlit editable dataframe
-            edited_df = st.data_editor(
-                df,
-                column_config={
-                    "completed": st.column_config.CheckboxColumn(
-                        "Completed",
-                        help="Mark task as completed",
-                        default=False,
-                    ),
-                    "deadline": st.column_config.DatetimeColumn(
-                        "Deadline",
-                        format="YYYY-MM-DD HH:mm:ss",
-                    ),
-                },
-                hide_index=True,
-                num_rows="dynamic"
-            )
-
-            # Update tasks based on edited dataframe
-            updated_tasks = edited_df.to_dict('records')
-            if updated_tasks != tasks:
-                tasks = [Task(**task) for task in updated_tasks if pd.notna(task['deadline'])]  # Create Task objects from dictionaries
-                save_tasks(selected_project, tasks)
-                st.success("Tasks updated successfully!")
-        else:
-            st.info(f"No tasks found for {selected_project}. Add a task to get started!")
-
         # Task input form
-        with st.expander(f"📌 Add New Task to {selected_project}"):
+        with st.expander(f"📌 Manually add a new task to {selected_project}"):
             task_name = st.text_input("Task Name")
             task_description = st.text_area("Task Description")
 
@@ -508,6 +473,42 @@ def projects_main():
                     st.success("Task added successfully!")
                 else:
                     st.error("Invalid deadline. Please select a valid date and time.")
+
+
+        # Display and manage tasks
+        st.subheader(f"📋 Tasks for {selected_project}")
+
+        if tasks:
+            df = pd.DataFrame([task.__dict__ for task in tasks])  # Convert Task objects to dictionaries
+            df['deadline'] = pd.to_datetime(df['deadline'], errors='coerce')
+            df = df[['name', 'description', 'deadline', 'priority', 'completed', 'agent', 'result']]
+
+            # Convert the DataFrame to a Streamlit editable dataframe
+            edited_df = st.data_editor(
+                df,
+                column_config={
+                    "completed": st.column_config.CheckboxColumn(
+                        "Completed",
+                        help="Mark task as completed",
+                        default=False,
+                    ),
+                    "deadline": st.column_config.DatetimeColumn(
+                        "Deadline",
+                        format="YYYY-MM-DD HH:mm:ss",
+                    ),
+                },
+                hide_index=True,
+                num_rows="dynamic"
+            )
+
+            # Update tasks based on edited dataframe
+            updated_tasks = edited_df.to_dict('records')
+            if updated_tasks != tasks:
+                tasks = [Task(**task) for task in updated_tasks if pd.notna(task['deadline'])]  # Create Task objects from dictionaries
+                save_tasks(selected_project, tasks)
+                st.success("Tasks updated successfully!")
+        else:
+            st.info(f"No tasks found for {selected_project}. Add a task to get started!")
 
         # Define AI agents
         st.subheader("🧑 AI Agents")
