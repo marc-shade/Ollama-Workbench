@@ -371,6 +371,20 @@ def projects_main():
     else:
         st.info("No projects available for statistics.")
 
+    # Project management
+    with st.expander("🚀 Add New Project"):
+        new_project = st.text_input("New Project Name")
+        if st.button("Add Project"):
+            if new_project and new_project not in projects:
+                projects.append(new_project)
+                save_projects(projects)
+                st.success(f"Project '{new_project}' added successfully!")
+                # Remove st.rerun() here
+            elif new_project in projects:
+                st.warning(f"Project '{new_project}' already exists.")
+            else:
+                st.warning("Please enter a project name.")
+
     # Project selection
     selected_project = st.selectbox("🚀 Select Project", projects)
 
@@ -515,20 +529,6 @@ def projects_main():
                         st.warning(f"Agent {task.agent} not defined. Please define the agent before running.")
             # Save tasks after running agents
             save_tasks(selected_project, tasks)
-
-    # Project management
-    with st.expander("🚀 Add New Project"):
-        new_project = st.text_input("New Project Name")
-        if st.button("Add Project"):
-            if new_project and new_project not in projects:
-                projects.append(new_project)
-                save_projects(projects)
-                st.success(f"Project '{new_project}' added successfully!")
-                # Remove st.rerun() here
-            elif new_project in projects:
-                st.warning(f"Project '{new_project}' already exists.")
-            else:
-                st.warning("Please enter a project name.")
 
     # File upload and download
     with st.expander("📦 Import/Export Tasks"):
