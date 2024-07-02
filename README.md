@@ -1,3 +1,4 @@
+```markdown
 # Ollama Workbench
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
@@ -25,7 +26,7 @@ Engage in a real-time chat with a selected model, enhanced with various features
 - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
 
 ### ⚙️ Workflow
-- 🚀 **Manage Projects:** Create, manage, and run projects with multiple AI agents. Each agent can be configured with a specific model, agent type, metacognitive type, voice type, corpus, temperature, and max tokens. You can add tasks to projects, assign them to agents, and run the agents to generate outputs for each task.
+- 🚀 **Manage Projects:** Create, manage, and run projects with multiple AI agents. Each agent can be configured with a specific model, agent type, metacognitive type, voice type, corpus, temperature, and max tokens. You can add tasks to projects, assign them to agents, and run the agents to generate outputs for each task. **You can even enter a plain-english description of your project, and the AI will create tasks, agents, and assign the agents to the tasks for you!**
 - ✨ **Manage Agent Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
 
 ### 🗄️ Document
@@ -140,3 +141,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 Special thanks to the contributors and the community for their support and feedback.
 
 Enjoy using the Ollama Workbench! If you encounter any issues, feel free to open an issue or submit a pull request. Happy testing and model management!
+```
