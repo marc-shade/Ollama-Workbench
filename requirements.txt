@@ -11,5 +11,6 @@ requests
 selenium
 streamlit
 streamlit-extras
+streamli-cli
 tiktoken
 webdriver-manager
