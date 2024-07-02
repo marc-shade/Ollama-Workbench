@@ -50,10 +50,6 @@ Engage in a real-time chat with a selected model, enhanced with various features
 ## Installation
 
 ### Prerequisites
-- [Python 3.7+](https://www.python.org/downloads/)
-- [Streamlit](https://streamlit.io/)
-- [requests](https://pypi.org/project/requests/)
-- [pandas](https://pandas.pydata.org/)
 - [ollama](https://pypi.org/project/ollama/)
 
 Create virtual environment (optional but nice):
