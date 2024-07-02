@@ -447,44 +447,44 @@ def projects_main():
             st.info(f"No tasks found for {selected_project}. Add a task to get started!")
 
         # Task input form
-        st.subheader(f"📌 Add New Task to {selected_project}")
-        task_name = st.text_input("Task Name")
-        task_description = st.text_area("Task Description")
+        with st.expander(f"📌 Add New Task to {selected_project}"):
+            task_name = st.text_input("Task Name")
+            task_description = st.text_area("Task Description")
 
-        # Create a 3-column layout for Deadline Date, Deadline Time, and Priority
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            task_deadline = st.date_input("Deadline Date")
-        with col2:
-            task_time = st.time_input("Deadline Time")
-        with col3:
-            task_priority = st.selectbox("Priority", ["Low", "Medium", "High"])
+            # Create a 3-column layout for Deadline Date, Deadline Time, and Priority
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                task_deadline = st.date_input("Deadline Date")
+            with col2:
+                task_time = st.time_input("Deadline Time")
+            with col3:
+                task_priority = st.selectbox("Priority", ["Low", "Medium", "High"])
 
-        # Dynamic agent selection
-        if 'agents' not in st.session_state:
-            st.session_state.agents = {}
-        agents = st.session_state.agents
-        agent_names = list(agents.keys())
-        task_agent = st.selectbox("AI Agent", ["None"] + agent_names)
+            # Dynamic agent selection
+            if 'agents' not in st.session_state:
+                st.session_state.agents = {}
+            agents = st.session_state.agents
+            agent_names = list(agents.keys())
+            task_agent = st.selectbox("AI Agent", ["None"] + agent_names)
 
-        if st.button("📌 Add Task"):
-            deadline = pd.Timestamp(datetime.combine(task_deadline, task_time))
-            if pd.notna(deadline):
-                task = Task(
-                    name=task_name,
-                    description=task_description,
-                    deadline=deadline,
-                    priority=task_priority,
-                    completed=False,
-                    agent=task_agent,
-                    result=None
-                )
-                tasks.append(task)
-                save_tasks(selected_project, tasks)
-                st.success("Task added successfully!")
-                # Remove st.rerun() here
-            else:
-                st.error("Invalid deadline. Please select a valid date and time.")
+            if st.button("📌 Add Task"):
+                deadline = pd.Timestamp(datetime.combine(task_deadline, task_time))
+                if pd.notna(deadline):
+                    task = Task(
+                        name=task_name,
+                        description=task_description,
+                        deadline=deadline,
+                        priority=task_priority,
+                        completed=False,
+                        agent=task_agent,
+                        result=None
+                    )
+                    tasks.append(task)
+                    save_tasks(selected_project, tasks)
+                    st.success("Task added successfully!")
+                    # Remove st.rerun() here
+                else:
+                    st.error("Invalid deadline. Please select a valid date and time.")
 
         # Define AI agents
         st.subheader("🧑 AI Agents")
