@@ -3,6 +3,7 @@ bs4
 datetime
 fpdf
 langchain
+langchain_community
 matplotlib
 ollama
 pandas
