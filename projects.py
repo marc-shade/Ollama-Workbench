@@ -88,6 +88,25 @@ def save_tasks(project_name, tasks):
     with open(f'projects/{project_name}_tasks.json', 'w') as f:
         json.dump(tasks, f, cls=DateTimeEncoder)
 
+# Function to load agents for a specific project
+def load_agents(project_name):
+    try:
+        with open(f'projects/{project_name}_agents.json', 'r') as f:
+            content = f.read()
+            if not content:
+                return {}
+            return json.loads(content)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as e:
+        st.error(f"Error loading agents for {project_name}: {str(e)}. Starting with an empty agent list.")
+        return {}
+
+# Function to save agents for a specific project
+def save_agents(project_name, agents):
+    with open(f'projects/{project_name}_agents.json', 'w') as f:
+        json.dump(agents, f)
+
 # Function to get corpus options
 def get_corpus_options():
     corpus_folder = "corpus"
@@ -157,11 +176,9 @@ def define_agent_block(name, agent_data=None):
         index=voice_options.index(agent_data.get('voice_type')) if agent_data.get('voice_type') in voice_options else 0
     )
     corpus = st.selectbox(f"{name} Corpus", get_corpus_options(), key=f"{name}_corpus", index=get_corpus_options().index(agent_data.get('corpus')) if agent_data.get('corpus') in get_corpus_options() else 0)
-    # Remove redundant 'value' argument
     temperature = st.slider(f"{name} Temperature", 0.0, 1.0, 0.7, key=f"{name}_temperature")
-    # Remove redundant 'value' argument
     max_tokens = st.slider(f"{name} Max Tokens", 100, 32000, 4000, key=f"{name}_max_tokens")
-    return {'model': model, 'agent_type': agent_type, 'metacognitive_type': metacognitive_type, 'voice_type': voice_type, 'corpus': corpus, 'temperature': temperature, 'max_tokens': max_tokens} # Include voice_type in the return
+    return {'model': model, 'agent_type': agent_type, 'metacognitive_type': metacognitive_type, 'voice_type': voice_type, 'corpus': corpus, 'temperature': temperature, 'max_tokens': max_tokens}
 
 def generate_workflow(user_request: str):
     """
@@ -289,17 +306,8 @@ def generate_workflow(user_request: str):
     generated_workflow = response['response']
 
     # 2. Preprocess generated workflow (remove extra characters and whitespace)
-    # Find the starting position of the JSON list
-    start_index = generated_workflow.find("{")
-    if start_index != -1:
-        generated_workflow = generated_workflow[start_index:]
-    # Find the ending position of the JSON list
-    end_index = generated_workflow.rfind("}")
-    if end_index != -1:
-        generated_workflow = generated_workflow[:end_index + 1]
     generated_workflow = generated_workflow.strip()  # Remove leading/trailing whitespace
     generated_workflow = generated_workflow.replace("'", '"')  # Replace single quotes with double quotes
-    # Allow for more characters in the regular expression
     generated_workflow = re.sub(r"[^\w\s{}\[\]\":,./\-+]+", "", generated_workflow)  # Remove invalid characters
 
     # 3. Ensure Enclosing Braces
@@ -313,6 +321,9 @@ def generate_workflow(user_request: str):
 
     # 5. Add Missing Commas (More Robust)
     generated_workflow = re.sub(r"([}\]])(\s*)(?=[{\[\"a-zA-Z])", r"\1,\2", generated_workflow)
+
+    # Debugging print statement
+    st.write("Generated Workflow:", generated_workflow)
 
     # 6. Load JSON and Post-process to ensure 'condition' is an array and 'depends_on' is valid
     try:
@@ -337,8 +348,7 @@ def generate_workflow(user_request: str):
         return tasks, agents
 
     except json.JSONDecodeError as e:
-        print(f"Error loading or post-processing JSON: {e}")
-        st.error(f"Failed to generate tasks. Invalid JSON: {e}")
+        st.error(f"Error loading or post-processing JSON: {e}")
         return None, None
 
 def projects_main():
@@ -379,18 +389,38 @@ def projects_main():
                 projects.append(new_project)
                 save_projects(projects)
                 st.success(f"Project '{new_project}' added successfully!")
-                # Remove st.rerun() here
             elif new_project in projects:
                 st.warning(f"Project '{new_project}' already exists.")
             else:
                 st.warning("Please enter a project name.")
 
+    # Option to delete a project
+    with st.expander("🗑️ Delete Project"):
+        project_to_delete = st.selectbox("Select Project to Delete", projects)
+        if st.button("Delete Project"):
+            if project_to_delete in projects:
+                projects.remove(project_to_delete)
+                task_file = f'projects/{project_to_delete}_tasks.json'
+                agent_file = f'projects/{project_to_delete}_agents.json'
+                if os.path.exists(task_file):
+                    os.remove(task_file)
+                if os.path.exists(agent_file):
+                    os.remove(agent_file)
+                save_projects(projects)
+                st.success(f"Project '{project_to_delete}' deleted successfully!")
+            else:
+                st.warning("Please select a valid project to delete.")
+
     # Project selection
     selected_project = st.selectbox("🚀 Select Project", projects)
 
     if selected_project:
-        # Load tasks for the selected project
+        # Load tasks and agents for the selected project
         tasks = load_tasks(selected_project)
+        if 'agents' not in st.session_state:
+            st.session_state.agents = load_agents(selected_project)
+        else:
+            st.session_state.agents.update(load_agents(selected_project))
 
         # Option to auto-generate tasks
         st.subheader("🤖 Auto-Generate Tasks")
@@ -400,13 +430,10 @@ def projects_main():
                 generated_tasks, generated_agents = generate_workflow(user_request)
                 if generated_tasks and generated_agents:
                     tasks.extend(generated_tasks)  # Add generated tasks to existing tasks
-                    # Update agents in session state
-                    if 'agents' not in st.session_state:
-                        st.session_state.agents = {}
-                    st.session_state.agents.update(generated_agents)
+                    st.session_state.agents.update(generated_agents)  # Add generated agents to session state
                     save_tasks(selected_project, tasks)
+                    save_agents(selected_project, st.session_state.agents)
                     st.success("Tasks and agents generated and added to the project!")
-                    # Remove st.rerun() here
                 else:
                     st.error("Failed to generate tasks.")
 
@@ -442,7 +469,6 @@ def projects_main():
                 tasks = [Task(**task) for task in updated_tasks if pd.notna(task['deadline'])]  # Create Task objects from dictionaries
                 save_tasks(selected_project, tasks)
                 st.success("Tasks updated successfully!")
-                # Remove st.rerun() here
         else:
             st.info(f"No tasks found for {selected_project}. Add a task to get started!")
 
@@ -461,8 +487,6 @@ def projects_main():
                 task_priority = st.selectbox("Priority", ["Low", "Medium", "High"])
 
             # Dynamic agent selection
-            if 'agents' not in st.session_state:
-                st.session_state.agents = {}
             agents = st.session_state.agents
             agent_names = list(agents.keys())
             task_agent = st.selectbox("AI Agent", ["None"] + agent_names)
@@ -482,15 +506,12 @@ def projects_main():
                     tasks.append(task)
                     save_tasks(selected_project, tasks)
                     st.success("Task added successfully!")
-                    # Remove st.rerun() here
                 else:
                     st.error("Invalid deadline. Please select a valid date and time.")
 
         # Define AI agents
         st.subheader("🧑 AI Agents")
         # Use agents from session state
-        if 'agents' not in st.session_state:
-            st.session_state.agents = {}
         agents = st.session_state.agents
         agent_names = list(agents.keys())
         num_agents = st.number_input("Number of Agents", min_value=len(agent_names), max_value=10, value=len(agent_names))
@@ -502,9 +523,19 @@ def projects_main():
                 agents[agent_name] = {'model': 'mistral:7b-instruct-v0.2-q8_0', 'agent_type': 'None', 'metacognitive_type': 'None', 'voice_type': 'None', 'corpus': 'None', 'temperature': 0.7, 'max_tokens': 4000}
                 agent_names.append(agent_name)
 
+        new_agent_names = []
         for agent_name in agent_names:
             with st.expander(f"🧑 {agent_name} Parameters"):
+                new_agent_name = st.text_input(f"{agent_name} Name", value=agent_name, key=f"{agent_name}_name")
+                new_agent_names.append(new_agent_name)
                 agents[agent_name] = define_agent_block(agent_name, agents[agent_name])
+
+        # Save the renamed agents
+        if st.button("Save Agent Names"):
+            renamed_agents = {new_name: agents[old_name] for new_name, old_name in zip(new_agent_names, agent_names)}
+            st.session_state.agents = renamed_agents
+            save_agents(selected_project, renamed_agents)
+            st.success("Agent names saved successfully!")
 
         # Run AI agents on tasks
         if st.button("🏃‍♂️🏃‍♀️💨 Run AI Agents on Tasks"):
@@ -542,7 +573,6 @@ def projects_main():
                 tasks = [task for task in new_tasks if pd.notna(task['deadline'])]
                 save_tasks(selected_project, tasks)
                 st.success("Tasks imported successfully!")
-                # Remove st.rerun() here
             except json.JSONDecodeError:
                 st.error("Error: Invalid JSON file. Please upload a valid JSON file.")
 
