@@ -13,11 +13,14 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
-from prompts import get_agent_prompt, get_metacognitive_prompt, manage_prompts
 from web_to_corpus import WebsiteCrawler
 import shutil
 import tiktoken
-from chat_interface import chat_interface  # Import the chat_interface function
+from chat_interface import chat_interface
+from brainstorm import brainstorm_session
+
+def manage_prompts_interface():
+    manage_prompts()
 
 def list_local_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
@@ -460,7 +463,7 @@ def files_tab():
             if file.endswith('.pdf'):
                 st.button("📥", key=f"download_{file}")
             else:
-                st.button("👁️", key=f"view_{file}")
+                st.button("👀", key=f"view_{file}")
         with col3:
             if not file.endswith('.pdf'):
                 st.button("✏️", key=f"edit_{file}")
@@ -662,3 +665,7 @@ def get_corpus_context_from_db(corpus_folder, corpus_name, query):
     db = Chroma(persist_directory=corpus_path, embedding_function=embeddings)
     results = db.similarity_search(query, k=3)
     return "\n".join([doc.page_content for doc in results])
+
+def brainstorm_interface():
+    brainstorm_session()
+

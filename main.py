@@ -1,3 +1,4 @@
+# main.py
 import os
 import json
 import queue
@@ -7,8 +8,7 @@ from model_tests import *
 from ui_elements import (
     model_comparison_test, contextual_response_test, feature_test,
     list_local_models, pull_models, show_model_details, remove_model_ui,
-    vision_comparison_test, chat_interface, update_models, files_tab, manage_prompts,
-    manage_corpus
+    vision_comparison_test, chat_interface, update_models, files_tab
 )
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
@@ -20,6 +20,8 @@ import pandas as pd
 import time
 from visjs_component import visjs_graph
 from datetime import datetime, timedelta
+from prompts import manage_prompts  # Import the manage_prompts function
+from brainstorm import brainstorm_interface  # Import the brainstorm_interface function
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -27,8 +29,9 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 # Define constants
 SIDEBAR_SECTIONS = {
     "⚙️ Workflow": [
-        ("🚀 Manage Projects", "Manage Projects"),
-        ("✨ Manage Agent Prompts", "Prompts"),
+        ("🧠 Brainstorm", "Brainstorm"),
+        ("🚀 Projects", "Manage Projects"),
+        ("✨ Prompts", "Prompts"),
     ],
     "🗄 Document": [
         ("🗂 Manage Corpus", "Manage Corpus"),
@@ -157,11 +160,8 @@ def handle_user_input(step, task_data):
     return True  # Indicate that user input is complete
 
 def main_content():
-    # Initialize bm_tasks if it doesn't exist
     if 'bm_tasks' not in st.session_state:
         st.session_state.bm_tasks = []
-
-    """Display the main content based on the selected test."""
     if st.session_state.selected_test == "Model Comparison by Response Quality":
         model_comparison_test()
     elif st.session_state.selected_test == "Contextual Response Test by Model":
@@ -189,13 +189,15 @@ def main_content():
     elif st.session_state.selected_test == "Files":
         files_tab()
     elif st.session_state.selected_test == "Prompts":
-        manage_prompts()
-    elif st.session_state.selected_test == "Manage Corpus":  # Add condition for Manage Corpus
+        manage_prompts()  # Call the manage_prompts function directly
+    elif st.session_state.selected_test == "Manage Corpus":
         manage_corpus()
-    elif st.session_state.selected_test == "Manage Projects":  # Add condition for Manage Projects
+    elif st.session_state.selected_test == "Manage Projects":
         projects_main()
+    elif st.session_state.selected_test == "Brainstorm":
+        brainstorm_interface()  # Call the brainstorm_interface function
     else:
-        display_welcome_message()  # Call the imported function
+        display_welcome_message()
 
 def main():
     initialize_session_state()

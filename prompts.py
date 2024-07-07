@@ -31,12 +31,15 @@ def get_agent_prompt():
 def get_metacognitive_prompt():
     return load_prompts("metacognitive")
 
-def get_voice_prompt(): # Add function to get voice prompts
+def get_voice_prompt():
     return load_prompts("voice")
 
+def get_identity_prompt():
+    return load_prompts("identity")
+
 def manage_prompts():
-    st.header("✨ Manage Prompts")
-    prompt_types = ["Agent", "Metacognitive", "Voice"] # Add "Voice" to prompt types
+    st.header("✨ Prompts")
+    prompt_types = ["Agent", "Metacognitive", "Voice", "Identity"]  # Added "Identity" to the list
     selected_prompt_type = st.selectbox("✨ Select Prompt Type:", prompt_types)
 
     if selected_prompt_type == "Agent":
@@ -45,14 +48,19 @@ def manage_prompts():
     elif selected_prompt_type == "Metacognitive":
         prompts = get_metacognitive_prompt()
         prompt_type = "metacognitive"
-    else: # Handle "Voice" prompt type
+    elif selected_prompt_type == "Voice":
         prompts = get_voice_prompt()
         prompt_type = "voice"
+    else:  # Handle "Identity" prompt type
+        prompts = get_identity_prompt()
+        prompt_type = "identity"
 
     # Use st.markdown to inject CSS for 100% width
     st.markdown("""
         <style>
-        div[data-testid="stDataEditor"] {
+        .dvn-stack, 
+        .dvn-stack > div, 
+        .stDataFrame, div[data-testid="stDataEditor"] {
             width: 100% !important;
         }
         </style>
@@ -63,7 +71,7 @@ def manage_prompts():
     if edited_prompts != prompts:
         save_prompts(prompt_type, edited_prompts)
         st.success(f"{selected_prompt_type} prompts saved successfully!")
-        st.experimental_rerun()
+        st.rerun()
 
     # Download prompts
     st.download_button(
