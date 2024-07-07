@@ -3,7 +3,7 @@
     {
       "name": "Mia the Creative",
       "emoji": "\ud83d\udc31",
-      "model": "dolphin-llama3:8b-v2.9-fp16",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -20,7 +20,7 @@
     {
       "name": "Codi the Coder",
       "emoji": "\ud83e\udd16",
-      "model": "deepseek-coder:6.7b-instruct-fp16",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -37,7 +37,7 @@
     {
       "name": "Rev the Reviewer",
       "emoji": "\ud83e\udd89",
-      "model": "mistral:7b-instruct-v0.2-q8_0",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -54,7 +54,7 @@
     {
       "name": "Otto the Optimizer",
       "emoji": "\ud83d\udc19",
-      "model": "mistral:7b-instruct-v0.2-fp16",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -71,7 +71,7 @@
     {
       "name": "Ham the Joker",
       "emoji": "\ud83d\udc39",
-      "model": "llama2:13b-chat-q8_0",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -88,7 +88,7 @@
     {
       "name": "Fin the Consultant",
       "emoji": "\ud83e\udd8a",
-      "model": "llama3:8b-instruct-fp16",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -105,7 +105,7 @@
     {
       "name": "Sam the Storyteller",
       "emoji": "\ud83e\uddda",
-      "model": "llama2:13b-chat-q8_0",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
@@ -122,7 +122,7 @@
     {
       "name": "Doc the Documenter",
       "emoji": "\ud83d\udc3f",
-      "model": "nous-hermes2:10.7b-solar-fp16",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "Analyst",
@@ -139,7 +139,7 @@
     {
       "name": "Van the Writer",
       "emoji": "\ud83d\udc30",
-      "model": "nous-hermes2:10.7b-solar-fp16",
+      "model": "mistral:instruct",
       "api_key": "ollama",
       "base_url": "http://localhost:11434/v1",
       "agent_type": "None",
