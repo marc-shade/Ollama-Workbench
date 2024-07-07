@@ -3,7 +3,6 @@ bs4
 datetime
 fpdf
 langchain
-langchain_community
 matplotlib
 ollama
 pandas
@@ -13,5 +12,4 @@ selenium
 streamlit
 streamlit-extras
 tiktoken
-visjs_component
 webdriver-manager
