@@ -121,7 +121,7 @@ streamlit run main.py
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.26.14 AM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.14.03 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.41.15 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.41.15 AM-2-1.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.18 AM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.24 AM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.45 AM-2.png" />
