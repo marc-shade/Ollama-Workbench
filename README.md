@@ -2,7 +2,7 @@
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
 
-This application is a comprehensive tool for managing and testing various models from the Ollama library. With features ranging from model comparison to vision testing, Ollama Workbench provides an intuitive interface for users to evaluate and maintain their machine learning models. It also features a chat interface for real-time interaction with selected models, including a workspace for saving and managing code and text generated during chat sessions.
+Ollama Workbench is a powerful and versatile platform for managing, testing, and leveraging various AI models from the Ollama library. It goes beyond simple model testing, offering advanced features for creating highly tunable AI agents, orchestrating complex workflows, and facilitating collaborative brainstorming sessions. With an intuitive interface, Ollama Workbench empowers users to harness the full potential of their machine learning models in creative and productive ways.
 
 **Table of Contents**
 - [Features](#features)
@@ -14,26 +14,27 @@ This application is a comprehensive tool for managing and testing various models
 
 ## Features
 
-### 💬 Chat
-Engage in a real-time chat with a selected model, enhanced with various features:
-- 🧑‍🔧 **Agent Types:** Choose from a variety of predefined agent types, each with specific prompts to guide the model's behavior (e.g., Coder, Analyst, Creative Writer). You can also create and manage your own custom agent type prompts.
-- 🧠 **Metacognitive Types:** Enhance the model's reasoning abilities by selecting a metacognitive type (e.g., Visualization of Thought, Chain of Thought). You can also create and manage your own custom metacognitive type prompts.
-- 🗣️ **Voice Types:** Set the tone and style of the model's responses (e.g., Sarcastic, Formal, Storyteller). You can also create and manage your own custom voice type prompts.
-- 📚 **Corpus Integration:** Load a corpus of text from the 'Files' section to provide contextual information to the model, improving its responses.
-- 🛠️ **Advanced Settings:** Fine-tune the model's output by adjusting parameters like temperature, max tokens, presence penalty, and frequency penalty.
-- 📜 **Workspace:** Save and manage code snippets and other text generated during your chat sessions.
-- 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
+### 💬 Chat and Advanced Agent Interaction
+Engage in sophisticated interactions with AI models through a feature-rich chat interface:
+- 🧑‍🔧 **Customizable Agent Types:** Choose from pre-defined agent types or create your own, each with specific prompts to guide the model's behavior (e.g., Coder, Analyst, Creative Writer).
+- 🧠 **Metacognitive Enhancements:** Boost the model's reasoning abilities with selectable metacognitive types (e.g., Visualization of Thought, Chain of Thought).
+- 🗣️ **Voice and Personality Customization:** Tailor the tone and style of the model's responses with customizable voice types.
+- 📚 **Dynamic Corpus Integration:** Enhance model responses by loading relevant text corpora for contextual information.
+- 🛠️ **Fine-grained Control:** Adjust advanced parameters like temperature, max tokens, presence penalty, and frequency penalty for precise output tuning.
+- 📜 **Integrated Workspace:** Efficiently manage and save code snippets and text generated during sessions.
+- 💾 **Session Management:** Save and load entire chat histories and workspaces for seamless workflow continuity.
 
-### ⚙️ Workflow
-- 🧠 **Brainstorm:** Level up with Brainstorm mode! Create a finely-tuned team of agents to brainstorm your ideas and concepts.
-- 🚀 **Projects:** Create, manage, and run projects with multiple AI agents. Each agent can be configured with a specific model, agent type, metacognitive type, voice type, corpus, temperature, and max tokens. You can add tasks to projects, assign them to agents, and run the agents to generate outputs for each task. **You can even enter a plain-english description of your project, and the AI will create tasks, agents, and assign the agents to the tasks for you!**
-- ✨ **Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
+### ⚙️ Advanced Workflows and Collaboration
+- 🧠 **Brainstorm Mode:** Create and manage teams of specialized AI agents for collaborative ideation and problem-solving.
+- 🚀 **Project Management:** Develop, manage, and execute complex projects with multiple AI agents. Configure each agent with specific models, types, and parameters.
+- 🤖 **AI-Assisted Project Planning:** Generate tasks, assign agents, and create project structures using natural language descriptions.
+- ✨ **Custom Prompt Management:** Create, edit, and manage custom prompts for various agent types, enabling highly specialized AI behaviors.
 
-### 🗄️ Document
-- 🗂️ **Manage Corpus:** Create, edit, and delete corpus from files.
-- 📂 **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
-- 🕸️ **Web to Corpus File**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
-- ✔️ **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file. The output will stream in real-time in the UI.
+### 🗄️ Document and Knowledge Management
+- 🗂️ **Corpus Management:** Create, edit, and curate text corpora to enhance AI model knowledge and context.
+- 📂 **File Management System:** Comprehensive system for uploading, viewing, editing, and organizing files used across the platform.
+- 🕸️ **Web Content Integration:** Convert web content into usable corpora for analysis or model training.
+- ✔️ **Intelligent Repository Analysis:** Analyze Python repositories to generate documentation, debug reports, and README files with real-time UI feedback.
 
 ### 🛠️ Maintain
 - 📋 **List Local Models:** View a list of all locally available models, including their size and last modified date.
@@ -83,16 +84,20 @@ After installation, you can start the application using the following command:
 ```bash
 streamlit run main.py
 ```
-### Using the Sidebar
-- Navigate through different functionalities using the sidebar.
-- Select the desired test, chat, document, workflow, or maintenance function.
+
+### Navigating the Interface
+- Use the sidebar to access different functionalities.
+- Explore various sections: Chat, Workflow, Document, Maintenance, and Testing.
 
 ### Chat
 - **Chat**: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
+- **Custom Agent Creation:** Design specialized agents with unique combinations of agent types, metacognitive abilities, and voice characteristics.
 - **Workspace**: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
 - **Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
 
 ### Workflow
+- **Brainstorm Mode:** Create teams of AI agents for collaborative problem-solving.
+- **Workflow Customization:** Create, save, and load custom workflows for repeated use.
 - **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
 - **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
 
@@ -122,6 +127,10 @@ streamlit run main.py
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.29 PM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.34 PM-2.png" />
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.15.41 PM-2.png" />
+
+### Upcoming Features
+- **Expanded Workflow Library:** Look forward to a growing collection of pre-designed workflows for various tasks and industries.
+- **Prompt Packs:** Soon, you'll be able to purchase specialized prompt packs to enhance your AI agents' capabilities in specific domains.
 
 ### Contributing
 Contributions are welcome! Please follow these steps to contribute:
