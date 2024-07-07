@@ -14,3 +14,4 @@ streamlit-extras
 tiktoken
 webdriver-manager
 autogen
+pyautogen
