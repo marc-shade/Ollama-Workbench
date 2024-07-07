@@ -20,9 +20,9 @@ def display_welcome_message():
             - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
 
             #### ⚙️ Workflow
+            - 🧠 **Brainstorm:** Engage in interactive brainstorming sessions with multiple AI agents, each with unique roles and perspectives.
             - 🚀 **Manage Projects:** Create, edit, delete, import, and export projects and tasks. Assign AI agents to tasks and auto-generate responses.
             - ✨ **Manage Agent Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type.
-
             #### 🗄️ Document
             - 🗂️ **Manage Corpus:** Create, edit, and delete corpus from files.
             - 📂 **Manage Files**: Upload, view, edit, and delete files.
