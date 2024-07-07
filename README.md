@@ -119,14 +119,20 @@ streamlit run main.py
 - **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
 - **Vision Model Comparison**: Compare vision models by uploading an image.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.39 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.54 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.12.59 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.14 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.22 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.29 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.13.34 PM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/Screenshot-2024-06-26-at-1.15.41 PM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.26.14 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.14.03 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.41.15 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.18 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.24 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.45 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.54 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.58.22 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.58.46 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.59.18 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.00.19 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.00.53 AM-2.png" />
+<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.03.32 AM-2.png" />
+
 
 ### Upcoming Features
 - **Expanded Workflow Library:** Look forward to a growing collection of pre-designed workflows for various tasks and industries.
