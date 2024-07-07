@@ -20,8 +20,9 @@ import pandas as pd
 import time
 from visjs_component import visjs_graph
 from datetime import datetime, timedelta
-from prompts import manage_prompts  # Import the manage_prompts function
-from brainstorm import brainstorm_interface  # Import the brainstorm_interface function
+from prompts import manage_prompts
+from brainstorm import brainstorm_interface
+from manage_corpus import manage_corpus
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
