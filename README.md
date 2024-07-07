@@ -14,7 +14,7 @@ This application is a comprehensive tool for managing and testing various models
 
 ## Features
 
-### 🧑 Chat
+### 💬 Chat
 Engage in a real-time chat with a selected model, enhanced with various features:
 - 🧑‍🔧 **Agent Types:** Choose from a variety of predefined agent types, each with specific prompts to guide the model's behavior (e.g., Coder, Analyst, Creative Writer). You can also create and manage your own custom agent type prompts.
 - 🧠 **Metacognitive Types:** Enhance the model's reasoning abilities by selecting a metacognitive type (e.g., Visualization of Thought, Chain of Thought). You can also create and manage your own custom metacognitive type prompts.
@@ -25,8 +25,9 @@ Engage in a real-time chat with a selected model, enhanced with various features
 - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
 
 ### ⚙️ Workflow
-- 🚀 **Manage Projects:** Create, manage, and run projects with multiple AI agents. Each agent can be configured with a specific model, agent type, metacognitive type, voice type, corpus, temperature, and max tokens. You can add tasks to projects, assign them to agents, and run the agents to generate outputs for each task. **You can even enter a plain-english description of your project, and the AI will create tasks, agents, and assign the agents to the tasks for you!**
-- ✨ **Manage Agent Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
+- 🧠 **Brainstorm:** Level up with Brainstorm mode! Create a finely-tuned team of agents to brainstorm your ideas and concepts.
+- 🚀 **Projects:** Create, manage, and run projects with multiple AI agents. Each agent can be configured with a specific model, agent type, metacognitive type, voice type, corpus, temperature, and max tokens. You can add tasks to projects, assign them to agents, and run the agents to generate outputs for each task. **You can even enter a plain-english description of your project, and the AI will create tasks, agents, and assign the agents to the tasks for you!**
+- ✨ **Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
 
 ### 🗄️ Document
 - 🗂️ **Manage Corpus:** Create, edit, and delete corpus from files.
