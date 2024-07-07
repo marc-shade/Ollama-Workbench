@@ -51,6 +51,12 @@ Engage in sophisticated interactions with AI models through a feature-rich chat 
 
 ## Installation
 
+If you don't have Ollama Server installed, you can run install_ollama.sh and you'll get the best models for working with all the JSON format needed for agents and workflows to work properly.
+```bash
+cd Ollama-Workbench
+sh install_ollama.sh
+```
+
 Create virtual environment (optional but nice):
 ```bash
 conda create --name ollamaworkbench python=3.11
