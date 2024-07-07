@@ -1,0 +1,8 @@
+{
+  "name": "Data Analyst",
+  "capabilities": ["data_analysis", "statistics"],
+  "prompts": {
+    "analyze_data": "Analyze the following data and provide basic statistics like mean, median, and standard deviation:\n{data}"
+  },
+  "model": "mistral:instruct"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Data Extractor",
+  "capabilities": ["data_extraction", "csv"],
+  "prompts": {
+    "extract_data": "Extract the data from the CSV file at: {file_path}"
+  },
+  "model": "mistral:instruct"
+}

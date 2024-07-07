@@ -1,0 +1,8 @@
+{
+  "name": "Report Writer",
+  "capabilities": ["report_generation"],
+  "prompts": {
+    "generate_report": "Generate a report summarizing the following analysis results:\n{analysis_results}"
+  },
+  "model": "mistral:instruct"
+}
