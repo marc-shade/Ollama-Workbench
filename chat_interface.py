@@ -12,7 +12,7 @@ from files_management import files_tab  # Import from files_management.py
 from streamlit_extras.bottom_container import bottom  # Correct import
 
 def chat_interface():
-    st.header("🧑 Chat With a Custom Agent")
+    st.header("💬 Chat")
 
     # Initialize session state variables
     if "chat_history" not in st.session_state:

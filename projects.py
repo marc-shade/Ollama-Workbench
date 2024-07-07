@@ -388,7 +388,7 @@ def projects_main():
             if new_project and new_project not in projects:
                 projects.append(new_project)
                 save_projects(projects)
-                st.success(f"Project '{new_project}' added successfully!")
+                st.success(f"🟢 Project '{new_project}' added successfully!")
             elif new_project in projects:
                 st.warning(f"Project '{new_project}' already exists.")
             else:
@@ -407,7 +407,7 @@ def projects_main():
                 if os.path.exists(agent_file):
                     os.remove(agent_file)
                 save_projects(projects)
-                st.success(f"Project '{project_to_delete}' deleted successfully!")
+                st.success(f"🟢 Project '{project_to_delete}' deleted successfully!")
             else:
                 st.warning("Please select a valid project to delete.")
 
@@ -433,7 +433,7 @@ def projects_main():
                     st.session_state.agents.update(generated_agents)  # Add generated agents to session state
                     save_tasks(selected_project, tasks)
                     save_agents(selected_project, st.session_state.agents)
-                    st.success("Tasks and agents generated and added to the project!")
+                    st.success("🟢 Tasks and agents generated and added to the project!")
                 else:
                     st.error("Failed to generate tasks.")
 
@@ -470,7 +470,7 @@ def projects_main():
                     )
                     tasks.append(task)
                     save_tasks(selected_project, tasks)
-                    st.success("Task added successfully!")
+                    st.success("🟢 Task added successfully!")
                 else:
                     st.error("Invalid deadline. Please select a valid date and time.")
 
@@ -506,7 +506,7 @@ def projects_main():
             if updated_tasks != tasks:
                 tasks = [Task(**task) for task in updated_tasks if pd.notna(task['deadline'])]  # Create Task objects from dictionaries
                 save_tasks(selected_project, tasks)
-                st.success("Tasks updated successfully!")
+                st.success("🟢 Tasks updated successfully!")
         else:
             st.info(f"No tasks found for {selected_project}. Add a task to get started!")
 
@@ -532,11 +532,11 @@ def projects_main():
                 agents[agent_name] = define_agent_block(agent_name, agents[agent_name])
 
         # Save the renamed agents
-        if st.button("Save Agent Names"):
+        if st.button("🧑 Save Agent Settings"):
             renamed_agents = {new_name: agents[old_name] for new_name, old_name in zip(new_agent_names, agent_names)}
             st.session_state.agents = renamed_agents
             save_agents(selected_project, renamed_agents)
-            st.success("Agent names saved successfully!")
+            st.success("🟢 Agent settings saved!")
 
         # Run AI agents on tasks
         if st.button("🏃‍♂️🏃‍♀️💨 Run AI Agents on Tasks"):
@@ -573,7 +573,7 @@ def projects_main():
                     task['deadline'] = pd.to_datetime(task['deadline'], errors='coerce')
                 tasks = [task for task in new_tasks if pd.notna(task['deadline'])]
                 save_tasks(selected_project, tasks)
-                st.success("Tasks imported successfully!")
+                st.success("🟢 Tasks imported successfully!")
             except json.JSONDecodeError:
                 st.error("Error: Invalid JSON file. Please upload a valid JSON file.")
 

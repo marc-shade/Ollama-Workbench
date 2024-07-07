@@ -2,6 +2,12 @@
 import streamlit as st
 import os
 
+def get_corpus_options():
+    corpus_folder = "corpus"
+    if not os.path.exists(corpus_folder):
+        os.makedirs(corpus_folder)
+    return [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
+
 def files_tab():
     st.subheader("📂 Files")
     files_folder = "files"
@@ -18,7 +24,7 @@ def files_tab():
             if file.endswith('.pdf'):
                 st.button("📥", key=f"download_{file}")
             else:
-                st.button("👁️", key=f"view_{file}")
+                st.button("👀", key=f"view_{file}")
         with col3:
             if not file.endswith('.pdf'):
                 st.button("✏️", key=f"edit_{file}")
@@ -44,7 +50,7 @@ def files_tab():
                 if st.button("Save Changes", key=f"save_{file}"):
                     with open(file_path, "w", encoding='utf-8') as f:
                         f.write(new_content)
-                    st.success(f"Changes saved to {file}")
+                    st.success(f"🟢 Changes saved to {file}")
             except UnicodeDecodeError:
                 st.error(f"Unable to decode file {file}. It may be a binary file.")
         
@@ -70,7 +76,7 @@ def files_tab():
         
         if st.session_state.get(f"delete_{file}", False):
             os.remove(file_path)
-            st.success(f"File {file} deleted.")
+            st.success(f"🟢 File {file} deleted.")
             st.experimental_rerun()
     
 
