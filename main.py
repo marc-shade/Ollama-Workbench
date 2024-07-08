@@ -1,60 +1,42 @@
 # main.py
-import os
-import json
-import queue
 import streamlit as st
-from ollama_utils import *
-from model_tests import *
-from ui_elements import (
-    model_comparison_test, contextual_response_test, feature_test,
-    list_local_models, pull_models, show_model_details, remove_model_ui,
-    vision_comparison_test, chat_interface, update_models, files_tab
-)
-from repo_docs import main as repo_docs_main
-from web_to_corpus import main as web_to_corpus_main
+import sys
+import os
+from streamlit_option_menu import option_menu
 from streamlit_extras.buy_me_a_coffee import button
-from welcome import display_welcome_message
-from projects import projects_main, Task
-import threading
-import pandas as pd
-import time
-from visjs_component import visjs_graph
-from datetime import datetime, timedelta
-from prompts import manage_prompts
-from brainstorm import brainstorm_interface
-from manage_corpus import manage_corpus
+import json
+from welcome import show_welcome
+import sqlite3
 
-# Set page config for wide layout
-st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
+# Ensure the current working directory is the root of the project
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(current_dir, 'leads'))
+sys.path.append(os.path.join(current_dir, 'onboarding'))
+sys.path.append(os.path.join(current_dir, 'domains'))
+sys.path.append(os.path.join(current_dir, 'task_management'))
+sys.path.append(os.path.join(current_dir, 'prompts'))
 
-# Define constants
-SIDEBAR_SECTIONS = {
-    "⚙️ Workflow": [
-        ("🧠 Brainstorm", "Brainstorm"),
-        ("🚀 Projects", "Manage Projects"),
-        ("✨ Prompts", "Prompts"),
-    ],
-    "🗄 Document": [
-        ("🗂 Manage Corpus", "Manage Corpus"),
-        ("📂 Manage Files", "Files"),
-        ("🕸️ Web to Corpus File", "Web to Corpus File"),
-        ("✔️ Repository Analyzer", "Repository Analyzer"),
-    ],
-    "🛠️ Maintain": [
-        ("📋 List Local Models", "List Local Models"),
-        ("🦙 Show Model Information", "Show Model Information"),
-        ("⬇ Pull a Model", "Pull a Model"),
-        ("🗑️ Remove a Model", "Remove a Model"),
-        ("🔄 Update Models", "Update Models"),
-    ],
-    "📊 Test": [
-        ("🧪 Model Feature Test", "Model Feature Test"),
-        ("🎯 Model Comparison by Response Quality", "Model Comparison by Response Quality"),
-        ("💬 Contextual Response Test by Model", "Contextual Response Test by Model"),
-        ("👁️ Vision Model Comparison", "Vision Model Comparison"),
-    ],
+# Set page config before any other Streamlit commands
+st.set_page_config(page_title="TeamWork", page_icon="🐴", layout="wide")
+
+# Import the necessary functions from each script
+from lead_generator import run_lead_generator
+from onboarding_workflow import run_onboarding_workflow
+from check_domain import run_domain_checker
+from domain_search import run_domain_search
+from task_management import run_task_management
+from prompts.weekly_prompt import run_weekly_prompt
+from prompts.agent_builder import run_agent_builder
+from website_critique import run_website_critique
+
+custom_css = """
+<style>
+body, h1, h2, h3, h4, h5, h6, p {
+    font-family: Helvetica, sans-serif!important;
+    font-size: 18px;
 }
-
+</style>
+"""
 
 def check_secret_key(file_path, expected_key):
     if os.path.exists(file_path):
@@ -63,38 +45,172 @@ def check_secret_key(file_path, expected_key):
             return data.get('secret_key') == expected_key
     return False
 
+def get_file_size(file_path):
+    """Get the size of a file in a human-readable format."""
+    if os.path.exists(file_path):
+        size_bytes = os.path.getsize(file_path)
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size_bytes < 1024.0:
+                return f"{size_bytes:.2f} {unit}"
+            size_bytes /= 1024.0
+    return "File not found"
 
-def initialize_session_state():
-    """Initialize session state variables if they don't exist."""
-    if 'selected_test' not in st.session_state:
-        st.session_state.selected_test = None
-    if "selected_models" not in st.session_state:
-        st.session_state.selected_models = []
-    if "selected_model" not in st.session_state:
-        st.session_state.selected_model = None
-    if 'bm_tasks' not in st.session_state:
-        st.session_state.bm_tasks = []
+def get_db_size(db_path):
+    """Get the size of a SQLite database file."""
+    if os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()")
+        size_bytes = cursor.fetchone()[0]
+        conn.close()
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size_bytes < 1024.0:
+                return f"{size_bytes:.2f} {unit}"
+            size_bytes /= 1024.0
+    return "Database not found"
 
+def reset_caches_and_databases():
+    st.title("🔄 Reset Caches and Databases")
+    st.write("Select the caches and databases you want to reset:")
 
-def create_sidebar():
-    """Create and populate the sidebar."""
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Lead Generator Cache
+        config_size = get_file_size('config.json')
+        reset_lead_generator = st.checkbox(f"Lead Generator Cache ({config_size})")
+
+        # Website Critique Database
+        website_critique_size = get_db_size('website_critique.db')
+        reset_website_critique = st.checkbox(f"Website Critique Database ({website_critique_size})")
+
+        # Weekly Prompt Database
+        weekly_prompt_size = get_db_size('prompts.db')
+        reset_weekly_prompt = st.checkbox(f"Weekly Prompt Database ({weekly_prompt_size})")
+
+        # Agent Builder Database
+        agent_builder_size = get_db_size('agent_prompts.db')
+        reset_agent_builder = st.checkbox(f"Agent Builder Database ({agent_builder_size})")
+
+    with col2:
+        # Onboarding Workflow Cache
+        onboarding_size = get_file_size('onboarding/config.json')
+        reset_onboarding = st.checkbox(f"Onboarding Workflow Cache ({onboarding_size})")
+
+        # Domain Search Cache
+        domain_search_size = get_file_size('domains/config.json')
+        reset_domain_search = st.checkbox(f"Domain Search Cache ({domain_search_size})")
+
+        # Task Management Database (in-memory, so no size)
+        reset_task_management = st.checkbox("Task Management Database (In-memory)")
+
+        # Streamlit Cache (size not directly accessible)
+        reset_streamlit_cache = st.checkbox("Streamlit Cache (Size not available)")
+
+    if st.button("Reset Selected"):
+        if reset_lead_generator:
+            if os.path.exists('config.json'):
+                os.remove('config.json')
+                st.success("Lead Generator Cache reset.")
+
+        if reset_website_critique:
+            conn = sqlite3.connect('website_critique.db')
+            c = conn.cursor()
+            c.execute("DROP TABLE IF EXISTS critiques")
+            conn.commit()
+            conn.close()
+            st.success("Website Critique Database reset.")
+
+        if reset_weekly_prompt:
+            conn = sqlite3.connect('prompts.db')
+            c = conn.cursor()
+            c.execute("DROP TABLE IF EXISTS prompts")
+            conn.commit()
+            conn.close()
+            st.success("Weekly Prompt Database reset.")
+
+        if reset_agent_builder:
+            conn = sqlite3.connect('agent_prompts.db')
+            c = conn.cursor()
+            c.execute("DROP TABLE IF EXISTS agent_prompts")
+            conn.commit()
+            conn.close()
+            st.success("Agent Builder Database reset.")
+
+        if reset_onboarding:
+            if os.path.exists('onboarding/config.json'):
+                os.remove('onboarding/config.json')
+            st.success("Onboarding Workflow Cache reset.")
+
+        if reset_domain_search:
+            if os.path.exists('domains/config.json'):
+                os.remove('domains/config.json')
+            st.success("Domain Search Cache reset.")
+
+        if reset_task_management:
+            if 'tasks' in st.session_state:
+                del st.session_state['tasks']
+            st.success("Task Management Database reset.")
+
+        if reset_streamlit_cache:
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            st.success("Streamlit Cache cleared.")
+
+        st.success("Selected caches and databases have been reset. Please refresh the page.")
+
+def main():
+    # Initialize the page state
+    if 'selected_page' not in st.session_state:
+        st.session_state.selected_page = 'Welcome'
+
+    # Sidebar navigation
     with st.sidebar:
+        # Style the app title
         st.markdown(
-            '<div style="text-align: left;">'
-            '<h1 class="logo" style="font-size: 50px;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
-            "</div>",
-            unsafe_allow_html=True,
+            """
+            <style>
+            body, h1, h2, h3, h4, h5, h6, p {
+            font-family: Open Sans, Helvetica, Arial, sans-serif!important;
+            }
+            .app-title {
+                font-size: 44px!important; /* Adjust font size as needed */
+                font-family: Open Sans, Helvetica, Arial, sans-serif!important;
+            }
+            .app-title span {
+                color: orange;
+            }
+            </style>
+            <h1 class="app-title">🐴 Team<span>Work</span></h1>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
-        if st.button("💬 Chat", key="button_chat"):
-            st.session_state.selected_test = "Chat"
+        # Create a more visually appealing navigation menu
+        selected = option_menu(
+            menu_title=None,
+            options=["Welcome", "Leads", "Website Critique", "Prompts", "Onboarding", "Domains", "Task Management", "Reset Caches"],
+            icons=["house", "bullseye", "lightbulb", "star", "rocket-takeoff", "globe", "kanban", "arrow-clockwise"],
+            menu_icon="cast",
+            default_index=0,
+            styles={
+                "container": {"padding": "0!important", "background-color": "transparent"},
+                "icon": {"color": "orange", "font-size": "25px"},
+                "nav-link": {"font-size": "16px", "color": "#999", "text-align": "left", "margin": "0px", "--hover-color": "#333"},
+                "nav-link-selected": {"background-color": "#333"},
+                "nav-link": {
+                    "font-size": "16px", 
+                    "color": "#999", 
+                    "text-align": "left", 
+                    "margin": "0px", 
+                    "--hover-color": "#333",
+                    "font-family": "Open Sans, Helvetica, Arial, sans-serif"
+                },
+            }
+        )
 
-        for section, buttons in SIDEBAR_SECTIONS.items():
-            with st.expander(section, expanded=False):
-                for button_text, test_name in buttons:
-                    if st.button(button_text, key=f"button_{test_name.lower().replace(' ', '_')}"):
-                        st.session_state.selected_test = test_name
+        # Update session state with selected page
+        st.session_state.selected_page = selected
 
         # Check if the secret key JSON file exists and has the correct key
         secret_key_file = 'secret_key_off.json'
@@ -119,91 +235,69 @@ def create_sidebar():
                     bg_color="#FF5F5F",
                     font_color="#FFFFFF",
                 )
-            st.markdown('<span style="font-size:17px; font-weight:normal; font-family:Courier;">Find this tool useful? Your support means a lot! Give a donation of $10 or more to remove this notice.</span>',
-                    unsafe_allow_html=True,)
+            st.markdown(
+                '<span style="font-size:17px; font-weight:normal; font-family:Courier;">Find this tool useful? Your support means a lot! Give a donation of $10 or more to remove this notice.</span>',
+                unsafe_allow_html=True,
+            )
 
-# Callback function to update task status in session state
-def update_task_status(task_index, status, result=None):
-    if task_index < len(st.session_state.bm_tasks):
-        st.session_state.bm_tasks[task_index]["status"] = status
-        if result is not None:
-            st.session_state.bm_tasks[task_index]["result"] = result
+    # Main content area
+    selected_page = st.session_state.selected_page
+    if selected_page == "Welcome":
+        show_welcome()
+    elif selected_page == "Leads":
+        run_lead_generator()
+    elif selected_page == "Website Critique":
+        run_website_critique()
+    elif selected_page == "Prompts":
+        submenu = option_menu(
+            menu_title="Prompts",
+            options=["Agent Prompt Builder", "Weekly Prompts"],
+            icons=["robot", "calendar"],
+            menu_icon="star",
+            default_index=0,
+            orientation="horizontal",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#333"},
+                "icon": {"color": "orange", "font-size": "20px"},
+                "nav-link": {"font-size": "14px", "color": "#FFF", "text-align": "center", "margin": "0px", "--hover-color": "#444"},
+                "nav-link-selected": {"background-color": "#444"},
+            }
+        )
 
-def handle_user_input(step, task_data):
-    """Handles user input for a specific task step."""
-    user_input_config = step.get("user_input")
-    if user_input_config:
-        input_type = user_input_config["type"]
-        prompt = user_input_config["prompt"]
+        if submenu == "Weekly Prompts":
+            st.title("🗓️  Weekly Prompts")
+            run_weekly_prompt()
+        elif submenu == "Agent Prompt Builder":
+            st.title("🤖 Agent Prompt Builder")
+            run_agent_builder()
+    elif selected_page == "Onboarding":
+        st.title("🚀 Onboarding Workflow")
+        run_onboarding_workflow()
+    elif selected_page == "Domains":
+        submenu = option_menu(
+            menu_title="Domains",
+            options=["AI-Powered Domain Search", "Domain Name Availability Checker"],
+            icons=["robot", "search"],
+            menu_icon="globe",
+            default_index=0,
+            orientation="horizontal",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#333"},
+                "icon": {"color": "orange", "font-size": "20px"},
+                "nav-link": {"font-size": "14px", "color": "#FFF", "text-align": "center", "margin": "0px", "--hover-color": "#444"},
+                "nav-link-selected": {"background-color": "#444"},
+            }
+        )
 
-        if input_type == "file_path":
-            file_path = st.text_input(prompt, key=f"user_input_{step['agent']}")
-            if file_path:
-                task_data["file_path"] = file_path
-            else:
-                st.warning("Please provide a file path.")
-                return False  # Indicate that user input is not complete
-
-        elif input_type == "options":
-            options = user_input_config.get("options", [])
-            selected_option = st.selectbox(prompt, options, key=f"user_input_{step['agent']}")
-            if selected_option:
-                task_data["selected_option"] = selected_option
-            else:
-                st.warning("Please select an option.")
-                return False  # Indicate that user input is not complete
-
-        elif input_type == "confirmation":
-            if not st.button(prompt, key=f"user_input_{step['agent']}"):
-                st.warning("Task skipped due to unconfirmed user input.")
-                return False  # Indicate that user input is not complete
-
-    return True  # Indicate that user input is complete
-
-def main_content():
-    if 'bm_tasks' not in st.session_state:
-        st.session_state.bm_tasks = []
-    if st.session_state.selected_test == "Model Comparison by Response Quality":
-        model_comparison_test()
-    elif st.session_state.selected_test == "Contextual Response Test by Model":
-        contextual_response_test()
-    elif st.session_state.selected_test == "Model Feature Test":
-        feature_test()
-    elif st.session_state.selected_test == "List Local Models":
-        list_local_models()
-    elif st.session_state.selected_test == "Pull a Model":
-        pull_models()
-    elif st.session_state.selected_test == "Show Model Information":
-        show_model_details()
-    elif st.session_state.selected_test == "Remove a Model":
-        remove_model_ui()
-    elif st.session_state.selected_test == "Vision Model Comparison":
-        vision_comparison_test()
-    elif st.session_state.selected_test == "Chat":
-        chat_interface()
-    elif st.session_state.selected_test == "Update Models":
-        update_models()
-    elif st.session_state.selected_test == "Repository Analyzer":
-        repo_docs_main()
-    elif st.session_state.selected_test == "Web to Corpus File":
-        web_to_corpus_main()
-    elif st.session_state.selected_test == "Files":
-        files_tab()
-    elif st.session_state.selected_test == "Prompts":
-        manage_prompts()  # Call the manage_prompts function directly
-    elif st.session_state.selected_test == "Manage Corpus":
-        manage_corpus()
-    elif st.session_state.selected_test == "Manage Projects":
-        projects_main()
-    elif st.session_state.selected_test == "Brainstorm":
-        brainstorm_interface()  # Call the brainstorm_interface function
-    else:
-        display_welcome_message()
-
-def main():
-    initialize_session_state()
-    create_sidebar()
-    main_content()
+        if submenu == "AI-Powered Domain Search":
+            run_domain_search()
+        elif submenu == "Domain Name Availability Checker":
+            run_domain_checker()
+    elif selected_page == "Task Management":
+        st.title("🗂️ Task Management")
+        run_task_management()
+    elif selected_page == "Reset Caches":
+        reset_caches_and_databases()
 
 if __name__ == "__main__":
     main()
