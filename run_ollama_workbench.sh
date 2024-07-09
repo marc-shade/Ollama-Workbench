@@ -19,7 +19,7 @@ fi
 
 # Set the repository URL and local directory
 REPO_URL="https://github.com/marc-shade/Ollama-Workbench.git"
-LOCAL_DIR="$HOME/ollama_workbench"
+LOCAL_DIR="$HOME/Ollama-Workbench"
 
 # Clone or update the repository
 if [ ! -d "$LOCAL_DIR" ]; then
