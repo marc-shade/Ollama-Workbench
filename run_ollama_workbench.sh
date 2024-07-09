@@ -18,7 +18,7 @@ if ! command_exists git; then
 fi
 
 # Set the repository URL and local directory
-REPO_URL="https://github.com/marc-shade/ollama_workbench.git"
+REPO_URL="https://github.com/marc-shade/Ollama-Workbench.git"
 LOCAL_DIR="$HOME/ollama_workbench"
 
 # Clone or update the repository
