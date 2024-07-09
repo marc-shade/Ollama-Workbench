@@ -30,20 +30,20 @@ else
 fi
 
 # Create and activate virtual environment
-if [ ! -d "$LOCAL_DIR/venv" ]; then
-    python -m venv "$LOCAL_DIR/venv"
-fi
-source "$LOCAL_DIR/venv/bin/activate"
+# if [ ! -d "$LOCAL_DIR/venv" ]; then
+#     python -m venv "$LOCAL_DIR/venv"
+# fi
+# source "$LOCAL_DIR/venv/bin/activate"
 
 # Install or update requirements
 pip install -r "$LOCAL_DIR/requirements.txt"
 
 # Install or update Ollama server (optional, assuming user has Ollama installed)
-if [ -f "$LOCAL_DIR/install_ollama.sh" ]; then
-    bash "$LOCAL_DIR/install_ollama.sh"
-else
-    echo "Ollama installation script not found. Skipping Ollama installation."
-fi
+# if [ -f "$LOCAL_DIR/install_ollama.sh" ]; then
+#     bash "$LOCAL_DIR/install_ollama.sh"
+# else
+#     echo "Ollama installation script not found. Skipping Ollama installation."
+# fi
 
 # Run the Streamlit app
 streamlit run "$LOCAL_DIR/main.py"
