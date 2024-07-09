@@ -8,6 +8,7 @@ matplotlib
 ollama
 pandas
 pdfkit
+psutil
 requests
 selenium
 streamlit
