@@ -21,6 +21,21 @@ from brainstorm import brainstorm_session
 import platform
 import time
 
+RESOURCE_USAGE_FILE = "resource_usage_setting.json"
+
+def save_resource_usage_setting(value):
+    """Save resource usage setting to a JSON file."""
+    with open(RESOURCE_USAGE_FILE, 'w') as f:
+        json.dump({"show_resource_usage": value}, f)
+
+def load_resource_usage_setting():
+    """Load resource usage setting from a JSON file."""
+    if os.path.exists(RESOURCE_USAGE_FILE):
+        with open(RESOURCE_USAGE_FILE, 'r') as f:
+            data = json.load(f)
+            return data.get("show_resource_usage", False)
+    return False
+
 def manage_prompts_interface():
     manage_prompts()
 

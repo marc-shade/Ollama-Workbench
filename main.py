@@ -82,11 +82,15 @@ def initialize_session_state():
 def display_resource_usage_sidebar():
     """Displays resource usage in the sidebar."""
     usage = get_ollama_resource_usage()
-    st.sidebar.markdown("### 🖥️ Resource Usage")
-    st.sidebar.text(f"Status: {usage['status']}")
-    st.sidebar.text(f"CPU Usage: {usage['cpu_usage']}")
-    st.sidebar.text(f"Memory Usage: {usage['memory_usage']}")
-    st.sidebar.text(f"GPU Usage: {usage['gpu_usage']}")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(f"🚦: {usage['status']}")
+    with col2:
+        st.markdown(f"CPU: {usage['cpu_usage']}")
+    with col3:
+        st.markdown(f"RAM: {usage['memory_usage']}")
+    with col4:
+        st.markdown(f": {usage['gpu_usage']}")
 
 def server_monitoring():
     st.header("🖥️ Server Monitoring")
