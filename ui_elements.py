@@ -18,6 +18,8 @@ import shutil
 import tiktoken
 from chat_interface import chat_interface
 from brainstorm import brainstorm_session
+import platform
+import time
 
 def manage_prompts_interface():
     manage_prompts()
@@ -29,7 +31,7 @@ def list_local_models():
     if not models:
         st.write("No local models available.")
         return
-    
+
     # Prepare data for the dataframe
     data = []
     for model in models:
@@ -42,16 +44,24 @@ def list_local_models():
             "Size (GB)": size_gb,
             "Modified At": modified_at
         })
-    
+
     # Create a pandas dataframe
     df = pd.DataFrame(data)
 
-    # Calculate height based on the number of rows
-    row_height = 35  # Set row height
-    height = row_height * len(df) + 35  # Calculate height
-    
     # Display the dataframe with Streamlit
-    st.dataframe(df, use_container_width=True, height=height, hide_index=True)
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    # Add Preload and Keep-Alive controls
+    st.subheader("Model Actions")
+    for model_name in df["Model Name"]:
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button(f"Preload {model_name}"):
+                preload_model(model_name)
+        with col2:
+            keep_alive = st.text_input(f"Keep-Alive for {model_name}", value="", key=f"keep_alive_{model_name}")
+            if st.button(f"Apply Keep-Alive for {model_name}"):
+                apply_model_keep_alive(model_name, keep_alive)
 
 def update_model_selection(selected_models, key):
     """Callback function to update session state during form submission."""
@@ -516,7 +526,7 @@ def files_tab():
         if st.session_state.get(f"delete_{file}", False):
             os.remove(file_path)
             st.success(f"File {file} deleted.")
-            st.experimental_rerun()
+            st.rerun()
     
 
    # File upload section
@@ -526,7 +536,7 @@ def files_tab():
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         st.success(f"File {uploaded_file.name} uploaded successfully!")
-        st.experimental_rerun()
+        st.rerun()
 
 def extract_code_blocks(text):
     # Simple regex to extract code blocks (text between triple backticks)
@@ -593,12 +603,12 @@ def manage_corpus():
             with col2:
                 if st.button("✏️", key=f"rename_corpus_{corpus}"):
                     st.session_state.rename_corpus = corpus
-                    st.experimental_rerun()
+                    st.rerun()
             with col3:
                 if st.button("🗑️", key=f"delete_corpus_{corpus}"):
                     shutil.rmtree(os.path.join(corpus_folder, corpus))
                     st.success(f"Corpus '{corpus}' deleted.")
-                    st.experimental_rerun()
+                    st.rerun()
     else:
         st.write("No existing corpus found.")
 
@@ -611,7 +621,7 @@ def manage_corpus():
                 os.rename(os.path.join(corpus_folder, corpus_to_rename), os.path.join(corpus_folder, new_corpus_name))
                 st.success(f"Corpus renamed to '{new_corpus_name}'")
                 st.session_state.rename_corpus = None
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Please enter a new corpus name.")
 
@@ -627,7 +637,7 @@ def manage_corpus():
         if selected_files and corpus_name:
             create_corpus_from_files(corpus_folder, corpus_name, files_folder, selected_files)
             st.success(f"Corpus '{corpus_name}' created from selected files.")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Please select files and enter a corpus name.")
 
@@ -669,3 +679,94 @@ def get_corpus_context_from_db(corpus_folder, corpus_name, query):
 def brainstorm_interface():
     brainstorm_session()
 
+def server_configuration():
+    st.header("⚙️ Server Configuration")
+
+    # Host/Bind Address
+    st.subheader("Host/Bind Address")
+    host = st.text_input("OLLAMA_HOST", value="127.0.0.1")
+
+    # Allowed Origins
+    st.subheader("Allowed Origins")
+    origins = st.text_input("OLLAMA_ORIGINS", value="127.0.0.1, 0.0.0.0")
+
+    # Model Directory
+    st.subheader("Model Directory")
+    model_dir = st.text_input("OLLAMA_MODELS", value=get_default_model_dir())
+
+    # Global Keep-Alive
+    st.subheader("Global Keep-Alive")
+    global_keep_alive = st.text_input("OLLAMA_KEEP_ALIVE", value="5m")
+
+    # Concurrency Control
+    st.subheader("Concurrency Control")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        max_loaded_models = st.number_input("OLLAMA_MAX_LOADED_MODELS", value=get_default_max_loaded_models(), min_value=1)
+    with col2:
+        num_parallel = st.number_input("OLLAMA_NUM_PARALLEL", value=4, min_value=1)
+    with col3:
+        max_queue = st.number_input("OLLAMA_MAX_QUEUE", value=512, min_value=1)
+
+    # Stop Server Button
+    if st.button("Stop Ollama Server"):
+        stop_server()
+
+    # Apply Settings Button
+    if st.button("Apply Settings"):
+        apply_server_settings(host, origins, model_dir, global_keep_alive, max_loaded_models, num_parallel, max_queue)
+
+    # Manual Restart Button
+    st.info("Click the button below to manually restart the Ollama server with the applied settings.")
+    if st.button("Restart Ollama Server"):
+        start_server()
+
+def server_monitoring():
+    st.header("🖥️ Server Monitoring")
+
+    # Resource Usage
+    st.subheader("Resource Usage")
+    usage = get_ollama_resource_usage()
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Status", usage["status"])
+    col2.metric("CPU Usage", usage["cpu_usage"])
+    col3.metric("Memory Usage", usage["memory_usage"])
+    col4.metric("GPU Usage", usage["gpu_usage"])
+
+    # Live Log Stream
+    st.subheader("Server Logs (Last 1000 Lines)")
+
+    # Button to refresh the logs
+    if st.button("Refresh Logs"):
+        st.rerun()
+
+    # Display the last 1000 lines of the log file
+    logs = get_server_logs()
+    logs = logs[-1000:]
+    log_text = "".join(logs)
+    st.text_area("Server Logs", value=log_text, height=400, key="server_logs")
+
+def get_default_model_dir():
+    system = platform.system()
+    if system == "Darwin":
+        return os.path.expanduser("~/.ollama/models")
+    elif system == "Linux":
+        return "/usr/share/ollama/.ollama/models"
+    elif system == "Windows":
+        return os.path.join(os.environ["USERPROFILE"], ".ollama", "models")
+    else:
+        return ""
+
+def get_default_max_loaded_models():
+    system = platform.system()
+    if system == "Windows" and platform.machine().endswith("64"):
+        # Windows with Radeon GPUs currently default to 1 model maximum
+        return 1
+    else:
+        # Check for GPUs (assuming NVIDIA for now)
+        try:
+            import GPUtil
+            num_gpus = len(GPUtil.getGPUs())
+            return 3 * num_gpus if num_gpus > 0 else 3
+        except ImportError:
+            return 3  # Default to 3 for CPU

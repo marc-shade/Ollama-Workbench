@@ -77,7 +77,7 @@ def files_tab():
         if st.session_state.get(f"delete_{file}", False):
             os.remove(file_path)
             st.success(f"🟢 File {file} deleted.")
-            st.experimental_rerun()
+            st.rerun()
     
 
    # File upload section
@@ -87,4 +87,4 @@ def files_tab():
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         st.success(f"🟢 File {uploaded_file.name} uploaded successfully!")
-        st.experimental_rerun()
+        st.rerun()

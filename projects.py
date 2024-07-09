@@ -1,3 +1,4 @@
+# projects.py
 import streamlit as st
 import pandas as pd
 import json
@@ -8,7 +9,7 @@ import base64
 from ollama_utils import get_available_models, ollama, call_ollama_endpoint
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import re
-from functools import lru_cache
+from functools import lru_cache  # Import lru_cache
 
 class Task:
     def __init__(self, name, description, deadline=None, priority="Medium", completed=False, agent="None", result=None, task_id=None):
@@ -107,18 +108,18 @@ def get_corpus_context_from_db(corpus_folder, corpus, user_input):
 def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corpus, temperature, max_tokens, previous_responses=[]):
     combined_prompt = ""
     if agent_type != "None":
-        combined_prompt += get_agent_prompt()[agent_type] + "\n\n"
+        combined_prompt += get_agent_prompt()[agent_type] + "\\n\\n"
     if metacognitive_type != "None":
-        combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\n\n"
+        combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\\n\\n"
     if voice_type != "None":
-        combined_prompt += get_voice_prompt()[voice_type] + "\n\n"
+        combined_prompt += get_voice_prompt()[voice_type] + "\\n\\n"
 
     if corpus != "None":
         corpus_context = get_corpus_context_from_db("corpus", corpus, user_input)
-        combined_prompt += f"Context: {corpus_context}\n\n"
+        combined_prompt += f"Context: {corpus_context}\\n\\n"
 
     for i, response in enumerate(previous_responses):
-        combined_prompt += f"Response {i+1}: {response}\n\n"
+        combined_prompt += f"Response {i+1}: {response}\\n\\n"
 
     final_prompt = f"{combined_prompt}User: {user_input}"
 
@@ -161,12 +162,12 @@ class ProjectManagerAgent:
         self.agent_type = agent_type
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.use_teachability = use_teachability
-        self.db_path = db_path
+        # self.use_teachability = use_teachability # Remove if not using Teachability
+        # self.db_path = db_path # Remove if not using Teachability
 
         # Teachability is removed
-        self.teachability = None
-        self.db = None
+        # self.teachability = None
+        # self.db = None
 
     @lru_cache(maxsize=None)
     def generate_workflow(self, user_request: str):
@@ -221,7 +222,7 @@ class ProjectManagerAgent:
         # Teachability context retrieval is removed
         # if self.use_teachability:
         #     context = self.teachability.retrieve_relevant_chunks(user_request, self.db)
-        #     generation_prompt += f"\n\nRelevant context from past interactions:\n{context}"
+        #     generation_prompt += f"\\n\\nRelevant context from past interactions:\\n{context}"
 
         response = ollama.generate(
             model=self.model,
@@ -230,22 +231,22 @@ class ProjectManagerAgent:
                 "num_predict": self.max_tokens,
                 "top_k": 10,
                 "top_p": self.temperature,
-                "stop": ["\n\n"]
+                "stop": ["\\n\\n"]
             }
         )
         generated_workflow = response['response']
 
         generated_workflow = generated_workflow.strip()
         generated_workflow = generated_workflow.replace("'", '"')
-        generated_workflow = re.sub(r"[^\w\s{}\[\]\":,./\-+]+", "", generated_workflow)
+        generated_workflow = re.sub(r"[^\\w\\s{}\\\\\\[\\]\":,./\\-+]+", "", generated_workflow)
 
         if not generated_workflow.startswith("{"):
             generated_workflow = "{" + generated_workflow
         if not generated_workflow.endswith("}"):
             generated_workflow = generated_workflow + "}"
 
-        generated_workflow = re.sub(r"(\s*)'(\w+)'(\s*):", r'\1"\2"\3:', generated_workflow)
-        generated_workflow = re.sub(r"([}\]])(\s*)(?=[{\[\"a-zA-Z])", r"\1,\2", generated_workflow)
+        generated_workflow = re.sub(r"(\\s*)'(\w+)'(\\s*):", r'\1"\2"\3:', generated_workflow)
+        generated_workflow = re.sub(r"([}\]])(\\s*)(?=[{\\\\\\[\\]\"a-zA-Z])", r"\1,\2", generated_workflow)
 
         st.write("Generated Workflow:", generated_workflow)
 
@@ -299,8 +300,8 @@ def initialize_session_state():
             'agent_type': 'Task Planner',
             'temperature': 0.7,
             'max_tokens': 4000,
-            'use_teachability': False,
-            'db_path': './tmp/project_manager_db'
+            # 'use_teachability': False, # Remove if not using Teachability
+            # 'db_path': './tmp/project_manager_db' # Remove if not using Teachability
         }
 
 def projects_main():

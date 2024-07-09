@@ -26,12 +26,12 @@ def manage_corpus():
             with col2:
                 if st.button("✏️", key=f"rename_corpus_{corpus}"):
                     st.session_state.rename_corpus = corpus
-                    st.experimental_rerun()
+                    st.rerun()
             with col3:
                 if st.button("🗑️", key=f"delete_corpus_{corpus}"):
                     shutil.rmtree(os.path.join(corpus_folder, corpus))
                     st.success(f"Corpus '{corpus}' deleted.")
-                    st.experimental_rerun()
+                    st.rerun()
     else:
         st.write("No existing corpus found.")
 
@@ -44,7 +44,7 @@ def manage_corpus():
                 os.rename(os.path.join(corpus_folder, corpus_to_rename), os.path.join(corpus_folder, new_corpus_name))
                 st.success(f"Corpus renamed to '{new_corpus_name}'")
                 st.session_state.rename_corpus = None
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Please enter a new corpus name.")
 
@@ -60,7 +60,7 @@ def manage_corpus():
         if selected_files and corpus_name:
             create_corpus_from_files(corpus_folder, corpus_name, files_folder, selected_files)
             st.success(f"Corpus '{corpus_name}' created from selected files.")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Please select files and enter a corpus name.")
 
