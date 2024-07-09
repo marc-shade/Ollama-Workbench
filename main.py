@@ -8,7 +8,8 @@ from model_tests import *
 from ui_elements import (
     model_comparison_test, contextual_response_test, feature_test,
     list_local_models, pull_models, show_model_details, remove_model_ui,
-    vision_comparison_test, chat_interface, update_models, files_tab
+    vision_comparison_test, chat_interface, update_models, files_tab,
+    server_configuration, server_monitoring
 )
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
@@ -23,6 +24,7 @@ from datetime import datetime, timedelta
 from prompts import manage_prompts
 from brainstorm import brainstorm_interface
 from manage_corpus import manage_corpus
+from ollama_utils import get_ollama_resource_usage
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -46,6 +48,8 @@ SIDEBAR_SECTIONS = {
         ("⬇ Pull a Model", "Pull a Model"),
         ("🗑️ Remove a Model", "Remove a Model"),
         ("🔄 Update Models", "Update Models"),
+        ("⚙️ Server Configuration", "Server Configuration"),
+        ("🖥️ Server Monitoring", "Server Monitoring"),
     ],
     "📊 Test": [
         ("🧪 Model Feature Test", "Model Feature Test"),
@@ -75,6 +79,30 @@ def initialize_session_state():
     if 'bm_tasks' not in st.session_state:
         st.session_state.bm_tasks = []
 
+def display_resource_usage_sidebar():
+    """Displays resource usage in the sidebar."""
+    usage = get_ollama_resource_usage()
+    st.sidebar.markdown("### 🖥️ Resource Usage")
+    st.sidebar.text(f"Status: {usage['status']}")
+    st.sidebar.text(f"CPU Usage: {usage['cpu_usage']}")
+    st.sidebar.text(f"Memory Usage: {usage['memory_usage']}")
+    st.sidebar.text(f"GPU Usage: {usage['gpu_usage']}")
+
+def server_monitoring():
+    st.header("🖥️ Server Monitoring")
+
+    # Add checkbox to enable/disable resource usage display
+    show_resource_usage = st.checkbox("Show Resource Usage in Sidebar", value=st.session_state.get("show_resource_usage", False))
+    st.session_state.show_resource_usage = show_resource_usage
+
+    # Resource Usage
+    st.subheader("Resource Usage")
+    usage = get_ollama_resource_usage()
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Status", usage["status"])
+    col2.metric("CPU Usage", usage["cpu_usage"])
+    col3.metric("Memory Usage", usage["memory_usage"])
+    col4.metric("GPU Usage", usage["gpu_usage"])
 
 def create_sidebar():
     """Create and populate the sidebar."""
@@ -86,14 +114,18 @@ def create_sidebar():
             unsafe_allow_html=True,
         )
 
+        # Display resource usage if enabled
+        if st.session_state.get("show_resource_usage", False):
+            display_resource_usage_sidebar()
+
         st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
-        if st.button("💬 Chat", key="button_chat"):
+        if st.button("💬 Chat", key="sidebar_button_chat"):
             st.session_state.selected_test = "Chat"
 
         for section, buttons in SIDEBAR_SECTIONS.items():
             with st.expander(section, expanded=False):
                 for button_text, test_name in buttons:
-                    if st.button(button_text, key=f"button_{test_name.lower().replace(' ', '_')}"):
+                    if st.button(button_text, key=f"sidebar_button_{test_name.lower().replace(' ', '_')}"):
                         st.session_state.selected_test = test_name
 
         # Check if the secret key JSON file exists and has the correct key
@@ -197,6 +229,10 @@ def main_content():
         projects_main()
     elif st.session_state.selected_test == "Brainstorm":
         brainstorm_interface()  # Call the brainstorm_interface function
+    elif st.session_state.selected_test == "Server Configuration":
+        server_configuration()
+    elif st.session_state.selected_test == "Server Monitoring":
+        server_monitoring()
     else:
         display_welcome_message()
 
