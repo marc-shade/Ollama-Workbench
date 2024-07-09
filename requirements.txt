@@ -4,6 +4,7 @@ chromadb
 datetime
 fpdf
 langchain
+langchain_community
 matplotlib
 ollama
 pandas
