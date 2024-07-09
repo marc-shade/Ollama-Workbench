@@ -83,7 +83,6 @@ conda activate ollamaworkbench
 
 If you don't have Ollama Server installed, you can run install_ollama.sh and you'll get the best models for working with all the JSON format needed for agents and workflows to work properly.
 ```bash
-cd Ollama-Workbench
 sh install_ollama.sh
 ```
 
