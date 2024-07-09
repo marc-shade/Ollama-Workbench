@@ -95,6 +95,11 @@ After installation, you can start the application using the following command:
 streamlit run main.py
 ```
 
+Alternately, you can use the following sh script that runs the app with an automated update if you want to stay updated without thinking about it and always run the latest version.
+```bash
+sh run_ollama_workbench.sh
+```
+
 ### Navigating the Interface
 - Use the sidebar to access different functionalities.
 - Explore various sections: Chat, Workflow, Document, Maintenance, and Testing.
