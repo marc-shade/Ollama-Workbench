@@ -8,6 +8,8 @@ import streamlit as st
 from fpdf import FPDF
 import tempfile
 import queue
+import re
+from datetime import datetime
 
 class PDF(FPDF):
     def header(self):
@@ -142,6 +144,28 @@ INSTRUCTION: Use appropriate Markdown formatting to make the README visually app
 
 {file_content}
 """
+    elif task_type == "project_summary":
+        prompt = f"""
+You are an expert technical writer, skilled at creating project summary documentation in Markdown format.
+Create a comprehensive project_summary.md file for a repository containing the following files and folders.
+The project_summary.md file will include:
+
+1. Table of Contents
+    - List all files and folders in the repository, excluding the 'files' folder.
+2. File Details
+    - For each file, provide the following information:
+        - Full Path
+        - Extension
+        - Language (if applicable)
+        - Size (in bytes)
+        - Created Date and Time
+        - Modified Date and Time
+        - Code Snippet (if applicable)
+
+INSTRUCTION: Use appropriate Markdown formatting to make the project summary visually appealing and easy to read. Here's the file and folder structure to base the project summary on:
+
+{file_content}
+"""
     elif task_type == "requirements":
         return None
 
@@ -171,13 +195,45 @@ def run_pylint(file_path):
     result = subprocess.run(['pylint', file_path], capture_output=True, text=True)
     return result.stdout
 
-def get_all_code_files(root_dir):
+def get_all_code_files(root_dir, exclude_patterns):
     code_files = []
     for subdir, _, files in os.walk(root_dir):
         for file in files:
+            file_path = os.path.join(subdir, file)
             if file.endswith('.py'):
-                code_files.append(os.path.join(subdir, file))
+                try:
+                    if not any(re.search(pattern, file_path) for pattern in exclude_patterns):
+                        code_files.append(file_path)
+                except re.error as e:
+                    st.warning(f"Invalid exclude pattern: '{pattern}'. Error: {e}. Skipping this pattern.")
     return code_files
+
+def get_file_info(file_path):
+    try:
+        file_stats = os.stat(file_path)
+        created_time = datetime.fromtimestamp(file_stats.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+        modified_time = datetime.fromtimestamp(file_stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+
+        extension = os.path.splitext(file_path)[1].lower()  # Get extension and make it lowercase
+        language = {
+            '.py': "python",
+            '.txt': "plaintext",
+            '.md': "markdown",
+            '.json': "json",
+            '.sh': "bash",
+            '.csv': "csv"
+        }.get(extension, "unknown")  # Determine language based on extension
+
+        return {
+            "Full Path": file_path,
+            "Extension": extension,
+            "Language": language,
+            "Size": file_stats.st_size,
+            "Created": created_time,
+            "Modified": modified_time
+        }
+    except FileNotFoundError:
+        return None
 
 def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area):
     try:
@@ -219,9 +275,9 @@ def generate_pdf(results, output_path, task_type):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     pdf.output(output_path, 'F')
 
-def generate_requirements_file(repo_path):
+def generate_requirements_file(repo_path, exclude_patterns):
     requirements = set()
-    code_files = get_all_code_files(repo_path)
+    code_files = get_all_code_files(repo_path, exclude_patterns)
     for code_file in code_files:
         with open(code_file, 'r') as file:
             for line in file:
@@ -246,15 +302,88 @@ def generate_requirements_file(repo_path):
             req_file.write(requirement + '\n')
     return requirements_path
 
+def generate_project_summary(repo_path, exclude_patterns):
+    # Create 'files' directory if it doesn't exist
+    files_dir = os.path.join(repo_path, 'files')
+    os.makedirs(files_dir, exist_ok=True)
+
+    summary_path = os.path.join(files_dir, 'project_summary.md')
+    with open(summary_path, 'w') as summary_file:
+        summary_file.write("--- START OF FILE project_summary.md ---\n\n")
+        summary_file.write("# Table of Contents\n")
+
+        # Get all files and directories, excluding those matching the exclude patterns
+        all_files = []
+        for root, dirs, files in os.walk(repo_path):
+            dirs[:] = [d for d in dirs if d != 'files' and not any(re.search(pattern, os.path.join(root, d)) for pattern in exclude_patterns)]
+            files[:] = [f for f in files if not any(re.search(pattern, os.path.join(root, f)) for pattern in exclude_patterns)]
+            for file in files:
+                all_files.append(os.path.join(root, file))
+
+        # 1. Write README.md first
+        readme_path = os.path.join(repo_path, "README.md")
+        if readme_path in all_files:
+            summary_file.write(f"- {readme_path}\n")
+            all_files.remove(readme_path)
+
+        # 2. Write requirements.txt second
+        requirements_path = os.path.join(repo_path, "requirements.txt")
+        if requirements_path in all_files:
+            summary_file.write(f"- {requirements_path}\n")
+            all_files.remove(requirements_path)
+
+        # 3. Write the rest of the files in alphabetical order
+        all_files.sort()
+        for file_path in all_files:
+            summary_file.write(f"- {file_path}\n")
+
+        summary_file.write("\n")
+
+        # Write file details (including README.md and requirements.txt)
+        for file_path in [readme_path, requirements_path] + all_files:
+            file_info = get_file_info(file_path)
+            if file_info:
+                write_file_details(summary_file, file_info)
+
+        summary_file.write("--- END OF FILE project_summary.md ---")
+    return summary_path
+
+def write_file_details(summary_file, file_info):
+    """Writes the file details to the summary file."""
+    summary_file.write(f"## File: {file_info['Full Path']}\n\n")
+    for key, value in file_info.items():
+        if key != "Full Path":
+            if key == "Size":
+                summary_file.write(f"- {key}: {value} bytes\n")
+            elif key == "Language":
+                summary_file.write(f"- {key}: {value}\n")
+                # Include content for specific file types
+                if value in ("python", "plaintext", "markdown", "bash", "csv", "json"): 
+                    summary_file.write(f"### Code\n\n")
+                    try:
+                        with open(file_info['Full Path'], 'r', encoding='utf-8') as code_file:
+                            code_content = code_file.read()
+                            summary_file.write(f"```{value}\n{code_content}\n```\n\n")
+                    except UnicodeDecodeError:
+                        summary_file.write(f"- Unable to display code snippet. File may be binary or encoded differently.\n")
+            else:
+                summary_file.write(f"- {key}: {value}\n")
+    summary_file.write("\n")
+
 def main():
     st.title("✔️ Repository Analyzer")
-    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, or requirements) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder.")
+    st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, requirements, or project_summary) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder. If you chose the 'project_summary' task type, a project_summary.md file will be created in the repository's 'files' folder.")
     repo_path = st.text_input("Enter the path to your repository:")
+
+    # Input for exclude patterns
+    exclude_patterns_str = st.text_input("Enter file/folder patterns to exclude (comma-separated, use regex):", 
+                                        value=".git,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.eml")
+    exclude_patterns = [pattern.strip() for pattern in exclude_patterns_str.split(",")]
 
     # Four-column layout for task type, model, temperature, and max tokens
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements"])
+        task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements", "project_summary"])
     with col2:
         available_models = get_available_models()
         model = st.selectbox(f"Select model for {task_type} task", available_models)
@@ -273,11 +402,15 @@ def main():
         os.makedirs(files_dir, exist_ok=True)
 
         if task_type == "requirements":
-            requirements_path = generate_requirements_file(repo_path)
+            requirements_path = generate_requirements_file(repo_path, exclude_patterns)
             st.success(f"requirements.txt file has been created at {requirements_path}")
             return
+        elif task_type == "project_summary":
+            summary_path = generate_project_summary(repo_path, exclude_patterns)
+            st.success(f"project_summary.md file has been created at {summary_path}")
+            return
 
-        code_files = get_all_code_files(repo_path)
+        code_files = get_all_code_files(repo_path, exclude_patterns)
 
         if not code_files:
             st.warning("No Python files found in the specified directory.")
