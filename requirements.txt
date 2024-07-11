@@ -18,3 +18,5 @@ tiktoken
 webdriver-manager
 autogen
 pyautogen
+radon
+flake8
