@@ -378,7 +378,7 @@ def main():
 
     # Input for exclude patterns
     exclude_patterns_str = st.text_input("Enter file/folder patterns to exclude (comma-separated, use regex):", 
-                                        value=".git,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.eml")
+                                        value=".git,__pycache__,cli,.*\\.pkl,tmp,.*\\.bin,.*\\.sqlite3,.*\\.db,.DS_Store,.*\\.log,files,venv,.*\\.ipynb,notebooks,checkpoints,.*\\.pdf,.*\\.png,.*\\.jpg,.*\\.jpeg,.*\\.gif,.*\\.eml")
     exclude_patterns = [pattern.strip() for pattern in exclude_patterns_str.split(",")]
 
     # Four-column layout for task type, model, temperature, and max tokens
