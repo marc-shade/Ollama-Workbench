@@ -303,11 +303,12 @@ def generate_requirements_file(repo_path, exclude_patterns):
     return requirements_path
 
 def generate_project_summary(repo_path, exclude_patterns):
-    # Create 'files' directory if it doesn't exist
+    # Create 'files' directory if it doesn't exist (for other outputs)
     files_dir = os.path.join(repo_path, 'files')
     os.makedirs(files_dir, exist_ok=True)
 
-    summary_path = os.path.join(files_dir, 'project_summary.md')
+    # Summary file path in the repository root
+    summary_path = os.path.join(repo_path, 'project_summary.md')
     with open(summary_path, 'w') as summary_file:
         summary_file.write("--- START OF FILE project_summary.md ---\n\n")
         summary_file.write("# Table of Contents\n")

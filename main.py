@@ -100,7 +100,7 @@ def server_monitoring():
     st.session_state.show_resource_usage = show_resource_usage
 
     # Resource Usage
-    st.subheader("Resource Usage")
+    st.subheader("📊 Resource Usage")
     usage = get_ollama_resource_usage()
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Status", usage["status"])
