@@ -37,10 +37,10 @@ SIDEBAR_SECTIONS = {
         ("✨ Prompts", "Prompts"),
     ],
     "🗄 Document": [
+        ("✔️ Repository Analyzer", "Repository Analyzer"),
+        ("🕸️ Web to Corpus File", "Web to Corpus File"),
         ("🗂 Manage Corpus", "Manage Corpus"),
         ("📂 Manage Files", "Files"),
-        ("🕸️ Web to Corpus File", "Web to Corpus File"),
-        ("✔️ Repository Analyzer", "Repository Analyzer"),
     ],
     "🛠️ Maintain": [
         ("📋 List Local Models", "List Local Models"),
