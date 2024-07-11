@@ -10,6 +10,9 @@ import tempfile
 import queue
 import re
 from datetime import datetime
+from radon.complexity import cc_visit, cc_rank
+from radon.metrics import mi_visit, h_visit
+from flake8.api import legacy as flake8
 
 class PDF(FPDF):
     def header(self):
@@ -224,7 +227,7 @@ def get_file_info(file_path):
             '.csv': "csv"
         }.get(extension, "unknown")  # Determine language based on extension
 
-        return {
+        file_info = {
             "Full Path": file_path,
             "Extension": extension,
             "Language": language,
@@ -232,6 +235,36 @@ def get_file_info(file_path):
             "Created": created_time,
             "Modified": modified_time
         }
+
+        # Calculate code complexity metrics
+        if language == "python":
+            with open(file_path, 'r', encoding='utf-8') as code_file:
+                code_content = code_file.read()
+                complexity = cc_visit(code_content)
+                maintainability = mi_visit(code_content, multi=False)
+
+            file_info['Complexity'] = {
+                'Cyclomatic Complexity': [f"{func.name}: {func.complexity} ({cc_rank(func.complexity)})" for func in complexity],
+                'Maintainability Index': maintainability
+            }
+
+            # Analyze code style using flake8
+            style_guide = flake8.get_style_guide()
+            report = style_guide.check_files([file_path])
+
+            style_violations = []
+            for error in report.get_statistics(''):
+                try:
+                    if isinstance(error, str):
+                        style_violations.append(error)
+                    else:
+                        style_violations.append(f"{error.code} ({error.text}): line {error.line}")
+                except AttributeError:
+                    style_violations.append(f"Unexpected error format: {error}")
+
+            file_info['Style Violations'] = style_violations
+
+        return file_info
     except FileNotFoundError:
         return None
 
@@ -359,7 +392,7 @@ def write_file_details(summary_file, file_info):
             elif key == "Language":
                 summary_file.write(f"- {key}: {value}\n")
                 # Include content for specific file types
-                if value in ("python", "plaintext", "markdown", "bash", "csv", "json"): 
+                if value in ("python", "plaintext", "markdown", "bash", "csv", "json"):
                     summary_file.write(f"### Code\n\n")
                     try:
                         with open(file_info['Full Path'], 'r', encoding='utf-8') as code_file:
@@ -367,6 +400,23 @@ def write_file_details(summary_file, file_info):
                             summary_file.write(f"```{value}\n{code_content}\n```\n\n")
                     except UnicodeDecodeError:
                         summary_file.write(f"- Unable to display code snippet. File may be binary or encoded differently.\n")
+            elif key == "Complexity":  # Write complexity metrics
+                summary_file.write(f"- {key}:\n")
+                for metric_name, metric_value in value.items():
+                    if isinstance(metric_value, list):  # For Cyclomatic Complexity
+                        summary_file.write(f"    - {metric_name}:\n")
+                        for item in metric_value:
+                            summary_file.write(f"        - {item}\n")
+                    elif isinstance(metric_value, dict):  # For Halstead Metrics
+                        summary_file.write(f"    - {metric_name}:\n")
+                        for sub_metric, sub_value in metric_value.items():
+                            summary_file.write(f"        - {sub_metric}: {sub_value}\n")
+                    else:  # For Maintainability Index
+                        summary_file.write(f"    - {metric_name}: {metric_value}\n")
+            elif key == "Style Violations":  # Write style violations
+                summary_file.write(f"- {key}:\n")
+                for violation in value:
+                    summary_file.write(f"    - {violation}\n")
             else:
                 summary_file.write(f"- {key}: {value}\n")
     summary_file.write("\n")
