@@ -25,6 +25,7 @@ from prompts import manage_prompts
 from brainstorm import brainstorm_interface
 from manage_corpus import manage_corpus
 from ollama_utils import get_ollama_resource_usage
+from research import research_interface
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -32,6 +33,7 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 # Define constants
 SIDEBAR_SECTIONS = {
     "⚙️ Workflow": [
+        ("🔬 Research", "Research"),
         ("🧠 Brainstorm", "Brainstorm"),
         ("🚀 Projects", "Manage Projects"),
         ("✨ Prompts", "Prompts"),
@@ -237,6 +239,8 @@ def main_content():
         server_configuration()
     elif st.session_state.selected_test == "Server Monitoring":
         server_monitoring()
+    elif st.session_state.selected_test == "Research":
+        research_interface()  # Call the correct function
     else:
         display_welcome_message()
 

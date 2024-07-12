@@ -37,6 +37,7 @@ fi
 
 # Install or update requirements
 pip install -r "$LOCAL_DIR/requirements.txt"
+python -m spacy download en_core_web_sm
 
 # Install or update Ollama server (optional, assuming user has Ollama installed)
 # if [ -f "$LOCAL_DIR/install_ollama.sh" ]; then
