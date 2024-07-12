@@ -68,6 +68,13 @@ def get_report_content(report_id: int):
     conn.close()
     return content
 
+def delete_report(report_id: int):
+    conn = sqlite3.connect('research_reports.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM reports WHERE id=?", (report_id,))
+    conn.commit()
+    conn.close()
+
 # Export functions
 def export_to_pdf(content: str, filename: str):
     pdf = SimpleDocTemplate(filename, pagesize=letter)
@@ -95,7 +102,7 @@ def research_interface():
     api_keys = load_api_keys()
 
     # API Key Settings
-    st.sidebar.subheader("API Key Settings")
+    st.sidebar.subheader("🔑 API Key Settings")
     api_keys["serpapi_api_key"] = st.sidebar.text_input("SerpApi API Key", value=api_keys.get("serpapi_api_key", ""))
     api_keys["serper_api_key"] = st.sidebar.text_input("Serper API Key", value=api_keys.get("serper_api_key", ""))
     api_keys["google_api_key"] = st.sidebar.text_input("Google Custom Search API Key", value=api_keys.get("google_api_key", ""))
@@ -117,11 +124,11 @@ def research_interface():
     available_models = get_available_models()
     col1, col2 = st.columns(2)
     with col1:
-        manager_model = st.selectbox("Select Search Manager Model", available_models)
+        manager_model = st.selectbox("Search Manager Model", available_models)
     with col2:
-        agent_model = st.selectbox("Select Search Agent Model", available_models)
+        agent_model = st.selectbox("Search Agent Model", available_models)
 
-    if st.button("Start Research"):
+    if st.button("🔬 Start Research"):
         if user_request:
             with st.spinner("Initializing Search Manager..."):
                 search_manager = SearchManager(
@@ -161,30 +168,34 @@ def research_interface():
             st.error("Please enter a research request.")
 
     # Add a section for viewing saved reports
-    st.subheader("Saved Reports")
+    st.subheader("📙 Saved Reports")
     reports = get_all_reports()
     for report_id, title, date in reports:
-        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([6, 1, 1, 1, 1])
         with col1:
-            st.write(f"{title} ({date})")
+            st.write(f"📄 {title} ({date})")
         with col2:
-            if st.button("View", key=f"view_{report_id}"):
+            if st.button("👀", key=f"view_{report_id}"):
                 report_content = get_report_content(report_id)
                 st.text_area("Report Content", report_content, height=300)
         with col3:
-            if st.button("Export PDF", key=f"pdf_{report_id}"):
+            if st.button("📥 PDF", key=f"pdf_{report_id}"):
                 report_content = get_report_content(report_id)
                 pdf_file = f"report_{report_id}.pdf"
                 export_to_pdf(report_content, pdf_file)
                 with open(pdf_file, "rb") as f:
-                    st.download_button("Download PDF", f, file_name=pdf_file)
+                    st.download_button("PDF", f, file_name=pdf_file)
         with col4:
-            if st.button("Export TXT", key=f"txt_{report_id}"):
+            if st.button("📥 TXT", key=f"txt_{report_id}"):
                 report_content = get_report_content(report_id)
                 txt_file = f"report_{report_id}.txt"
                 export_to_txt(report_content, txt_file)
                 with open(txt_file, "rb") as f:
-                    st.download_button("Download TXT", f, file_name=txt_file)
+                    st.download_button("TXT", f, file_name=txt_file)
+        with col5:
+            if st.button("🗑️", key=f"delete_{report_id}"):
+                delete_report(report_id)
+                st.experimental_rerun()  # Refresh the page to show the updated list of reports
 
 if __name__ == "__main__":
     research_interface()
