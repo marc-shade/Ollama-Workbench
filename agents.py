@@ -7,6 +7,8 @@ from search_libraries import duckduckgo_search, google_search, serpapi_search, s
 import ollama
 import re
 import spacy
+from langchain_community.embeddings import OllamaEmbeddings # Add this import
+from langchain_community.vectorstores import Chroma # Add this import
 
 # Set up logging
 logging.basicConfig(filename='agents.log', level=logging.INFO,
