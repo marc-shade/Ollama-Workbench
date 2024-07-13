@@ -21,15 +21,16 @@ def display_welcome_message():
             - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
 
             #### ⚙️ Workflow
+            - 🔬 **Research:** Conduct in-depth research using multiple AI agents, each specializing in a different search approach. The agents will generate summaries of their findings, and a final report will be compiled based on their collective insights.
             - 🧠 **Brainstorm:** Engage in interactive brainstorming sessions with multiple AI agents, each with unique roles and perspectives. The agents use AutoGen's 'Teachable Agent' memory feature to remember your brainstoring sessions.
             - 🚀 **Projects:** Create, edit, delete, import, and export projects and tasks. Assign AI agents to tasks and auto-generate responses.
-            - ✨ **Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type.
+            - ✨ **Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, Voice Type, and Identity.
 
             #### 🗄️ Document
-            - 🗂️ **Manage Corpus:** Create, edit, and delete corpus from files.
+            - 🗂️ **Manage Corpus:** Create, edit, delete, and rename corpus from files, URLs, or text input.
             - 📂 **Manage Files**: Upload, view, edit, and delete files.
-            - 🕸️ **Web to Corpus File**: Convert web content into a corpus for analysis or training.
             - ✔️ **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
+            - 🕸️ **Web to Corpus File**: Convert web content into a corpus for analysis or training.
 
             #### 🛠️ Maintain
             - 📋 **List Local Models:** View a list of all locally available models, including their size and last modified date.
@@ -37,6 +38,8 @@ def display_welcome_message():
             - ⬇ **Pull a Model:** Download a new model from the Ollama library.
             - 🗑️ **Remove a Model**: Delete a selected model from the local storage.
             - 🔄 **Update Models**: Update all local models.
+            - ⚙️ **Server Configuration:** Configure the Ollama server settings, including host address, allowed origins, model directory, global keep-alive, and concurrency controls.
+            - 🖥️ **Server Monitoring:** Monitor the Ollama server's resource usage, including CPU, memory, and GPU utilization, as well as view live server logs.
 
             #### 📊 Test
             - 🧪 **Model Feature Test**: Test a model's capability to handle JSON and function calls.
