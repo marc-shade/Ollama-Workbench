@@ -27,8 +27,8 @@ def serpapi_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]
             "api_key": api_key,
             "num": num_results
         }
-        search = GoogleSearch(params)
-        results = search.get_dict()
+        client = GoogleSearch(params)
+        results = client.get_dict()
         organic_results = results.get("organic_results", [])
         if not organic_results:
             print(f"SerpApi returned no results. Full response: {results}")  # For debugging
