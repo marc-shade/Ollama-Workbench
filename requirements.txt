@@ -5,6 +5,7 @@ duckduckgo_search
 flake8
 fpdf
 google-api-python-client
+google-search-results
 langchain
 langchain_community
 matplotlib
