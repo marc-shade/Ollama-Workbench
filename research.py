@@ -198,14 +198,14 @@ def research_interface():
                         st.write(content)
                         final_report = content
                     elif result_type == "References":
-                        st.subheader("References")
+                        st.subheader("All References")
                         for reference in content:
                             st.write(reference)
                         references = content
 
                 # After the research is complete, save the report
                 report_title = f"Research on: {user_request[:50]}..."  # Truncate long titles
-                full_report = f"Final Report:\n\n{final_report}\n\nReferences:\n" + "\n".join(references)
+                full_report = f"Final Report:\n\n{final_report}\n\nAll References:\n" + "\n".join(references)
                 
                 # Add agent outputs to the full report
                 full_report += "\n\nSearch Results:\n\n"
