@@ -3,8 +3,8 @@ import streamlit as st
 import ollama
 from typing import List, Dict
 import json
-from langchain_community.embeddings import OllamaEmbeddings  # Updated import
-from langchain_community.vectorstores import Chroma  # Updated import
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 import os
@@ -15,9 +15,15 @@ from ollama_utils import get_available_models
 import sqlite3
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 import pdfkit
+
+# Create 'files' directory if it doesn't exist
+files_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files')
+os.makedirs(files_dir, exist_ok=True)
 
 # Load API keys from settings file
 def load_api_keys():
@@ -77,20 +83,55 @@ def delete_report(report_id: int):
 
 # Export functions
 def export_to_pdf(content: str, filename: str):
-    pdf = SimpleDocTemplate(filename, pagesize=letter)
+    pdf_path = os.path.join(files_dir, filename)
+    pdf = SimpleDocTemplate(pdf_path, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
     styles = getSampleStyleSheet()
+    custom_style = ParagraphStyle(
+        'CustomStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        spaceBefore=6,
+        spaceAfter=6
+    )
+    title_style = ParagraphStyle(
+        'TitleStyle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        leading=20,
+        spaceBefore=12,
+        spaceAfter=12
+    )
     flowables = []
 
-    for line in content.split('\n'):
-        p = Paragraph(line, styles['Normal'])
-        flowables.append(p)
+    # Split content into sections
+    sections = content.split('\n\n')
+    for section in sections:
+        if section.startswith('Final Report:'):
+            flowables.append(Paragraph("Final Report", title_style))
+            flowables.append(Paragraph(section[14:], custom_style))
+        elif section.startswith('References:'):
+            flowables.append(Paragraph("References", title_style))
+            references = section[12:].split('\n')
+            for ref in references:
+                flowables.append(Paragraph(ref, custom_style))
+        elif section.startswith('Search Results:'):
+            flowables.append(Paragraph("Search Results", title_style))
+            search_results = section[16:].split('\n\n')
+            for result in search_results:
+                flowables.append(Paragraph(result, custom_style))
+        else:
+            flowables.append(Paragraph(section, custom_style))
         flowables.append(Spacer(1, 12))
 
     pdf.build(flowables)
+    return pdf_path
 
 def export_to_txt(content: str, filename: str):
-    with open(filename, 'w', encoding='utf-8') as f:
+    txt_path = os.path.join(files_dir, filename)
+    with open(txt_path, 'w', encoding='utf-8') as f:
         f.write(content)
+    return txt_path
 
 def research_interface():
     st.title("🔬 Research")
@@ -109,16 +150,20 @@ def research_interface():
     api_keys["google_cse_id"] = st.sidebar.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""))
     api_keys["bing_api_key"] = st.sidebar.text_input("Bing Search API Key", value=api_keys.get("bing_api_key", ""))
     
-    if st.sidebar.button("💾 Save API Keys"):
+    if st.sidebar.button("Save API Keys"):
         save_api_keys(api_keys)
         st.sidebar.success("API keys saved!")
 
     # User research request
     user_request = st.text_area("Enter your research request:")
 
-    # Report length options
-    report_lengths = ["short", "medium", "long"]
-    selected_length = st.selectbox("📏 Report Length", report_lengths)
+    # Report length options with word count targets
+    report_lengths = {
+        "short": 500,
+        "medium": 1000,
+        "long": 2000
+    }
+    selected_length = st.selectbox("Report Length", list(report_lengths.keys()), format_func=lambda x: f"{x.capitalize()} (~{report_lengths[x]} words)")
 
     # Model selection for Search Manager and Agents
     available_models = get_available_models()
@@ -128,12 +173,12 @@ def research_interface():
     with col2:
         agent_model = st.selectbox("Search Agent Model", available_models)
 
-    if st.button("🧪 Start Research"):
+    if st.button("🔬 Start Research"):
         if user_request:
             with st.spinner("Initializing Search Manager..."):
                 search_manager = SearchManager(
                     name="Search Manager",
-                    model=manager_model,  # Use the selected manager model
+                    model=manager_model,
                     temperature=0.7,
                     max_tokens=4000,
                     api_keys=api_keys
@@ -143,17 +188,17 @@ def research_interface():
                 final_report = ""
                 references = []
                 agent_outputs = []
-                for result_type, content in search_manager.run_research(user_request, selected_length, agent_model):  # Pass agent_model here
-                    if result_type.startswith("Agent"):
-                        with st.expander(result_type, expanded=False):  # Set expanded to False to collapse by default
+                for result_type, content in search_manager.run_research(user_request, selected_length, agent_model, report_lengths[selected_length]):
+                    if result_type.endswith("Report") and result_type != "Final Report":
+                        with st.expander(result_type, expanded=False):
                             st.write(content)
-                        agent_outputs.append({"agent": result_type, "content": content})
+                        agent_outputs.append({"name": result_type.replace(" Report", ""), "content": content})
                     elif result_type == "Final Report":
-                        st.subheader("📄 Generated Report")
+                        st.subheader("Generated Report")
                         st.write(content)
                         final_report = content
                     elif result_type == "References":
-                        st.subheader("📚 References")
+                        st.subheader("References")
                         for reference in content:
                             st.write(reference)
                         references = content
@@ -161,6 +206,12 @@ def research_interface():
                 # After the research is complete, save the report
                 report_title = f"Research on: {user_request[:50]}..."  # Truncate long titles
                 full_report = f"Final Report:\n\n{final_report}\n\nReferences:\n" + "\n".join(references)
+                
+                # Add agent outputs to the full report
+                full_report += "\n\nSearch Results:\n\n"
+                for agent_output in agent_outputs:
+                    full_report += f"{agent_output['name']}:\n{agent_output['content']}\n\n"
+                
                 save_report(report_title, full_report)
                 st.success("Research report saved successfully!")
 
@@ -168,34 +219,34 @@ def research_interface():
             st.error("Please enter a research request.")
 
     # Add a section for viewing saved reports
-    st.subheader("🗂️ Saved Reports")
+    st.subheader("📙 Saved Reports")
     reports = get_all_reports()
     for report_id, title, date in reports:
-        col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([6, 1, 1, 1, 1])
         with col1:
-            st.write(f"{title} ({date})")
+            st.write(f"📄 {title} ({date})")
         with col2:
-            if st.button("📄 View", key=f"view_{report_id}"):
+            if st.button("👀", key=f"view_{report_id}"):
                 report_content = get_report_content(report_id)
                 st.text_area("Report Content", report_content, height=300)
         with col3:
-            if st.button("📄 Export PDF", key=f"pdf_{report_id}"):
+            if st.button("📥 PDF", key=f"pdf_{report_id}"):
                 report_content = get_report_content(report_id)
                 pdf_file = f"report_{report_id}.pdf"
-                export_to_pdf(report_content, pdf_file)
-                with open(pdf_file, "rb") as f:
-                    st.download_button("Download PDF", f, file_name=pdf_file)
+                pdf_path = export_to_pdf(report_content, pdf_file)
+                with open(pdf_path, "rb") as f:
+                    st.download_button("PDF", f, file_name=pdf_file)
         with col4:
-            if st.button("📄 Export TXT", key=f"txt_{report_id}"):
+            if st.button("📥 TXT", key=f"txt_{report_id}"):
                 report_content = get_report_content(report_id)
                 txt_file = f"report_{report_id}.txt"
-                export_to_txt(report_content, txt_file)
-                with open(txt_file, "rb") as f:
-                    st.download_button("Download TXT", f, file_name=txt_file)
+                txt_path = export_to_txt(report_content, txt_file)
+                with open(txt_path, "rb") as f:
+                    st.download_button("TXT", f, file_name=txt_file)
         with col5:
-            if st.button("🗑️ Delete", key=f"delete_{report_id}"):
+            if st.button("🗑️", key=f"delete_{report_id}"):
                 delete_report(report_id)
-                st.experimental_rerun()  # Refresh the page to show the updated list of reports
+                st.rerun()  # Refresh the page to show the updated list of reports
 
 if __name__ == "__main__":
     research_interface()
