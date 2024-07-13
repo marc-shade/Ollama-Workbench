@@ -40,11 +40,11 @@ pip install -r "$LOCAL_DIR/requirements.txt"
 python -m spacy download en_core_web_sm
 
 # Install or update Ollama server (optional, assuming user has Ollama installed)
-# if [ -f "$LOCAL_DIR/install_ollama.sh" ]; then
-#     bash "$LOCAL_DIR/install_ollama.sh"
-# else
-#     echo "Ollama installation script not found. Skipping Ollama installation."
-# fi
+if [ -f "$LOCAL_DIR/install_ollama.sh" ]; then
+    bash "$LOCAL_DIR/install_ollama.sh"
+else
+    echo "Ollama installation script not found. Skipping Ollama installation."
+fi
 
 # Run the Streamlit app
 streamlit run "$LOCAL_DIR/main.py"
