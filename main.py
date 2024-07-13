@@ -23,9 +23,9 @@ from visjs_component import visjs_graph
 from datetime import datetime, timedelta
 from prompts import manage_prompts
 from brainstorm import brainstorm_interface
-from manage_corpus import manage_corpus
 from ollama_utils import get_ollama_resource_usage
 from research import research_interface
+from enhanced_corpus import enhance_corpus_ui
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -39,10 +39,10 @@ SIDEBAR_SECTIONS = {
         ("✨ Prompts", "Prompts"),
     ],
     "🗄 Document": [
+        ("🗂 Manage Corpus", "Enhanced Corpus"),
+        ("📂 Manage Files", "Files"),
         ("✔️ Repository Analyzer", "Repository Analyzer"),
         ("🕸️ Web to Corpus File", "Web to Corpus File"),
-        ("🗂 Manage Corpus", "Manage Corpus"),
-        ("📂 Manage Files", "Files"),
     ],
     "🛠️ Maintain": [
         ("📋 List Local Models", "List Local Models"),
@@ -138,8 +138,7 @@ def create_sidebar():
         secret_key_file = 'secret_key_off.json'
         secret_key_value = 'I_am_an_honest_person'
         if not check_secret_key(secret_key_file, secret_key_value):
-            # Add Buy Me a Coffee button and image in a 2-column layout
-            st.markdown("---")  # Add a separator
+            st.markdown("---")
 
             col1, col2 = st.columns([1, 3])
             with col1:
@@ -228,19 +227,19 @@ def main_content():
     elif st.session_state.selected_test == "Files":
         files_tab()
     elif st.session_state.selected_test == "Prompts":
-        manage_prompts()  # Call the manage_prompts function directly
-    elif st.session_state.selected_test == "Manage Corpus":
-        manage_corpus()
+        manage_prompts()
     elif st.session_state.selected_test == "Manage Projects":
         projects_main()
     elif st.session_state.selected_test == "Brainstorm":
-        brainstorm_interface()  # Call the brainstorm_interface function
+        brainstorm_interface()
     elif st.session_state.selected_test == "Server Configuration":
         server_configuration()
     elif st.session_state.selected_test == "Server Monitoring":
         server_monitoring()
     elif st.session_state.selected_test == "Research":
-        research_interface()  # Call the correct function
+        research_interface()
+    elif st.session_state.selected_test == "Enhanced Corpus":
+        enhance_corpus_ui()
     else:
         display_welcome_message()
 

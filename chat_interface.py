@@ -10,6 +10,8 @@ from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
 from files_management import files_tab  # Import from files_management.py
 from streamlit_extras.bottom_container import bottom  # Correct import
+from agents import SearchManager # Add this import
+# from api_keys import api_keys # Add this import
 
 def chat_interface():
     st.header("💬 Chat")
@@ -209,7 +211,7 @@ def get_corpus_context_from_db(corpus_folder, corpus_name, query):
     from langchain_community.embeddings import OllamaEmbeddings
     from langchain_community.vectorstores import Chroma
     corpus_path = os.path.join(corpus_folder, corpus_name)
-    embeddings = OllamaEmbeddings()
+    embeddings = OllamaEmbeddings(model="llama2:latest") # Use the same embedding model as when creating the corpus
     db = Chroma(persist_directory=corpus_path, embedding_function=embeddings)
     results = db.similarity_search(query, k=3)
     return "\n".join([doc.page_content for doc in results])
