@@ -109,7 +109,7 @@ def research_interface():
     api_keys["google_cse_id"] = st.sidebar.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""))
     api_keys["bing_api_key"] = st.sidebar.text_input("Bing Search API Key", value=api_keys.get("bing_api_key", ""))
     
-    if st.sidebar.button("Save API Keys"):
+    if st.sidebar.button("💾 Save API Keys"):
         save_api_keys(api_keys)
         st.sidebar.success("API keys saved!")
 
@@ -118,7 +118,7 @@ def research_interface():
 
     # Report length options
     report_lengths = ["short", "medium", "long"]
-    selected_length = st.selectbox("Report Length", report_lengths)
+    selected_length = st.selectbox("📏 Report Length", report_lengths)
 
     # Model selection for Search Manager and Agents
     available_models = get_available_models()
@@ -128,7 +128,7 @@ def research_interface():
     with col2:
         agent_model = st.selectbox("Search Agent Model", available_models)
 
-    if st.button("🔬 Start Research"):
+    if st.button("🧪 Start Research"):
         if user_request:
             with st.spinner("Initializing Search Manager..."):
                 search_manager = SearchManager(
@@ -149,11 +149,11 @@ def research_interface():
                             st.write(content)
                         agent_outputs.append({"agent": result_type, "content": content})
                     elif result_type == "Final Report":
-                        st.subheader("Generated Report")
+                        st.subheader("📄 Generated Report")
                         st.write(content)
                         final_report = content
                     elif result_type == "References":
-                        st.subheader("References")
+                        st.subheader("📚 References")
                         for reference in content:
                             st.write(reference)
                         references = content
@@ -168,32 +168,32 @@ def research_interface():
             st.error("Please enter a research request.")
 
     # Add a section for viewing saved reports
-    st.subheader("📙 Saved Reports")
+    st.subheader("🗂️ Saved Reports")
     reports = get_all_reports()
     for report_id, title, date in reports:
-        col1, col2, col3, col4, col5 = st.columns([6, 1, 1, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 1])
         with col1:
-            st.write(f"📄 {title} ({date})")
+            st.write(f"{title} ({date})")
         with col2:
-            if st.button("👀", key=f"view_{report_id}"):
+            if st.button("📄 View", key=f"view_{report_id}"):
                 report_content = get_report_content(report_id)
                 st.text_area("Report Content", report_content, height=300)
         with col3:
-            if st.button("📥 PDF", key=f"pdf_{report_id}"):
+            if st.button("📄 Export PDF", key=f"pdf_{report_id}"):
                 report_content = get_report_content(report_id)
                 pdf_file = f"report_{report_id}.pdf"
                 export_to_pdf(report_content, pdf_file)
                 with open(pdf_file, "rb") as f:
-                    st.download_button("PDF", f, file_name=pdf_file)
+                    st.download_button("Download PDF", f, file_name=pdf_file)
         with col4:
-            if st.button("📥 TXT", key=f"txt_{report_id}"):
+            if st.button("📄 Export TXT", key=f"txt_{report_id}"):
                 report_content = get_report_content(report_id)
                 txt_file = f"report_{report_id}.txt"
                 export_to_txt(report_content, txt_file)
                 with open(txt_file, "rb") as f:
-                    st.download_button("TXT", f, file_name=txt_file)
+                    st.download_button("Download TXT", f, file_name=txt_file)
         with col5:
-            if st.button("🗑️", key=f"delete_{report_id}"):
+            if st.button("🗑️ Delete", key=f"delete_{report_id}"):
                 delete_report(report_id)
                 st.experimental_rerun()  # Refresh the page to show the updated list of reports
 
