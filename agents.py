@@ -176,156 +176,6 @@ class SearchManager(Agent):
                     if self.api_keys.get(f"{library}_api_key") or (library == "google" and self.api_keys.get("google_api_key") and self.api_keys.get("google_cse_id")) or library == "duckduckgo":
                         self.search_agents[agent_name] = SearchAgent(
                             name=agent_name,
-                            model=agent_model,  # Use the agent_model here
-                            search_function=search_function,
-                            api_key=self.api_keys.get(f"{library}_api_key") or self.api_keys.get("serpapi_api_key"),
-                            cse_id=self.api_keys.get("google_cse_id") if library == "google" else None,
-                            prompt=prompt,
-                            role=role
-                        )
-                    else:
-                        logging.warning(f"Skipping agent {agent_name} due to missing API key for {library}")
-                else:
-                    logging.warning(f"Invalid search library: {library} for agent {agent_name}")
-            else:
-                logging.warning(f"Incomplete agent definition: {agent_data}")
-
-    def parse_json_response(self, response: str) -> Dict[str, Any]:
-        """
-        Attempts to parse the JSON response, handling potential errors.
-
-        Args:
-            response: The string response from the LLM.
-
-        Returns:
-            A dictionary containing the parsed JSON, or None if parsing fails.
-        """
-        try:
-            # Remove any leading/trailing whitespace and newlines
-            response = response.strip()
-            # If the response is wrapped in ```, remove them
-            if response.startswith("```json"):
-                response = response[7:]
-            if response.endswith("```"):
-                response = response[:-3]
-            # Parse the JSON
-            return json.loads(response)
-        except json.JSONDecodeError as e:
-            logging.error(f"JSON parsing error: {str(e)}")
-            logging.error(f"Problematic JSON: {response}")
-            return None
-
-    def fallback_agent_definitions(self) -> Dict[str, Any]:
-        """
-        Provides a fallback set of agent definitions if the LLM fails to generate valid JSON.
-
-        Returns:
-            A dictionary containing predefined agent definitions.
-        """
-        return {
-            "agents": [
-                {
-                    "name": "General Researcher",
-                    "role": "Background Research",
-                    "library": "duckduckgo",
-                    "prompt": "Conduct a general search on the topic and provide an overview of key information."
-                },
-                {
-                    "name": "Detailed Analyst",
-                    "role": "In-depth Analysis",
-                    "library": "google",
-                    "prompt": "Perform a detailed analysis of the topic, focusing on recent developments and expert opinions."
-                },
-                {
-                    "name": "Fact Checker",
-                    "role": "Verification",
-                    "library": "bing",
-                    "prompt": "Verify key claims and provide factual information from reputable sources."
-                }
-            ]
-        }
-
-class SearchManager(Agent):
-    def __init__(self, name: str, model: str, temperature: float, max_tokens: int, api_keys: Dict[str, str]):
-        capabilities = ["research_management"]
-        prompts = {
-            "agent_creation": "Create specialized research agents based on the given request.",
-            "report_compilation": "Compile a comprehensive report based on agent summaries."
-        }
-        super().__init__(name=name, capabilities=capabilities, prompts=prompts, model=model)
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-        self.search_agents = {}
-        self.api_keys = api_keys
-
-    def create_search_agents(self, user_request: str, agent_model: str):
-        """
-        Dynamically creates search agents based on the user's research request.
-
-        Args:
-            user_request: The user's research request.
-            agent_model: The LLM model to use for search agents.
-        """
-        search_libraries = {
-            "duckduckgo": duckduckgo_search,
-            "google": google_search,
-            "serpapi": serpapi_search,
-            "serper": serper_search,
-            "bing": bing_search
-        }
-
-        agent_definition_prompt = f"""
-        Based on the following research request, create a team of specialized researchers:
-        "{user_request}"
-
-        Generate a JSON object defining 3-5 research agents, each specializing in a different aspect of the request.
-        The JSON object should have the following structure:
-
-        {{
-          "agents": [
-            {{
-              "name": "Agent Name",
-              "role": "Specific Research Focus",
-              "library": "Search Library",
-              "prompt": "Detailed instructions for the agent's research focus"
-            }},
-            // ... more agents
-          ]
-        }}
-
-        Available search libraries: {', '.join(search_libraries.keys())}
-        Ensure each agent has a unique role and uses a different search library.
-        """
-
-        try:
-            response = ollama.generate(
-                model=self.model,
-                prompt=agent_definition_prompt,
-                options={
-                    "temperature": self.temperature,
-                    "max_tokens": self.max_tokens
-                }
-            )
-            agent_definitions = self.parse_json_response(response['response'])
-            if not agent_definitions:
-                raise ValueError("Failed to generate valid agent definitions")
-        except Exception as e:
-            logging.error(f"Error generating agent definitions: {str(e)}")
-            agent_definitions = self.fallback_agent_definitions()
-
-        self.search_agents = {}
-        for agent_data in agent_definitions.get("agents", []):
-            agent_name = agent_data.get("name")
-            role = agent_data.get("role")
-            library = agent_data.get("library")
-            prompt = agent_data.get("prompt")
-
-            if agent_name and role and library and prompt:
-                search_function = search_libraries.get(library)
-                if search_function:
-                    if self.api_keys.get(f"{library}_api_key") or (library == "google" and self.api_keys.get("google_api_key") and self.api_keys.get("google_cse_id")) or library == "duckduckgo":
-                        self.search_agents[agent_name] = SearchAgent(
-                            name=agent_name,
                             model=agent_model,
                             search_function=search_function,
                             api_key=self.api_keys.get(f"{library}_api_key") or self.api_keys.get("serpapi_api_key"),
@@ -395,7 +245,7 @@ class SearchManager(Agent):
             ]
         }
 
-    def run_research(self, user_request: str, report_length: str = "medium", agent_model: str = None) -> Tuple[str, List[str], List[Dict]]:
+    def run_research(self, user_request: str, report_length: str = "medium", agent_model: str = None, word_count_target: int = 1000) -> Tuple[str, List[str], List[Dict]]:
         """
         Runs the research process, including agent creation, searching, and report generation.
 
@@ -403,6 +253,7 @@ class SearchManager(Agent):
             user_request: The user's research request.
             report_length: The desired length of the report ("short", "medium", or "long").
             agent_model: The model to use for search agents.
+            word_count_target: The target word count for the report.
 
         Returns:
             A tuple containing:
@@ -424,7 +275,7 @@ class SearchManager(Agent):
             summary = agent.generate_summary(user_request, search_results)
             agent_outputs.append({"agent": agent_name, "summary": summary, "results": search_results})
             logging.info(f"{agent_name} summary: {summary}")
-            yield f"Agent {agent_name} Report", summary
+            yield f"{agent_name} Report", summary
 
         formatted_summaries = "\n\n".join([f"**{output['agent']} Summary:**\n{output['summary']}" for output in agent_outputs])
         final_report_prompt = f"""You are a research manager tasked with writing a {report_length} comprehensive report on: {user_request}
@@ -433,6 +284,7 @@ class SearchManager(Agent):
         {formatted_summaries}
 
         Based on these summaries, generate a {report_length} report that answers the user's request.
+        Aim for approximately {word_count_target} words in your report.
         Ensure the report is well-structured, informative, and includes citations in square brackets (e.g., [1], [2]).
         Include the following sections in your report:
 
