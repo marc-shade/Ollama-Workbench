@@ -128,13 +128,13 @@ class SearchManager(Agent):
         Based on the following research request, create a team of specialized researchers:
         "{user_request}"
 
-        Generate a JSON object defining 3-5 research agents, each specializing in a different aspect of the request.
+        Generate a JSON object defining 5 research agents, each specializing in a different aspect of the request.
         The JSON object should have the following structure:
 
         {{
           "agents": [
             {{
-              "name": "Agent Name",
+              "name": "Name",
               "role": "Specific Research Focus",
               "library": "Search Library",
               "prompt": "Detailed instructions for the agent's research focus"
