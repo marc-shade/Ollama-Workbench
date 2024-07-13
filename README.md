@@ -61,27 +61,25 @@ conda activate ollamaworkbench
 ```
 
 ### Steps
-1. **Clone the repository**
+1. **Clone the repository, install, and run**
     ```bash
     git clone https://github.com/marc-shade/Ollama-Workbench.git
     cd Ollama-Workbench
+    sh run_ollama_workbench.sh
     ```
 
-2. **Install dependencies**
+2. **Optional Manual Install dependencies**
     ```bash
     pip install -r requirements.txt
     ```
 
-3. **Run the application (choose one)**
+3. **Optional Manual run the application**
     ```bash
     streamlit run main.py
     ```
 
-    ```bash
-    sh run_ollama_workbench.sh
-    ```
+If you don't have Ollama Server installed, you can run install_ollama.sh and you'll get the best models for working with all the JSON format needed for agents and workflows to work properly. If you use the SH run script, it will perform all the necessary installations, including Ollama and the models.
 
-If you don't have Ollama Server installed, you can run install_ollama.sh and you'll get the best models for working with all the JSON format needed for agents and workflows to work properly.
 ```bash
 sh install_ollama.sh
 ```
