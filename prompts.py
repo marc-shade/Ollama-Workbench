@@ -39,7 +39,7 @@ def get_identity_prompt():
 
 def manage_prompts():
     st.header("✨ Prompts")
-    prompt_types = ["Agent", "Metacognitive", "Voice", "Identity"]  # Added "Identity" to the list
+    prompt_types = ["Agent", "Metacognitive", "Voice", "Identity"]
     selected_prompt_type = st.selectbox("✨ Select Prompt Type:", prompt_types)
 
     if selected_prompt_type == "Agent":
@@ -51,7 +51,7 @@ def manage_prompts():
     elif selected_prompt_type == "Voice":
         prompts = get_voice_prompt()
         prompt_type = "voice"
-    else:  # Handle "Identity" prompt type
+    else:
         prompts = get_identity_prompt()
         prompt_type = "identity"
 

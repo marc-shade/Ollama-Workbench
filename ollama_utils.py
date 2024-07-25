@@ -14,7 +14,7 @@ import os
 
 OLLAMA_URL = "http://localhost:11434/api"
 
-@st.cache_data(ttl=0)  # Disable caching for this function
+@st.cache_data(ttl=0)
 def get_ollama_resource_usage():
     """Gets Ollama server resource usage."""
     try:
@@ -25,7 +25,7 @@ def get_ollama_resource_usage():
                 memory_usage = process.info['memory_percent']
 
                 # Get GPU usage if available (placeholder for now)
-                gpu_usage = "N/A"  
+                gpu_usage = "N/A"
 
                 # Check server responsiveness
                 response = requests.get("http://localhost:11434/api/tags")
@@ -42,7 +42,7 @@ def get_ollama_resource_usage():
     except Exception as e:
         return {"status": f"Error: {str(e)}", "cpu_usage": "N/A", "memory_usage": "N/A", "gpu_usage": "N/A"}
 
-@st.cache_data  # Cache the list of available models
+@st.cache_data
 def get_available_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
     response.raise_for_status()
@@ -80,7 +80,7 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
     try:
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        return f"An error occurred: {str(e)}", None, None, None  # Return None for eval_count and eval_duration
+        return f"An error occurred: {str(e)}", None, None, None
 
     response_parts = []
     eval_count = None
@@ -93,33 +93,6 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
             eval_duration = part.get("eval_duration", None)
             break
     return "".join(response_parts), part.get("context", None), eval_count, eval_duration
-
-def get_ollama_resource_usage():
-    """Gets Ollama server resource usage."""
-    try:
-        # Check if Ollama process is running
-        for process in psutil.process_iter(['name', 'cpu_percent', 'memory_percent']):
-            if process.info['name'] == 'ollama':
-                cpu_usage = process.info['cpu_percent']
-                memory_usage = process.info['memory_percent']
-
-                # Get GPU usage if available (placeholder for now)
-                gpu_usage = "N/A"  
-
-                # Check server responsiveness
-                response = requests.get("http://localhost:11434/api/tags")
-                server_status = "Running" if response.status_code == 200 else "Not Responding"
-
-                return {
-                    "status": server_status,
-                    "cpu_usage": f"{cpu_usage:.2f}%",
-                    "memory_usage": f"{memory_usage:.2f}%",
-                    "gpu_usage": gpu_usage
-                }
-
-        return {"status": "Not Running", "cpu_usage": "N/A", "memory_usage": "N/A", "gpu_usage": "N/A"}
-    except Exception as e:
-        return {"status": f"Error: {str(e)}", "cpu_usage": "N/A", "memory_usage": "N/A", "gpu_usage": "N/A"}
 
 def check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Return the following data in JSON format: name: John, age: 30, city: New York"
@@ -145,7 +118,7 @@ def pull_model(model_name):
     total = None
     st.write(f"📥 Pulling model: `{model_name}`")
     for line in response.iter_lines():
-        line = line.decode("utf-8")  # Decode the line from bytes to str
+        line = line.decode("utf-8")
         data = json.loads(line)
         
         if "total" in data and "completed" in data:
@@ -288,7 +261,7 @@ def view_last_logs():
     logs = get_server_logs()
     logs = logs[-1000:]
     log_text = "".join(logs)
-    st.text_area("Last 1000 Lines of Server Logs", value=log_text, height=400, key="last_logs_view")  # Changed key
+    st.text_area("Last 1000 Lines of Server Logs", value=log_text, height=400, key="last_logs_view")
 
 def get_server_logs():
     """Fetches server logs from the local Ollama log file."""

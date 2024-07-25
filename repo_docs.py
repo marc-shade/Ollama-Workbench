@@ -217,7 +217,7 @@ def get_file_info(file_path):
         created_time = datetime.fromtimestamp(file_stats.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
         modified_time = datetime.fromtimestamp(file_stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
 
-        extension = os.path.splitext(file_path)[1].lower()  # Get extension and make it lowercase
+        extension = os.path.splitext(file_path)[1].lower()
         language = {
             '.py': "python",
             '.txt': "plaintext",
@@ -225,7 +225,7 @@ def get_file_info(file_path):
             '.json': "json",
             '.sh': "bash",
             '.csv': "csv"
-        }.get(extension, "unknown")  # Determine language based on extension
+        }.get(extension, "unknown")
 
         file_info = {
             "Full Path": file_path,
@@ -242,10 +242,12 @@ def get_file_info(file_path):
                 code_content = code_file.read()
                 complexity = cc_visit(code_content)
                 maintainability = mi_visit(code_content, multi=False)
+                halstead = h_visit(code_content)
 
             file_info['Complexity'] = {
                 'Cyclomatic Complexity': [f"{func.name}: {func.complexity} ({cc_rank(func.complexity)})" for func in complexity],
-                'Maintainability Index': maintainability
+                'Maintainability Index': maintainability,
+                'Halstead Metrics': halstead
             }
 
             # Analyze code style using flake8
@@ -434,14 +436,14 @@ def main():
     # Four-column layout for task type, model, temperature, and max tokens
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        task_type = st.selectbox("Select task type", ["project_summary", "debug", "readme", "requirements", "documentation"])
+        task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements", "project_summary"])
     with col2:
         available_models = get_available_models()
         model = st.selectbox(f"Select model for {task_type} task", available_models)
     with col3:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2, step=0.1)
     with col4:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
 
     if st.button("🔍 Analyze Repository"):
         if not repo_path or not os.path.isdir(repo_path):

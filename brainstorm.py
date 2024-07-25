@@ -2,7 +2,7 @@
 import os
 import json
 import streamlit as st
-import subprocess  # Add this import
+import subprocess
 from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
 from autogen.agentchat.contrib.capabilities.teachability import Teachability
 from ollama_utils import get_available_models
@@ -178,7 +178,7 @@ def edit_agent_settings(agent_settings):
     
     with col4:
         agent_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, agent_settings['temperature'], key=f"{agent_settings['name']}_temperature")
-        agent_settings['max_tokens'] = st.slider("Max Tokens", 100, 32000, agent_settings['max_tokens'], key=f"{agent_settings['name']}_max_tokens")
+        agent_settings['max_tokens'] = st.slider("Max Tokens", min_value=1000, max_value=128000, value=agent_settings['max_tokens'], step=1000, key=f"{agent_settings['name']}_max_tokens")
         agent_settings['presence_penalty'] = st.slider("Presence Penalty", -2.0, 2.0, agent_settings['presence_penalty'], key=f"{agent_settings['name']}_presence_penalty")
         agent_settings['frequency_penalty'] = st.slider("Frequency Penalty", -2.0, 2.0, agent_settings['frequency_penalty'], key=f"{agent_settings['name']}_frequency_penalty")
 

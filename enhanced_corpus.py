@@ -1,12 +1,13 @@
+# enhanced_corpus.py
 import streamlit as st
-from langchain_community.document_loaders import PyPDFLoader, TextLoader, WebBaseLoader # Update imports
+from langchain_community.document_loaders import PyPDFLoader, TextLoader, WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import  OllamaEmbeddings # Update imports
-from langchain_community.vectorstores import Chroma # Update imports
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
-from langchain_community.llms import Ollama # Update imports
+from langchain_community.llms import Ollama
 from langchain.prompts import PromptTemplate
-from ollama_utils import get_available_models # Import the function
+from ollama_utils import get_available_models
 import os
 import shutil
 
@@ -29,8 +30,8 @@ class DocumentProcessor:
         return self.text_splitter.split_text(text)
 
 class EmbeddingGenerator:
-    def __init__(self, model_name="llama2:latest"): # Correct model name
-        self.embeddings = OllamaEmbeddings(model=model_name) # Use OllamaEmbeddings
+    def __init__(self, model_name="llama2:latest"):
+        self.embeddings = OllamaEmbeddings(model=model_name)
 
     def generate(self, texts):
         return self.embeddings.embed_documents(texts)
@@ -65,9 +66,9 @@ class QueryProcessor:
         return self.retrieval_engine.hybrid_search(query)
 
 class RAGLLMIntegration:
-    def __init__(self, query_processor, model="mistral:latest"): # Add model parameter
+    def __init__(self, query_processor, model="mistral:latest"):
         self.query_processor = query_processor
-        self.llm = Ollama(model=model) # Use the provided model
+        self.llm = Ollama(model=model)
         self.prompt_template = PromptTemplate(
             template="Answer the question based on the context below:\n\nContext: {context}\n\nQuestion: {question}\n\nAnswer:",
             input_variables=["context", "question"]
@@ -92,7 +93,7 @@ def enhance_corpus_ui():
     st.subheader("📋 Existing Corpus")
     if corpus_list:
         for corpus in corpus_list:
-            col1, col2, col3 = st.columns([6, 1, 1])  # Add a column for renaming
+            col1, col2, col3 = st.columns([6, 1, 1])
             with col1:
                 st.write(corpus)
             with col2:
@@ -124,7 +125,7 @@ def enhance_corpus_ui():
 
     # Model Selection
     available_models = get_available_models()
-    default_index = available_models.index("llama2:latest") if "llama2:latest" in available_models else 0 # Fixed model name
+    default_index = available_models.index("llama2:latest") if "llama2:latest" in available_models else 0
     selected_model = st.selectbox("Select Model", available_models, index=default_index)
 
     # Tabs for different input methods
@@ -177,8 +178,8 @@ def process_and_save_corpus(data, corpus_name, selected_model, is_url=False, is_
             f.write(data.getbuffer())
         documents = doc_processor.process_file(file_path)
 
-    embedding_generator = EmbeddingGenerator(model_name=selected_model) # Pass selected_model here
-    embeddings = embedding_generator.generate([doc.page_content for doc in documents])
+    embedding_generator = EmbeddingGenerator(model_name=selected_model)
+    embedding_generator.generate([doc.page_content for doc in documents])
 
     vector_db = VectorDatabase(embedding_generator.embeddings, persist_directory=corpus_path)
     vector_db.add_documents(documents)

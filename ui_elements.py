@@ -105,7 +105,7 @@ def model_comparison_test():
     with col1:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
     with col3:
         presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
     with col4:
@@ -152,7 +152,7 @@ def vision_comparison_test():
     with col1:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
     with col3:
         presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
     with col4:
@@ -309,7 +309,7 @@ def feature_test():
     with col1:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=4000, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
     with col3:
         presence_penalty = st.slider("Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
     with col4:

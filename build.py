@@ -1,3 +1,4 @@
+# build.py
 import os
 import re
 import json
@@ -355,33 +356,6 @@ class Test{cls}:
 """)
     return "\n".join(test_cases)
 
-def analyze_code(code: str) -> Dict[str, List[str]]:
-    tree = ast.parse(code)
-    functions = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-    classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
-    return {"functions": functions, "classes": classes}
-
-def generate_test_cases(code_analysis: Dict[str, List[str]]) -> str:
-    test_cases = []
-    for func in code_analysis["functions"]:
-        test_cases.append(f"""
-def test_{func}():
-    # TODO: Implement test for {func}
-    assert True
-""")
-    for cls in code_analysis["classes"]:
-        test_cases.append(f"""
-class Test{cls}:
-    def test_init(self):
-        # TODO: Implement test for {cls} initialization
-        assert True
-
-    def test_methods(self):
-        # TODO: Implement tests for {cls} methods
-        assert True
-""")
-    return "\n".join(test_cases)
-
 def run_tests(project_dir: str) -> Dict[str, Any]:
     test_dir = os.path.join(project_dir, "tests")
     if not os.path.exists(test_dir):
@@ -537,7 +511,7 @@ def build_interface():
     with col1:
         temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2, step=0.1)
     with col2:
-        max_tokens = st.slider("Max Tokens", min_value=100, max_value=32000, value=8000, step=100)
+        max_tokens = st.slider("Max Tokens", min_value=1000, max_value=128000, value=8000, step=1000)
 
     use_search = st.checkbox("Use search functionality")
     if use_search:
@@ -681,30 +655,6 @@ def build_interface():
                     st.rerun()  # This will restart the Streamlit app with the updated max_iterations
 
             # Continue with the rest of the process if no additional iterations are needed
-            exchange_log = f"Objective: {user_request}\n\n" if user_request else f"Objective: Analyze and improve the provided repository\n\n"
-            exchange_log += "=" * 40 + " Task Breakdown " + "=" * 40 + "\n\n"
-            for i, (prompt, result) in enumerate(task_exchanges, start=1):
-                exchange_log += f"Task {i}:\n"
-                exchange_log += f"Prompt: {prompt}\n"
-                exchange_log += f"Result: {result}\n\n"
-            exchange_log += "=" * 40 + " Refined Final Output " + "=" * 40 + "\n\n"
-            exchange_log += refined_output
-
-            exchange_log_filename = f"{timestamp}_{project_name}_log.md"
-            exchange_log_path = os.path.join(project_dir, exchange_log_filename)
-            try:
-                with open(exchange_log_path, 'w', encoding='utf-8') as f:
-                    f.write(exchange_log)
-                console.print(Panel(f"Saved exchange log: [bold]{exchange_log_path}[/bold]", title="[bold green]Exchange Log[/bold green]", title_align="left", border_style="green"))
-            except IOError as e:
-                console.print(Panel(f"Error saving exchange log: {str(e)}", title="[bold red]Exchange Log Error[/bold red]", title_align="left", border_style="red"))
-
-            st.session_state.project_state['status'] = 'Completed'
-            st.session_state.project_state['code'] = refined_output
-            st.session_state.project_state['project_dir'] = project_dir
-
-            st.success(f"Project built successfully! Files saved in: {project_dir}")
-
             exchange_log = f"Objective: {user_request}\n\n" if user_request else f"Objective: Analyze and improve the provided repository\n\n"
             exchange_log += "=" * 40 + " Task Breakdown " + "=" * 40 + "\n\n"
             for i, (prompt, result) in enumerate(task_exchanges, start=1):
