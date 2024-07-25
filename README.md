@@ -25,6 +25,8 @@ Engage in sophisticated interactions with AI models through a feature-rich chat 
 - 💾 **Session Management:** Save and load entire chat histories and workspaces for seamless workflow continuity.
 
 ### ⚙️ Advanced Workflows and Collaboration
+- 🔨 **Build:** Autonomous Multi-Agent Software Development System
+- 🔬 **Research:** Conduct in-depth research using multiple AI agents, each specializing in a different search approach. The agents will generate summaries of their findings, and a final report will be compiled based on their collective insights.
 - 🧠 **Brainstorm Mode:** Create and manage teams of specialized AI agents for collaborative ideation and problem-solving.
 - 🚀 **Project Management:** Develop, manage, and execute complex projects with multiple AI agents. Configure each agent with specific models, types, and parameters.
 - 🤖 **AI-Assisted Project Planning:** Generate tasks, assign agents, and create project structures using natural language descriptions.
@@ -164,5 +166,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ### Acknowledgements
 Special thanks to the contributors and the community for their support and feedback.
-
-Enjoy using the Ollama Workbench! If you encounter any issues, feel free to open an issue or submit a pull request. Happy testing and model management!
