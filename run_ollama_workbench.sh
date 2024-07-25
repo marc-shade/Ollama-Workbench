@@ -36,7 +36,7 @@ fi
 # source "$LOCAL_DIR/venv/bin/activate"
 
 # Install or update requirements
-pip install -r "$LOCAL_DIR/requirements.txt"
+pip install -U -r "$LOCAL_DIR/requirements.txt"
 python -m spacy download en_core_web_sm
 
 # Install or update Ollama server (optional, assuming user has Ollama installed)
