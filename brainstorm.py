@@ -2,6 +2,7 @@
 import os
 import json
 import streamlit as st
+import subprocess  # Add this import
 from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
 from autogen.agentchat.contrib.capabilities.teachability import Teachability
 from ollama_utils import get_available_models
@@ -230,12 +231,16 @@ def manage_agents():
     
     save_agent_settings(settings)
 
-def brainstorm_session():
+def brainstorm_session(use_docker):
     settings = load_agent_settings()
     agents = [create_agent(agent_settings) for agent_settings in settings["agents"]]
 
     if 'group_chat' not in st.session_state:
-        user = UserProxyAgent("👨‍💼 User", human_input_mode="NEVER")
+        user = UserProxyAgent(
+            "👨‍💼 User",
+            human_input_mode="NEVER",
+            code_execution_config={"use_docker": use_docker}
+        )
         st.session_state.group_chat = GroupChat(
             agents=[*agents, user],
             messages=[],
@@ -333,14 +338,41 @@ def brainstorm_session():
 
 def brainstorm_interface():
     st.title("🧠 Brainstorm")
-    
+
+    # Docker usage option
+    use_docker = st.checkbox("Use Docker for code execution", value=False)
+
+    if use_docker:
+        # Check if Docker is installed and running
+        if not is_docker_running():
+            st.warning("Docker is not running. Please start Docker or install it if not already installed.")
+            st.info("""
+            To install Docker:
+            1. Visit https://www.docker.com/products/docker-desktop
+            2. Download and install Docker Desktop for your operating system
+            3. After installation, start Docker Desktop
+            4. Once Docker is running, refresh this page
+            """)
+            st.stop()
+    else:
+        os.environ["AUTOGEN_USE_DOCKER"] = "0"
+
     tab1, tab2 = st.tabs(["Brainstorm Session", "Manage Agents"])
     
     with tab1:
-        brainstorm_session()
+        brainstorm_session(use_docker)
     
     with tab2:
         manage_agents()
+
+def is_docker_running():
+    try:
+        subprocess.run(["docker", "info"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    except FileNotFoundError:
+        return False
 
 if __name__ == "__main__":
     brainstorm_interface()
