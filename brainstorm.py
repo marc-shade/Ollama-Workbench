@@ -1,13 +1,20 @@
-# brainstorm.py
 import os
 import json
 import streamlit as st
-from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
-from autogen.agentchat.contrib.capabilities.teachability import Teachability
 from ollama_utils import get_available_models
 import markdown
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 from info_brainstorm import display_info_brainstorm
+
+# Try to import from autogen, if it fails, set the imports to None
+try:
+    from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
+    from autogen.agentchat.contrib.capabilities.teachability import Teachability
+    AUTOGEN_AVAILABLE = True
+except ImportError:
+    ConversableAgent = UserProxyAgent = GroupChat = GroupChatManager = Teachability = None
+    AUTOGEN_AVAILABLE = False
+    print("Warning: autogen library could not be imported. Brainstorm functionality will be limited.")
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -231,6 +238,9 @@ def manage_agents():
     save_agent_settings(settings)
 
 def brainstorm_session():
+    if not AUTOGEN_AVAILABLE:
+        st.error("The autogen library is not available. Brainstorm functionality is limited.")
+        return
     settings = load_agent_settings()
     agents = [create_agent(agent_settings) for agent_settings in settings["agents"]]
 
@@ -334,6 +344,10 @@ def brainstorm_session():
 def brainstorm_interface():
     st.title("🧠 Brainstorm")
     
+    if not AUTOGEN_AVAILABLE:
+        st.error("The autogen library is not available. Brainstorm functionality is limited.")
+        return
+
     tab1, tab2 = st.tabs(["Brainstorm Session", "Manage Agents"])
     
     with tab1:
