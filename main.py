@@ -26,6 +26,7 @@ from brainstorm import brainstorm_interface
 from ollama_utils import get_ollama_resource_usage
 from research import research_interface
 from enhanced_corpus import enhance_corpus_ui
+from build import build_interface
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -33,6 +34,7 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 # Define constants
 SIDEBAR_SECTIONS = {
     "⚙️ Workflow": [
+        ("🔨 Build", "Build"), # Add this line
         ("🔬 Research", "Research"),
         ("🧠 Brainstorm", "Brainstorm"),
         ("🚀 Projects", "Manage Projects"),
@@ -240,6 +242,8 @@ def main_content():
         research_interface()
     elif st.session_state.selected_test == "Enhanced Corpus":
         enhance_corpus_ui()
+    elif st.session_state.selected_test == "Build": # Add this elif block
+        build_interface()
     else:
         display_welcome_message()
 
