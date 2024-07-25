@@ -1,10 +1,16 @@
 # search_libraries.py
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build
-from serpapi import GoogleSearch
 import requests
 import json
 from typing import List, Dict
+
+# Try to import GoogleSearch from serpapi, if it fails, set it to None
+try:
+    from serpapi import GoogleSearch
+except ImportError:
+    GoogleSearch = None
+    print("Warning: serpapi.GoogleSearch could not be imported. SerpAPI search will not be available.")
 
 def duckduckgo_search(query: str, num_results: int = 5) -> List[Dict]:
     """Performs a search using DuckDuckGo."""
@@ -20,6 +26,10 @@ def google_search(query: str, api_key: str, cse_id: str, num_results: int = 5) -
 
 def serpapi_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]:
     """Performs a search using SerpApi."""
+    if GoogleSearch is None:
+        print("Error: SerpAPI search is not available due to missing serpapi.GoogleSearch.")
+        return []
+    
     try:
         params = {
             "engine": "google",
@@ -31,10 +41,10 @@ def serpapi_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]
         results = search.get_dict()
         organic_results = results.get("organic_results", [])
         if not organic_results:
-            print(f"SerpApi returned no results. Full response: {results}")  # For debugging
+            print(f"SerpApi returned no results. Full response: {results}")
         return [{"title": result["title"], "url": result["link"]} for result in organic_results]
     except Exception as e:
-        print(f"Error in SerpApi search: {str(e)}")  # For debugging
+        print(f"Error in SerpApi search: {str(e)}")
         return []
 
 def serper_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]:
@@ -55,7 +65,7 @@ def serper_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]:
         organic_results = results.get("organic", [])
         return [{"title": result["title"], "url": result["link"]} for result in organic_results]
     except requests.RequestException as e:
-        print(f"Error in Serper search: {str(e)}")  # For debugging
+        print(f"Error in Serper search: {str(e)}")
         return []
 
 def bing_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]:
@@ -69,5 +79,5 @@ def bing_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]:
         search_results = response.json()
         return [{"title": result["name"], "url": result["url"]} for result in search_results.get("webPages", {}).get("value", [])]
     except requests.RequestException as e:
-        print(f"Error in Bing search: {str(e)}")  # For debugging
+        print(f"Error in Bing search: {str(e)}")
         return []
