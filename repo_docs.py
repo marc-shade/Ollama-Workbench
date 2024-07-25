@@ -428,13 +428,13 @@ def main():
 
     # Input for exclude patterns
     exclude_patterns_str = st.text_input("Enter file/folder patterns to exclude (comma-separated, use regex):", 
-                                        value=".git,__pycache__,cli,.*\\.pkl,tmp,.*\\.bin,.*\\.sqlite3,.*\\.db,.DS_Store,.*\\.log,files,venv,.*\\.ipynb,notebooks,LICENSE,checkpoints,.*\\.pdf,.*\\.png,.*\\.jpg,.*\\.jpeg,.*\\.gif,.*\\.eml")
+                                        value=".git,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.eml,.*\.json,chroma_db,.pytest_cache,project_summary.md")
     exclude_patterns = [pattern.strip() for pattern in exclude_patterns_str.split(",")]
 
     # Four-column layout for task type, model, temperature, and max tokens
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements", "project_summary"])
+        task_type = st.selectbox("Select task type", ["project_summary", "debug", "readme", "requirements", "documentation"])
     with col2:
         available_models = get_available_models()
         model = st.selectbox(f"Select model for {task_type} task", available_models)

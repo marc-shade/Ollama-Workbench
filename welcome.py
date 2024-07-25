@@ -21,6 +21,7 @@ def display_welcome_message():
             - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
 
             #### ⚙️ Workflow
+            - 🔨 **Build:** Autonomous Multi-Agent Software Development System
             - 🔬 **Research:** Conduct in-depth research using multiple AI agents, each specializing in a different search approach. The agents will generate summaries of their findings, and a final report will be compiled based on their collective insights.
             - 🧠 **Brainstorm:** Engage in interactive brainstorming sessions with multiple AI agents, each with unique roles and perspectives. The agents use AutoGen's 'Teachable Agent' memory feature to remember your brainstoring sessions.
             - 🚀 **Projects:** Create, edit, delete, import, and export projects and tasks. Assign AI agents to tasks and auto-generate responses.
