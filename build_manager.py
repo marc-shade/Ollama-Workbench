@@ -2,17 +2,17 @@
 import json
 import os
 import queue
-import csv  # For CSV handling
-import threading  # Import the threading module
-import logging  # Import the logging module
+import csv
+import threading
+import logging
 from agents import Agent
 from ollama_utils import call_ollama_endpoint
-from projects import Task, save_tasks, load_tasks  # Import necessary functions
-import ollama  # Import the ollama module
+from projects import Task, load_tasks
+import ollama
 from concurrent.futures import ThreadPoolExecutor
 import re
 from functools import reduce
-import streamlit as st  # Import Streamlit
+import streamlit as st
 from datetime import datetime, timedelta
 
 # Set up logging
@@ -39,8 +39,8 @@ class BuildManager(Agent):
             print(f"Critical error during initialization: {e}")
             logging.error(f"Critical error during initialization: {e}")
             self.cancel_workflow()
-            self.update_task_callback(0, "Failed", f"Critical Error: {e}")  # Assuming index 0 is the first task
-            return  # Terminate initialization
+            self.update_task_callback(0, "Failed", f"Critical Error: {e}")
+            return
 
     def load_agents(self):
         self.agents = {}
@@ -53,7 +53,7 @@ class BuildManager(Agent):
                 except Exception as e:
                     print(f"Error loading agent from {filepath}: {e}")
                     logging.error(f"Error loading agent from {filepath}: {e}")
-                    raise  # Re-raise the exception to trigger workflow termination
+                    raise
 
     def load_workflows(self):
         self.workflows = {}
@@ -67,7 +67,7 @@ class BuildManager(Agent):
                     except Exception as e:
                         print(f"Error loading workflow from {filepath}: {e}")
                         logging.error(f"Error loading workflow from {filepath}: {e}")
-                        raise  # Re-raise the exception to trigger workflow termination
+                        raise
 
     def process_request(self, user_request: str):
         try:
@@ -83,7 +83,6 @@ class BuildManager(Agent):
 
             Classification: 
             """
-            # Use ollama.generate for non-streaming response
             response = ollama.generate(model="mistral:7b-instruct-v0.2-q8_0", prompt=classification_prompt)
             task_category = response['response'].strip().lower()
 
@@ -96,13 +95,13 @@ class BuildManager(Agent):
                 print(f"Error: Unable to classify user request: {user_request}")
                 logging.error(f"Error: Unable to classify user request: {user_request}")
                 self.cancel_workflow()
-                self.update_task_callback(0, "Failed", f"Error: Unable to classify user request")  # Assuming index 0 is the first task
+                self.update_task_callback(0, "Failed", f"Error: Unable to classify user request")
 
         except Exception as e:
             print(f"Critical error in process_request: {e}")
             logging.error(f"Critical error in process_request: {e}")
             self.cancel_workflow()
-            self.update_task_callback(0, "Failed", f"Critical Error: {e}")  # Assuming index 0 is the first task
+            self.update_task_callback(0, "Failed", f"Critical Error: {e}")
 
     def execute_workflow(self, workflow_name: str, user_request: str, project_name="My Project"):
         workflow = self.workflows.get(workflow_name)
@@ -214,7 +213,7 @@ class BuildManager(Agent):
 
         try:
             # Update task status to "In Progress"
-            self.update_task_callback(step_index, "In Progress", None)  # Use the callback to update UI
+            self.update_task_callback(step_index, "In Progress", None)
 
             # Generate prompt using the task description
             prompt_template = agent.prompts.get("generate_code")
@@ -263,12 +262,12 @@ class BuildManager(Agent):
                 return
 
             # Update task status to "Completed"
-            self.update_task_callback(step_index, "Completed", task.result)  # Use the callback to update UI
+            self.update_task_callback(step_index, "Completed", task.result)
 
         except Exception as e:
             print(f"Error executing task: {e}")
             logging.error(f"Error executing task: {task.name} - {e}", exc_info=True)
-            self.update_task_callback(step_index, "Failed", f"Error: {e}")  # Use the callback to update UI
+            self.update_task_callback(step_index, "Failed", f"Error: {e}")
 
         # Handle pause/resume/cancel commands
         command = st.session_state.get("command")

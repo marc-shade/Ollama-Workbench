@@ -9,7 +9,7 @@ import base64
 from ollama_utils import get_available_models, ollama, call_ollama_endpoint
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import re
-from functools import lru_cache  # Import lru_cache
+from functools import lru_cache
 
 class Task:
     def __init__(self, name, description, deadline=None, priority="Medium", completed=False, agent="None", result=None, task_id=None):
@@ -153,7 +153,7 @@ def define_agent_block(name, agent_data=None):
     )
     corpus = st.selectbox(f"{name} Corpus", get_corpus_options(), key=f"{name}_corpus", index=get_corpus_options().index(agent_data.get('corpus')) if agent_data.get('corpus') in get_corpus_options() else 0)
     temperature = st.slider(f"{name} Temperature", 0.0, 1.0, agent_data.get('temperature', 0.7), key=f"{name}_temperature")
-    max_tokens = st.slider(f"{name} Max Tokens", 100, 32000, agent_data.get('max_tokens', 4000), key=f"{name}_max_tokens")
+    max_tokens = st.slider(f"{name} Max Tokens", 4000, 128000, agent_data.get('max_tokens', 4000), key=f"{name}_max_tokens" , step=1000)
     return {'model': model, 'agent_type': agent_type, 'metacognitive_type': metacognitive_type, 'voice_type': voice_type, 'corpus': corpus, 'temperature': temperature, 'max_tokens': max_tokens}
 
 class ProjectManagerAgent:
@@ -162,12 +162,6 @@ class ProjectManagerAgent:
         self.agent_type = agent_type
         self.temperature = temperature
         self.max_tokens = max_tokens
-        # self.use_teachability = use_teachability # Remove if not using Teachability
-        # self.db_path = db_path # Remove if not using Teachability
-
-        # Teachability is removed
-        # self.teachability = None
-        # self.db = None
 
     @lru_cache(maxsize=None)
     def generate_workflow(self, user_request: str):
@@ -218,11 +212,6 @@ class ProjectManagerAgent:
             }}
         }}
         """
-
-        # Teachability context retrieval is removed
-        # if self.use_teachability:
-        #     context = self.teachability.retrieve_relevant_chunks(user_request, self.db)
-        #     generation_prompt += f"\\n\\nRelevant context from past interactions:\\n{context}"
 
         response = ollama.generate(
             model=self.model,
@@ -300,8 +289,6 @@ def initialize_session_state():
             'agent_type': 'Task Planner',
             'temperature': 0.7,
             'max_tokens': 4000,
-            # 'use_teachability': False, # Remove if not using Teachability
-            # 'db_path': './tmp/project_manager_db' # Remove if not using Teachability
         }
 
 def projects_main():
@@ -408,9 +395,8 @@ def projects_main():
     
     with col2:
         st.session_state.project_manager_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, st.session_state.project_manager_settings['temperature'], step=0.1)
-        st.session_state.project_manager_settings['max_tokens'] = st.slider("Max Tokens", 100, 32000, st.session_state.project_manager_settings['max_tokens'], step=100)
+        st.session_state.project_manager_settings['max_tokens'] = st.slider("Max Tokens", 4000, 128000, st.session_state.project_manager_settings['max_tokens'], step=1000)
     
-    # Teachability option removed
     # st.session_state.project_manager_settings['use_teachability'] = st.checkbox("Use Teachability", value=st.session_state.project_manager_settings['use_teachability'])
     # if st.session_state.project_manager_settings['use_teachability']:
     #     st.session_state.project_manager_settings['db_path'] = st.text_input("Teachability Database Path", value=st.session_state.project_manager_settings['db_path'])
@@ -419,7 +405,7 @@ def projects_main():
     st.subheader("🤖 Auto-Generate Tasks")
     user_request = st.text_area("Enter your project request:")
 
-    if selected_project: # Moved the button inside the conditional block
+    if selected_project:
         if st.button("Generate Tasks"):
             if user_request:
                 with st.spinner("Generating tasks and agents..."):
@@ -534,7 +520,7 @@ def projects_main():
         if num_agents > len(agent_names):
             for i in range(len(agent_names), num_agents):
                 agent_name = f"Agent {i+1}"
-                st.session_state.agents[agent_name] = {'model': 'mistral:7b-instruct-v0.2-q8_0', 'agent_type': 'None', 'metacognitive_type': 'None', 'voice_type': 'None', 'corpus': 'None', 'temperature': 0.7, 'max_tokens': 4000}
+                st.session_state.agents[agent_name] = {'model': 'mistral:instruct', 'agent_type': 'None', 'metacognitive_type': 'None', 'voice_type': 'None', 'corpus': 'None', 'temperature': 0.7, 'max_tokens': 4000}
                 agent_names.append(agent_name)
 
         new_agent_names = []

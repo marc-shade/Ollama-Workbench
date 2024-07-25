@@ -8,10 +8,9 @@ import ollama
 from ollama_utils import get_available_models
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
-from files_management import files_tab  # Import from files_management.py
-from streamlit_extras.bottom_container import bottom  # Correct import
-from agents import SearchManager # Add this import
-# from api_keys import api_keys # Add this import
+from files_management import files_tab
+from streamlit_extras.bottom_container import bottom
+from agents import SearchManager
 
 def chat_interface():
     st.header("💬 Chat")
@@ -70,7 +69,7 @@ def chat_interface():
             with col1:
                 temperature = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
             with col2:
-                max_tokens = st.slider("📊 Max Tokens", min_value=100, max_value=32000, value=4000, step=100, key="max_tokens_slider_chat")
+                max_tokens = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000, key="max_tokens_slider_chat")
             with col3:
                 presence_penalty = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
             with col4:
@@ -211,7 +210,7 @@ def get_corpus_context_from_db(corpus_folder, corpus_name, query):
     from langchain_community.embeddings import OllamaEmbeddings
     from langchain_community.vectorstores import Chroma
     corpus_path = os.path.join(corpus_folder, corpus_name)
-    embeddings = OllamaEmbeddings(model="llama2:latest") # Use the same embedding model as when creating the corpus
+    embeddings = OllamaEmbeddings(model="llama2:latest")
     db = Chroma(persist_directory=corpus_path, embedding_function=embeddings)
     results = db.similarity_search(query, k=3)
     return "\n".join([doc.page_content for doc in results])

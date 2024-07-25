@@ -5,6 +5,7 @@ import time
 import json
 import matplotlib.pyplot as plt
 from ollama_utils import call_ollama_endpoint
+import io # Added import
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":

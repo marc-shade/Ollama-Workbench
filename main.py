@@ -34,7 +34,7 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 # Define constants
 SIDEBAR_SECTIONS = {
     "⚙️ Workflow": [
-        ("🔨 Build", "Build"), # Add this line
+        ("🔨 Build", "Build"),
         ("🔬 Research", "Research"),
         ("🧠 Brainstorm", "Brainstorm"),
         ("🚀 Projects", "Manage Projects"),
@@ -94,23 +94,7 @@ def display_resource_usage_sidebar():
     with col3:
         st.markdown(f"RAM: {usage['memory_usage']}")
     with col4:
-        st.markdown(f": {usage['gpu_usage']}")
-
-def server_monitoring():
-    st.header("🖥️ Server Monitoring")
-
-    # Add checkbox to enable/disable resource usage display
-    show_resource_usage = st.checkbox("Show Resource Usage in Sidebar", value=st.session_state.get("show_resource_usage", False))
-    st.session_state.show_resource_usage = show_resource_usage
-
-    # Resource Usage
-    st.subheader("📊 Resource Usage")
-    usage = get_ollama_resource_usage()
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Status", usage["status"])
-    col2.metric("CPU Usage", usage["cpu_usage"])
-    col3.metric("Memory Usage", usage["memory_usage"])
-    col4.metric("GPU Usage", usage["gpu_usage"])
+        st.markdown(f"GPU: {usage['gpu_usage']}")
 
 def create_sidebar():
     """Create and populate the sidebar."""
@@ -242,7 +226,7 @@ def main_content():
         research_interface()
     elif st.session_state.selected_test == "Enhanced Corpus":
         enhance_corpus_ui()
-    elif st.session_state.selected_test == "Build": # Add this elif block
+    elif st.session_state.selected_test == "Build":
         build_interface()
     else:
         display_welcome_message()
