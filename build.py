@@ -26,6 +26,18 @@ from pytest_html import extras
 from io import StringIO
 import ast
 
+API_KEYS_FILE = "api_keys.json"
+
+def load_api_keys():
+    if os.path.exists(API_KEYS_FILE):
+        with open(API_KEYS_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_api_keys(api_keys):
+    with open(API_KEYS_FILE, 'w') as f:
+        json.dump(api_keys, f, indent=4)
+
 # Initialize the Rich Console
 console = Console()
 
@@ -173,13 +185,20 @@ def perform_search(query: str, search_method: str, api_keys: Dict[str, str], num
     if search_method == "duckduckgo":
         return duckduckgo_search(query, num_results)
     elif search_method == "google":
+        if "google_api_key" not in api_keys or "google_cse_id" not in api_keys:
+            console.print("[bold red]Error: Google API Key or CSE ID not provided.[/bold red]")
+            return []
         return google_search(query, api_keys["google_api_key"], api_keys["google_cse_id"], num_results)
     elif search_method == "serpapi":
+        if "serpapi_api_key" not in api_keys:
+            console.print("[bold red]Error: SerpAPI Key not provided.[/bold red]")
+            return []
         return serpapi_search(query, api_keys["serpapi_api_key"], num_results)
     else:
-        raise ValueError(f"Unsupported search method: {search_method}")
+        console.print(f"[bold red]Unsupported search method: {search_method}[/bold red]")
+        return []
 
-def manage_task(objective, model, file_content=None, previous_results=None, use_search=False, temperature=0.2, max_tokens=8000, search_results=None, groq_api_key=None):
+def manage_task(objective, model, file_content=None, previous_results=None, use_search=False, temperature=0.2, max_tokens=8000, search_results=None, groq_api_key=None, api_keys=None):
     console.print(f"\n[bold]Calling Manager for your objective[/bold]")
     previous_results_text = "\n".join(previous_results) if previous_results else "None"
     if file_content:
@@ -247,50 +266,67 @@ def manage_task(objective, model, file_content=None, previous_results=None, use_
     if is_groq_model(model):
         response_text = call_groq_api(model, messages, temperature, max_tokens, groq_api_key)
     else:
-        response = client.chat(
-            model=model,
-            messages=messages,
-            tools=tools,
-            options={
-                "temperature": temperature,
-                "num_predict": max_tokens
-            }
-        )
-        response_text = response['message']['content']
-        tool_calls = response['message'].get('tool_calls')
+        try:
+            response = client.chat(
+                model=model,
+                messages=messages,
+                tools=tools,
+                options={
+                    "temperature": temperature,
+                    "num_predict": max_tokens
+                }
+            )
+            response_text = response['message']['content']
+            tool_calls = response['message'].get('tool_calls')
 
-        if tool_calls:
-            # Process tool calls
-            for tool_call in tool_calls:
-                function_name = tool_call['function']['name']
-                arguments = json.loads(tool_call['function']['arguments'])
+            if tool_calls:
+                # Process tool calls
+                for tool_call in tool_calls:
+                    function_name = tool_call['function']['name']
+                    arguments = tool_call['function']['arguments']
 
-                if function_name == "perform_search":
-                    search_query = arguments['query']
-                    search_method = arguments['search_method']
-                    api_keys = arguments['api_keys']
-                    num_results = arguments['num_results']
+                    if function_name == "perform_search":
+                        search_query = arguments.get('query', '')
+                        search_method = arguments.get('search_method', 'duckduckgo')
+                        num_results = arguments.get('num_results', 5)
 
-                    search_results = perform_search(search_query, search_method, api_keys, num_results)
-                    console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
+                        search_results = perform_search(search_query, search_method, api_keys, num_results)
+                        if search_results:
+                            console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
 
-                    # Append search results to the messages
-                    messages.append({
-                        "role": "tool",
-                        "content": json.dumps(search_results)
-                    })
+                            # Append search results to the messages
+                            messages.append({
+                                "role": "tool",
+                                "content": json.dumps(search_results)
+                            })
 
-                    # Call the model again with the search results
-                    response = client.chat(
-                        model=model,
-                        messages=messages,
-                        tools=tools,
-                        options={
-                            "temperature": temperature,
-                            "num_predict": max_tokens
-                        }
-                    )
-                    response_text = response['message']['content']
+                            # Call the model again with the search results
+                            response = client.chat(
+                                model=model,
+                                messages=messages,
+                                tools=tools,
+                                options={
+                                    "temperature": temperature,
+                                    "num_predict": max_tokens
+                                }
+                            )
+                            response_text = response['message']['content']
+                else:
+                    console.print("[bold yellow]Warning: Search returned no results.[/bold yellow]")
+        except Exception as e:
+            if "does not support tools" in str(e):
+                # If the model doesn't support tools, fall back to a regular chat without tools
+                response = client.chat(
+                    model=model,
+                    messages=messages,
+                    options={
+                        "temperature": temperature,
+                        "num_predict": max_tokens
+                    }
+                )
+                response_text = response['message']['content']
+            else:
+                raise e
 
     console.print(Panel(response_text, title=f"[bold green]Manager Response[/bold green]", title_align="left", border_style="green", subtitle="Sending task to sub-agent 👇"))
     return response_text, file_content
@@ -365,50 +401,68 @@ def sub_agent_task(prompt, model, previous_tasks=None, use_search=False, continu
     if is_groq_model(model):
         response_text = call_groq_api(model, messages, temperature, max_tokens, groq_api_key)
     else:
-        response = client.chat(
-            model=model,
-            messages=messages,
-            tools=tools,
-            options={
-                "temperature": temperature,
-                "num_predict": max_tokens
-            }
-        )
-        response_text = response['message']['content']
-        tool_calls = response['message'].get('tool_calls')
+        try:
+            response = client.chat(
+                model=model,
+                messages=messages,
+                tools=tools,
+                options={
+                    "temperature": temperature,
+                    "num_predict": max_tokens
+                }
+            )
+            response_text = response['message']['content']
+            tool_calls = response['message'].get('tool_calls')
 
-        if tool_calls:
-            # Process tool calls
-            for tool_call in tool_calls:
-                function_name = tool_call['function']['name']
-                arguments = json.loads(tool_call['function']['arguments'])
+            if tool_calls:
+                # Process tool calls
+                for tool_call in tool_calls:
+                    function_name = tool_call['function']['name']
+                    arguments = tool_call['function']['arguments']
 
-                if function_name == "perform_search":
-                    search_query = arguments['query']
-                    search_method = arguments['search_method']
-                    api_keys = arguments['api_keys']
-                    num_results = arguments['num_results']
+                    if function_name == "perform_search":
+                        search_query = arguments.get('query', '')
+                        search_method = arguments.get('search_method', 'duckduckgo')
+                        api_keys = arguments.get('api_keys', {})
+                        num_results = arguments.get('num_results', 5)
 
-                    search_results = perform_search(search_query, search_method, api_keys, num_results)
-                    console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
+                        search_results = perform_search(search_query, search_method, api_keys, num_results)
+                        if search_results:
+                            console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
 
-                    # Append search results to the messages
-                    messages.append({
-                        "role": "tool",
-                        "content": json.dumps(search_results)
-                    })
+                            # Append search results to the messages
+                            messages.append({
+                                "role": "tool",
+                                "content": json.dumps(search_results)
+                            })
 
-                    # Call the model again with the search results
-                    response = client.chat(
-                        model=model,
-                        messages=messages,
-                        tools=tools,
-                        options={
-                            "temperature": temperature,
-                            "num_predict": max_tokens
-                        }
-                    )
-                    response_text = response['message']['content']
+                            # Call the model again with the search results
+                            response = client.chat(
+                                model=model,
+                                messages=messages,
+                                tools=tools,
+                                options={
+                                    "temperature": temperature,
+                                    "num_predict": max_tokens
+                                }
+                            )
+                            response_text = response['message']['content']
+                        else:
+                            console.print("[bold yellow]Warning: Search returned no results.[/bold yellow]")
+        except Exception as e:
+            if "does not support tools" in str(e):
+                # If the model doesn't support tools, fall back to a regular chat without tools
+                response = client.chat(
+                    model=model,
+                    messages=messages,
+                    options={
+                        "temperature": temperature,
+                        "num_predict": max_tokens
+                    }
+                )
+                response_text = response['message']['content']
+            else:
+                raise e
 
     if len(response_text) >= 8000:
         console.print("[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response.")
@@ -418,7 +472,7 @@ def sub_agent_task(prompt, model, previous_tasks=None, use_search=False, continu
     console.print(Panel(response_text, title="[bold blue]Sub-agent Result[/bold blue]", title_align="left", border_style="blue", subtitle="Task completed, sending result to Manager 👇"))
     return response_text
 
-def refine_task(objective, model, sub_task_results, filename, projectname, continuation=False, temperature=0.2, max_tokens=8000, groq_api_key=None):
+def refine_task(objective, model, sub_task_results, filename, projectname, continuation=False, temperature=0.2, max_tokens=8000, groq_api_key=None, api_keys=None):
     print("\nCalling Refiner to provide the refined final output for your objective:")
     messages = [
         {
@@ -431,7 +485,7 @@ def refine_task(objective, model, sub_task_results, filename, projectname, conti
 
     if len(response_text) >= 8000 and not continuation:
         console.print("[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response.")
-        continuation_response_text = refine_task(objective, model, sub_task_results + [response_text], filename, projectname, continuation=True, temperature=temperature, max_tokens=max_tokens, groq_api_key=groq_api_key)
+        continuation_response_text = refine_task(objective, model, sub_task_results + [response_text], filename, projectname, continuation=True, temperature=temperature, max_tokens=max_tokens, groq_api_key=groq_api_key, api_keys=api_keys)
         response_text += "\n" + continuation_response_text
 
     console.print(Panel(response_text, title="[bold green]Final Output[/bold green]", title_align="left", border_style="green"))
@@ -624,6 +678,7 @@ def build_interface():
     st.title("🔨 Build: Autonomous Multi-Agent Software Development System")
 
     settings = load_settings()
+    api_keys = load_api_keys()  # Load API keys
 
     if 'project_state' not in st.session_state:
         st.session_state.project_state = {
@@ -706,15 +761,22 @@ def build_interface():
     use_search = st.checkbox("Use search functionality")
     if use_search:
         search_method = st.selectbox("Select search method", ["duckduckgo", "google", "serpapi"])
-        api_keys = {}
+        
+        # Display current API keys and allow editing
         if search_method == "google":
-            api_keys["google_api_key"] = st.text_input("Enter Google API Key", type="password")
-            api_keys["google_cse_id"] = st.text_input("Enter Google Custom Search Engine ID", type="password")
+            api_keys["google_api_key"] = st.text_input("Google API Key", value=api_keys.get("google_api_key", ""), type="password")
+            api_keys["google_cse_id"] = st.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""), type="password")
         elif search_method == "serpapi":
-            api_keys["serpapi_api_key"] = st.text_input("Enter SerpApi API Key", type="password")
+            api_keys["serpapi_api_key"] = st.text_input("SerpApi API Key", value=api_keys.get("serpapi_api_key", ""), type="password")
+        
+        # Add num_results input
+        num_results = st.number_input("Number of search results", min_value=1, max_value=20, value=5)
+        
+        # Save API keys if they have changed
+        save_api_keys(api_keys)
     else:
         search_method = None
-        api_keys = None
+        num_results = None
 
     agent_logs = st.empty()
 
@@ -737,7 +799,7 @@ def build_interface():
             search_results = None
             if use_search:
                 search_query = user_request or "Repository improvement techniques"
-                search_results = perform_search(search_query, search_method, api_keys)
+                search_results = perform_search(search_query, search_method, api_keys, num_results)
                 console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
 
             task_exchanges = []
@@ -755,7 +817,8 @@ def build_interface():
                         temperature=temperature,
                         max_tokens=max_tokens,
                         search_results=search_results,
-                        groq_api_key=settings.get("groq_api_key")
+                        groq_api_key=settings.get("groq_api_key"),
+                        api_keys=api_keys
                     )
                 else:
                     agent_result, _ = manage_task(
@@ -766,7 +829,8 @@ def build_interface():
                         temperature=temperature,
                         max_tokens=max_tokens,
                         search_results=search_results,
-                        groq_api_key=settings.get("groq_api_key")
+                        groq_api_key=settings.get("groq_api_key"),
+                        api_keys=api_keys
                     )
 
                 if "The task is complete:" in agent_result:
@@ -784,7 +848,8 @@ def build_interface():
                         temperature=temperature,
                         max_tokens=max_tokens,
                         search_results=search_results,
-                        groq_api_key=settings.get("groq_api_key")
+                        groq_api_key=settings.get("groq_api_key"),
+                        api_keys=api_keys
                     )
                     worker_tasks.append({"task": sub_task_prompt, "result": sub_task_result})
                     task_exchanges.append((sub_task_prompt, sub_task_result))
@@ -805,7 +870,8 @@ def build_interface():
                 projectname=sanitized_objective,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                groq_api_key=settings.get("groq_api_key")
+                groq_api_key=settings.get("groq_api_key"),
+                api_keys=api_keys
             )
 
             project_name_match = re.search(r'Project Name: (.*)', refined_output)
