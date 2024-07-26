@@ -1,4 +1,5 @@
 # ollama_utils.py
+# ollama_utils.py
 import requests
 import json
 import io
@@ -53,7 +54,7 @@ def get_available_models():
     ]
     return models
 
-def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None, tools=None):
     payload = {
         "model": model,
         "temperature": temperature,
@@ -61,6 +62,7 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
         "presence_penalty": presence_penalty,
         "frequency_penalty": frequency_penalty,
         "context": context if context is not None else [],
+        "tools": tools if tools is not None else []
     }
     if prompt:
         payload["prompt"] = prompt

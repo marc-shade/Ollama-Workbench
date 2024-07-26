@@ -20,6 +20,7 @@ from chat_interface import chat_interface
 from brainstorm import brainstorm_session
 import platform
 import time
+import asyncio
 
 def manage_prompts_interface():
     manage_prompts()
@@ -315,7 +316,29 @@ def feature_test():
     with col4:
         frequency_penalty = st.slider("Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
 
+    # Define the test function
+    def test_function(arg1: str, arg2: int) -> str:
+        return f"Argument 1: {arg1}, Argument 2: {arg2}"
+
+    # Define the tool description and arguments
+    tool_description = "A test function that takes two arguments: a string and an integer."
+    arguments = {
+        "arg1": {"type": "string", "description": "The first argument (a string)."},
+        "arg2": {"type": "integer", "description": "The second argument (an integer)."}
+    }
+
     if st.button("Run Feature Test", key="run_feature_test"):
+        try:
+            # Run the tool test asynchronously
+            result = asyncio.run(run_tool_test(selected_model, "Test the tool function.", tool_description, test_function, arguments))
+
+            st.markdown(f"### 🧰 Tool Test Result: {result}")
+        except ollama.ResponseError as e:
+            if "does not support tools" in str(e):
+                st.markdown(f"### 🧰 Tool Test Result: This model does not support tools.")
+            else:
+                st.error(f"An error occurred during the tool test: {e}")
+
         json_result = check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
         function_result = check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
 
