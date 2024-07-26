@@ -142,17 +142,25 @@ def research_interface():
     # Load API keys
     api_keys = load_api_keys()
 
-    # API Key Settings
-    st.sidebar.subheader("🔑 API Key Settings")
-    api_keys["serpapi_api_key"] = st.sidebar.text_input("SerpApi API Key", value=api_keys.get("serpapi_api_key", ""))
-    api_keys["serper_api_key"] = st.sidebar.text_input("Serper API Key", value=api_keys.get("serper_api_key", ""))
-    api_keys["google_api_key"] = st.sidebar.text_input("Google Custom Search API Key", value=api_keys.get("google_api_key", ""))
-    api_keys["google_cse_id"] = st.sidebar.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""))
-    api_keys["bing_api_key"] = st.sidebar.text_input("Bing Search API Key", value=api_keys.get("bing_api_key", ""))
-    
-    if st.sidebar.button("Save API Keys"):
-        save_api_keys(api_keys)
-        st.sidebar.success("API keys saved!")
+    # Sidebar settings
+    with st.sidebar:
+        # API Key Settings in a collapsed section
+        with st.expander("🔑 API Key Settings", expanded=False):
+            api_keys["serpapi_api_key"] = st.text_input("SerpApi API Key", value=api_keys.get("serpapi_api_key", ""), type="password")
+            api_keys["serper_api_key"] = st.text_input("Serper API Key", value=api_keys.get("serper_api_key", ""), type="password")
+            api_keys["google_api_key"] = st.text_input("Google Custom Search API Key", value=api_keys.get("google_api_key", ""), type="password")
+            api_keys["google_cse_id"] = st.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""), type="password")
+            api_keys["bing_api_key"] = st.text_input("Bing Search API Key", value=api_keys.get("bing_api_key", ""), type="password")
+            
+            if st.button("Save API Keys"):
+                save_api_keys(api_keys)
+                st.success("API keys saved!")
+
+        # Model Settings in a collapsed section
+        with st.expander("🤖 Model Settings", expanded=False):
+            available_models = get_available_models()
+            manager_model = st.selectbox("Search Manager Model", available_models)
+            agent_model = st.selectbox("Search Agent Model", available_models)
 
     # User research request
     user_request = st.text_area("Enter your research request:")
@@ -164,14 +172,6 @@ def research_interface():
         "long": 2000
     }
     selected_length = st.selectbox("Report Length", list(report_lengths.keys()), format_func=lambda x: f"{x.capitalize()} (~{report_lengths[x]} words)")
-
-    # Model selection for Search Manager and Agents
-    available_models = get_available_models()
-    col1, col2 = st.columns(2)
-    with col1:
-        manager_model = st.selectbox("Search Manager Model", available_models)
-    with col2:
-        agent_model = st.selectbox("Search Agent Model", available_models)
 
     if st.button("🔬 Start Research"):
         if user_request:
