@@ -21,6 +21,14 @@ fi
 REPO_URL="https://github.com/marc-shade/Ollama-Workbench.git"
 LOCAL_DIR="$HOME/Ollama-Workbench"
 
+# Create a temporary script for installation commands
+TEMP_SCRIPT=$(mktemp)
+
+# Write installation commands to the temporary script
+cat << EOF > "$TEMP_SCRIPT"
+#!/bin/bash
+set -e
+
 # Clone or update the repository
 if [ ! -d "$LOCAL_DIR" ]; then
     git clone "$REPO_URL" "$LOCAL_DIR"
@@ -28,12 +36,6 @@ else
     cd "$LOCAL_DIR"
     git pull
 fi
-
-# Create and activate virtual environment
-# if [ ! -d "$LOCAL_DIR/venv" ]; then
-#     python -m venv "$LOCAL_DIR/venv"
-# fi
-# source "$LOCAL_DIR/venv/bin/activate"
 
 # Install or update requirements
 pip install -U -r "$LOCAL_DIR/requirements.txt"
@@ -45,6 +47,16 @@ if [ -f "$LOCAL_DIR/install_ollama.sh" ]; then
 else
     echo "Ollama installation script not found. Skipping Ollama installation."
 fi
+EOF
+
+# Make the temporary script executable
+chmod +x "$TEMP_SCRIPT"
+
+# Run the loading screen with the installation script
+python "$LOCAL_DIR/loading_screen.py" bash "$TEMP_SCRIPT"
+
+# Remove the temporary script
+rm "$TEMP_SCRIPT"
 
 # Run the Streamlit app
 streamlit run "$LOCAL_DIR/main.py"
