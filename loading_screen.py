@@ -129,13 +129,26 @@ if __name__ == "__main__":
     clear_screen()
     print("\n" * 5)
     print_centered("Installation/Update Complete!")
+    print_centered("______________________________________________________")
+
+    print_centered("Built by 🟦🟦 2 Acre Studios")
+    print_centered("With thanks to:")
+    print_centered("Ollama")
+    print_centered("SerpApi")
+    print_centered("Google")
+    print_centered("Streamlit")
+    print_centered("LangChain")
+    print_centered("AutoGen")
+    print_centered("Chroma")
+    print_centered("Hugging Face")
+    print_centered("PyTorch")
+    print_centered("DuckDuckGo")
+    print_centered("Bing")
+    print_centered("And the countless developers and researchers")
+    print_centered("whose work made this possible.")
+    print_centered("______________________________________________________")
+
     print_centered("Launching Ollama Workbench...")
-    print_centered(r"""
-         _/\____/\
-        (  o o   )
-        (   ==o  )
-          \____/   ❤️
-         """)
 
     print("\n" * 5)
     time.sleep(2)
