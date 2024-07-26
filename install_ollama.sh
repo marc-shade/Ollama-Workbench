@@ -38,4 +38,7 @@ ollama pull mistral:instruct
 echo "Pulling mistral:7b-instruct-v0.2-q8_0 model..."
 ollama pull mistral:7b-instruct-v0.2-q8_0
 
+echo "Pulling mistral:instruct model..."
+ollama pull llama2:latest
+
 echo "Installation and model pulling completed successfully!"
