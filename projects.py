@@ -301,6 +301,20 @@ def projects_main():
 
     st.title("🚀 Projects")
 
+    # Sidebar configuration
+    with st.sidebar:
+        with st.expander("🤖 Project Manager Settings", expanded=False):
+            st.session_state.project_manager_settings['model'] = st.selectbox(
+                "Select Model for Project Manager",
+                get_available_models(),
+                index=get_available_models().index(st.session_state.project_manager_settings['model'])
+            )
+            st.session_state.project_manager_settings['agent_type'] = "Task Planner"
+            st.write(f"Agent Type: {st.session_state.project_manager_settings['agent_type']}")
+            
+            st.session_state.project_manager_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, st.session_state.project_manager_settings['temperature'], step=0.1)
+            st.session_state.project_manager_settings['max_tokens'] = st.slider("Max Tokens", 4000, 128000, st.session_state.project_manager_settings['max_tokens'], step=1000)
+
     # Display task statistics
     if projects:
         total_tasks = completed_tasks = pending_tasks = high_priority_tasks = 0
@@ -376,30 +390,6 @@ def projects_main():
                 b64 = base64.b64encode(json_str.encode()).decode()
                 href = f'<a href="data:file/json;base64,{b64}" download="{selected_project}_tasks.json">Download JSON file</a>'
                 st.markdown(href, unsafe_allow_html=True)
-
-    # Project Manager Agent Configuration
-    st.subheader("🤖 Project Manager Agent Configuration")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.session_state.project_manager_settings['model'] = st.selectbox(
-            "Select Model for Project Manager",
-            get_available_models(),
-            index=get_available_models().index(st.session_state.project_manager_settings['model'])
-        )
-        st.session_state.project_manager_settings['agent_type'] = st.selectbox(
-            "Agent Type",
-            ["Task Planner"] + list(get_agent_prompt().keys()),
-            index=(["Task Planner"] + list(get_agent_prompt().keys())).index(st.session_state.project_manager_settings['agent_type'])
-        )
-    
-    with col2:
-        st.session_state.project_manager_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, st.session_state.project_manager_settings['temperature'], step=0.1)
-        st.session_state.project_manager_settings['max_tokens'] = st.slider("Max Tokens", 4000, 128000, st.session_state.project_manager_settings['max_tokens'], step=1000)
-    
-    # st.session_state.project_manager_settings['use_teachability'] = st.checkbox("Use Teachability", value=st.session_state.project_manager_settings['use_teachability'])
-    # if st.session_state.project_manager_settings['use_teachability']:
-    #     st.session_state.project_manager_settings['db_path'] = st.text_input("Teachability Database Path", value=st.session_state.project_manager_settings['db_path'])
 
     # Option to auto-generate tasks
     st.subheader("🤖 Auto-Generate Tasks")
