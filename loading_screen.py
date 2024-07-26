@@ -80,6 +80,8 @@ def loading_animation():
         "Generating Creative Sparks...",
         "Connecting to the Matrix...",
         "Downloading Latest Stuff...",
+        "First time? Oh boy, this might take a while...",
+        "Getting latest Ollama models...",
         "Preparing for Awesomeness..."
     ]
     dots = 0
