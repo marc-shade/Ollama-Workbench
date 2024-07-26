@@ -79,7 +79,7 @@ def loading_animation():
         "Calibrating Quantum Sensors...",
         "Generating Creative Sparks...",
         "Connecting to the Matrix...",
-        "Downloading Latest Knowledge...",
+        "Downloading Latest Stuff...",
         "Preparing for Awesomeness..."
     ]
     dots = 0
@@ -125,5 +125,12 @@ if __name__ == "__main__":
     print("\n" * 5)
     print_centered("Installation/Update Complete!")
     print_centered("Launching Ollama Workbench...")
+    print_centered(r"""
+         _/\____/\
+        (  o o   )
+        (   ==o  )
+          \____/   ❤️
+         """)
+
     print("\n" * 5)
     time.sleep(2)
