@@ -85,7 +85,7 @@ def loading_animation():
         "Preparing for Awesomeness..."
     ]
     dots = 0
-    max_dots = 3
+    max_dots = 12
 
     while not installation_complete.is_set():
         clear_screen()
