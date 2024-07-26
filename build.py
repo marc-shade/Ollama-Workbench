@@ -195,7 +195,102 @@ def manage_task(objective, model, file_content=None, previous_results=None, use_
     if use_search and search_results:
         messages[0]["content"] += f"\n\nSearch Results:\n{json.dumps(search_results, indent=2)}"
 
-    response_text = call_model(model, messages, temperature, max_tokens, groq_api_key)
+    # Define the search tool
+    search_tool = {
+        "type": "function",
+        "function": {
+            "name": "perform_search",
+            "description": "Performs a web search using the specified search method and API keys.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query."
+                    },
+                    "search_method": {
+                        "type": "string",
+                        "description": "The search method to use (duckduckgo, google, serpapi).",
+                        "enum": ["duckduckgo", "google", "serpapi"]
+                    },
+                    "api_keys": {
+                        "type": "object",
+                        "description": "API keys for the selected search methods.",
+                        "properties": {
+                            "google_api_key": {
+                                "type": "string",
+                                "description": "Google API key."
+                            },
+                            "google_cse_id": {
+                                "type": "string",
+                                "description": "Google Custom Search Engine ID."
+                            },
+                            "serpapi_api_key": {
+                                "type": "string",
+                                "description": "SerpApi API key."
+                            }
+                        }
+                    },
+                    "num_results": {
+                        "type": "integer",
+                        "description": "The number of search results to return."
+                    }
+                },
+                "required": ["query", "search_method", "api_keys", "num_results"]
+            }
+        }
+    }
+
+    # Add the search tool to the tools list if use_search is True
+    tools = [search_tool] if use_search else []
+
+    if is_groq_model(model):
+        response_text = call_groq_api(model, messages, temperature, max_tokens, groq_api_key)
+    else:
+        response = client.chat(
+            model=model,
+            messages=messages,
+            tools=tools,
+            options={
+                "temperature": temperature,
+                "num_predict": max_tokens
+            }
+        )
+        response_text = response['message']['content']
+        tool_calls = response['message'].get('tool_calls')
+
+        if tool_calls:
+            # Process tool calls
+            for tool_call in tool_calls:
+                function_name = tool_call['function']['name']
+                arguments = json.loads(tool_call['function']['arguments'])
+
+                if function_name == "perform_search":
+                    search_query = arguments['query']
+                    search_method = arguments['search_method']
+                    api_keys = arguments['api_keys']
+                    num_results = arguments['num_results']
+
+                    search_results = perform_search(search_query, search_method, api_keys, num_results)
+                    console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
+
+                    # Append search results to the messages
+                    messages.append({
+                        "role": "tool",
+                        "content": json.dumps(search_results)
+                    })
+
+                    # Call the model again with the search results
+                    response = client.chat(
+                        model=model,
+                        messages=messages,
+                        tools=tools,
+                        options={
+                            "temperature": temperature,
+                            "num_predict": max_tokens
+                        }
+                    )
+                    response_text = response['message']['content']
 
     console.print(Panel(response_text, title=f"[bold green]Manager Response[/bold green]", title_align="left", border_style="green", subtitle="Sending task to sub-agent 👇"))
     return response_text, file_content
@@ -218,7 +313,102 @@ def sub_agent_task(prompt, model, previous_tasks=None, use_search=False, continu
 
     messages = [{"role": "user", "content": full_prompt}]
 
-    response_text = call_model(model, messages, temperature, max_tokens, groq_api_key)
+    # Define the search tool
+    search_tool = {
+        "type": "function",
+        "function": {
+            "name": "perform_search",
+            "description": "Performs a web search using the specified search method and API keys.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query."
+                    },
+                    "search_method": {
+                        "type": "string",
+                        "description": "The search method to use (duckduckgo, google, serpapi).",
+                        "enum": ["duckduckgo", "google", "serpapi"]
+                    },
+                    "api_keys": {
+                        "type": "object",
+                        "description": "API keys for the selected search methods.",
+                        "properties": {
+                            "google_api_key": {
+                                "type": "string",
+                                "description": "Google API key."
+                            },
+"google_cse_id": {
+                                "type": "string",
+                                "description": "Google Custom Search Engine ID."
+                            },
+                            "serpapi_api_key": {
+                                "type": "string",
+                                "description": "SerpApi API key."
+                            }
+                        }
+                    },
+                    "num_results": {
+                        "type": "integer",
+                        "description": "The number of search results to return."
+                    }
+                },
+                "required": ["query", "search_method", "api_keys", "num_results"]
+            }
+        }
+    }
+
+    # Add the search tool to the tools list if use_search is True
+    tools = [search_tool] if use_search else []
+
+    if is_groq_model(model):
+        response_text = call_groq_api(model, messages, temperature, max_tokens, groq_api_key)
+    else:
+        response = client.chat(
+            model=model,
+            messages=messages,
+            tools=tools,
+            options={
+                "temperature": temperature,
+                "num_predict": max_tokens
+            }
+        )
+        response_text = response['message']['content']
+        tool_calls = response['message'].get('tool_calls')
+
+        if tool_calls:
+            # Process tool calls
+            for tool_call in tool_calls:
+                function_name = tool_call['function']['name']
+                arguments = json.loads(tool_call['function']['arguments'])
+
+                if function_name == "perform_search":
+                    search_query = arguments['query']
+                    search_method = arguments['search_method']
+                    api_keys = arguments['api_keys']
+                    num_results = arguments['num_results']
+
+                    search_results = perform_search(search_query, search_method, api_keys, num_results)
+                    console.print(Panel(f"Search Results: {json.dumps(search_results, indent=2)}", title="[bold green]Search Results[/bold green]", title_align="left", border_style="green"))
+
+                    # Append search results to the messages
+                    messages.append({
+                        "role": "tool",
+                        "content": json.dumps(search_results)
+                    })
+
+                    # Call the model again with the search results
+                    response = client.chat(
+                        model=model,
+                        messages=messages,
+                        tools=tools,
+                        options={
+                            "temperature": temperature,
+                            "num_predict": max_tokens
+                        }
+                    )
+                    response_text = response['message']['content']
 
     if len(response_text) >= 8000:
         console.print("[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response.")

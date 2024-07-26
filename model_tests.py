@@ -6,6 +6,9 @@ import json
 import matplotlib.pyplot as plt
 from ollama_utils import call_ollama_endpoint
 import io # Added import
+import asyncio
+from ollama import AsyncClient
+from typing import Callable
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":
@@ -13,7 +16,7 @@ if st.get_option("theme.base") == "light":
 else:
     plt.style.use('dark_background')  # Use dark background for dark mode
 
-def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def performance_test(models, prompt, temperature=0.7, max_tokens=1000, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
     if models:  # Check if any models are selected
         for model in models:
@@ -35,7 +38,7 @@ def performance_test(models, prompt, temperature=0.5, max_tokens=150, presence_p
     else:
         return {}  # Return an empty dictionary if no models are selected
 
-def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def vision_test(models, image_file, temperature=0.7, max_tokens=1000, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
     for model in models:
         start_time = time.time()
@@ -59,3 +62,47 @@ def vision_test(models, image_file, temperature=0.5, max_tokens=150, presence_pe
         results[model] = (result, elapsed_time, eval_count, eval_duration)
         time.sleep(0.1)
     return results
+
+async def run_tool_test(model: str, prompt: str, tool_description: str, function_to_call: Callable, arguments: dict):
+    """Runs a test using Ollama's tool calling feature."""
+    client = AsyncClient()
+    messages = [{'role': 'user', 'content': prompt}]
+
+    response = await client.chat(
+        model=model,
+        messages=messages,
+        tools=[
+            {
+                'type': 'function',
+                'function': {
+                    'name': 'tool_function',
+                    'description': tool_description,
+                    'parameters': {
+                        'type': 'object',
+                        'properties': arguments,
+                        'required': list(arguments.keys()),
+                    },
+                },
+            },
+        ],
+    )
+
+    messages.append(response['message'])
+
+    if not response['message'].get('tool_calls'):
+        print("The model didn't use the function. Its response was:")
+        print(response['message']['content'])
+        return response['message']['content']
+
+    if response['message'].get('tool_calls'):
+        for tool in response['message']['tool_calls']:
+            function_response = function_to_call(**tool['function']['arguments'])
+            messages.append(
+                {
+                    'role': 'tool',
+                    'content': function_response,
+                }
+            )
+
+    final_response = await client.chat(model=model, messages=messages)
+    return final_response['message']['content']
