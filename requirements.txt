@@ -2,6 +2,7 @@ autogen
 pyautogen
 bs4
 chromadb
+cursor
 duckduckgo_search
 flake8
 fpdf
