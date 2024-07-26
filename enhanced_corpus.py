@@ -88,6 +88,14 @@ def enhance_corpus_ui():
     if not os.path.exists(corpus_folder):
         os.makedirs(corpus_folder)
 
+    # Model Selection in sidebar
+    with st.sidebar:
+        with st.expander("⚠️ Advanced Model Settings", expanded=False):
+            st.warning("Warning: Changing the model may affect corpus compatibility. Only change if you know what you're doing.")
+            available_models = get_available_models()
+            default_index = available_models.index("llama2:latest") if "llama2:latest" in available_models else 0
+            selected_model = st.selectbox("Select Model", available_models, index=default_index, key="corpus_model")
+
     # List existing corpus
     corpus_list = [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
     st.subheader("📋 Existing Corpus")
@@ -122,11 +130,6 @@ def enhance_corpus_ui():
                 st.error("Please enter a new corpus name.")
 
     st.subheader("✚ Create New Corpus")
-
-    # Model Selection
-    available_models = get_available_models()
-    default_index = available_models.index("llama2:latest") if "llama2:latest" in available_models else 0
-    selected_model = st.selectbox("Select Model", available_models, index=default_index)
 
     # Tabs for different input methods
     tab1, tab2, tab3 = st.tabs(["From File", "From URL", "From Text"])
