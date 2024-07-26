@@ -10,7 +10,7 @@ import cursor
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def print_centered(text):
+def print(text):
     terminal_width = os.get_terminal_size().columns
     print(text.center(terminal_width))
 
@@ -93,9 +93,9 @@ def loading_animation():
     while not installation_complete.is_set():
         clear_screen()
         print("\n" * 5)
-        print_centered(random.choice(frames))
+        print(random.choice(frames))
         print("\n" * 2)
-        print_centered(f"{random.choice(loading_text)}{'.' * dots}")
+        print(f"{random.choice(loading_text)}{'.' * dots}")
         print("\n" * 5)
         time.sleep(0.5)
         dots = (dots + 1) % (max_dots + 1)
@@ -128,27 +128,27 @@ if __name__ == "__main__":
 
     clear_screen()
     print("\n" * 5)
-    print_centered("Installation/Update Complete!")
-    print_centered("______________________________________________________")
+    print("Installation/Update Complete!")
+    print("______________________________________________________")
 
-    print_centered("Built by 🟦🟦 2 Acre Studios")
-    print_centered("With thanks to:")
-    print_centered("Ollama")
-    print_centered("SerpApi")
-    print_centered("Google")
-    print_centered("Streamlit")
-    print_centered("LangChain")
-    print_centered("AutoGen")
-    print_centered("Chroma")
-    print_centered("Hugging Face")
-    print_centered("PyTorch")
-    print_centered("DuckDuckGo")
-    print_centered("Bing")
-    print_centered("And the countless developers and researchers")
-    print_centered("whose work made this possible.")
-    print_centered("______________________________________________________")
+    print("Built by 🟦🟦 2 Acre Studios")
+    print("With thanks to:")
+    print("Ollama")
+    print("SerpApi")
+    print("Google")
+    print("Streamlit")
+    print("LangChain")
+    print("AutoGen")
+    print("Chroma")
+    print("Hugging Face")
+    print("PyTorch")
+    print("DuckDuckGo")
+    print("Bing")
+    print("And the countless developers and researchers")
+    print("whose work made this possible.")
+    print("______________________________________________________")
 
-    print_centered("Launching Ollama Workbench...")
+    print("Launching Ollama Workbench...")
 
     print("\n" * 5)
     time.sleep(2)
