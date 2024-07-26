@@ -52,8 +52,8 @@ EOF
 # Make the temporary script executable
 chmod +x "$TEMP_SCRIPT"
 
-# Run the loading screen with the installation script
-python "$LOCAL_DIR/loading_screen.py" bash "$TEMP_SCRIPT"
+# Run the loading screen with the installation script as a single command
+python "$LOCAL_DIR/loading_screen.py" "bash $TEMP_SCRIPT"
 
 # Remove the temporary script
 rm "$TEMP_SCRIPT"

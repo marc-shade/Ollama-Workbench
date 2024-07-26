@@ -1,8 +1,11 @@
+
 import time
 import os
 import sys
 import random
 import threading
+import subprocess
+import cursor
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -11,54 +14,97 @@ def print_centered(text):
     terminal_width = os.get_terminal_size().columns
     print(text.center(terminal_width))
 
-def dancing_llama():
+def loading_animation():
     frames = [
         r"""
-         /\____/\
-        (  oo   )
-        (  ==   )
-         \____/   ❤️
-        """,
+          /\____/\
+         (  oo   )
+         (  ==   )
+          \____/   ❤️
+         """,
         r"""
-         /\____/\
-        (  oo   )
-        (  ==   )
-         \____/ ❤️
-        """,
+          /\____/\
+         (  oo   )
+         (  ==   )
+          \____/ ❤️
+         """,
         r"""
-         /\____/\
-        (  oo   )
-        (  ==   )
-       ❤️ \____/
-        """,
+          /\____/\
+         (  oo   )
+         (  ==   )
+        ❤️ \____/
+         """,
         r"""
-         /\____/\
-        (  oo   )
-        (  ==   )
-        ❤️\____/
-        """
+          /\____/\
+         (  oo   )
+         (  ==   )
+         ❤️\____/
+         """,
+        r"""
+          /\____/\
+         (  oo   )
+         (  ==   )
+          \____/   ❤️
+         """,
+        r"""
+         _/\____/\
+        (  o o   )
+        (   ==   )
+          \____/   ❤️
+         """,
+        r"""
+         _/\____/\
+        (   oo   )
+        (  o==   )
+          \____/   ❤️
+         """,
+        r"""
+         _/\____/\
+        (   oo   )
+        (   ==o  )
+          \____/   ❤️
+         """,
+        r"""
+         _/\____/\
+        (  o o   )
+        (   ==o  )
+          \____/   ❤️
+         """,
     ]
-    return frames
-
-def loading_animation():
-    llama_frames = dancing_llama()
-    loading_text = "Installing Ollama Workbench"
+    loading_text = [
+        "Booting Up...",
+        "Initializing Flux Capacitor...",
+        "Loading AI Modules...",
+        "Warming Up GPUs...",
+        "Calibrating Quantum Sensors...",
+        "Generating Creative Sparks...",
+        "Connecting to the Matrix...",
+        "Downloading Latest Knowledge...",
+        "Preparing for Awesomeness..."
+    ]
     dots = 0
     max_dots = 3
 
     while not installation_complete.is_set():
         clear_screen()
         print("\n" * 5)
-        print_centered(llama_frames[dots % len(llama_frames)])
+        print_centered(random.choice(frames))
         print("\n" * 2)
-        print_centered(f"{loading_text}{'.' * dots}")
+        print_centered(f"{random.choice(loading_text)}{'.' * dots}")
         print("\n" * 5)
         time.sleep(0.5)
         dots = (dots + 1) % (max_dots + 1)
 
 def run_installation(command):
-    os.system(command)
+    # Hide the cursor during installation
+    cursor.hide()
+
+    # Run the command, capturing output to suppress it
+    subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     installation_complete.set()
+
+    # Show the cursor again after installation
+    cursor.show()
 
 if __name__ == "__main__":
     installation_complete = threading.Event()
@@ -77,7 +123,7 @@ if __name__ == "__main__":
 
     clear_screen()
     print("\n" * 5)
-    print_centered("Installation Complete!")
+    print_centered("Installation/Update Complete!")
     print_centered("Launching Ollama Workbench...")
     print("\n" * 5)
     time.sleep(2)
