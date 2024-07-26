@@ -17,6 +17,9 @@ if ! command_exists git; then
     exit 1
 fi
 
+# Get ready for the loading screen
+pip install cursor
+
 # Set the repository URL and local directory
 REPO_URL="https://github.com/marc-shade/Ollama-Workbench.git"
 LOCAL_DIR="$HOME/Ollama-Workbench"
