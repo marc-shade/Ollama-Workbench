@@ -480,13 +480,17 @@ def count_tokens(text):
     encoding = tiktoken.get_encoding("cl100k_base")
     return len(encoding.encode(text))
 
-def split_file(file_path, chunk_size):
+def split_file(file_path, chunk_size, include_extension):
     """Splits a file into chunks of a given size."""
     file_number = 1
+    file_base, file_ext = os.path.splitext(file_path)
     with open(file_path, 'r', encoding='utf-8') as f:
         chunk = f.read(chunk_size)
         while chunk:
-            chunk_file_path = f"{file_path}.part{file_number}"
+            if include_extension:
+                chunk_file_path = f"{file_base}.part{file_number}{file_ext}"
+            else:
+                chunk_file_path = f"{file_base}.part{file_number}"
             with open(chunk_file_path, 'w', encoding='utf-8') as chunk_file:
                 chunk_file.write(chunk)
             file_number += 1
@@ -579,10 +583,11 @@ def files_tab():
     selected_file = st.selectbox("Select a text file to split", text_files)
     chunk_size_mb = st.slider("Chunk Size (MB)", 1, 100, 20)
     chunk_size = chunk_size_mb * 1024 * 1024  # Convert MB to bytes
+    include_extension = st.checkbox("Include original file extension in chunk filenames", value=True)
     if st.button("Split File"):
         if selected_file:
             file_path = os.path.join(files_folder, selected_file)
-            split_file(file_path, chunk_size)
+            split_file(file_path, chunk_size, include_extension)
             st.success(f"File '{selected_file}' split into chunks.")
             st.rerun()
         else:
@@ -669,7 +674,7 @@ def manage_corpus():
         if st.button("Confirm Rename", key=f"confirm_rename_{corpus_to_rename}"):
             if new_corpus_name:
                 os.rename(os.path.join(corpus_folder, corpus_to_rename), os.path.join(corpus_folder, new_corpus_name))
-                st.success(f"Corpus renamed to               '{new_corpus_name}'")
+                st.success(f"Corpus renamed to '{new_corpus_name}'")
                 st.session_state.rename_corpus = None
                 st.rerun()
             else:
