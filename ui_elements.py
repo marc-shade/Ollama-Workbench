@@ -480,12 +480,24 @@ def count_tokens(text):
     encoding = tiktoken.get_encoding("cl100k_base")
     return len(encoding.encode(text))
 
+def split_file(file_path, chunk_size):
+    """Splits a file into chunks of a given size."""
+    file_number = 1
+    with open(file_path, 'r', encoding='utf-8') as f:
+        chunk = f.read(chunk_size)
+        while chunk:
+            chunk_file_path = f"{file_path}.part{file_number}"
+            with open(chunk_file_path, 'w', encoding='utf-8') as chunk_file:
+                chunk_file.write(chunk)
+            file_number += 1
+            chunk = f.read(chunk_size)
+
 def files_tab():
     st.subheader("📂 Files")
     files_folder = "files"
     if not os.path.exists(files_folder):
         os.makedirs(files_folder)
-    allowed_extensions = ['.json', '.txt', '.pdf', '.gif', '.jpg', '.jpeg', '.png']
+    allowed_extensions = ['.json', '.txt', '.pdf', '.gif', '.jpg', '.jpeg', '.png', '.md']
     files = [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f)) and os.path.splitext(f)[1].lower() in allowed_extensions]
 
     for file in files:
@@ -553,13 +565,28 @@ def files_tab():
     
 
    # File upload section
-    uploaded_file = st.file_uploader("Upload a file", type=['txt', 'pdf', 'json', 'gif', 'jpg', 'jpeg', 'png'])
+    uploaded_file = st.file_uploader("Upload a file", type=['txt', 'pdf', 'json', 'gif', 'jpg', 'jpeg', 'png', 'md'])
     if uploaded_file is not None:
         file_path = os.path.join(files_folder, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         st.success(f"File {uploaded_file.name} uploaded successfully!")
         st.rerun()
+
+    # File splitter section
+    st.subheader("Split File")
+    text_files = [f for f in files if f.endswith(('.txt', '.md'))]
+    selected_file = st.selectbox("Select a text file to split", text_files)
+    chunk_size_mb = st.slider("Chunk Size (MB)", 1, 100, 20)
+    chunk_size = chunk_size_mb * 1024 * 1024  # Convert MB to bytes
+    if st.button("Split File"):
+        if selected_file:
+            file_path = os.path.join(files_folder, selected_file)
+            split_file(file_path, chunk_size)
+            st.success(f"File '{selected_file}' split into chunks.")
+            st.rerun()
+        else:
+            st.warning("Please select a file to split.")
 
 def extract_code_blocks(text):
     # Simple regex to extract code blocks (text between triple backticks)
@@ -642,7 +669,7 @@ def manage_corpus():
         if st.button("Confirm Rename", key=f"confirm_rename_{corpus_to_rename}"):
             if new_corpus_name:
                 os.rename(os.path.join(corpus_folder, corpus_to_rename), os.path.join(corpus_folder, new_corpus_name))
-                st.success(f"Corpus renamed to '{new_corpus_name}'")
+                st.success(f"Corpus renamed to               '{new_corpus_name}'")
                 st.session_state.rename_corpus = None
                 st.rerun()
             else:
