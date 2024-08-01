@@ -20,7 +20,7 @@ def display_welcome_message():
             - 📜 **Workspace:** Save and manage code snippets and other text generated during your chat sessions.
             - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
 
-            #### ⚙️ Workflow
+            #### 🔄 Workflow
             - 🔨 **Build:** Autonomous Multi-Agent Software Development System
             - 🔬 **Research:** Conduct in-depth research using multiple AI agents, each specializing in a different search approach. The agents will generate summaries of their findings, and a final report will be compiled based on their collective insights.
             - 🧠 **Brainstorm:** Engage in interactive brainstorming sessions with multiple AI agents, each with unique roles and perspectives. The agents use AutoGen's 'Teachable Agent' memory feature to remember your brainstoring sessions.
@@ -38,7 +38,7 @@ def display_welcome_message():
             - 🦙 **Show Model Information:** Display detailed information about a selected model.
             - ⬇ **Pull a Model:** Download a new model from the Ollama library.
             - 🗑️ **Remove a Model**: Delete a selected model from the local storage.
-            - 🔄 **Update Models**: Update all local models.
+            - ⤵️ **Update Models**: Update all local models.
             - ⚙️ **Server Configuration:** Configure the Ollama server settings, including host address, allowed origins, model directory, global keep-alive, and concurrency controls.
             - 🖥️ **Server Monitoring:** Monitor the Ollama server's resource usage, including CPU, memory, and GPU utilization, as well as view live server logs.
 

@@ -43,15 +43,15 @@ SIDEBAR_SECTIONS = {
     "🗄 Document": [
         ("🗂 Manage Corpus", "Enhanced Corpus"),
         ("📂 Manage Files", "Files"),
-        ("✔️ Repository Analyzer", "Repository Analyzer"),
         ("🕸️ Web to Corpus File", "Web to Corpus File"),
+        ("✔️ Repository Analyzer", "Repository Analyzer"),
     ],
     "🛠️ Maintain": [
         ("📋 List Local Models", "List Local Models"),
         ("🦙 Show Model Information", "Show Model Information"),
         ("⬇ Pull a Model", "Pull a Model"),
         ("🗑️ Remove a Model", "Remove a Model"),
-        ("🔄 Update Models", "Update Models"),
+        ("⤵️ Update Models", "Update Models"),
         ("⚙️ Server Configuration", "Server Configuration"),
         ("🖥️ Server Monitoring", "Server Monitoring"),
     ],
