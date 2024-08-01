@@ -1,5 +1,4 @@
 # ollama_utils.py
-# ollama_utils.py
 import requests
 import json
 import io
@@ -121,21 +120,27 @@ def pull_model(model_name):
     st.write(f"📥 Pulling model: `{model_name}`")
     for line in response.iter_lines():
         line = line.decode("utf-8")
-        data = json.loads(line)
-        
-        if "total" in data and "completed" in data:
-            total = data["total"]
-            completed = data["completed"]
-            progress = completed / total
-            progress_bar.progress(progress)
-            status_text.text(f"Progress: {progress * 100:.2f}%")
-        else:
-            progress = None
-            if not data["status"].startswith("pulling"):
-                status_text.text(data["status"])
-        
-        if data["status"] == "success":
-            break
+        try:
+            data = json.loads(line)
+            
+            if "total" in data and "completed" in data:
+                total = data["total"]
+                completed = data["completed"]
+                progress = completed / total
+                progress_bar.progress(progress)
+                status_text.text(f"Progress: {progress * 100:.2f}%")
+            elif "status" in data:
+                if not data["status"].startswith("pulling"):
+                    status_text.text(data["status"])
+                if data["status"] == "success":
+                    break
+            else:
+                # Handle cases where neither "total" nor "status" is present
+                status_text.text("Processing...")
+            
+            results.append(data)
+        except json.JSONDecodeError:
+            st.warning(f"Failed to parse JSON: {line}")
         
     return results
 

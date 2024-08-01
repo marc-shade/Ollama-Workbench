@@ -33,7 +33,7 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 
 # Define constants
 SIDEBAR_SECTIONS = {
-    "⚙️ Workflow": [
+    "🔄 Workflow": [
         ("🔨 Build", "Build"),
         ("🔬 Research", "Research"),
         ("🧠 Brainstorm", "Brainstorm"),
