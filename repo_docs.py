@@ -14,6 +14,9 @@ from radon.complexity import cc_visit, cc_rank
 from radon.metrics import mi_visit, h_visit
 from flake8.api import legacy as flake8
 
+# Settings file for model settings
+MODEL_SETTINGS_FILE = "model_settings.json"
+
 class PDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 12)
@@ -93,13 +96,13 @@ def get_available_models():
 def generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
     if task_type == "documentation":
         prompt = f"""
-You are an expert in Python programming and technical writing. Your task is to generate comprehensive documentation and insightful commentary for the provided Python code. 
+You are an expert in programming and technical writing. Your task is to generate comprehensive documentation and insightful commentary for the provided code. 
 
 Follow these steps:
 
 1. **Overview**: Provide a high-level summary of what the code does, its purpose, its main components, and how it connects to the other scripts in this repository.
 2. **Code Walkthrough**: Go through the code section by section, explaining the functionality of each part. Highlight key functions, classes, and methods.
-3. **Best Practices**: Identify any non-Pythonic practices or areas where the code could be improved. Suggest best practices and optimizations.
+3. **Best Practices**: Identify any non-idiomatic practices or areas where the code could be improved. Suggest best practices and optimizations.
 4. **Examples**: Where applicable, include example usages or scenarios that demonstrate how the code should be used.
 5. **Formatting**: Ensure that the documentation is well-organized, clearly formatted, and easy to read. Use bullet points, headers, and code blocks where necessary.
 
@@ -109,9 +112,9 @@ Generate a detailed and neatly formatted documentation for the following code:
 """
     elif task_type == "debug":
         prompt = f"""
-You are a highly experienced Python code debugger with a deep understanding of Pythonic best practices and coding standards. Your task is to thoroughly analyze the provided code, identify any issues, and offer recommendations for improvements. Follow these steps:
+You are a highly experienced code debugger with a deep understanding of best practices and coding standards. Your task is to thoroughly analyze the provided code, identify any issues, and offer recommendations for improvements. Follow these steps:
 
-1. **Identify Issues**: Go through the code line by line and identify syntax errors, logical errors, performance issues, and any non-Pythonic practices.
+1. **Identify Issues**: Go through the code line by line and identify syntax errors, logical errors, performance issues, and any non-idiomatic practices.
 2. **Provide Recommendations**: For each issue identified, provide a detailed explanation of why it is an issue and how it can be fixed or improved.
 3. **Code Examples**: Whenever possible, include code snippets to illustrate the recommended changes or improvements.
 4. **Formatting**: Ensure that your debug report is well-organized, clearly formatted, and easy to read. Use bullet points, headers, and code blocks where necessary.
@@ -198,12 +201,20 @@ def run_pylint(file_path):
     result = subprocess.run(['pylint', file_path], capture_output=True, text=True)
     return result.stdout
 
+def run_phpstan(file_path):
+    result = subprocess.run(['phpstan', 'analyse', file_path], capture_output=True, text=True)
+    return result.stdout
+
+def run_eslint(file_path):
+    result = subprocess.run(['eslint', file_path], capture_output=True, text=True)
+    return result.stdout
+
 def get_all_code_files(root_dir, exclude_patterns):
     code_files = []
     for subdir, _, files in os.walk(root_dir):
         for file in files:
             file_path = os.path.join(subdir, file)
-            if file.endswith('.py'):
+            if file.endswith(('.py', '.php', '.js', '.css', '.html')):
                 try:
                     if not any(re.search(pattern, file_path) for pattern in exclude_patterns):
                         code_files.append(file_path)
@@ -224,7 +235,41 @@ def get_file_info(file_path):
             '.md': "markdown",
             '.json': "json",
             '.sh': "bash",
-            '.csv': "csv"
+            '.csv': "csv",
+            '.php': "php",
+            '.js': "javascript",
+            '.css': "css",
+            '.html': "html",
+            '.xml': "xml",
+            '.yaml': "yaml",
+            '.yml': "yaml",
+            '.sql': "sql",
+            '.java': "java",
+            '.cpp': "cpp",
+            '.c': "c",
+            '.h': "c",
+            '.rb': "ruby",
+            '.go': "go",
+            '.rs': "rust",
+            '.ts': "typescript",
+            '.swift': "swift",
+            '.kt': "kotlin",
+            '.scala': "scala",
+            '.pl': "perl",
+            '.lua': "lua",
+            '.r': "r",
+            '.m': "matlab",
+            '.vb': "vbnet",
+            '.fs': "fsharp",
+            '.hs': "haskell",
+            '.ex': "elixir",
+            '.erl': "erlang",
+            '.clj': "clojure",
+            '.groovy': "groovy",
+            '.dart': "dart",
+            '.f': "fortran",
+            '.cob': "cobol",
+            '.asm': "assembly",
         }.get(extension, "unknown")
 
         file_info = {
@@ -236,13 +281,19 @@ def get_file_info(file_path):
             "Modified": modified_time
         }
 
-        # Calculate code complexity metrics
+        # Read file content for all supported languages
+        if language != "unknown":
+            try:
+                with open(file_path, 'r', encoding='utf-8') as code_file:
+                    file_info['Code'] = code_file.read()
+            except UnicodeDecodeError:
+                file_info['Code'] = f"Error reading file: UnicodeDecodeError"
+
+        # Calculate code complexity metrics for Python files
         if language == "python":
-            with open(file_path, 'r', encoding='utf-8') as code_file:
-                code_content = code_file.read()
-                complexity = cc_visit(code_content)
-                maintainability = mi_visit(code_content, multi=False)
-                halstead = h_visit(code_content)
+            complexity = cc_visit(file_info['Code'])
+            maintainability = mi_visit(file_info['Code'], multi=False)
+            halstead = h_visit(file_info['Code'])
 
             file_info['Complexity'] = {
                 'Cyclomatic Complexity': [f"{func.name}: {func.complexity} ({cc_rank(func.complexity)})" for func in complexity],
@@ -266,6 +317,12 @@ def get_file_info(file_path):
 
             file_info['Style Violations'] = style_violations
 
+        elif language == "php":
+            file_info['PHPStan Report'] = run_phpstan(file_path)
+
+        elif language in ["javascript", "css"]:
+            file_info['ESLint Report'] = run_eslint(file_path)
+
         return file_info
     except FileNotFoundError:
         return None
@@ -284,8 +341,11 @@ def process_file_with_updates(file_path, task_type, model, temperature, max_toke
             documentation += chunk
             update_queue.put(("output", documentation))
 
-        pylint_report = run_pylint(file_path) if task_type == "debug" else ""
-        return file_path, documentation, pylint_report, file_content
+        pylint_report = run_pylint(file_path) if task_type == "debug" and file_path.endswith('.py') else ""
+        phpstan_report = run_phpstan(file_path) if task_type == "debug" and file_path.endswith('.php') else ""
+        eslint_report = run_eslint(file_path) if task_type == "debug" and (file_path.endswith('.js') or file_path.endswith('.css')) else ""
+
+        return file_path, documentation, pylint_report + phpstan_report + eslint_report, file_content
     except UnicodeDecodeError:
         print(f"Error reading file {file_path}: UnicodeDecodeError")
         return file_path, f"Error reading file: UnicodeDecodeError", "", ""
@@ -344,7 +404,7 @@ def generate_project_summary(repo_path, exclude_patterns):
 
     # Summary file path in the repository root
     summary_path = os.path.join(repo_path, 'project_summary.md')
-    with open(summary_path, 'w') as summary_file:
+    with open(summary_path, 'w', encoding='utf-8') as summary_file:
         summary_file.write("--- START OF FILE project_summary.md ---\n\n")
         summary_file.write("# Table of Contents\n")
 
@@ -393,16 +453,11 @@ def write_file_details(summary_file, file_info):
                 summary_file.write(f"- {key}: {value} bytes\n")
             elif key == "Language":
                 summary_file.write(f"- {key}: {value}\n")
-                # Include content for specific file types
-                if value in ("python", "plaintext", "markdown", "bash", "csv", "json"):
+                # Include content for all code and text-based file types
+                if value in ("python", "php", "javascript", "css", "plaintext", "markdown", "bash", "csv", "json", "html", "xml", "yaml", "sql"):
                     summary_file.write(f"### Code\n\n")
-                    try:
-                        with open(file_info['Full Path'], 'r', encoding='utf-8') as code_file:
-                            code_content = code_file.read()
-                            summary_file.write(f"```{value}\n{code_content}\n```\n\n")
-                    except UnicodeDecodeError:
-                        summary_file.write(f"- Unable to display code snippet. File may be binary or encoded differently.\n")
-            elif key == "Complexity":  # Write complexity metrics
+                    summary_file.write(f"```{value}\n{file_info.get('Code', 'Code not available')}\n```\n\n")
+            elif key == "Complexity":  # Write complexity metrics for Python files
                 summary_file.write(f"- {key}:\n")
                 for metric_name, metric_value in value.items():
                     if isinstance(metric_value, list):  # For Cyclomatic Complexity
@@ -415,35 +470,70 @@ def write_file_details(summary_file, file_info):
                             summary_file.write(f"        - {sub_metric}: {sub_value}\n")
                     else:  # For Maintainability Index
                         summary_file.write(f"    - {metric_name}: {metric_value}\n")
-            elif key == "Style Violations":  # Write style violations
+            elif key == "Style Violations":  # Write style violations for Python files
                 summary_file.write(f"- {key}:\n")
                 for violation in value:
                     summary_file.write(f"    - {violation}\n")
+            elif key == "PHPStan Report":  # Write PHPStan report for PHP files
+                summary_file.write(f"- {key}:\n```\n{value}\n```\n")
+            elif key == "ESLint Report":  # Write ESLint report for JS and CSS files
+                summary_file.write(f"- {key}:\n```\n{value}\n```\n")
             else:
                 summary_file.write(f"- {key}: {value}\n")
     summary_file.write("\n")
 
+# Function to load model settings
+def load_model_settings():
+    if os.path.exists(MODEL_SETTINGS_FILE):
+        with open(MODEL_SETTINGS_FILE, "r") as f:
+            return json.load(f)
+    else:
+        return {
+            "model": "mistral:instruct",
+            "temperature": 0.7,
+            "max_tokens": 4000
+        }
+
+# Function to save model settings
+def save_model_settings(settings):
+    with open(MODEL_SETTINGS_FILE, "w") as f:
+        json.dump(settings, f, indent=4)
+
 def main():
+    # Load model settings
+    model_settings = load_model_settings()
+
     st.title("✔️ Repository Analyzer")
     st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, requirements, or project_summary) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder. If you chose the 'project_summary' task type, a project_summary.md file will be created in the repository's 'files' folder.")
-    repo_path = st.text_input("Enter the path to your repository:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        task_type = st.selectbox("Select task type", ["project_summary", "documentation", "debug", "readme", "requirements"])
+    with col2:
+        repo_path = st.text_input("Enter the path to your repository:")
 
     # Input for exclude patterns
     exclude_patterns_str = st.text_input("Enter file/folder patterns to exclude (comma-separated, use regex):", 
-                                        value=".git,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.eml,.*\.json,chroma_db,.pytest_cache,project_summary.md")
+                                        value=".git,node_modules,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.csv,.*\.docx,.*\.zip,.*\.eml,.*\.json,.*\.svg,.*\.vue,.*\.ogg,.*\.eot,.*\.ttf,.*\.ico,.*\.otf,.*\.woff,.*\.woff2,chroma_db,.pytest_cache,project_summary.md,agent_prompts,docs,__init__.py")
     exclude_patterns = [pattern.strip() for pattern in exclude_patterns_str.split(",")]
 
-    # Four-column layout for task type, model, temperature, and max tokens
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        task_type = st.selectbox("Select task type", ["documentation", "debug", "readme", "requirements", "project_summary"])
-    with col2:
-        available_models = get_available_models()
-        model = st.selectbox(f"Select model for {task_type} task", available_models)
-    with col3:
-        temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.2, step=0.1)
-    with col4:
-        max_tokens = st.slider("Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
+    # Model Settings in a collapsed section in the sidebar
+    with st.sidebar:
+        with st.expander("🤖 Model Settings", expanded=False):
+            # Model selection
+            available_models = get_available_models()
+            model_settings["model"] = st.selectbox("Select Model", available_models, index=available_models.index(model_settings["model"]))
+
+            # Temperature slider
+            model_settings["temperature"] = st.slider("Temperature", min_value=0.0, max_value=1.0, value=model_settings["temperature"], step=0.1)
+
+            # Max Tokens slider
+            model_settings["max_tokens"] = st.slider("Max Tokens", min_value=1000, max_value=128000, value=model_settings["max_tokens"], step=1000)
+
+            # Save Settings button
+            if st.button("💾 Save Settings"):
+                save_model_settings(model_settings)
+                st.success("Model settings saved!")
 
     if st.button("🔍 Analyze Repository"):
         if not repo_path or not os.path.isdir(repo_path):
@@ -466,7 +556,7 @@ def main():
         code_files = get_all_code_files(repo_path, exclude_patterns)
 
         if not code_files:
-            st.warning("No Python files found in the specified directory.")
+            st.warning("No code files found in the specified directory.")
             return
 
         results = []

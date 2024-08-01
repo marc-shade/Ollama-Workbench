@@ -1,4 +1,3 @@
-
 import time
 import os
 import sys
@@ -111,21 +110,12 @@ def run_installation(command):
     # Show the cursor again after installation
     cursor.show()
 
-if __name__ == "__main__":
-    installation_complete = threading.Event()
-    
-    if len(sys.argv) > 1:
-        installation_command = " ".join(sys.argv[1:])
-        installation_thread = threading.Thread(target=run_installation, args=(installation_command,))
-        installation_thread.start()
-        
-        loading_animation()
-        
-        installation_thread.join()
-    else:
-        print("Usage: python loading_screen.py <installation_command>")
-        sys.exit(1)
+def run_installation_with_output(command):
+    # Run the command, showing output
+    subprocess.run(command, shell=True)
+    installation_complete.set()
 
+def print_completion_message():
     clear_screen()
     print("\n" * 5)
     print("Installation/Update Complete!")
@@ -149,7 +139,26 @@ if __name__ == "__main__":
     print("______________________________________________________")
 
     print("Launching Ollama Workbench...")
-
-
     print("\n" * 5)
     time.sleep(2)
+
+if __name__ == "__main__":
+    installation_complete = threading.Event()
+    
+    if len(sys.argv) > 1:
+        installation_command = " ".join(sys.argv[1:])
+        
+        if "--no-loading-screen" in sys.argv:
+            # Run installation with output
+            run_installation_with_output(installation_command)
+        else:
+            # Run installation with loading screen
+            installation_thread = threading.Thread(target=run_installation, args=(installation_command,))
+            installation_thread.start()
+            loading_animation()
+            installation_thread.join()
+        
+        print_completion_message()
+    else:
+        print("Usage: python loading_screen.py <installation_command>")
+        sys.exit(1)
