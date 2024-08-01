@@ -42,26 +42,26 @@ def chat_interface():
             with col1:
                 available_models = get_available_models()
                 selected_model = st.selectbox(
-                    "📦 Select a Model:",
+                    "📦 Model:",
                     available_models,
                     key="selected_model",
                     index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
                 )
             with col2:
                 agent_types = ["None"] + list(get_agent_prompt().keys())
-                agent_type = st.selectbox("🧑‍🔧 Select Agent Type:", agent_types, key="agent_type")
+                agent_type = st.selectbox("🧑‍🔧 Agent Type:", agent_types, key="agent_type")
             with col3:
                 metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
-                metacognitive_type = st.selectbox("🧠 Select Metacognitive Type:", metacognitive_types, key="metacognitive_type")
+                metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types, key="metacognitive_type")
             with col4:
                 voice_types = ["None"] + list(get_voice_prompt().keys())
-                voice_type = st.selectbox("🗣️ Select Voice Type:", voice_types, key="voice_type")
+                voice_type = st.selectbox("🗣️ Voice Type:", voice_types, key="voice_type")
             with col5:
                 corpus_folder = "corpus"
                 if not os.path.exists(corpus_folder):
                     os.makedirs(corpus_folder)
                 corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-                selected_corpus = st.selectbox("📚 Select Corpus:", corpus_options, key="selected_corpus")
+                selected_corpus = st.selectbox("📚 Corpus:", corpus_options, key="selected_corpus")
 
         # Advanced Settings (Collapsible, collapsed by default)
         with st.expander("🛠️ Advanced Settings", expanded=False):
