@@ -69,7 +69,6 @@ def chat_interface():
 
     # Sidebar for Settings and Advanced Settings
     with st.sidebar:
-        st.write(f"Total Token Count: {st.session_state.total_tokens}")
         with st.expander("⚙️ Chat Agent Settings", expanded=False):
             available_models = get_available_models()
             st.session_state.selected_model = st.selectbox(
@@ -142,7 +141,7 @@ def chat_interface():
 
             # Generate and display the assistant's response
             full_response = ""
-
+            
             # Combine agent type, metacognitive type, and voice type prompts
             combined_prompt = ""
             if st.session_state.agent_type != "None":
@@ -169,7 +168,7 @@ def chat_interface():
 
             # Update token count for the entire prompt
             st.session_state.total_tokens += count_tokens(final_prompt)
-
+            st.info(f"Total Token Count: {st.session_state.total_tokens}")
             with response_placeholder.container():
                 with st.chat_message("assistant"):
                     message_placeholder = st.empty()

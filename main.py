@@ -36,7 +36,8 @@ st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙
 st.markdown("""
         <style>
         body, h1, h2, h3, h4, h5, h6, p {
-        font-family: Open Sans, Helvetica, Arial, sans-serif!important;
+            font-family: Open Sans, Helvetica, Arial, sans-serif!important;
+            font-weight: 300;
         }
         .app-title {
             font-size: 44px!important; /* Adjust font size as needed */
@@ -51,7 +52,7 @@ st.markdown("""
             background-color: transparent;
             color: inherit;
             border: 0!important;
-            padding: 10px;
+            padding: 0px;
             text-align: left!important;
             cursor: pointer;
             font-size: 16px;
@@ -68,10 +69,12 @@ st.markdown("""
             border: 0!important;
         }
         
-        .st-emotion-cache-0 details {
-            border-color: rgba(250, 250, 250, 0.1!important;
+        .st-emotion-cache-0, 
+        .st-emotion-cache-0 details, 
+        .st-emotion-cache-0 summary {
+            border: 0!important;
         }
-        
+
         </style>
 """, unsafe_allow_html=True)
 
@@ -147,7 +150,7 @@ def create_sidebar():
     with st.sidebar:
         st.markdown(
             '<div style="text-align: left;">'
-            '<h1 class="logo" style="font-size: 26px;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
+            '<h1 class="logo" style="font-size: 26px; font-weight: 300;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
             "</div>",
             unsafe_allow_html=True,
         )
