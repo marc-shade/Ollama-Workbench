@@ -31,6 +31,43 @@ from build import build_interface
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
 
+
+
+st.markdown("""
+        <style>
+        body, h1, h2, h3, h4, h5, h6, p {
+        font-family: Open Sans, Helvetica, Arial, sans-serif!important;
+        }
+        .app-title {
+            font-size: 44px!important; /* Adjust font size as needed */
+            font-family: Open Sans, Helvetica, Arial, sans-serif!important;
+        }
+        .app-title span {
+            color: orange;
+        }
+        .nav-button {
+            display: block;
+            width: 100%;
+            background-color: transparent;
+            color: inherit;
+            border: none;
+            padding: 10px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .nav-button:hover {
+            background-color: #f0f0f0;
+        }
+        .stButton button {
+            width: 100%;
+        }
+        </style>
+""", unsafe_allow_html=True)
+
+
+
 # Define constants
 SIDEBAR_SECTIONS = {
     "🔄 Workflow": [
