@@ -104,7 +104,7 @@ def chat_interface():
             save_chat_and_workspace()
 
     # Create tabs for Chat and Workspace
-    chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
+    chat_tab, workspace_tab = st.tabs(["💬 Chat", "📜 Workspace"])
 
     with chat_tab:
         # Display chat history
@@ -195,7 +195,6 @@ def chat_interface():
 
     # Workspace tab
     with workspace_tab:
-        st.subheader("📜 Workspace")
         
         # Display workspace items
         for index, item in enumerate(st.session_state.workspace_items):
@@ -210,7 +209,7 @@ def chat_interface():
 
         # Option to add a new workspace item manually
         new_item = st.text_area("Add a new item to the workspace:", key="new_workspace_item")
-        if st.button("Add to Workspace"):
+        if st.button("✚ Add to Workspace"):
             if new_item:
                 st.session_state.workspace_items.append({
                     "type": "text",
