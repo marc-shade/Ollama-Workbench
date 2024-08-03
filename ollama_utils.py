@@ -297,3 +297,14 @@ def get_resource_usage():
     """Fetches resource usage data from the Ollama API (placeholder)."""
     st.info("Real-time resource usage monitoring is not yet supported by the Ollama API.")
     return {}
+
+def generate_embeddings(model, text):
+    """Generates embeddings for the given text using the specified model."""
+    try:
+        response = requests.post(f"{OLLAMA_URL}/embed", json={"model": model, "text": text})
+        response.raise_for_status()
+        embedding_data = response.json()
+        return embedding_data["embedding"], embedding_data["total_duration"], embedding_data["load_duration"], embedding_data["prompt_eval_count"]
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error generating embeddings: {e}")
+        return None, None, None, None

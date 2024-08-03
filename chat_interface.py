@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 import re
 import ollama
-from ollama_utils import get_available_models
+from ollama_utils import get_available_models, generate_embeddings
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
 from files_management import files_tab
@@ -126,6 +126,13 @@ def chat_interface():
         # Include chat history and corpus context
         chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
         if selected_corpus != "None":
+            # Generate embeddings and display statistics
+            embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(st.session_state.selected_model, prompt)
+            st.write("Embedding Statistics:")
+            st.write(f"Total Duration: {total_duration:.4f} seconds")
+            st.write(f"Load Duration: {load_duration:.4f} seconds")
+            st.write(f"Prompt Eval Count: {prompt_eval_count:.2f}")
+
             corpus_context = get_corpus_context_from_db(corpus_folder, selected_corpus, prompt)
             final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}\n\n{combined_prompt}"
         else:

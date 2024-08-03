@@ -7,7 +7,7 @@ from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain_community.llms import Ollama
 from langchain.prompts import PromptTemplate
-from ollama_utils import get_available_models
+from ollama_utils import get_available_models, generate_embeddings
 import os
 import shutil
 
@@ -31,10 +31,21 @@ class DocumentProcessor:
 
 class EmbeddingGenerator:
     def __init__(self, model_name="llama2:latest"):
-        self.embeddings = OllamaEmbeddings(model=model_name)
+        self.model_name = model_name
 
     def generate(self, texts):
-        return self.embeddings.embed_documents(texts)
+        embeddings = []
+        total_durations = []
+        load_durations = []
+        prompt_eval_counts = []
+        for text in texts:
+            embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(self.model_name, text)
+            if embedding is not None:
+                embeddings.append(embedding)
+                total_durations.append(total_duration)
+                load_durations.append(load_duration)
+                prompt_eval_counts.append(prompt_eval_count)
+        return embeddings, total_durations, load_durations, prompt_eval_counts
 
 class VectorDatabase:
     def __init__(self, embedding_function, persist_directory: str):
@@ -182,9 +193,15 @@ def process_and_save_corpus(data, corpus_name, selected_model, is_url=False, is_
         documents = doc_processor.process_file(file_path)
 
     embedding_generator = EmbeddingGenerator(model_name=selected_model)
-    embedding_generator.generate([doc.page_content for doc in documents])
+    embeddings, total_durations, load_durations, prompt_eval_counts = embedding_generator.generate([doc.page_content for doc in documents])
+    
+    # Display embedding statistics
+    st.write("Embedding Statistics:")
+    st.write(f"Average Total Duration: {sum(total_durations) / len(total_durations):.4f} seconds")
+    st.write(f"Average Load Duration: {sum(load_durations) / len(load_durations):.4f} seconds")
+    st.write(f"Average Prompt Eval Count: {sum(prompt_eval_counts) / len(prompt_eval_counts):.2f}")
 
-    vector_db = VectorDatabase(embedding_generator.embeddings, persist_directory=corpus_path)
+    vector_db = VectorDatabase(embeddings, persist_directory=corpus_path)
     vector_db.add_documents(documents)
 
     st.success(f"Corpus '{corpus_name}' created successfully!")
