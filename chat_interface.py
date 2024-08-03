@@ -10,28 +10,66 @@ import tiktoken
 from streamlit_extras.bottom_container import bottom
 from agents import SearchManager
 
+SETTINGS_FILE = "chat-settings.json"
+
+# Load settings from JSON file
+def load_settings():
+    if os.path.exists(SETTINGS_FILE):
+        with open(SETTINGS_FILE, "r") as f:
+            settings = json.load(f)
+            for key, value in settings.items():
+                if value != "None":  # Only set non-None values
+                    st.session_state[key] = value
+        print(f"Settings loaded: {settings}")
+
+def save_settings():
+    settings = {
+        "selected_model": st.session_state.selected_model,
+        "agent_type": st.session_state.agent_type,
+        "metacognitive_type": st.session_state.metacognitive_type,
+        "voice_type": st.session_state.voice_type,
+        "selected_corpus": st.session_state.selected_corpus,
+        "temperature_slider_chat": st.session_state.temperature_slider_chat,
+        "max_tokens_slider_chat": st.session_state.max_tokens_slider_chat,
+        "presence_penalty_slider_chat": st.session_state.presence_penalty_slider_chat,
+        "frequency_penalty_slider_chat": st.session_state.frequency_penalty_slider_chat,
+    }
+    with open(SETTINGS_FILE, "w") as f:
+        json.dump(settings, f)
+    print(f"Settings saved: {settings}")
+    st.success("Settings saved successfully!")
+
 def chat_interface():
-    st.header("💬 Chat")
+    # Load settings initially
+    load_settings()
 
     # Initialize session state variables
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "workspace_items" not in st.session_state:
         st.session_state.workspace_items = []
-    if "agent_type" not in st.session_state:
-        st.session_state.agent_type = "None"
-    if "metacognitive_type" not in st.session_state:
-        st.session_state.metacognitive_type = "None"
-    if "voice_type" not in st.session_state:
-        st.session_state.voice_type = "None"
+    
+    # Use get() method with a default of "None" for these settings
+    st.session_state.agent_type = st.session_state.get("agent_type", "None")
+    st.session_state.metacognitive_type = st.session_state.get("metacognitive_type", "None")
+    st.session_state.voice_type = st.session_state.get("voice_type", "None")
+    
     if "selected_model" not in st.session_state:
         available_models = get_available_models()
-        st.session_state.selected_model = available_models[0] if available_models else None
+        st.session_state.selected_model = st.session_state.get("selected_model", available_models[0] if available_models else None)
+    
+    st.session_state.selected_corpus = st.session_state.get("selected_corpus", "None")
+    st.session_state.temperature_slider_chat = st.session_state.get("temperature_slider_chat", 0.5)
+    st.session_state.max_tokens_slider_chat = st.session_state.get("max_tokens_slider_chat", 4000)
+    st.session_state.presence_penalty_slider_chat = st.session_state.get("presence_penalty_slider_chat", 0.0)
+    st.session_state.frequency_penalty_slider_chat = st.session_state.get("frequency_penalty_slider_chat", 0.0)
+    
     if "total_tokens" not in st.session_state:
         st.session_state.total_tokens = 0
 
     # Sidebar for Settings and Advanced Settings
     with st.sidebar:
+        st.write(f"Total Token Count: {st.session_state.total_tokens}")
         with st.expander("⚙️ Settings", expanded=False):
             available_models = get_available_models()
             st.session_state.selected_model = st.selectbox(
@@ -40,24 +78,24 @@ def chat_interface():
                 index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
             )
             agent_types = ["None"] + list(get_agent_prompt().keys())
-            st.session_state.agent_type = st.selectbox("🧑‍🔧 Agent Type:", agent_types)
+            st.session_state.agent_type = st.selectbox("🧑‍🔧 Agent Type:", agent_types, index=agent_types.index(st.session_state.agent_type))
             metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
-            st.session_state.metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types)
+            st.session_state.metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types, index=metacognitive_types.index(st.session_state.metacognitive_type))
             voice_types = ["None"] + list(get_voice_prompt().keys())
-            st.session_state.voice_type = st.selectbox("🗣️ Voice Type:", voice_types)
+            st.session_state.voice_type = st.selectbox("🗣️ Voice Type:", voice_types, index=voice_types.index(st.session_state.voice_type))
             corpus_folder = "corpus"
             if not os.path.exists(corpus_folder):
                 os.makedirs(corpus_folder)
             corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-            st.session_state.selected_corpus = st.selectbox("📚 Corpus:", corpus_options)
+            st.session_state.selected_corpus = st.selectbox("📚 Corpus:", corpus_options, index=corpus_options.index(st.session_state.selected_corpus))
+            st.button("Save Settings", key="save_settings_general", on_click=save_settings)
 
         with st.expander("🛠️ Advanced Settings", expanded=False):
-            st.session_state.temperature_slider_chat = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-            st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
-            st.session_state.presence_penalty_slider_chat = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
-            st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
-
-        st.write(f"Total Token Count: {st.session_state.total_tokens}")
+            st.session_state.temperature_slider_chat = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=st.session_state.temperature_slider_chat, step=0.1)
+            st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=st.session_state.max_tokens_slider_chat, step=1000)
+            st.session_state.presence_penalty_slider_chat = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.presence_penalty_slider_chat, step=0.1)
+            st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.frequency_penalty_slider_chat, step=0.1)
+            st.button("Save Settings", key="save_settings_advanced", on_click=save_settings)
 
         with st.expander("📁 Saved Chats and Workspaces", expanded=False):
             manage_saved_chats()
@@ -239,7 +277,7 @@ def manage_saved_chats():
                 st.rerun()
         with col3:
             if st.button("🗑️", key=f"delete_{file}"):
-                delete_chat_and_workspace(os.path.join(sessions_folder, file))
+                delete_chat_delete_chat_and_workspace(os.path.join(sessions_folder, file))
 
     if st.session_state.rename_file:
         rename_chat_and_workspace(st.session_state.rename_file, sessions_folder)
@@ -270,3 +308,6 @@ def rename_chat_and_workspace(file_to_rename, sessions_folder):
             st.session_state.rename_file = None
             st.cache_resource.clear()
             st.rerun()
+
+if __name__ == "__main__":
+    chat_interface()
