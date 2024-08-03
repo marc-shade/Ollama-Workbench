@@ -62,6 +62,9 @@ def chat_interface():
         with st.expander("📁 Saved Chats and Workspaces", expanded=False):
             manage_saved_chats()
 
+        if st.button("📥 Save Chat and Workspace"):
+            save_chat_and_workspace()
+
     # Create tabs for Chat and Workspace
     chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
 
@@ -151,10 +154,6 @@ def chat_interface():
                 })
             if code_blocks:
                 st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
-
-    # Save chat and workspace button (outside the bottom container)
-    if st.button("📥 Save Chat and Workspace"):
-        save_chat_and_workspace()
 
     # Workspace tab
     with workspace_tab:
