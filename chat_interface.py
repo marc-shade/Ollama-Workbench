@@ -1,4 +1,3 @@
-# chat_interface.py
 import streamlit as st
 import os
 import json
@@ -31,147 +30,131 @@ def chat_interface():
     if "total_tokens" not in st.session_state:
         st.session_state.total_tokens = 0
 
+    # Sidebar for Settings and Advanced Settings
+    with st.sidebar:
+        with st.expander("⚙️ Settings", expanded=False):
+            available_models = get_available_models()
+            st.session_state.selected_model = st.selectbox(
+                "📦 Model:",
+                available_models,
+                index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+            )
+            agent_types = ["None"] + list(get_agent_prompt().keys())
+            st.session_state.agent_type = st.selectbox("🧑‍🔧 Agent Type:", agent_types)
+            metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
+            st.session_state.metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types)
+            voice_types = ["None"] + list(get_voice_prompt().keys())
+            st.session_state.voice_type = st.selectbox("🗣️ Voice Type:", voice_types)
+            corpus_folder = "corpus"
+            if not os.path.exists(corpus_folder):
+                os.makedirs(corpus_folder)
+            corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
+            st.session_state.selected_corpus = st.selectbox("📚 Corpus:", corpus_options)
+
+        with st.expander("🛠️ Advanced Settings", expanded=False):
+            st.session_state.temperature_slider_chat = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+            st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000)
+            st.session_state.presence_penalty_slider_chat = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+            st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1)
+
+        st.write(f"Total Token Count: {st.session_state.total_tokens}")
+
+        with st.expander("📁 Saved Chats and Workspaces", expanded=False):
+            manage_saved_chats()
+
     # Create tabs for Chat and Workspace
     chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
 
     with chat_tab:
-        # Settings (Collapsible, open by default)
-        with st.expander("⚙️ Settings", expanded=True):
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                available_models = get_available_models()
-                selected_model = st.selectbox(
-                    "📦 Model:",
-                    available_models,
-                    key="selected_model",
-                    index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
-                )
-            with col2:
-                agent_types = ["None"] + list(get_agent_prompt().keys())
-                agent_type = st.selectbox("🧑‍🔧 Agent Type:", agent_types, key="agent_type")
-            with col3:
-                metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
-                metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types, key="metacognitive_type")
-            with col4:
-                voice_types = ["None"] + list(get_voice_prompt().keys())
-                voice_type = st.selectbox("🗣️ Voice Type:", voice_types, key="voice_type")
-            with col5:
-                corpus_folder = "corpus"
-                if not os.path.exists(corpus_folder):
-                    os.makedirs(corpus_folder)
-                corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-                selected_corpus = st.selectbox("📚 Corpus:", corpus_options, key="selected_corpus")
+        # Display chat history
+        for message in st.session_state.chat_history:
+            with st.chat_message(message["role"]):
+                if message["role"] == "assistant":
+                    code_blocks = extract_code_blocks(message["content"])
+                    for code_block in code_blocks:
+                        st.code(code_block)
+                    non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
+                    for part in non_code_parts:
+                        st.markdown(part.strip())
+                else:
+                    st.markdown(message["content"])
 
-        # Advanced Settings (Collapsible, collapsed by default)
-        with st.expander("🛠️ Advanced Settings", expanded=False):
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                temperature = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider_chat")
-            with col2:
-                max_tokens = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=4000, step=1000, key="max_tokens_slider_chat")
-            with col3:
-                presence_penalty = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="presence_penalty_slider_chat")
-            with col4:
-                frequency_penalty = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=0.0, step=0.1, key="frequency_penalty_slider_chat")
+        # Create placeholders for user input and assistant's response
+        user_input_placeholder = st.empty()
+        response_placeholder = st.empty()
 
-        # Display total token count
-        st.write(f"Total Token Count: {st.session_state.total_tokens}")
+        # Chat input at the bottom using bottom_container
+        with bottom():
+            prompt = st.chat_input("🧐 What is up my person❔", key="chat_input")
 
-    # Display chat history
-    for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            if message["role"] == "assistant":
-                code_blocks = extract_code_blocks(message["content"])
-                for code_block in code_blocks:
-                    st.code(code_block)
-                non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
-                for part in non_code_parts:
-                    st.markdown(part.strip())
+        # Process the user input and generate response outside the bottom container
+        if prompt:
+            # Display user input
+            with user_input_placeholder.container():
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+
+            # Update token count for user input
+            st.session_state.total_tokens += count_tokens(prompt)
+
+            # Generate and display the assistant's response
+            full_response = ""
+
+            # Combine agent type, metacognitive type, and voice type prompts
+            combined_prompt = ""
+            if st.session_state.agent_type != "None":
+                combined_prompt += get_agent_prompt()[st.session_state.agent_type] + "\n\n"
+            if st.session_state.metacognitive_type != "None":
+                combined_prompt += get_metacognitive_prompt()[st.session_state.metacognitive_type] + "\n\n"
+            if st.session_state.voice_type != "None":
+                combined_prompt += get_voice_prompt()[st.session_state.voice_type] + "\n\n"
+
+            # Include chat history and corpus context
+            chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+            if st.session_state.selected_corpus != "None":
+                # Generate embeddings and display statistics
+                embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(st.session_state.selected_model, prompt)
+                st.write("Embedding Statistics:")
+                st.write(f"Total Duration: {total_duration:.4f} seconds")
+                st.write(f"Load Duration: {load_duration:.4f} seconds")
+                st.write(f"Prompt Eval Count: {prompt_eval_count:.2f}")
+
+                corpus_context = get_corpus_context_from_db(corpus_folder, st.session_state.selected_corpus, prompt)
+                final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}\n\n{combined_prompt}"
             else:
-                st.markdown(message["content"])
+                final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {prompt}\n\n{combined_prompt}"
 
-    # Create placeholders for user input and assistant's response
-    user_input_placeholder = st.empty()
-    response_placeholder = st.empty()
+            # Update token count for the entire prompt
+            st.session_state.total_tokens += count_tokens(final_prompt)
 
-    # Chat input at the bottom using bottom_container
-    with bottom():
-        prompt = st.chat_input("🧐 What is up my person❔", key="chat_input")
+            with response_placeholder.container():
+                with st.chat_message("assistant"):
+                    message_placeholder = st.empty()
+                    for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
+                        full_response += response_chunk["response"]
+                        message_placeholder.markdown(full_response + "▌")
+                        # Update token count for each chunk of the response
+                        st.session_state.total_tokens += count_tokens(response_chunk["response"])
+                    message_placeholder.markdown(full_response)
 
-    # Process the user input and generate response outside the bottom container
-    if prompt:
-        # Display user input
-        with user_input_placeholder.container():
-            with st.chat_message("user"):
-                st.markdown(prompt)
+            st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-
-        # Update token count for user input
-        st.session_state.total_tokens += count_tokens(prompt)
-
-        # Generate and display the assistant's response
-        full_response = ""
-
-        # Combine agent type, metacognitive type, and voice type prompts
-        combined_prompt = ""
-        if agent_type != "None":
-            combined_prompt += get_agent_prompt()[agent_type] + "\n\n"
-        if metacognitive_type != "None":
-            combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\n\n"
-        if voice_type != "None":
-            combined_prompt += get_voice_prompt()[voice_type] + "\n\n"
-
-        # Include chat history and corpus context
-        chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
-        if selected_corpus != "None":
-            # Generate embeddings and display statistics
-            embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(st.session_state.selected_model, prompt)
-            st.write("Embedding Statistics:")
-            st.write(f"Total Duration: {total_duration:.4f} seconds")
-            st.write(f"Load Duration: {load_duration:.4f} seconds")
-            st.write(f"Prompt Eval Count: {prompt_eval_count:.2f}")
-
-            corpus_context = get_corpus_context_from_db(corpus_folder, selected_corpus, prompt)
-            final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}\n\n{combined_prompt}"
-        else:
-            final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {prompt}\n\n{combined_prompt}"
-
-        # Update token count for the entire prompt
-        st.session_state.total_tokens += count_tokens(final_prompt)
-
-        with response_placeholder.container():
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
-                    full_response += response_chunk["response"]
-                    message_placeholder.markdown(full_response + "▌")
-                    # Update token count for each chunk of the response
-                    st.session_state.total_tokens += count_tokens(response_chunk["response"])
-                message_placeholder.markdown(full_response)
-
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
-
-        # Update the total token count display
-        st.write(f"Total Token Count: {st.session_state.total_tokens}")
-
-        # Automatically detect and save code to workspace
-        code_blocks = extract_code_blocks(full_response)
-        for code_block in code_blocks:
-            st.session_state.workspace_items.append({
-                "type": "code",
-                "content": code_block,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-        if code_blocks:
-            st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
+            # Automatically detect and save code to workspace
+            code_blocks = extract_code_blocks(full_response)
+            for code_block in code_blocks:
+                st.session_state.workspace_items.append({
+                    "type": "code",
+                    "content": code_block,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            if code_blocks:
+                st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
 
     # Save chat and workspace button (outside the bottom container)
     if st.button("📥 Save Chat and Workspace"):
         save_chat_and_workspace()
-
-    # Load/Rename/Delete chat and workspace
-    manage_saved_chats()
 
     # Workspace tab
     with workspace_tab:
@@ -206,7 +189,6 @@ def count_tokens(text):
 
 def extract_code_blocks(text):
     code_blocks = re.findall(r'```[\s\S]*?```', text)
-    
     return [block.strip('`').strip() for block in code_blocks]
 
 def get_corpus_context_from_db(corpus_folder, corpus_name, query):
