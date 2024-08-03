@@ -50,9 +50,9 @@ st.markdown("""
             width: 100%;
             background-color: transparent;
             color: inherit;
-            border: none;
+            border: 0!important;
             padding: 10px;
-            text-align: left;
+            text-align: left!important;
             cursor: pointer;
             font-size: 16px;
             box-sizing: border-box;
@@ -63,6 +63,15 @@ st.markdown("""
         .stButton button {
             width: 100%;
         }
+        
+        button {
+            border: 0!important;
+        }
+        
+        .st-emotion-cache-0 details {
+            border-color: rgba(250, 250, 250, 0.1!important;
+        }
+        
         </style>
 """, unsafe_allow_html=True)
 
@@ -138,7 +147,7 @@ def create_sidebar():
     with st.sidebar:
         st.markdown(
             '<div style="text-align: left;">'
-            '<h1 class="logo" style="font-size: 28px;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
+            '<h1 class="logo" style="font-size: 26px;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
             "</div>",
             unsafe_allow_html=True,
         )
