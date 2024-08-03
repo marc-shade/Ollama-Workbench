@@ -348,31 +348,25 @@ def manager_agent_task(
     4. "instructions": Clear instructions for the coding agents.
     """
 
-    response = call_model(model, [{"role": "user", "content": prompt}], temperature, max_tokens)
-
     try:
+        response = call_model(model, [{"role": "user", "content": prompt}], temperature, max_tokens)
         return json.loads(response)
     except json.JSONDecodeError as e:
-        print(f"Error parsing JSON response: {e}")
-        print(f"Raw response: {response}")
-
-        # Attempt to extract JSON-like content
-        import re
-
-        json_like = re.search(r"\{.*\}", response, re.DOTALL)
-        if json_like:
-            try:
-                return json.loads(json_like.group())
-            except json.JSONDecodeError:
-                pass
-
-        # If all else fails, return a default structure
+        st.session_state.project_state["errors"].append(
+            f"Error parsing JSON response from Manager Agent: {e}"
+        )
+        st.session_state.project_state["errors"].append(f"Raw response: {response}")
         return {
             "analysis": "Error parsing response. Please review the raw output.",
             "work_plan": "Unable to generate work plan due to parsing error.",
             "priorities": ["Review and fix JSON parsing issues"],
             "instructions": "Please review the raw output and manually extract relevant information.",
         }
+    except Exception as e:
+        st.session_state.project_state["errors"].append(
+            f"An error occurred during the manager agent task: {str(e)}"
+        )
+        return {}
 
 
 def sub_agent_task(
@@ -423,12 +417,23 @@ def sub_agent_task(
                 "num_predict": max_tokens
             }
         )
-        return json.loads(response['message']['content'])
-    except json.JSONDecodeError as e:
-        st.error(f"Error parsing JSON response: {e}")
-        return {}
+        response_text = response['message']['content']
+
+        # Attempt to parse the response as JSON
+        try:
+            json_response = json.loads(response_text)
+            return json_response
+        except json.JSONDecodeError as e:
+            st.session_state.project_state["errors"].append(
+                f"Error parsing JSON response from Sub Agent: {e}"
+            )
+            st.session_state.project_state["errors"].append(f"Raw response: {response_text}")
+            return {}
+
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+        st.session_state.project_state["errors"].append(
+            f"An error occurred during the sub-agent task: {str(e)}"
+        )
         return {}
 
 
@@ -589,7 +594,10 @@ def manage_task(
                 )
                 response_text = response["message"]["content"]
             else:
-                raise e
+                st.session_state.project_state["errors"].append(
+                    f"An error occurred during the manager task: {str(e)}"
+                )
+                response_text = ""
 
     console.print(
         Panel(
@@ -764,7 +772,10 @@ def sub_agent_task(
                 )
                 response_text = response["message"]["content"]
             else:
-                raise e
+                st.session_state.project_state["errors"].append(
+                    f"An error occurred during the sub-agent task: {str(e)}"
+                )
+                response_text = ""
 
     if len(response_text) >= 8000:
         console.print(
@@ -818,9 +829,15 @@ def refine_task(
         }
     ]
 
-    response_text = call_model(
-        model, messages, temperature, max_tokens, groq_api_key
-    )
+    try:
+        response_text = call_model(
+            model, messages, temperature, max_tokens, groq_api_key
+        )
+    except Exception as e:
+        st.session_state.project_state["errors"].append(
+            f"An error occurred during the refine task: {str(e)}"
+        )
+        response_text = ""
 
     if len(response_text) >= 8000 and not continuation:
         console.print(
@@ -860,7 +877,7 @@ def parse_folder_structure(structure_string):
 
     json_string = match.group(1)
 
-    try:
+    try: 
         structure = json.loads(json_string)
         return structure
     except json.JSONDecodeError as e:
@@ -895,17 +912,22 @@ def extract_code_blocks(refined_output):
 
 
 def save_file(content: str, filename: str, project_dir: str) -> None:
-    file_path = Path(project_dir) / "code" / filename
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    file_path.write_text(content, encoding="utf-8")
-    console.print(
-        Panel(
-            f"[yellow]Saved file: [bold]{file_path}[/bold]",
-            title="[bold green]File Saved[/bold green]",
-            title_align="left",
-            border_style="yellow",
+    try:
+        file_path = Path(project_dir) / "code" / filename
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(content, encoding="utf-8")
+        console.print(
+            Panel(
+                f"[yellow]Saved file: [bold]{file_path}[/bold]",
+                title="[bold green]File Saved[/bold green]",
+                title_align="left",
+                border_style="yellow",
+            )
         )
-    )
+    except Exception as e:
+        st.session_state.project_state["errors"].append(
+            f"Error saving file '{filename}': {str(e)}"
+        )
 
 
 def dump_repository(repo_path: str) -> Dict[str, str]:
@@ -927,14 +949,20 @@ def dump_repository(repo_path: str) -> Dict[str, str]:
 
 
 def analyze_code(code: str) -> Dict[str, List[str]]:
-    tree = ast.parse(code)
-    functions = [
-        node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
-    ]
-    classes = [
-        node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-    ]
-    return {"functions": functions, "classes": classes}
+    try:
+        tree = ast.parse(code)
+        functions = [
+            node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+        ]
+        classes = [
+            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
+        ]
+        return {"functions": functions, "classes": classes}
+    except SyntaxError as e:
+        st.session_state.project_state["errors"].append(
+            f"Syntax error in code analysis: {e}"
+        )
+        return {"functions": [], "classes": []}
 
 
 def analyze_code_with_ruff(file_path: str) -> List[Dict]:
@@ -1028,39 +1056,45 @@ def run_tests(project_dir: str) -> Dict[str, Any]:
                     f.write(f"from {file[:-3]} import *\n\n")
                     f.write(test_cases)
 
-    # Run pytest
-    pytest_result = subprocess.run(
-        ["pytest", "-v", test_dir], capture_output=True, text=True
-    )
+    try:
+        # Run pytest
+        pytest_result = subprocess.run(
+            ["pytest", "-v", test_dir], capture_output=True, text=True
+        )
 
-    # Run Ruff on all Python files
-    ruff_violations = []
-    for root, _, files in os.walk(project_dir):
-        for file in files:
-            if file.endswith(".py"):
-                file_path = os.path.join(root, file)
-                result = subprocess.run(
-                    ["ruff", "check", file_path, "--format=json"],
-                    capture_output=True,
-                    text=True,
-                )
-                try:
-                    violations = json.loads(result.stdout)
-                    ruff_violations.extend(violations)
-                except json.JSONDecodeError:
-                    print(f"Error parsing Ruff output for {file_path}")
+        # Run Ruff on all Python files
+        ruff_violations = []
+        for root, _, files in os.walk(project_dir):
+            for file in files:
+                if file.endswith(".py"):
+                    file_path = os.path.join(root, file)
+                    result = subprocess.run(
+                        ["ruff", "check", file_path, "--format=json"],
+                        capture_output=True,
+                        text=True,
+                    )
+                    try:
+                        violations = json.loads(result.stdout)
+                        ruff_violations.extend(violations)
+                    except json.JSONDecodeError:
+                        print(f"Error parsing Ruff output for {file_path}")
 
-    ruff_report = generate_ruff_report(ruff_violations)
+        ruff_report = generate_ruff_report(ruff_violations)
 
-    return {
-        "pytest_output": pytest_result.stdout,
-        "ruff_report": ruff_report,
-        "passed": pytest_result.stdout.count("PASSED"),
-        "failed": pytest_result.stdout.count("FAILED"),
-        "errors": pytest_result.stdout.count("ERROR"),
-        "warnings": pytest_result.stdout.count("WARN"),
-        "ruff_violations": len(ruff_violations),
-    }
+        return {
+            "pytest_output": pytest_result.stdout,
+            "ruff_report": ruff_report,
+            "passed": pytest_result.stdout.count("PASSED"),
+            "failed": pytest_result.stdout.count("FAILED"),
+            "errors": pytest_result.stdout.count("ERROR"),
+            "warnings": pytest_result.stdout.count("WARN"),
+            "ruff_violations": len(ruff_violations),
+        }
+    except Exception as e:
+        st.session_state.project_state["errors"].append(
+            f"An error occurred during testing: {str(e)}"
+        )
+        return {}
 
 
 def generate_readme(
@@ -1090,10 +1124,16 @@ def generate_readme(
     """
 
     messages = [{"role": "user", "content": readme_prompt}]
-    readme_content = call_model(
-        refiner_model, messages, temperature=0.7, max_tokens=2000
-    )
-    return readme_content
+    try:
+        readme_content = call_model(
+            refiner_model, messages, temperature=0.7, max_tokens=2000
+        )
+        return readme_content
+    except Exception as e:
+        st.session_state.project_state["errors"].append(
+            f"An error occurred during README generation: {str(e)}"
+        )
+        return ""
 
 
 def execute_code(code: str, project_type: str) -> str:
@@ -1397,6 +1437,7 @@ def build_interface():
             st_ss.project_state["agent_logs"] = []
             st_ss.project_state["progress"] = 0
             st_ss.project_state["iterations"] = 0
+            st_ss.project_state["errors"].clear()
 
             search_results = None
             if use_search:
@@ -1444,8 +1485,8 @@ def build_interface():
                         temperature=st.session_state.settings["manager_temperature"],
                         max_tokens=st.session_state.settings["manager_max_tokens"],
                         search_results=search_results,
-                        groq_api_key=st_ss.settings.get("groq_api_key"),
-                        api_keys=st_ss.api_keys,
+                        groq_api_key=st.session_state.settings.get("groq_api_key"),
+                        api_keys=st.session_state.api_keys,
                     )
 
                 if "The task is complete:" in agent_result:
@@ -1568,54 +1609,48 @@ def build_interface():
             current_task = "Implement initial project structure"
 
             # Call manager agent
-            try:
-                manager_response = manager_agent_task(
+            manager_response = manager_agent_task(
+                create_agent_context(
+                    st.session_state.project_state,
+                    st.session_state.project_state["test_results"],
+                    current_task,
+                ),
+                st.session_state.settings["manager_model"],
+                st.session_state.settings["manager_temperature"],
+                st.session_state.settings["manager_max_tokens"],
+            )
+
+            if "analysis" not in manager_response:
+                st.error(
+                    "Manager response is incomplete. Please check the logs for details."
+                )
+                st.json(manager_response)
+            else:
+                # Proceed with sub_agent_task
+                sub_agent_response = sub_agent_task(
                     create_agent_context(
                         st.session_state.project_state,
                         st.session_state.project_state["test_results"],
-                        current_task,
+                        current_task
                     ),
-                    st.session_state.settings["manager_model"],
-                    st.session_state.settings["manager_temperature"],
-                    st.session_state.settings["manager_max_tokens"],
+                    manager_response,
+                    st.session_state.settings["subagent_model"],
+                    st.session_state.settings["subagent_temperature"],
+                    st.session_state.settings["subagent_max_tokens"]
                 )
 
-                if "analysis" not in manager_response:
-                    st.error(
-                        "Manager response is incomplete. Please check the logs for details."
-                    )
-                    st.json(manager_response)
-                else:
-                    # Proceed with sub_agent_task
-                    sub_agent_response = sub_agent_task(
-                        create_agent_context(
-                            st.session_state.project_state,
-                            st.session_state.project_state["test_results"],
-                            current_task
-                        ),
-                        manager_response,
-                        st.session_state.settings["subagent_model"],
-                        st.session_state.settings["subagent_temperature"],
-                        st.session_state.settings["subagent_max_tokens"]
-                    )
+                # Process sub_agent_response here
+                st.write("Sub-agent Response:")
+                st.json(sub_agent_response)
 
-                    # Process sub_agent_response here
-                    st.write("Sub-agent Response:")
-                    st.json(sub_agent_response)
-
-                    # Update project state with sub-agent results
+                # Update project state with sub-agent results
+                if sub_agent_response:  # Check if sub_agent_response is not empty
                     st.session_state.project_state["code"] = sub_agent_response.get(
                         "code_changes", ""
                     )
                     st.session_state.project_state["quality_review"] = (
                         sub_agent_response.get("explanation", "")
                     )
-
-            except Exception as e:
-                st.error(
-                    f"An error occurred during the manager or sub-agent task: {str(e)}"
-                )
-                st.exception(e)
 
             # Check if there are any failed tests, errors, or Ruff violations
             if (
@@ -1638,7 +1673,7 @@ def build_interface():
                     st_ss.project_state["max_iterations"] += 3
             else:
                 st_ss.project_state["status"] = "Completed"
-                st_ss.project_state["progress"] = 1.0
+                st.session_state.project_state["progress"] = 1.0
                 progress_bar.progress(1.0)
                 st.success("Project build completed successfully!")
         else:
@@ -1646,6 +1681,10 @@ def build_interface():
 
     with tab1:
         st.subheader("Code")
+        if st.session_state.project_state["errors"]:
+            st.error("Errors encountered during code generation:")
+            for error in st.session_state.project_state["errors"]:
+                st.write(error)
         st.text_area("Generated Code:", st.session_state.project_state["code"], height=400)
 
     with tab2:

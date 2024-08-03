@@ -101,7 +101,7 @@ def create_sidebar():
     with st.sidebar:
         st.markdown(
             '<div style="text-align: left;">'
-            '<h1 class="logo" style="font-size: 50px;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
+            '<h1 class="logo" style="font-size: 28px;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
             "</div>",
             unsafe_allow_html=True,
         )
