@@ -70,7 +70,7 @@ def chat_interface():
     # Sidebar for Settings and Advanced Settings
     with st.sidebar:
         st.write(f"Total Token Count: {st.session_state.total_tokens}")
-        with st.expander("⚙️ Settings", expanded=False):
+        with st.expander("⚙️ Chat Agent Settings", expanded=False):
             available_models = get_available_models()
             st.session_state.selected_model = st.selectbox(
                 "📦 Model:",
@@ -88,14 +88,14 @@ def chat_interface():
                 os.makedirs(corpus_folder)
             corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
             st.session_state.selected_corpus = st.selectbox("📚 Corpus:", corpus_options, index=corpus_options.index(st.session_state.selected_corpus))
-            st.button("Save Settings", key="save_settings_general", on_click=save_settings)
+            st.button("💾 Save Settings", key="save_settings_general", on_click=save_settings)
 
         with st.expander("🛠️ Advanced Settings", expanded=False):
             st.session_state.temperature_slider_chat = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=st.session_state.temperature_slider_chat, step=0.1)
             st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=st.session_state.max_tokens_slider_chat, step=1000)
             st.session_state.presence_penalty_slider_chat = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.presence_penalty_slider_chat, step=0.1)
             st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.frequency_penalty_slider_chat, step=0.1)
-            st.button("Save Settings", key="save_settings_advanced", on_click=save_settings)
+            st.button("💾 Save Settings", key="save_settings_advanced", on_click=save_settings)
 
         with st.expander("📁 Saved Chats and Workspaces", expanded=False):
             manage_saved_chats()
@@ -277,7 +277,7 @@ def manage_saved_chats():
                 st.rerun()
         with col3:
             if st.button("🗑️", key=f"delete_{file}"):
-                delete_chat_delete_chat_and_workspace(os.path.join(sessions_folder, file))
+                delete_chat_and_workspace(os.path.join(sessions_folder, file))
 
     if st.session_state.rename_file:
         rename_chat_and_workspace(st.session_state.rename_file, sessions_folder)
@@ -298,16 +298,22 @@ def delete_chat_and_workspace(file_path):
 
 def rename_chat_and_workspace(file_to_rename, sessions_folder):
     current_name = os.path.splitext(file_to_rename)[0]
-    new_name = st.text_input("Rename file:", value=current_name, key="rename_file_input")
-    if new_name:
-        old_file_path = os.path.join(sessions_folder, file_to_rename)
-        new_file_path = os.path.join(sessions_folder, new_name + ".json")
-        if new_file_path != old_file_path:
-            os.rename(old_file_path, new_file_path)
-            st.success(f"File renamed to {new_name}")
-            st.session_state.rename_file = None
-            st.cache_resource.clear()
-            st.rerun()
+    new_name = st.sidebar.text_input("Rename file:", value=current_name, key="rename_file_input")
+    if st.sidebar.button("Confirm Rename"):
+        if new_name and new_name != current_name:
+            old_file_path = os.path.join(sessions_folder, file_to_rename)
+            new_file_path = os.path.join(sessions_folder, new_name + ".json")
+            if new_file_path != old_file_path:
+                os.rename(old_file_path, new_file_path)
+                st.sidebar.success(f"File renamed to {new_name}")
+                st.session_state.rename_file = None
+                st.rerun()
+        else:
+            st.sidebar.error("Please enter a new name different from the current one.")
+    
+    if st.sidebar.button("Cancel"):
+        st.session_state.rename_file = None
+        st.rerun()
 
 if __name__ == "__main__":
     chat_interface()
