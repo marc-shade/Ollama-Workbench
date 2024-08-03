@@ -8,7 +8,6 @@ import ollama
 from ollama_utils import get_available_models, generate_embeddings
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
-from files_management import files_tab
 from streamlit_extras.bottom_container import bottom
 from agents import SearchManager
 
@@ -32,8 +31,8 @@ def chat_interface():
     if "total_tokens" not in st.session_state:
         st.session_state.total_tokens = 0
 
-    # Create tabs for Chat, Workspace, and Files
-    chat_tab, workspace_tab, files_tab_ui = st.tabs(["Chat", "Workspace", "Files"])
+    # Create tabs for Chat and Workspace
+    chat_tab, workspace_tab = st.tabs(["Chat", "Workspace"])
 
     with chat_tab:
         # Settings (Collapsible, open by default)
@@ -201,16 +200,13 @@ def chat_interface():
                 st.success("New item added to Workspace")
                 st.rerun()
 
-    # Files tab
-    with files_tab_ui:
-        files_tab()
-
 def count_tokens(text):
     encoding = tiktoken.get_encoding("cl100k_base")
     return len(encoding.encode(text))
 
 def extract_code_blocks(text):
     code_blocks = re.findall(r'```[\s\S]*?```', text)
+    
     return [block.strip('`').strip() for block in code_blocks]
 
 def get_corpus_context_from_db(corpus_folder, corpus_name, query):
