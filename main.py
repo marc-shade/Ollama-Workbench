@@ -48,7 +48,6 @@ st.markdown("""
         }
         .nav-button {
             display: block;
-            width: 100%;
             background-color: transparent;
             color: inherit;
             border: 0!important;
@@ -61,12 +60,14 @@ st.markdown("""
         .nav-button:hover {
             background-color: #f0f0f0;
         }
-        .stButton button {
+        .st-emotion-cache-1itdyc2 .stButton button {
             width: 100%;
         }
         
         button {
             border: 0!important;
+            text-align: left!important;
+            justify-content: left!important;
         }
         
         .st-emotion-cache-0, 
@@ -75,6 +76,9 @@ st.markdown("""
             border: 0!important;
         }
 
+        .main button {
+            width: auto!important;
+            }
         </style>
 """, unsafe_allow_html=True)
 
