@@ -43,3 +43,4 @@ numpy
 tqdm
 torch
 transformers
+openai
