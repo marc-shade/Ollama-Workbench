@@ -27,6 +27,7 @@ radon
 reportlab
 requests
 ruff
+scikit-learn
 selenium
 sentence_transformers
 serpapi
