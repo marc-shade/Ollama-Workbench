@@ -249,7 +249,7 @@ def brainstorm_session(use_docker):
         st.session_state.group_chat_manager = GroupChatManager(groupchat=st.session_state.group_chat)
 
     # Workflow management
-    st.subheader("Workflow Management")
+    st.subheader("🔄 Workflow Management")
     available_workflows = get_available_workflows()
     selected_workflow = st.selectbox("Load Workflow", [""] + available_workflows)
     workflow_name = st.text_input("Workflow Name")
@@ -263,7 +263,7 @@ def brainstorm_session(use_docker):
             st.rerun()
 
     # Agent sequence setup
-    st.subheader("Agent Response Sequence")
+    st.subheader("🦊 Agent Response Sequence")
     if 'agent_sequence' not in st.session_state:
         st.session_state.agent_sequence = []
 
@@ -306,7 +306,7 @@ def brainstorm_session(use_docker):
             st.error("Please enter a workflow name before saving.")
 
     # User input
-    user_message = st.text_input("Enter your message:")
+    user_message = st.text_input("▶️ Enter your message:")
 
     if st.button("Send"):
         if user_message and any(st.session_state.agent_sequence):
@@ -326,7 +326,7 @@ def brainstorm_session(use_docker):
                             st.error(f"Agent '{agent_name}' not found.")
 
     # Display conversation history with formatting
-    st.subheader("Conversation History")
+    st.subheader("📜 Conversation History")
     for message in st.session_state.group_chat.messages:
         with st.chat_message(message['role']):
             st.markdown(f"**{message['name']}**")
@@ -345,9 +345,9 @@ def brainstorm_interface():
     if use_docker:
         # Check if Docker is installed and running
         if not is_docker_running():
-            st.warning("Docker is not running. Please start Docker or install it if not already installed.")
+            st.warning("🟠 Docker is not running. Please start Docker or install it if not already installed.")
             st.info("""
-            To install Docker:
+            ❓ To install Docker:
             1. Visit https://www.docker.com/products/docker-desktop
             2. Download and install Docker Desktop for your operating system
             3. After installation, start Docker Desktop
@@ -357,7 +357,7 @@ def brainstorm_interface():
     else:
         os.environ["AUTOGEN_USE_DOCKER"] = "0"
 
-    tab1, tab2 = st.tabs(["Brainstorm Session", "Manage Agents"])
+    tab1, tab2 = st.tabs(["💡 Brainstorm Session", "🦊 Manage Agents"])
     
     with tab1:
         brainstorm_session(use_docker)

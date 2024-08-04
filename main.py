@@ -48,7 +48,6 @@ st.markdown("""
         }
         .nav-button {
             display: block;
-            background-color: transparent;
             color: inherit;
             border: 0!important;
             padding: 0px;
@@ -56,10 +55,9 @@ st.markdown("""
             cursor: pointer;
             font-size: 16px;
             box-sizing: border-box;
+            white-space: nowrap;
         }
-        .nav-button:hover {
-            background-color: #f0f0f0;
-        }
+
         .st-emotion-cache-1itdyc2 .stButton button {
             width: 100%;
         }
@@ -68,6 +66,15 @@ st.markdown("""
             border: 0!important;
             text-align: left!important;
             justify-content: left!important;
+            white-space: nowrap;
+        }
+        
+        button[kind="secondary"] {
+            background-color: rgb(255, 165, 0, .2)!important;
+        }
+
+        [data-testid="stExpanderDetails"] .row-widget.stButton button[kind="secondary"] {
+            background-color: rgb(0, 0, 0, 0)!important;
         }
         
         .st-emotion-cache-0, 
@@ -100,8 +107,8 @@ SIDEBAR_SECTIONS = {
         ("✔️ Repository Analyzer", "Repository Analyzer"),
     ],
     "🛠️ Maintain": [
-        ("📋 List Local Models", "List Local Models"),
-        ("🦙 Show Model Information", "Show Model Information"),
+        ("🤖 List Local Models", "List Local Models"),
+        ("🦙 Model Information", "Show Model Information"),
         ("⬇ Pull a Model", "Pull a Model"),
         ("🗑️ Remove a Model", "Remove a Model"),
         ("⤵️ Update Models", "Update Models"),
@@ -109,10 +116,10 @@ SIDEBAR_SECTIONS = {
         ("🖥️ Server Monitoring", "Server Monitoring"),
     ],
     "📊 Test": [
-        ("🧪 Model Feature Test", "Model Feature Test"),
-        ("🎯 Model Comparison by Response Quality", "Model Comparison by Response Quality"),
-        ("💬 Contextual Response Test by Model", "Contextual Response Test by Model"),
-        ("👁️ Vision Model Comparison", "Vision Model Comparison"),
+        ("🧪 Model Feature Test", "Feature Test"),
+        ("🎯 Response Quality", "Model Comparison by Response Quality"),
+        ("💬 Contextual Response", "Contextual Response Test by Model"),
+        ("👁️ Vision Models", "Vision Model Comparison"),
     ],
 }
 
@@ -173,30 +180,7 @@ def create_sidebar():
                     if st.button(button_text, key=f"sidebar_button_{test_name.lower().replace(' ', '_')}"):
                         st.session_state.selected_test = test_name
 
-        # Check if the secret key JSON file exists and has the correct key
-        secret_key_file = 'secret_key_off.json'
-        secret_key_value = 'I_am_an_honest_person'
-        if not check_secret_key(secret_key_file, secret_key_value):
-            st.markdown("---")
-
-            col1, col2 = st.columns([1, 3])
-            with col1:
-                st.markdown(
-                    '<a href="https://github.com/marc-shade" target="_blank"><img src="https://2acrestudios.com/wp-content/uploads/2024/06/marc-cyberpunk.png" '
-                    'style="border-radius: 50%; max-width: 70px; object-fit: cover;" /></a>',
-                    unsafe_allow_html=True,
-                )
-            with col2:
-                button(
-                    username=os.getenv("BUYMEACOFFEE_USERNAME", "marcshade"),
-                    floating=False,
-                    text="Support Marc",
-                    emoji="☕",
-                    bg_color="#FF5F5F",
-                    font_color="#FFFFFF",
-                )
-            st.markdown('<span style="font-size:17px; font-weight:normal; font-family:Courier;">Find this tool useful? Your support means a lot! Give a donation of $10 or more to remove this notice.</span>',
-                    unsafe_allow_html=True,)
+        st.markdown('<hr />', unsafe_allow_html=True)
 
 # Callback function to update task status in session state
 def update_task_status(task_index, status, result=None):

@@ -26,6 +26,7 @@ def manage_prompts_interface():
     manage_prompts()
 
 def list_local_models():
+    st.title("🤖 Local Models")
     response = requests.get(f"{OLLAMA_URL}/tags")
     response.raise_for_status()
     models = response.json().get("models", [])
@@ -53,7 +54,7 @@ def list_local_models():
     st.dataframe(df, use_container_width=True, hide_index=True)
 
     # Add Preload and Keep-Alive controls
-    st.subheader("Model Actions")
+    st.subheader("⚡ Model Actions")
     for model_name in df["Model Name"]:
         col1, col2 = st.columns(2)
         with col1:
@@ -376,21 +377,26 @@ def list_models():
 def pull_models():
     st.header("⬇ Pull a Model from Ollama Library")
     st.write("Enter the exact name of the model you want to pull from the Ollama library. You can just paste the whole model snippet from the model library page like 'ollama run llava-phi3' or you can just enter the model name like 'llava-phi3' and then click 'Pull Model' to begin the download. The progress of the download will be displayed below.")
-    model_name = st.text_input("Enter the name of the model you want to pull:")
-    if st.button("Pull Model", key="pull_model"):
-        if model_name:
-            # Strip off "ollama run" or "ollama pull" from the beginning
-            model_name = model_name.replace("ollama run ", "").replace("ollama pull ", "").strip()
 
-            result = pull_model(model_name)
-            if any("error" in status for status in result):
-                st.warning(f"Model '{model_name}' not found. Please make sure you've entered the correct model name. "
-                           f"Model names often include a ':' to specify the variant. For example: 'mistral:instruct'")
+    col1, col2 = st.columns([10, 1], vertical_alignment="bottom")
+
+    with col1:
+        model_name = st.text_input("Enter the name of the model you want to pull:")
+    
+    with col2:
+        if st.button("Pull Model", key="pull_model"):
+            if model_name:
+                # Strip off "ollama run" or "ollama pull" from the beginning
+                model_name = model_name.replace("ollama run ", "").replace("ollama pull ", "").strip()
+
+                result = pull_model(model_name)
+                if any("error" in status for status in result):
+                    st.warning(f"Model '{model_name}' not found. Please make sure you've entered the correct model name. Model names often include a ':' to specify the variant. For example: 'mistral:instruct'")
+                else:
+                    for status in result:
+                        st.write(status)
             else:
-                for status in result:
-                    st.write(status)
-        else:
-            st.error("Please enter a model name.")
+                st.error("Please enter a model name.")
 
 def show_model_details():
     st.header("🦙 Show Model Information")

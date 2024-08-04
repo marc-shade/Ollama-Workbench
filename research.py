@@ -219,25 +219,25 @@ def research_interface():
             st.error("Please enter a research request.")
 
     # Add a section for viewing saved reports
-    st.subheader("📙 Saved Reports")
+    st.title("📗 Saved Reports")
     reports = get_all_reports()
     for report_id, title, date in reports:
-        col1, col2, col3, col4, col5 = st.columns([6, 1, 1, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([12, 1, 1, 1, 1])
         with col1:
-            st.write(f"📄 {title} ({date})")
+            st.write(f"🟩 {title} ({date})")
         with col2:
             if st.button("👀", key=f"view_{report_id}"):
                 report_content = get_report_content(report_id)
                 st.text_area("Report Content", report_content, height=300)
         with col3:
-            if st.button("📥 PDF", key=f"pdf_{report_id}"):
+            if st.button("📕", key=f"pdf_{report_id}"):
                 report_content = get_report_content(report_id)
                 pdf_file = f"report_{report_id}.pdf"
                 pdf_path = export_to_pdf(report_content, pdf_file)
                 with open(pdf_path, "rb") as f:
                     st.download_button("PDF", f, file_name=pdf_file)
         with col4:
-            if st.button("📥 TXT", key=f"txt_{report_id}"):
+            if st.button("📄", key=f"txt_{report_id}"):
                 report_content = get_report_content(report_id)
                 txt_file = f"report_{report_id}.txt"
                 txt_path = export_to_txt(report_content, txt_file)
