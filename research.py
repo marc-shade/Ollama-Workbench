@@ -133,6 +133,18 @@ def export_to_txt(content: str, filename: str):
         f.write(content)
     return txt_path
 
+# Load research model settings from JSON file
+def load_research_model_settings():
+    if os.path.exists("research_models.json"):
+        with open("research_models.json", "r") as f:
+            return json.load(f)
+    return {}
+
+# Save research model settings to JSON file
+def save_research_model_settings(settings):
+    with open("research_models.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
 def research_interface():
     st.title("🔬 Research")
 
@@ -141,6 +153,9 @@ def research_interface():
 
     # Load API keys
     api_keys = load_api_keys()
+
+    # Load research model settings
+    research_model_settings = load_research_model_settings()
 
     # Sidebar settings
     with st.sidebar:
@@ -152,15 +167,41 @@ def research_interface():
             api_keys["google_cse_id"] = st.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""), type="password")
             api_keys["bing_api_key"] = st.text_input("Bing Search API Key", value=api_keys.get("bing_api_key", ""), type="password")
             
-            if st.button("Save API Keys"):
+            if st.button("💾 Save API Keys"):
                 save_api_keys(api_keys)
-                st.success("API keys saved!")
+                st.success("🟢 API keys saved!")
 
         # Model Settings in a collapsed section
         with st.expander("🤖 Model Settings", expanded=False):
             available_models = get_available_models()
-            manager_model = st.selectbox("Search Manager Model", available_models)
-            agent_model = st.selectbox("Search Agent Model", available_models)
+
+            # Load settings or defaults
+            manager_model = research_model_settings.get("manager_model", available_models[0])
+            manager_temperature = research_model_settings.get("manager_temperature", 0.7)
+            manager_max_tokens = research_model_settings.get("manager_max_tokens", 4000)
+            agent_model = research_model_settings.get("agent_model", available_models[0])
+            agent_temperature = research_model_settings.get("agent_temperature", 0.7)
+            agent_max_tokens = research_model_settings.get("agent_max_tokens", 4000)
+
+            # Display model selection and settings
+            manager_model = st.selectbox("Search Manager Model", available_models, index=available_models.index(manager_model))
+            manager_temperature = st.slider("Search Manager Temperature", 0.0, 1.0, manager_temperature, step=0.1)
+            manager_max_tokens = st.slider("Search Manager Max Tokens", 1000, 128000, manager_max_tokens, step=1000)
+            agent_model = st.selectbox("Search Agent Model", available_models, index=available_models.index(agent_model))
+            agent_temperature = st.slider("Search Agent Temperature", 0.0, 1.0, agent_temperature, step=0.1)
+            agent_max_tokens = st.slider("Search Agent Max Tokens", 1000, 128000, agent_max_tokens, step=1000)
+
+            if st.button("💾 Save Model Settings"):
+                research_model_settings = {
+                    "manager_model": manager_model,
+                    "manager_temperature": manager_temperature,
+                    "manager_max_tokens": manager_max_tokens,
+                    "agent_model": agent_model,
+                    "agent_temperature": agent_temperature,
+                    "agent_max_tokens": agent_max_tokens
+                }
+                save_research_model_settings(research_model_settings)
+                st.success("🟢 Model settings saved!")
 
     # User research request
     user_request = st.text_area("Enter your research request:")
@@ -179,8 +220,8 @@ def research_interface():
                 search_manager = SearchManager(
                     name="Search Manager",
                     model=manager_model,
-                    temperature=0.7,
-                    max_tokens=4000,
+                    temperature=manager_temperature,
+                    max_tokens=manager_max_tokens,
                     api_keys=api_keys
                 )
 

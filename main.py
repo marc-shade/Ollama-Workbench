@@ -28,48 +28,16 @@ from research import research_interface
 from enhanced_corpus import enhance_corpus_ui
 from build import build_interface
 from streamlit_extras.stylable_container import stylable_container
+from streamlit_javascript import st_javascript
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
-
-# Inject custom CSS
-st.markdown("""
-<style>
-/* Custom styles for the Chat button */
-button[data-testid="sidebar_button_chat"] {
-    color: #ffffff;
-    background-color: #4CAF50;
-    border-radius: 20px;
-    border: 2px solid #4CAF50;
-    padding: 10px 24px;
-    cursor: pointer;
-    transition-duration: 0.4s;
-}
-button[data-testid="sidebar_button_chat"]:hover {
-    background-color: #45a049;
-}
-
-/* Custom styles for other buttons */
-button[data-testid^="sidebar_button_"] {
-    color: #ffffff;
-    background-color: #008CBA;
-    border-radius: 10px;
-    border: 2px solid #008CBA;
-    padding: 10px 24px;
-    cursor: pointer;
-    transition-duration: 0.4s;
-}
-button[data-testid^="sidebar_button_"]:hover {
-    background-color: #007BB5;
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.markdown("""
         <style>
         body, h1, h2, h3, h4, h5, h6, p {
             font-family: Open Sans, Helvetica, Arial, sans-serif!important;
-            font-weight: 300;
+            font-weight: 400;
         }
         .app-title {
             font-size: 40px!important; /* Adjust font size as needed */
@@ -122,16 +90,6 @@ st.markdown("""
             white-space: nowrap;
         }
         
-        button[kind="secondary"] {
-            background-color: #1976D2;
-            color: #FFFFFF;
-        }
-
-        button[kind="secondary"]:hover {
-            background-color: #2196F3;
-            color: #FFFFFF;
-        }
-
         [data-testid="stExpanderDetails"] .row-widget.stButton button[kind="secondary"], 
         button[data-testid="sidebar_button_chat"]{
             background-color: rgb(0, 0, 0, 0);
@@ -150,7 +108,52 @@ st.markdown("""
         </style>
 """, unsafe_allow_html=True)
 
+# Function to inject custom CSS
+def inject_custom_css(css):
+    st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
+# JavaScript to detect theme
+theme = st_javascript("""
+    (function() {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        return prefersDark ? 'dark' : 'light';
+    })();
+""")
+
+# Define CSS for light and dark modes
+light_mode_css = """
+/* Custom styles for the Chat button in light mode */
+
+button[kind="secondary"] {
+    background-color: #1976D2;
+    color: #FFFFFF;
+}
+
+button[kind="secondary"]:hover {
+    background-color: #2196F3;
+    color: #FFFFFF;
+}
+"""
+
+dark_mode_css = """
+/* Custom styles for the Chat button in dark mode */
+
+button[kind="secondary"] {
+    background-color: pink;
+    color: #FFFFFF;
+}
+
+button[kind="secondary"]:hover {
+    background-color: red;
+    color: #FFFFFF;
+}
+"""
+
+# Apply the appropriate CSS based on the detected theme
+if theme == 'dark':
+    inject_custom_css(dark_mode_css)
+else:
+    inject_custom_css(light_mode_css)
 
 # Define constants
 SIDEBAR_SECTIONS = {
@@ -183,15 +186,6 @@ SIDEBAR_SECTIONS = {
         ("👁️ Vision Models", "Vision Model Comparison"),
     ],
 }
-
-
-def check_secret_key(file_path, expected_key):
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-            return data.get('secret_key') == expected_key
-    return False
-
 
 def initialize_session_state():
     """Initialize session state variables if they don't exist."""
@@ -249,44 +243,6 @@ def create_sidebar():
 
         st.markdown('<hr />', unsafe_allow_html=True)
 
-# Callback function to update task status in session state
-def update_task_status(task_index, status, result=None):
-    if task_index < len(st.session_state.bm_tasks):
-        st.session_state.bm_tasks[task_index]["status"] = status
-        if result is not None:
-            st.session_state.bm_tasks[task_index]["result"] = result
-
-def handle_user_input(step, task_data):
-    """Handles user input for a specific task step."""
-    user_input_config = step.get("user_input")
-    if user_input_config:
-        input_type = user_input_config["type"]
-        prompt = user_input_config["prompt"]
-
-        if input_type == "file_path":
-            file_path = st.text_input(prompt, key=f"user_input_{step['agent']}")
-            if file_path:
-                task_data["file_path"] = file_path
-            else:
-                st.warning("Please provide a file path.")
-                return False  # Indicate that user input is not complete
-
-        elif input_type == "options":
-            options = user_input_config.get("options", [])
-            selected_option = st.selectbox(prompt, options, key=f"user_input_{step['agent']}")
-            if selected_option:
-                task_data["selected_option"] = selected_option
-            else:
-                st.warning("Please select an option.")
-                return False  # Indicate that user input is not complete
-
-        elif input_type == "confirmation":
-            if not st.button(prompt, key=f"user_input_{step['agent']}"):
-                st.warning("Task skipped due to unconfirmed user input.")
-                return False  # Indicate that user input is not complete
-
-    return True  # Indicate that user input is complete
-
 def main_content():
     if 'bm_tasks' not in st.session_state:
         st.session_state.bm_tasks = []
@@ -294,7 +250,7 @@ def main_content():
         model_comparison_test()
     elif st.session_state.selected_test == "Contextual Response Test by Model":
         contextual_response_test()
-    elif st.session_state.selected_test == "Model Feature Test":
+    elif st.session_state.selected_test == "Feature Test":
         feature_test()
     elif st.session_state.selected_test == "List Local Models":
         list_local_models()
