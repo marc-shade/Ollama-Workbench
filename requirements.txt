@@ -16,6 +16,7 @@ matplotlib
 ollama
 pandas
 pdfkit
+playwright
 plotly
 psutil
 PyPDF2
