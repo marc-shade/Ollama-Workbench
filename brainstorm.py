@@ -311,7 +311,7 @@ def brainstorm_session(use_docker):
 
     # User input
     st.subheader("🧑‍⚕️ User Input")
-    user_message = st.text_input("▶️ Enter your question or topic for the Brainstorm session:")
+    user_message = st.text_input("Enter your question or topic for the Brainstorm session:")
 
     if st.button("Send"):
         if user_message and any(st.session_state.agent_sequence):
