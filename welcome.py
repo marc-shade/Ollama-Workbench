@@ -30,11 +30,11 @@ def display_welcome_message():
             #### 🗄️ Document
             - 🗂️ **Manage Corpus:** Create, edit, delete, and rename corpus from files, URLs, or text input.
             - 📂 **Manage Files**: Upload, view, edit, and delete files.
-            - 🔍 **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
             - 🕸️ **Web to Corpus File**: Convert web content into a corpus for analysis or training.
+            - 🔍 **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
 
             #### 🛠️ Maintain
-            - 📋 **List Local Models:** View a list of all locally available models, including their size and last modified date.
+            - 🤖 **List Local Models:** View a list of all locally available models, including their size and last modified date.
             - 🦙 **Show Model Information:** Display detailed information about a selected model.
             - ⬇ **Pull a Model:** Download a new model from the Ollama library.
             - 🗑️ **Remove a Model**: Delete a selected model from the local storage.
