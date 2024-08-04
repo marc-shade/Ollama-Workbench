@@ -503,7 +503,7 @@ def main():
     # Load model settings
     model_settings = load_model_settings()
 
-    st.title("✔️ Repository Analyzer")
+    st.title("🔍 Repository Analyzer")
     st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, requirements, or project_summary) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder. If you chose the 'project_summary' task type, a project_summary.md file will be created in the repository's 'files' folder.")
     
     col1, col2 = st.columns(2)

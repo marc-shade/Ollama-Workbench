@@ -30,7 +30,7 @@ def display_welcome_message():
             #### 🗄️ Document
             - 🗂️ **Manage Corpus:** Create, edit, delete, and rename corpus from files, URLs, or text input.
             - 📂 **Manage Files**: Upload, view, edit, and delete files.
-            - ✔️ **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
+            - 🔍 **Repository Analyzer**: Analyze your Python repository, generate documentation, debug reports, or a README.md file.
             - 🕸️ **Web to Corpus File**: Convert web content into a corpus for analysis or training.
 
             #### 🛠️ Maintain
