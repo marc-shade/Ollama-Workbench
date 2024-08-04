@@ -109,12 +109,11 @@ def enhance_corpus_ui():
 
     # List existing corpus
     corpus_list = [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-    st.subheader("📋 Existing Corpus")
     if corpus_list:
         for corpus in corpus_list:
-            col1, col2, col3 = st.columns([6, 1, 1])
+            col1, col2, col3 = st.columns([20, 1, 1])
             with col1:
-                st.write(corpus)
+                st.write("🟩 ", corpus)
             with col2:
                 if st.button("✏️", key=f"rename_corpus_{corpus}"):
                     st.session_state.rename_corpus = corpus
