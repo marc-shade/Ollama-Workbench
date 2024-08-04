@@ -497,7 +497,7 @@ def split_file(file_path, chunk_size, include_extension):
             chunk = f.read(chunk_size)
 
 def files_tab():
-    st.subheader("📂 Files")
+    st.title("📂 Files")
     files_folder = "files"
     if not os.path.exists(files_folder):
         os.makedirs(files_folder)
@@ -505,7 +505,7 @@ def files_tab():
     files = [f for f in os.listdir(files_folder) if os.path.isfile(os.path.join(files_folder, f)) and os.path.splitext(f)[1].lower() in allowed_extensions]
 
     for file in files:
-        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+        col1, col2, col3, col4 = st.columns([20, 1, 1, 1])
         with col1:
             st.write(file)
         with col2:
