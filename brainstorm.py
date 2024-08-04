@@ -9,6 +9,7 @@ from ollama_utils import get_available_models
 import markdown
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 from info_brainstorm import display_info_brainstorm
+from chat_interface import chat_interface
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -60,6 +61,13 @@ class CustomConversableAgent(ConversableAgent):
         Your task is to respond to the latest message, considering the full context above. Remember your role and respond accordingly:
         """
         return super().generate_reply(messages=[{"role": "user", "content": prompt}], sender=sender, config=config)
+
+def brainstorm_session():
+    st.header("💡 Brainstorming Session")
+    
+    st.write("Welcome to the brainstorming session! Here you can discuss ideas, share thoughts, and collaborate in real-time.")
+    
+    chat_interface()
 
 def create_agent(settings):
     llm_config = {
@@ -302,7 +310,7 @@ def brainstorm_session(use_docker):
         else:
             st.session_state.agent_sequence.append(agent)
 
-    if st.button("Save Workflow"):
+    if st.button("💾 Save Workflow"):
         if workflow_name:
             current_sequence = [agent for agent in st.session_state.agent_sequence if agent]
             save_workflow(workflow_name, current_sequence)
@@ -313,7 +321,7 @@ def brainstorm_session(use_docker):
     st.subheader("🧑‍⚕️ User Input")
     user_message = st.text_input("Enter your question or topic for the Brainstorm session:")
 
-    if st.button("Send"):
+    if st.button("👥 Send Input to Agents"):
         if user_message and any(st.session_state.agent_sequence):
             # Add user message to the group chat
             st.session_state.group_chat.messages.append({"role": "user", "name": "User", "content": user_message})

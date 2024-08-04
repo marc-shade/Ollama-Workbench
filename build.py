@@ -1235,10 +1235,10 @@ def build_interface():
 
     # Sidebar
     with st.sidebar:
-        with st.expander("Groq"):
+        with st.expander("🇬 Groq"):
             st.form(key="settings_form")
             st_ss.settings["groq_api_key"] = st.text_input(
-                "Groq API Key",
+                "🔑 Groq API Key",
                 value=st_ss.settings.get("groq_api_key", ""),
                 type="password",
             )
@@ -1263,8 +1263,7 @@ def build_interface():
                     index=index,
                 )
     
-        with st.expander("Model Selection"):
-            st.subheader("Model Selection")
+        with st.expander("🤖 Model Selection"):
             
             def get_valid_model(model_key, default_index=0):
                 saved_model = st.session_state.settings.get(model_key)
@@ -1329,7 +1328,7 @@ def build_interface():
                 step=1000,
             )
 
-        if st.button("Save Settings"):
+        if st.button("💾 Save Settings"):
             save_settings(st.session_state.settings)
             st.success("Settings saved successfully!")
 

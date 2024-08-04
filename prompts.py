@@ -38,9 +38,9 @@ def get_identity_prompt():
     return load_prompts("identity")
 
 def manage_prompts():
-    st.header("✨ Prompts")
+    st.title("✨ Prompts")
     prompt_types = ["Agent", "Metacognitive", "Voice", "Identity"]
-    selected_prompt_type = st.selectbox("✨ Select Prompt Type:", prompt_types)
+    selected_prompt_type = st.selectbox("Select Prompt Type:", prompt_types)
 
     if selected_prompt_type == "Agent":
         prompts = get_agent_prompt()

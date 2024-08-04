@@ -1,4 +1,3 @@
-# ollama_utils.py
 import requests
 import json
 import io
@@ -108,6 +107,11 @@ def check_function_calling(model, temperature, max_tokens, presence_penalty, fre
     prompt = "Define a function named 'add' that takes two numbers and returns their sum. Then call the function with arguments 5 and 3."
     result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     return "8" in result
+
+def run_tool_test(model, description, tool_description, test_function, arguments):
+    prompt = f"Test the function: {tool_description}. Arguments: {arguments}"
+    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt)
+    return result
 
 def pull_model(model_name):
     payload = {"name": model_name, "stream": True}

@@ -76,6 +76,44 @@ def load_tasks(project_name):
         st.error(f"Error loading tasks for {project_name}: {str(e)}. Starting with an empty task list.")
         return []
 
+# Callback function to update task status in session state
+def update_task_status(task_index, status, result=None):
+    if task_index < len(st.session_state.bm_tasks):
+        st.session_state.bm_tasks[task_index]["status"] = status
+        if result is not None:
+            st.session_state.bm_tasks[task_index]["result"] = result
+
+def handle_user_input(step, task_data):
+    """Handles user input for a specific task step."""
+    user_input_config = step.get("user_input")
+    if user_input_config:
+        input_type = user_input_config["type"]
+        prompt = user_input_config["prompt"]
+
+        if input_type == "file_path":
+            file_path = st.text_input(prompt, key=f"user_input_{step['agent']}")
+            if file_path:
+                task_data["file_path"] = file_path
+            else:
+                st.warning("Please provide a file path.")
+                return False  # Indicate that user input is not complete
+
+        elif input_type == "options":
+            options = user_input_config.get("options", [])
+            selected_option = st.selectbox(prompt, options, key=f"user_input_{step['agent']}")
+            if selected_option:
+                task_data["selected_option"] = selected_option
+            else:
+                st.warning("Please select an option.")
+                return False  # Indicate that user input is not complete
+
+        elif input_type == "confirmation":
+            if not st.button(prompt, key=f"user_input_{step['agent']}"):
+                st.warning("Task skipped due to unconfirmed user input.")
+                return False  # Indicate that user input is not complete
+
+    return True  # Indicate that user input is complete
+
 def save_tasks(project_name, tasks):
     tasks = [task for task in tasks if pd.notna(task.deadline)]
     with open(f'projects/{project_name}_tasks.json', 'w') as f:
@@ -396,7 +434,7 @@ def projects_main():
     user_request = st.text_area("Enter your project request:")
 
     if selected_project:
-        if st.button("Generate Tasks"):
+        if st.button("✅ Generate Tasks"):
             if user_request:
                 with st.spinner("Generating tasks and agents..."):
                     # Create a ProjectManagerAgent instance

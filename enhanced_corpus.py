@@ -113,7 +113,7 @@ def enhance_corpus_ui():
         for corpus in corpus_list:
             col1, col2, col3 = st.columns([20, 1, 1])
             with col1:
-                st.write("🟩 ", corpus)
+                st.write("📖 ", corpus)
             with col2:
                 if st.button("✏️", key=f"rename_corpus_{corpus}"):
                     st.session_state.rename_corpus = corpus
@@ -148,7 +148,7 @@ def enhance_corpus_ui():
         # File upload
         uploaded_file = st.file_uploader("Upload a document", type=["pdf", "txt"])
         corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_file")
-        if st.button("Create Corpus", key="create_corpus_button_file"):
+        if st.button("✚ Create Corpus", key="create_corpus_button_file"):
             if uploaded_file is not None and corpus_name:
                 process_and_save_corpus(uploaded_file, corpus_name, selected_model)
             else:
@@ -158,7 +158,7 @@ def enhance_corpus_ui():
         # URL input
         url = st.text_input("Enter a URL to process")
         corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_url")
-        if st.button("Create Corpus", key="create_corpus_button_url"):
+        if st.button("✚ Create Corpus", key="create_corpus_button_url"):
             if url and corpus_name:
                 process_and_save_corpus(url, corpus_name, selected_model, is_url=True)
             else:
@@ -168,7 +168,7 @@ def enhance_corpus_ui():
         # Text input
         text_input = st.text_area("Enter text to process")
         corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_text")
-        if st.button("Create Corpus", key="create_corpus_button_text"):
+        if st.button("✚ Create Corpus", key="create_corpus_button_text"):
             if text_input and corpus_name:
                 process_and_save_corpus(text_input, corpus_name, selected_model, is_text=True)
             else:
