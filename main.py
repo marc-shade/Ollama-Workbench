@@ -27,11 +27,43 @@ from ollama_utils import get_ollama_resource_usage
 from research import research_interface
 from enhanced_corpus import enhance_corpus_ui
 from build import build_interface
+from streamlit_extras.stylable_container import stylable_container
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
 
+# Inject custom CSS
+st.markdown("""
+<style>
+/* Custom styles for the Chat button */
+button[data-testid="sidebar_button_chat"] {
+    color: #ffffff;
+    background-color: #4CAF50;
+    border-radius: 20px;
+    border: 2px solid #4CAF50;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition-duration: 0.4s;
+}
+button[data-testid="sidebar_button_chat"]:hover {
+    background-color: #45a049;
+}
 
+/* Custom styles for other buttons */
+button[data-testid^="sidebar_button_"] {
+    color: #ffffff;
+    background-color: #008CBA;
+    border-radius: 10px;
+    border: 2px solid #008CBA;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition-duration: 0.4s;
+}
+button[data-testid^="sidebar_button_"]:hover {
+    background-color: #007BB5;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
         <style>
@@ -40,12 +72,31 @@ st.markdown("""
             font-weight: 300;
         }
         .app-title {
-            font-size: 44px!important; /* Adjust font size as needed */
+            font-size: 40px!important; /* Adjust font size as needed */
             font-family: Open Sans, Helvetica, Arial, sans-serif!important;
         }
         .app-title span {
             color: orange;
         }
+        /* Style navigation links */
+        .nav-link {
+            display: block;
+            color: inherit;
+            border: 0!important;
+            padding: 10px; /* Add padding for better visual appeal */
+            text-align: left!important;
+            cursor: pointer;
+            font-size: 16px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            text-decoration: none; /* Remove default link underline */
+        }
+        /* Highlight active navigation link */
+        .nav-link.active {
+            background-color: orange; /* Orange background for active link */
+            color: white;
+        }
+        /* Style buttons */
         .nav-button {
             display: block;
             color: inherit;
@@ -62,6 +113,8 @@ st.markdown("""
             width: 100%;
         }
         
+        div.row-widget.stButton > button {width:100%;}
+        
         button {
             border: 0!important;
             text-align: left!important;
@@ -70,11 +123,19 @@ st.markdown("""
         }
         
         button[kind="secondary"] {
-            background-color: rgb(255, 165, 0, .2)!important;
+            background-color: #1976D2;
+            color: #FFFFFF;
         }
 
-        [data-testid="stExpanderDetails"] .row-widget.stButton button[kind="secondary"] {
-            background-color: rgb(0, 0, 0, 0)!important;
+        button[kind="secondary"]:hover {
+            background-color: #2196F3;
+            color: #FFFFFF;
+        }
+
+        [data-testid="stExpanderDetails"] .row-widget.stButton button[kind="secondary"], 
+        button[data-testid="sidebar_button_chat"]{
+            background-color: rgb(0, 0, 0, 0);
+            color: inherit;
         }
         
         .st-emotion-cache-0, 
@@ -161,7 +222,7 @@ def create_sidebar():
     with st.sidebar:
         st.markdown(
             '<div style="text-align: left;">'
-            '<h1 class="logo" style="font-size: 26px; font-weight: 300;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
+            '<h1 class="logo" style="font-size: 24px; font-weight: 300;">🦙 Ollama <span style="color: orange;">Workbench</span></h1>'
             "</div>",
             unsafe_allow_html=True,
         )
@@ -170,9 +231,15 @@ def create_sidebar():
         if st.session_state.get("show_resource_usage", False):
             display_resource_usage_sidebar()
 
-        st.markdown('<style>div.row-widget.stButton > button {width:100%;}</style>', unsafe_allow_html=True)
-        if st.button("💬 Chat", key="sidebar_button_chat"):
-            st.session_state.selected_test = "Chat"
+        # Use stylable_container for the Chat button
+        with stylable_container(key="chat_button", css_styles=["""
+            button {
+                background-color: transparent;
+                color: inherit;
+            }
+        """]):
+            if st.button("💬 Chat", key="chat_button"):
+                st.session_state.selected_test = "Chat"
 
         for section, buttons in SIDEBAR_SECTIONS.items():
             with st.expander(section, expanded=False):
