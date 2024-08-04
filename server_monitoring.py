@@ -2,14 +2,48 @@
 import streamlit as st
 import subprocess
 import json
+import os
+import platform
 
 def get_ollama_resource_usage():
-    result = subprocess.run(["ollama", "resource-usage"], capture_output=True, text=True)
-    usage = json.loads(result.stdout)
-    return usage
+    try:
+        result = subprocess.run(["ollama", "resource-usage", "--json"], capture_output=True, text=True)
+        if result.returncode == 0:
+            usage = json.loads(result.stdout)
+            return usage
+        else:
+            st.error(f"Error getting resource usage: {result.stderr}")
+            return {"status": "Unknown", "cpu_usage": "Unknown", "memory_usage": "Unknown", "gpu_usage": "Unknown"}
+    except json.JSONDecodeError as e:
+        st.error(f"Error decoding resource usage: {e}")
+        return {"status": "Unknown", "cpu_usage": "Unknown", "memory_usage": "Unknown", "gpu_usage": "Unknown"}
 
 def get_server_logs():
-    return subprocess.check_output(['tail', '-n', '1000', '/var/log/ollama/server.log']).decode('utf-8').split('\n')
+    log_file_path = get_log_file_path()
+    if log_file_path:
+        try:
+            logs = subprocess.check_output(['tail', '-n', '1000', log_file_path]).decode('utf-8').split('\n')
+            # Format logs with line breaks within the text_area
+            formatted_logs = [f"{log}\n" for log in logs]
+            return formatted_logs
+        except subprocess.CalledProcessError:
+            st.warning(f"Unable to access log file: {log_file_path}")
+            return []
+    else:
+        return []
+
+def get_log_file_path():
+    """Returns the platform-specific path to the Ollama server log file."""
+    system = platform.system()
+    if system == "Darwin":
+        return os.path.expanduser("~/.ollama/logs/server.log")
+    elif system == "Linux":
+        return "/var/log/ollama/server.log"  # Assuming a standard location for Linux
+    elif system == "Windows":
+        return os.path.join(os.environ["LOCALAPPDATA"], "Ollama", "server.log")
+    else:
+        st.warning("Unsupported operating system. Unable to fetch server logs.")
+        return None
 
 def server_monitoring():
     st.header("🖥️ Server Monitoring")
