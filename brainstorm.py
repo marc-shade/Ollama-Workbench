@@ -249,10 +249,14 @@ def brainstorm_session(use_docker):
         st.session_state.group_chat_manager = GroupChatManager(groupchat=st.session_state.group_chat)
 
     # Workflow management
-    st.subheader("🔄 Workflow Management")
     available_workflows = get_available_workflows()
-    selected_workflow = st.selectbox("Load Workflow", [""] + available_workflows)
-    workflow_name = st.text_input("Workflow Name")
+    col1, col2, col3 = st.columns([10, 1, 10], vertical_alignment="bottom")
+    with col1:
+        workflow_name = st.text_input("Add a New Workflow")
+    with col2:
+        st.write("OR")
+    with col3:
+        selected_workflow = st.selectbox("Load an Existing Workflow", [""] + available_workflows)
 
     if selected_workflow and selected_workflow != st.session_state.get('last_loaded_workflow'):
         agent_sequence = load_workflow(selected_workflow)
@@ -272,7 +276,7 @@ def brainstorm_session(use_docker):
 
     # Number of agents in the workflow
     num_agents = len(st.session_state.agent_sequence)
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([1, 5])
     with col1:
         st.write("Number of Agents:")
     with col2:
@@ -306,7 +310,8 @@ def brainstorm_session(use_docker):
             st.error("Please enter a workflow name before saving.")
 
     # User input
-    user_message = st.text_input("▶️ Enter your message:")
+    st.subheader("🧑‍⚕️ User Input")
+    user_message = st.text_input("▶️ Enter your question or topic for the Brainstorm session:")
 
     if st.button("Send"):
         if user_message and any(st.session_state.agent_sequence):
