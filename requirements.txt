@@ -34,6 +34,7 @@ skit-learn
 spacy
 streamlit
 streamlit-extras
+streamlit-javascript
 tiktoken
 webdriver-manager
 
