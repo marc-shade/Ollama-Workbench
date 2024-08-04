@@ -29,7 +29,6 @@ ruff
 selenium
 sentence_transformers
 serpapi
-skit-learn
 spacy
 streamlit
 streamlit-extras
