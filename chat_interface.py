@@ -92,7 +92,7 @@ def chat_interface():
         st.session_state.selected_model = st.session_state.get("selected_model", available_models[0] if available_models else None)
 
     st.session_state.selected_corpus = st.session_state.get("selected_corpus", "None")
-    st.session_state.temperature_slider_chat = st.session_state.get("temperature_slider_chat", 0.5)
+    st.session_state.temperature_slider_chat = st.session_state.get("temperature_slider_chat", 0.7)
     st.session_state.max_tokens_slider_chat = st.session_state.get("max_tokens_slider_chat", 4000)
     st.session_state.presence_penalty_slider_chat = st.session_state.get("presence_penalty_slider_chat", 0.0)
     st.session_state.frequency_penalty_slider_chat = st.session_state.get("frequency_penalty_slider_chat", 0.0)
@@ -159,7 +159,7 @@ def chat_interface():
                 st.session_state.show_prompt_modal = True
                 st.rerun()
         with col2:
-            user_input = st.chat_input("🧐 What is up my person❔")
+            user_input = st.chat_input("What is up my person?")
 
     if st.session_state.get("show_prompt_modal", False):
         ai_assisted_prompt_writing()
