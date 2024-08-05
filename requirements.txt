@@ -35,6 +35,7 @@ spacy
 streamlit
 streamlit-extras
 streamlit-javascript
+streamlit-option-menu
 tiktoken
 webdriver-manager
 
