@@ -1,8 +1,5 @@
-# main.py
-import os
-import json
-import queue
 import streamlit as st
+from streamlit_option_menu import option_menu
 from ollama_utils import *
 from model_tests import *
 from ui_elements import (
@@ -13,14 +10,8 @@ from ui_elements import (
 )
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
-from streamlit_extras.buy_me_a_coffee import button
 from welcome import display_welcome_message
 from projects import projects_main, Task
-import threading
-import pandas as pd
-import time
-from visjs_component import visjs_graph
-from datetime import datetime, timedelta
 from prompts import manage_prompts
 from brainstorm import brainstorm_interface
 from ollama_utils import get_ollama_resource_usage
@@ -46,7 +37,6 @@ st.markdown("""
         .app-title span {
             color: orange;
         }
-        /* Style navigation links */
         .nav-link {
             display: block;
             color: inherit;
@@ -59,12 +49,10 @@ st.markdown("""
             white-space: nowrap;
             text-decoration: none; /* Remove default link underline */
         }
-        /* Highlight active navigation link */
         .nav-link.active {
-            background-color: orange; /* Orange background for active link */
+            background-color: orange!important; /* Orange background for active link */
             color: white;
         }
-        /* Style buttons */
         .nav-button {
             display: block;
             color: inherit;
@@ -76,35 +64,39 @@ st.markdown("""
             box-sizing: border-box;
             white-space: nowrap;
         }
-
         .st-emotion-cache-1itdyc2 .stButton button {
             width: 100%;
         }
-        
         div.row-widget.stButton > button {width:100%;}
-        
         button {
             border: 0!important;
             text-align: left!important;
             justify-content: left!important;
             white-space: nowrap;
         }
-        
-        [data-testid="stExpanderDetails"] .row-widget.stButton button[kind="secondary"], 
-        button[data-testid="sidebar_button_chat"]{
-            background-color: rgb(0, 0, 0, 0);
-            color: inherit;
-        }
-        
+
         .st-emotion-cache-0, 
         .st-emotion-cache-0 details, 
         .st-emotion-cache-0 summary {
             border: 0!important;
         }
-
         .main button {
             width: auto!important;
-            }
+        }
+        .help-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            line-height: 40px;
+        }
         </style>
 """, unsafe_allow_html=True)
 
@@ -122,30 +114,30 @@ theme = st_javascript("""
 
 # Define CSS for light and dark modes
 light_mode_css = """
-/* Custom styles for the Chat button in light mode */
-
-button[kind="secondary"] {
-    background-color: rgb(0,0,0,.3);
-    color: #FFFFFF;
+/* Custom styles for light mode */
+.sidebar .css-1d391kg {
+    background-color: #fafafa;
 }
-
-button[kind="secondary"]:hover {
-    background-color: rgb(0,0,0,.5);
-    color: #FFFFFF;
+.sidebar .css-1d391kg .nav-link {
+    color: #000000;
+}
+.sidebar .css-1d391kg .nav-link-selected {
+    background-color: #e0e0e0;
+    color: #000000;
 }
 """
 
 dark_mode_css = """
-/* Custom styles for the Chat button in dark mode */
-
-button[kind="secondary"] {
-    background-color: pink;
-    color: #FFFFFF;
+/* Custom styles for dark mode */
+.sidebar .css-1d391kg {
+    background-color: #333333;
 }
-
-button[kind="secondary"]:hover {
-    background-color: red;
-    color: #FFFFFF;
+.sidebar .css-1d391kg .nav-link {
+    color: #ffffff;
+}
+.sidebar .css-1d391kg .nav-link-selected {
+    background-color: #555555;
+    color: #ffffff;
 }
 """
 
@@ -155,42 +147,42 @@ if theme == 'dark':
 else:
     inject_custom_css(light_mode_css)
 
-# Define constants
+# Define constants for the sidebar sections
 SIDEBAR_SECTIONS = {
-    "🔄 Workflow": [
-        ("🔨 Build", "Build"),
-        ("🔬 Research", "Research"),
-        ("🧠 Brainstorm", "Brainstorm"),
-        ("🚀 Projects", "Manage Projects"),
-        ("✨ Prompts", "Prompts"),
+    "Workflow": [
+        ("Research", "Research"),
+        ("Brainstorm", "Brainstorm"),
+        ("Projects", "Projects"),
+        ("Build", "Build"),
+        ("Prompts", "Prompts"),
     ],
-    "🗄 Document": [
-        ("🗂 Manage Corpus", "Enhanced Corpus"),
-        ("📂 Manage Files", "Files"),
-        ("🕸️ Web Crawler", "Web to Corpus File"),
-        ("🔍 Repository Analyzer", "Repository Analyzer"),
+    "Document": [
+        ("Repository Analyzer", "Repository Analyzer"),
+        ("Web Crawler", "Web Crawler"),
+        ("Corpus", "Corpus"),
+        ("Manage Files", "Files"),
     ],
-    "🛠️ Maintain": [
-        ("🤖 List Local Models", "List Local Models"),
-        ("🦙 Model Information", "Show Model Information"),
-        ("⬇ Pull a Model", "Pull a Model"),
-        ("🗑️ Remove a Model", "Remove a Model"),
-        ("⤵️ Update Models", "Update Models"),
-        ("⚙️ Server Configuration", "Server Configuration"),
-        ("🖥️ Server Monitoring", "Server Monitoring"),
+    "Maintain": [
+        ("List Local Models", "List Local Models"),
+        ("Model Information", "Show Model Information"),
+        ("Pull a Model", "Pull a Model"),
+        ("Remove a Model", "Remove a Model"),
+        ("Update Models", "Update Models"),
+        ("Server Configuration", "Server Configuration"),
+        ("Server Monitoring", "Server Monitoring"),
     ],
-    "📊 Test": [
-        ("🧪 Model Feature Test", "Feature Test"),
-        ("🎯 Response Quality", "Model Comparison by Response Quality"),
-        ("💬 Contextual Response", "Contextual Response Test by Model"),
-        ("👁️ Vision Models", "Vision Model Comparison"),
+    "Test": [
+        ("Model Feature Test", "Feature Test"),
+        ("Response Quality", "Model Comparison"),
+        ("Contextual Response", "Contextual Response"),
+        ("Vision Models", "Vision"),
     ],
 }
 
 def initialize_session_state():
     """Initialize session state variables if they don't exist."""
     if 'selected_test' not in st.session_state:
-        st.session_state.selected_test = None
+        st.session_state.selected_test = "Chat"
     if "selected_models" not in st.session_state:
         st.session_state.selected_models = []
     if "selected_model" not in st.session_state:
@@ -221,75 +213,106 @@ def create_sidebar():
             unsafe_allow_html=True,
         )
 
-        # Display resource usage if enabled
         if st.session_state.get("show_resource_usage", False):
             display_resource_usage_sidebar()
 
-        # Use stylable_container for the Chat button
-        with stylable_container(key="chat_button", css_styles=["""
-            button {
-                background-color: transparent;
-                color: inherit;
-            }
-        """]):
-            if st.button("💬 Chat", key="chat_button"):
-                st.session_state.selected_test = "Chat"
+        # Define the main navigation menu
+        main_menu = option_menu(
+            menu_title="",
+            options=["Chat"] + list(SIDEBAR_SECTIONS.keys()),
+            icons=["chat", "gear", "folder", "tools", "clipboard-check"],
+            menu_icon="cast",
+            default_index=0,
+            styles={
+                "container": {"padding": "0!important"},
+                "icon": {"font-size": "12px"},
+                "nav-link": {
+                    "font-size": "14px",
+                    "text-align": "left",
+                    "margin": "0px",
+                    "--primary-color": "#1976D2",
+                    "--hover-color": "#e16d6d",
+                },
+                "nav-link-selected": {"font-weight": "bold"},
+            },
+        )
 
-        for section, buttons in SIDEBAR_SECTIONS.items():
-            with st.expander(section, expanded=False):
-                for button_text, test_name in buttons:
-                    if st.button(button_text, key=f"sidebar_button_{test_name.lower().replace(' ', '_')}"):
-                        st.session_state.selected_test = test_name
+        # Define the sub navigation menu based on the selected main menu
+        if main_menu == "Chat":
+            st.session_state.selected_test = "Chat"
+        else:
+            sub_menu = option_menu(
+                menu_title=None,
+                options=[option[1] for option in SIDEBAR_SECTIONS[main_menu]],
+                default_index=0,
+                styles={
+                    "container": {"padding": "0!important"},
+                    "icon": {"font-size": "12px"},
+                    "nav-link": {
+                        "font-size": "14px",
+                        "text-align": "left",
+                        "margin": "0px",
+                        "--primary-color": "#1976D2",
+                        "--hover-color": "#e16d6d",
+                    },
+                    "nav-link-selected": {"font-weight": "bold"},
+                },
+            )
+            st.session_state.selected_test = sub_menu
 
-        st.markdown('<hr />', unsafe_allow_html=True)
+        # Add help button
+        if st.button("?", key="help_button", help="Click for help"):
+            st.session_state.selected_test = "Help"
 
 def main_content():
     if 'bm_tasks' not in st.session_state:
         st.session_state.bm_tasks = []
-    if st.session_state.selected_test == "Model Comparison by Response Quality":
-        model_comparison_test()
-    elif st.session_state.selected_test == "Contextual Response Test by Model":
-        contextual_response_test()
-    elif st.session_state.selected_test == "Feature Test":
-        feature_test()
-    elif st.session_state.selected_test == "List Local Models":
-        list_local_models()
-    elif st.session_state.selected_test == "Pull a Model":
-        pull_models()
-    elif st.session_state.selected_test == "Show Model Information":
-        show_model_details()
-    elif st.session_state.selected_test == "Remove a Model":
-        remove_model_ui()
-    elif st.session_state.selected_test == "Vision Model Comparison":
-        vision_comparison_test()
-    elif st.session_state.selected_test == "Chat":
+    if st.session_state.selected_test == "Chat":
         chat_interface()
-    elif st.session_state.selected_test == "Update Models":
-        update_models()
-    elif st.session_state.selected_test == "Repository Analyzer":
-        repo_docs_main()
-    elif st.session_state.selected_test == "Web to Corpus File":
-        web_to_corpus_main()
-    elif st.session_state.selected_test == "Files":
-        files_tab()
-    elif st.session_state.selected_test == "Prompts":
-        manage_prompts()
-    elif st.session_state.selected_test == "Manage Projects":
-        projects_main()
+    elif st.session_state.selected_test == "Build":
+        build_interface()
+    elif st.session_state.selected_test == "Research":
+        research_interface()
     elif st.session_state.selected_test == "Brainstorm":
         brainstorm_interface()
+    elif st.session_state.selected_test == "Projects":
+        projects_main()
+    elif st.session_state.selected_test == "Prompts":
+        manage_prompts()
+    elif st.session_state.selected_test == "Corpus":
+        enhance_corpus_ui()
+    elif st.session_state.selected_test == "Files":
+        files_tab()
+    elif st.session_state.selected_test == "Web Crawler":
+        web_to_corpus_main()
+    elif st.session_state.selected_test == "Repository Analyzer":
+        repo_docs_main()
+    elif st.session_state.selected_test == "List Local Models":
+        list_local_models()
+    elif st.session_state.selected_test == "Show Model Information":
+        show_model_details()
+    elif st.session_state.selected_test == "Pull a Model":
+        pull_models()
+    elif st.session_state.selected_test == "Remove a Model":
+        remove_model_ui()
+    elif st.session_state.selected_test == "Update Models":
+        update_models()
     elif st.session_state.selected_test == "Server Configuration":
         server_configuration()
     elif st.session_state.selected_test == "Server Monitoring":
         server_monitoring()
-    elif st.session_state.selected_test == "Research":
-        research_interface()
-    elif st.session_state.selected_test == "Enhanced Corpus":
-        enhance_corpus_ui()
-    elif st.session_state.selected_test == "Build":
-        build_interface()
-    else:
+    elif st.session_state.selected_test == "Feature Test":
+        feature_test()
+    elif st.session_state.selected_test == "Model Comparison":
+        model_comparison_test()
+    elif st.session_state.selected_test == "Contextual Response":
+        contextual_response_test()
+    elif st.session_state.selected_test == "Vision":
+        vision_comparison_test()
+    elif st.session_state.selected_test == "Help":
         display_welcome_message()
+    else:
+        chat_interface()
 
 def main():
     initialize_session_state()
