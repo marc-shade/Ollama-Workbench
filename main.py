@@ -125,12 +125,12 @@ light_mode_css = """
 /* Custom styles for the Chat button in light mode */
 
 button[kind="secondary"] {
-    background-color: #1976D2;
+    background-color: rgb(0,0,0,.3);
     color: #FFFFFF;
 }
 
 button[kind="secondary"]:hover {
-    background-color: #2196F3;
+    background-color: rgb(0,0,0,.5);
     color: #FFFFFF;
 }
 """
