@@ -39,35 +39,67 @@ def save_settings():
     print(f"Settings saved: {settings}")
     st.success("Settings saved successfully!")
 
+def ai_assisted_prompt_writing():
+    st.markdown("""
+    <style>
+    .stModal > div[data-testid="stHorizontalBlock"]:first-child {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("## AI-Assisted Prompt Writing")
+    
+    if st.button("X", key="close_modal"):
+        st.session_state.show_prompt_modal = False
+        st.rerun()
+    
+    user_need = st.text_input("What do you need help with?")
+    if user_need:
+        prompt_suggestion = generate_prompt_suggestion(user_need)
+        st.write("Suggested prompt:")
+        edited_prompt = st.text_area("Edit the prompt before using it:", value=prompt_suggestion)
+        if st.button("Use this prompt"):
+            st.session_state.chat_input = edited_prompt
+            st.session_state.show_prompt_modal = False
+            st.rerun()
+
+def generate_prompt_suggestion(user_need):
+    response = ollama.generate(st.session_state.selected_model, 
+        f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}")
+    return response['response'].strip()
+
 def chat_interface():
-    # Load settings initially
     load_settings()
 
-    # Initialize session state variables
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "workspace_items" not in st.session_state:
         st.session_state.workspace_items = []
-    
-    # Use get() method with a default of "None" for these settings
+    if "chat_input" not in st.session_state:
+        st.session_state.chat_input = ""
+    if "suggested_prompt" not in st.session_state:
+        st.session_state.suggested_prompt = ""
+    if "show_prompt_modal" not in st.session_state:
+        st.session_state.show_prompt_modal = False
+
     st.session_state.agent_type = st.session_state.get("agent_type", "None")
     st.session_state.metacognitive_type = st.session_state.get("metacognitive_type", "None")
     st.session_state.voice_type = st.session_state.get("voice_type", "None")
-    
+
     if "selected_model" not in st.session_state:
         available_models = get_available_models()
         st.session_state.selected_model = st.session_state.get("selected_model", available_models[0] if available_models else None)
-    
+
     st.session_state.selected_corpus = st.session_state.get("selected_corpus", "None")
     st.session_state.temperature_slider_chat = st.session_state.get("temperature_slider_chat", 0.5)
     st.session_state.max_tokens_slider_chat = st.session_state.get("max_tokens_slider_chat", 4000)
     st.session_state.presence_penalty_slider_chat = st.session_state.get("presence_penalty_slider_chat", 0.0)
     st.session_state.frequency_penalty_slider_chat = st.session_state.get("frequency_penalty_slider_chat", 0.0)
-    
+
     if "total_tokens" not in st.session_state:
         st.session_state.total_tokens = 0
 
-    # Sidebar for Settings and Advanced Settings
     with st.sidebar:
         with st.expander("⚙️ Chat Agent Settings", expanded=False):
             available_models = get_available_models()
@@ -102,11 +134,9 @@ def chat_interface():
         if st.button("📥 Save Chat and Workspace"):
             save_chat_and_workspace()
 
-    # Create tabs for Chat and Workspace
     chat_tab, workspace_tab = st.tabs(["💬 Chat", "📜 Workspace"])
 
     with chat_tab:
-        # Display chat history
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
                 if message["role"] == "assistant":
@@ -119,83 +149,75 @@ def chat_interface():
                 else:
                     st.markdown(message["content"])
 
-        # Create placeholders for user input and assistant's response
         user_input_placeholder = st.empty()
         response_placeholder = st.empty()
 
-        # Chat input at the bottom using bottom_container
-        with bottom():
-            prompt = st.chat_input("🧐 What is up my person❔", key="chat_input")
+    with bottom():
+        col1, col2 = st.columns([1, 20])
+        with col1:
+            if st.button("✨", key="prompt_helper"):
+                st.session_state.show_prompt_modal = True
+                st.rerun()
+        with col2:
+            user_input = st.chat_input("🧐 What is up my person❔")
 
-        # Process the user input and generate response outside the bottom container
-        if prompt:
-            # Display user input
-            with user_input_placeholder.container():
-                with st.chat_message("user"):
-                    st.markdown(prompt)
+    if st.session_state.get("show_prompt_modal", False):
+        ai_assisted_prompt_writing()
 
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
+    if st.session_state.chat_input:
+        user_input = st.session_state.chat_input
+        st.session_state.chat_input = ""
 
-            # Update token count for user input
-            st.session_state.total_tokens += count_tokens(prompt)
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        st.session_state.total_tokens += count_tokens(user_input)
 
-            # Generate and display the assistant's response
-            full_response = ""
-            
-            # Combine agent type, metacognitive type, and voice type prompts
-            combined_prompt = ""
-            if st.session_state.agent_type != "None":
-                combined_prompt += get_agent_prompt()[st.session_state.agent_type] + "\n\n"
-            if st.session_state.metacognitive_type != "None":
-                combined_prompt += get_metacognitive_prompt()[st.session_state.metacognitive_type] + "\n\n"
-            if st.session_state.voice_type != "None":
-                combined_prompt += get_voice_prompt()[st.session_state.voice_type] + "\n\n"
+        full_response = ""
+        combined_prompt = ""
+        if st.session_state.agent_type != "None":
+            combined_prompt += get_agent_prompt()[st.session_state.agent_type] + "\n\n"
+        if st.session_state.metacognitive_type != "None":
+            combined_prompt += get_metacognitive_prompt()[st.session_state.metacognitive_type] + "\n\n"
+        if st.session_state.voice_type != "None":
+            combined_prompt += get_voice_prompt()[st.session_state.voice_type] + "\n\n"
 
-            # Include chat history and corpus context
-            chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
-            if st.session_state.selected_corpus != "None":
-                # Generate embeddings and display statistics
-                embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(st.session_state.selected_model, prompt)
-                st.write("Embedding Statistics:")
-                st.write(f"Total Duration: {total_duration:.4f} seconds")
-                st.write(f"Load Duration: {load_duration:.4f} seconds")
-                st.write(f"Prompt Eval Count: {prompt_eval_count:.2f}")
+        chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+        if st.session_state.selected_corpus != "None":
+            embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(st.session_state.selected_model, user_input)
+            st.write("Embedding Statistics:")
+            st.write(f"Total Duration: {total_duration:.4f} seconds")
+            st.write(f"Load Duration: {load_duration:.4f} seconds")
+            st.write(f"Prompt Eval Count: {prompt_eval_count:.2f}")
 
-                corpus_context = get_corpus_context_from_db(corpus_folder, st.session_state.selected_corpus, prompt)
-                final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nContext: {corpus_context}\n\nUser: {prompt}\n\n{combined_prompt}"
-            else:
-                final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {prompt}\n\n{combined_prompt}"
+            corpus_context = get_corpus_context_from_db(corpus_folder, st.session_state.selected_corpus, user_input)
+            final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nContext: {corpus_context}\n\nUser: {user_input}\n\n{combined_prompt}"
+        else:
+            final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {user_input}\n\n{combined_prompt}"
 
-            # Update token count for the entire prompt
-            st.session_state.total_tokens += count_tokens(final_prompt)
-            st.info(f"Total Token Count: {st.session_state.total_tokens}")
-            with response_placeholder.container():
-                with st.chat_message("assistant"):
-                    message_placeholder = st.empty()
-                    for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
-                        full_response += response_chunk["response"]
-                        message_placeholder.markdown(full_response + "▌")
-                        # Update token count for each chunk of the response
-                        st.session_state.total_tokens += count_tokens(response_chunk["response"])
-                    message_placeholder.markdown(full_response)
+        st.session_state.total_tokens += count_tokens(final_prompt)
+        st.info(f"Total Token Count: {st.session_state.total_tokens}")
+        with response_placeholder.container():
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
+                    full_response += response_chunk["response"]
+                    message_placeholder.markdown(full_response + "▌")
+                    st.session_state.total_tokens += count_tokens(response_chunk["response"])
+                message_placeholder.markdown(full_response)
 
-            st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
-            # Automatically detect and save code to workspace
-            code_blocks = extract_code_blocks(full_response)
-            for code_block in code_blocks:
-                st.session_state.workspace_items.append({
-                    "type": "code",
-                    "content": code_block,
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                })
-            if code_blocks:
-                st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
+        code_blocks = extract_code_blocks(full_response)
+        for code_block in code_blocks:
+            st.session_state.workspace_items.append({
+                "type": "code",
+                "content": code_block,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+        if code_blocks:
+            st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
 
-    # Workspace tab
     with workspace_tab:
-        
-        # Display workspace items
         for index, item in enumerate(st.session_state.workspace_items):
             with st.expander(f"Item {index + 1} - {item['timestamp']}"):
                 if item['type'] == 'code':
@@ -206,7 +228,6 @@ def chat_interface():
                     st.session_state.workspace_items.pop(index)
                     st.rerun()
 
-        # Option to add a new workspace item manually
         new_item = st.text_area("Add a new item to the workspace:", key="new_workspace_item")
         if st.button("✚ Add to Workspace"):
             if new_item:
