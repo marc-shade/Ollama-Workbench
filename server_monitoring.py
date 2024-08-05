@@ -111,5 +111,3 @@ def server_monitoring():
         st.download_button("Download Config", json.dumps(config, indent=4), file_name="ollama_config.json")
     else:
         st.warning("Configuration file not found.")
-
-server_monitoring()

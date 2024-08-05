@@ -92,7 +92,7 @@ class RAGLLMIntegration:
         return self.llm(prompt)
 
 def enhance_corpus_ui():
-    st.title("🗂️ Manage Corpus")
+    st.title("Corpus")
 
     # Corpus folder
     corpus_folder = "corpus"

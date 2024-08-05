@@ -1,4 +1,8 @@
 import streamlit as st
+
+# Set page config for wide layout
+st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
+
 from streamlit_option_menu import option_menu
 from ollama_utils import *
 from model_tests import *
@@ -21,9 +25,7 @@ from build import build_interface
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
 
-# Set page config for wide layout
-st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
-
+# Custom CSS
 st.markdown("""
         <style>
         body, h1, h2, h3, h4, h5, h6, p {
@@ -189,6 +191,8 @@ def initialize_session_state():
         st.session_state.selected_model = None
     if 'bm_tasks' not in st.session_state:
         st.session_state.bm_tasks = []
+    if 'show_resource_usage' not in st.session_state:
+        st.session_state.show_resource_usage = False
 
 def display_resource_usage_sidebar():
     """Displays resource usage in the sidebar."""
