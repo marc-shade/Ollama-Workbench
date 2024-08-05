@@ -169,7 +169,7 @@ class WebsiteCrawler:
                 f.write("-" * 80 + "\n\n")
 
 def main():
-    st.title("🕸️ Website Crawler File Generator")
+    st.title("🕸️ Web Crawler")
     st.write("Enter the website URL you want to crawl in the box below. Choose your preferred output format (TXT, JSON, or PDF) from the dropdown menu. Click 'Start Crawling' to begin. Once complete, the generated file will be saved to the 'files' folder. You can access and manage this file in the 'Files' tab under the 'Chat' section or through the 'Document' section.")
     col1, col2, col3 = st.columns([3,3,1], vertical_alignment="bottom")
     with col1:
