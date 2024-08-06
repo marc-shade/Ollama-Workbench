@@ -50,7 +50,7 @@ def ai_assisted_prompt_writing():
     
     st.markdown("## AI-Assisted Prompt Writing")
     
-    if st.button("X", key="close_modal"):
+    if st.button("X", key="close_modal", help="Cancel assisted prompt writing."):
         st.session_state.show_prompt_modal = False
         st.rerun()
     
