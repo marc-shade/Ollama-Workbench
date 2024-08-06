@@ -155,7 +155,7 @@ def chat_interface():
     with bottom():
         col1, col2 = st.columns([1, 20])
         with col1:
-            if st.button("✨", key="prompt_helper"):
+            if st.button("✨", key="prompt_helper", help="Need help writing a prompt?"):
                 st.session_state.show_prompt_modal = True
                 st.rerun()
         with col2:
