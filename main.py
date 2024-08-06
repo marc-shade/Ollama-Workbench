@@ -129,6 +129,10 @@ light_mode_css = """
 }
 button.ef3psqc13 {
     background-color: rgb(0,0,0,.1);
+    border: solid 1px #999;
+}
+button.ef3psqc13:hover {
+    background-color: rgb(0,0,0,.05);
 }
 """
 
@@ -143,6 +147,13 @@ dark_mode_css = """
 .sidebar .css-1d391kg .nav-link-selected {
     background-color: #555555;
     color: #ffffff;
+}
+button.ef3psqc13 {
+    background-color: rgb(255,255,255,.1);
+    border: 0px!important;
+}
+button.ef3psqc13:hover {
+    background-color: rgb(255,255,255,.05);
 }
 """
 
@@ -182,6 +193,9 @@ SIDEBAR_SECTIONS = {
         ("Contextual Response", "Contextual Response"),
         ("Vision Models", "Vision"),
     ],
+    "Help": [
+        ("Help", "Help")
+    ]
 }
 
 def initialize_session_state():
@@ -196,19 +210,6 @@ def initialize_session_state():
         st.session_state.bm_tasks = []
     if 'show_resource_usage' not in st.session_state:
         st.session_state.show_resource_usage = False
-
-def display_resource_usage_sidebar():
-    """Displays resource usage in the sidebar."""
-    usage = get_ollama_resource_usage()
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(f"🚦: {usage['status']}")
-    with col2:
-        st.markdown(f"CPU: {usage['cpu_usage']}")
-    with col3:
-        st.markdown(f"RAM: {usage['memory_usage']}")
-    with col4:
-        st.markdown(f"GPU: {usage['gpu_usage']}")
 
 def create_sidebar():
     """Create and populate the sidebar."""
@@ -227,7 +228,7 @@ def create_sidebar():
         main_menu = option_menu(
             menu_title="",
             options=["Chat"] + list(SIDEBAR_SECTIONS.keys()),
-            icons=["chat", "gear", "folder", "tools", "clipboard-check"],
+            icons=["chat", "gear", "folder", "tools", "clipboard-check", "question-circle"],
             menu_icon="cast",
             default_index=0,
             styles={
@@ -266,10 +267,6 @@ def create_sidebar():
                 },
             )
             st.session_state.selected_test = sub_menu
-
-        # Add help button
-        if st.button("?", key="help_button", help="Click for help"):
-            st.session_state.selected_test = "Help"
 
 def main_content():
     if 'bm_tasks' not in st.session_state:
