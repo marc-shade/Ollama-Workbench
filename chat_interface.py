@@ -48,7 +48,7 @@ def ai_assisted_prompt_writing():
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown("## AI-Assisted Prompt Writing")
+    st.subheader("AI Prompt Writer")
     
     if st.button("X", key="close_modal", help="Cancel assisted prompt writing."):
         st.session_state.show_prompt_modal = False
@@ -128,10 +128,10 @@ def chat_interface():
             st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.frequency_penalty_slider_chat, step=0.1)
             st.button("💾 Save Settings", key="save_settings_advanced", on_click=save_settings)
 
-        with st.expander("📁 Saved Chats and Workspaces", expanded=False):
+        with st.expander("📁 Saved Chats", expanded=False):
             manage_saved_chats()
 
-        if st.button("📥 Save Chat and Workspace"):
+        if st.button("📥 Save Chat"):
             save_chat_and_workspace()
 
     chat_tab, workspace_tab = st.tabs(["💬 Chat", "📜 Workspace"])
@@ -258,7 +258,7 @@ def get_corpus_context_from_db(corpus_folder, corpus_name, query):
 
 def save_chat_and_workspace():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    default_filename = f"chat_and_workspace_{timestamp}"
+    default_filename = f"{timestamp}"
     chat_name = st.text_input("Enter a name for the save:", value=default_filename, key="save_chat_name")
     if chat_name:
         save_data = {
