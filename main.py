@@ -127,6 +127,9 @@ light_mode_css = """
     background-color: #e0e0e0;
     color: #000000;
 }
+button.ef3psqc13 {
+    background-color: rgb(0,0,0,.1);
+}
 """
 
 dark_mode_css = """
