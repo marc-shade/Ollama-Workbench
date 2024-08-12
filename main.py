@@ -1,3 +1,4 @@
+# main.py
 import streamlit as st
 
 # Set page config for wide layout
@@ -22,6 +23,8 @@ from ollama_utils import get_ollama_resource_usage
 from research import research_interface
 from enhanced_corpus import enhance_corpus_ui
 from build import build_interface
+from openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
+from groq_utils import display_groq_settings, call_groq_api
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
 
@@ -66,10 +69,7 @@ st.markdown("""
             box-sizing: border-box;
             white-space: nowrap;
         }
-        .st-emotion-cache-1itdyc2 .stButton button {
-            width: 100%;
-        }
-        div.row-widget.stButton > button {width:100%;}
+        
         button {
             border: 0!important;
             text-align: left!important;
@@ -81,23 +81,6 @@ st.markdown("""
         .st-emotion-cache-0 details, 
         .st-emotion-cache-0 summary {
             border: 0!important;
-        }
-        .main button {
-            width: auto!important;
-        }
-        .help-button {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background-color: #f0f0f0;
-            border: none;
-            cursor: pointer;
-            font-size: 20px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            line-height: 40px;
         }
         </style>
 """, unsafe_allow_html=True)
@@ -186,6 +169,7 @@ SIDEBAR_SECTIONS = {
         ("Update Models", "Update Models"),
         ("Server Configuration", "Server Configuration"),
         ("Server Monitoring", "Server Monitoring"),
+        ("External Providers", "External Providers")
     ],
     "Test": [
         ("Model Feature Test", "Feature Test"),
@@ -305,6 +289,8 @@ def main_content():
         server_configuration()
     elif st.session_state.selected_test == "Server Monitoring":
         server_monitoring()
+    elif st.session_state.selected_test == "External Providers":
+        external_providers_ui()
     elif st.session_state.selected_test == "Feature Test":
         feature_test()
     elif st.session_state.selected_test == "Model Comparison":
@@ -317,6 +303,11 @@ def main_content():
         display_welcome_message()
     else:
         chat_interface()
+
+def external_providers_ui():
+    st.header("☁️ External Providers")
+    display_openai_settings()
+    display_groq_settings()
 
 def main():
     initialize_session_state()

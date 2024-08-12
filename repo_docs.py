@@ -13,6 +13,9 @@ from datetime import datetime
 from radon.complexity import cc_visit, cc_rank
 from radon.metrics import mi_visit, h_visit
 from flake8.api import legacy as flake8
+from ollama_utils import get_available_models as get_ollama_models
+from openai_utils import OPENAI_MODELS
+from groq_utils import GROQ_MODELS
 
 # Settings file for model settings
 MODEL_SETTINGS_FILE = "model_settings.json"
@@ -83,15 +86,9 @@ def call_ollama_endpoint(model, prompt, temperature=0.5, max_tokens=150, presenc
 
 @st.cache_data
 def get_available_models():
-    url = "http://localhost:11434/api/tags"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        models = response.json()['models']
-        return [model['name'] for model in models]
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching available models: {e}")
-        return []
+    ollama_models = get_ollama_models()
+    all_models = ollama_models + OPENAI_MODELS + GROQ_MODELS
+    return all_models
 
 def generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
     if task_type == "documentation":
@@ -175,27 +172,36 @@ INSTRUCTION: Use appropriate Markdown formatting to make the project summary vis
     elif task_type == "requirements":
         return None
 
-    url = "http://localhost:11434/api/generate"
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "stream": True,
-    }
-    headers = {"Content-Type": "application/json"}
+    if model in OPENAI_MODELS:
+        from openai_utils import call_openai_api
+        response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_key)
+        yield response
+    elif model in GROQ_MODELS:
+        from groq_utils import call_groq_api
+        response = call_groq_api(model, prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_key)
+        yield response
+    else:
+        url = "http://localhost:11434/api/generate"
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+        }
+        headers = {"Content-Type": "application/json"}
 
-    with requests.post(url, json=payload, headers=headers, stream=True) as response:
-        response.raise_for_status()
-        for line in response.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8')
-                try:
-                    json_response = json.loads(decoded_line)
-                    if 'response' in json_response:
-                        yield json_response['response']
-                except json.JSONDecodeError:
-                    print(f"Skipping invalid JSON line: {decoded_line}")
+        with requests.post(url, json=payload, headers=headers, stream=True) as response:
+            response.raise_for_status()
+            for line in response.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    try:
+                        json_response = json.loads(decoded_line)
+                        if 'response' in json_response:
+                            yield json_response['response']
+                    except json.JSONDecodeError:
+                        print(f"Skipping invalid JSON line: {decoded_line}")
 
 def run_pylint(file_path):
     result = subprocess.run(['pylint', file_path], capture_output=True, text=True)
@@ -327,7 +333,7 @@ def get_file_info(file_path):
     except FileNotFoundError:
         return None
 
-def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area):
+def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, api_key, update_queue, progress_bar, status_text, output_area):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
@@ -337,7 +343,7 @@ def process_file_with_updates(file_path, task_type, model, temperature, max_toke
         
         # Generate documentation with real-time updates
         documentation = ""
-        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
+        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens, api_key):
             documentation += chunk
             update_queue.put(("output", documentation))
 
@@ -491,7 +497,8 @@ def load_model_settings():
         return {
             "model": "mistral:instruct",
             "temperature": 0.7,
-            "max_tokens": 4000
+            "max_tokens": 4000,
+            "api_key": ""  # Add this line
         }
 
 # Function to save model settings
@@ -522,7 +529,11 @@ def main():
         with st.expander("🤖 Model Settings", expanded=False):
             # Model selection
             available_models = get_available_models()
-            model_settings["model"] = st.selectbox("Select Model", available_models, index=available_models.index(model_settings["model"]))
+            model_settings["model"] = st.selectbox("Select Model", available_models, index=available_models.index(model_settings["model"]) if model_settings["model"] in available_models else 0)
+
+            # API Key input (for OpenAI and Groq models)
+            if model_settings["model"] in OPENAI_MODELS or model_settings["model"] in GROQ_MODELS:
+                model_settings["api_key"] = st.text_input("API Key", value=model_settings.get("api_key", ""), type="password")
 
             # Temperature slider
             model_settings["temperature"] = st.slider("Temperature", min_value=0.0, max_value=1.0, value=model_settings["temperature"], step=0.1)
@@ -579,7 +590,7 @@ def main():
                     break
 
         with ThreadPoolExecutor(max_workers=1) as executor:
-            futures = {executor.submit(process_file_with_updates, file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area): file_path for file_path in code_files}
+            futures = {executor.submit(process_file_with_updates, file_path, task_type, model_settings["model"], model_settings["temperature"], model_settings["max_tokens"], model_settings["api_key"], update_queue, progress_bar, status_text, output_area): file_path for file_path in code_files}
             for i, future in enumerate(as_completed(futures)):               
                 file_path, documentation, pylint_report, file_content = future.result()
                 results.append((file_path, documentation, pylint_report, file_content))

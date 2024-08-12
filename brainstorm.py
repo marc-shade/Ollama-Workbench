@@ -1,20 +1,25 @@
 # brainstorm.py
 import os
+import openai
 import json
 import streamlit as st
 import subprocess
 from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
 from autogen.agentchat.contrib.capabilities.teachability import Teachability
-from ollama_utils import get_available_models
+from ollama_utils import get_available_models, get_all_models
 import markdown
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 from info_brainstorm import display_info_brainstorm
 from chat_interface import chat_interface
+from ollama_utils import load_api_keys
+from groq_utils import GROQ_MODELS
+from openai_utils import OPENAI_MODELS
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 SETTINGS_FILE = "brainstorm_agents_settings.json"
 WORKFLOWS_DIR = "brainstorm_workflows"
+API_KEYS_FILE = "api_keys.json"
 
 # List of animal emojis
 ANIMAL_EMOJIS = [
@@ -33,6 +38,9 @@ except ImportError:
 
 class CustomConversableAgent(ConversableAgent):
     def __init__(self, name, llm_config, agent_type, identity, metacognitive_type, voice_type, corpus, temperature, max_tokens, presence_penalty, frequency_penalty, db_path, *args, **kwargs):
+        if 'api_key' in llm_config:
+            os.environ["OPENAI_API_KEY"] = llm_config['api_key']
+        
         super().__init__(name=name, llm_config=llm_config, *args, **kwargs)
         self.agent_type = agent_type
         self.identity = identity
@@ -70,16 +78,37 @@ def brainstorm_session():
     chat_interface()
 
 def create_agent(settings):
-    llm_config = {
-        "config_list": [
-            {
-                "model": settings["model"],
-                "api_key": settings["api_key"],
-                "base_url": settings["base_url"]
-            }
-        ],
-        "timeout": 120
-    }
+    api_keys = load_api_keys()  # Load API keys
+    print(f"Creating agent with model: {settings['model']}")
+    print(f"API keys loaded: {api_keys}")
+    
+    if settings['model'] in OPENAI_MODELS:
+        print("Using OpenAI model")
+        llm_config = {
+            "request_timeout": 120,
+            "api_key": api_keys.get("openai_api_key"),
+            "model": settings['model'],
+        }
+        # Set the OpenAI API key in the environment variable
+        os.environ["OPENAI_API_KEY"] = api_keys.get("openai_api_key", "")
+    elif settings['model'] in GROQ_MODELS:
+        print("Using Groq model")
+        llm_config = {
+            "request_timeout": 120,
+            "api_key": api_keys.get("groq_api_key"),
+            "model": settings['model'],
+        }
+    else:
+        print("Using Ollama model")
+        llm_config = {
+            "request_timeout": 120,
+            "api_base": "http://localhost:11434/v1",
+            "api_type": "open_ai",
+            "model": settings["model"],
+        }
+    
+    print(f"LLM config: {llm_config}")
+    
     return CustomConversableAgent(
         name=f"{settings['emoji']} {settings['name']}",
         llm_config=llm_config,
@@ -94,7 +123,7 @@ def create_agent(settings):
         frequency_penalty=settings["frequency_penalty"],
         db_path=settings["db_path"]
     )
-
+    
 def load_agent_settings():
     if os.path.exists(SETTINGS_FILE):
         with open(SETTINGS_FILE, 'r') as f:
@@ -133,13 +162,13 @@ def load_workflow(workflow_name):
 def edit_agent_settings(agent_settings):
     st.subheader(f"Edit Agent: {agent_settings['name']}")
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         agent_settings['name'] = st.text_input("Agent Name", agent_settings['name'], key=f"{agent_settings['name']}_name")
         agent_settings['emoji'] = st.selectbox("Emoji", ANIMAL_EMOJIS, index=ANIMAL_EMOJIS.index(agent_settings.get('emoji', '🐶')), key=f"{agent_settings['name']}_emoji")
-        agent_settings['model'] = st.selectbox("Model", get_available_models(), 
-                                               index=get_available_models().index(agent_settings['model']),
+        agent_settings['model'] = st.selectbox("Model", get_all_models(), 
+                                               index=get_all_models().index(agent_settings['model']) if agent_settings['model'] in get_all_models() else 0,
                                                key=f"{agent_settings['name']}_model")
         voice_options = ["None"] + list(get_voice_prompt().keys())
         agent_settings['voice_type'] = st.selectbox(
@@ -180,15 +209,11 @@ def edit_agent_settings(agent_settings):
         )
     
     with col3:
-        agent_settings['base_url'] = st.text_input("Base URL", agent_settings['base_url'], key=f"{agent_settings['name']}_base_url")
-        agent_settings['api_key'] = st.text_input("API Key", agent_settings['api_key'], key=f"{agent_settings['name']}_api_key")
-        agent_settings['db_path'] = st.text_input("Database Path", agent_settings['db_path'], key=f"{agent_settings['name']}_db_path")
-    
-    with col4:
         agent_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, agent_settings['temperature'], key=f"{agent_settings['name']}_temperature")
         agent_settings['max_tokens'] = st.slider("Max Tokens", min_value=1000, max_value=128000, value=agent_settings['max_tokens'], step=1000, key=f"{agent_settings['name']}_max_tokens")
         agent_settings['presence_penalty'] = st.slider("Presence Penalty", -2.0, 2.0, agent_settings['presence_penalty'], key=f"{agent_settings['name']}_presence_penalty")
         agent_settings['frequency_penalty'] = st.slider("Frequency Penalty", -2.0, 2.0, agent_settings['frequency_penalty'], key=f"{agent_settings['name']}_frequency_penalty")
+        agent_settings['db_path'] = st.text_input("Database Path", agent_settings['db_path'], key=f"{agent_settings['name']}_db_path")
 
     return agent_settings
 
@@ -210,9 +235,7 @@ def manage_agents():
         new_agent = {
             "name": "",
             "emoji": "🐶",
-            "model": get_available_models()[0],
-            "api_key": "ollama",
-            "base_url": "http://localhost:11434/v1",
+            "model": get_all_models()[0],
             "agent_type": "None",
             "identity": "None",
             "metacognitive_type": "None",
@@ -241,6 +264,10 @@ def manage_agents():
 
 def brainstorm_session(use_docker):
     settings = load_agent_settings()
+    api_keys = load_api_keys()
+    os.environ["OPENAI_API_KEY"] = api_keys.get("openai_api_key", "")
+    openai.api_key = api_keys.get("openai_api_key", "")
+    print(f"OpenAI API Key: {os.environ.get('OPENAI_API_KEY')}")
     agents = [create_agent(agent_settings) for agent_settings in settings["agents"]]
 
     if 'group_chat' not in st.session_state:
@@ -300,8 +327,8 @@ def brainstorm_session(use_docker):
     for i in range(num_agents):
         current_agent = st.session_state.agent_sequence[i] if i < len(st.session_state.agent_sequence) else ""
         agent = st.selectbox(
-            f"Agent {i+1}", 
-            agent_names, 
+            f"Agent {i+1}",
+            agent_names,
             index=agent_names.index(current_agent) if current_agent in agent_names else 0,
             key=f"agent_{i}"
         )
@@ -325,7 +352,7 @@ def brainstorm_session(use_docker):
         if user_message and any(st.session_state.agent_sequence):
             # Add user message to the group chat
             st.session_state.group_chat.messages.append({"role": "user", "name": "User", "content": user_message})
-            
+
             # Generate responses from the sequence of agents
             for agent_name in st.session_state.agent_sequence:
                 if agent_name:  # Skip empty selections
@@ -371,10 +398,10 @@ def brainstorm_interface():
         os.environ["AUTOGEN_USE_DOCKER"] = "0"
 
     tab1, tab2 = st.tabs(["💡 Brainstorm Session", "🦊 Manage Agents"])
-    
+
     with tab1:
         brainstorm_session(use_docker)
-    
+
     with tab2:
         manage_agents()
 

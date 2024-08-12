@@ -6,11 +6,14 @@ import json
 from datetime import datetime
 import re
 import ollama
-from ollama_utils import get_available_models
+from ollama_utils import get_available_models, get_all_models, load_api_keys, call_ollama_endpoint
+from openai_utils import call_openai_api
+from groq_utils import call_groq_api
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
 from streamlit_extras.bottom_container import bottom
 from enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
+from groq_utils import GROQ_MODELS
 
 SETTINGS_FILE = "chat-settings.json"
 RAGTEST_DIR = "ragtest"
@@ -68,7 +71,7 @@ def ai_assisted_prompt_writing():
             st.rerun()
 
 def generate_prompt_suggestion(user_need):
-    response = ollama.generate(st.session_state.selected_model, 
+    response = ollama.generate(st.session_state.selected_model,
         f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}")
     return response['response'].strip()
 
@@ -137,7 +140,7 @@ def chat_interface():
 
     with st.sidebar:
         with st.expander("⚙️ Chat Agent Settings", expanded=False):
-            available_models = get_available_models()
+            available_models = get_all_models()  # Update available models
             st.session_state.selected_model = st.selectbox(
                 "📦 Model:",
                 available_models,
@@ -172,14 +175,20 @@ def chat_interface():
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
                 if message["role"] == "assistant":
-                    code_blocks = extract_code_blocks(message["content"])
-                    for code_block in code_blocks:
-                        st.code(code_block)
-                    non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
-                    for part in non_code_parts:
-                        st.markdown(part.strip())
+                    if message.get("content"):  # Check if content exists and is not None
+                        code_blocks = extract_code_blocks(message["content"])
+                        for code_block in code_blocks:
+                            st.code(code_block)
+                        non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
+                        for part in non_code_parts:
+                            st.markdown(part.strip())
+                    else:
+                        st.warning("This message has no content.")
                 else:
-                    st.markdown(message["content"])
+                    if message.get("content"):  # Check if content exists and is not None
+                        st.markdown(message["content"])
+                    else:
+                        st.warning("This message has no content.")
 
         user_input_placeholder = st.empty()
         response_placeholder = st.empty()
@@ -201,6 +210,7 @@ def chat_interface():
         st.session_state.chat_input = ""
 
     if user_input:
+        api_keys = load_api_keys()
         st.session_state.chat_history.append({"role": "user", "content": user_input})
         st.session_state.total_tokens += count_tokens(user_input)
 
@@ -240,20 +250,37 @@ def chat_interface():
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 full_response = ""
-                for response_chunk in ollama.generate(
-                    st.session_state.selected_model,
-                    final_prompt,
-                    stream=True,
-                    options={
-                        "temperature": st.session_state.temperature_slider_chat,
-                        "num_predict": st.session_state.max_tokens_slider_chat,
-                        "presence_penalty": st.session_state.presence_penalty_slider_chat,
-                        "frequency_penalty": st.session_state.frequency_penalty_slider_chat,
-                    }
-                ):
-                    full_response += response_chunk["response"]
-                    message_placeholder.markdown(full_response + "▌")
-                    st.session_state.total_tokens += count_tokens(response_chunk["response"])
+                if st.session_state.selected_model.startswith("gpt-"):
+                    full_response = call_openai_api(
+                        st.session_state.selected_model,
+                        [{"role": "user", "content": final_prompt}],
+                        temperature=st.session_state.temperature_slider_chat,
+                        max_tokens=st.session_state.max_tokens_slider_chat,
+                        openai_api_key=api_keys.get("openai_api_key")
+                    )
+                elif st.session_state.selected_model in GROQ_MODELS:
+                    full_response = call_groq_api(
+                        st.session_state.selected_model,
+                        final_prompt,
+                        temperature=st.session_state.temperature_slider_chat,
+                        max_tokens=st.session_state.max_tokens_slider_chat,
+                        groq_api_key=api_keys.get("groq_api_key")
+                    )
+                else:
+                    for response_chunk in ollama.generate(
+                        st.session_state.selected_model,
+                        final_prompt,
+                        stream=True,
+                        options={
+                            "temperature": st.session_state.temperature_slider_chat,
+                            "num_predict": st.session_state.max_tokens_slider_chat,
+                            "presence_penalty": st.session_state.presence_penalty_slider_chat,
+                            "frequency_penalty": st.session_state.frequency_penalty_slider_chat,
+                        }
+                    ):
+                        full_response += response_chunk["response"]
+                        message_placeholder.markdown(full_response + "▌")
+                        st.session_state.total_tokens += count_tokens(response_chunk["response"])
                 message_placeholder.markdown(full_response)
 
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
@@ -295,6 +322,8 @@ def count_tokens(text):
     return len(encoding.encode(text))
 
 def extract_code_blocks(text):
+    if text is None:
+        return []  # Return an empty list if text is None
     code_blocks = re.findall(r'```[\s\S]*?```', text)
     return [block.strip('`').strip() for block in code_blocks]
 

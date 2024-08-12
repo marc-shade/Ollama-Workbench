@@ -1,3 +1,4 @@
+# build.py
 import streamlit as st
 import ast
 import json
@@ -24,7 +25,9 @@ from rich.panel import Panel
 from serpapi import GoogleSearch
 from streamlit import session_state as st_ss
 
-from ollama_utils import get_available_models
+from ollama_utils import get_available_models, get_all_models, load_api_keys, call_ollama_endpoint
+from groq_utils import call_groq_api
+from openai_utils import call_openai_api, set_openai_api_key
 
 API_KEYS_FILE = "api_keys.json"
 SETTINGS_FILE = "build_settings.json"
@@ -68,144 +71,12 @@ def save_settings(settings):
         json.dump(settings, f, indent=4)
 
 
-def load_api_keys():
-    if os.path.exists(API_KEYS_FILE):
-        with open(API_KEYS_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-
-def save_api_keys(api_keys):
-    with open(API_KEYS_FILE, "w") as f:
-        json.dump(api_keys, f, indent=4)
-
-
 def is_groq_model(model_name):
     return model_name in GROQ_MODELS
 
 
 def is_advanced_groq_model(model_name):
     return model_name in ADVANCED_GROQ_MODELS
-
-
-def get_all_models(settings, include_advanced=False):
-    try:
-        ollama_models = get_available_models()
-    except Exception as e:
-        console.print(f"Error getting Ollama models: {e}", style="bold red")
-        ollama_models = []
-
-    groq_models = []
-    if settings.get("groq_api_key"):
-        groq_models = (
-            GROQ_MODELS
-            if include_advanced
-            else [m for m in GROQ_MODELS if m not in ADVANCED_GROQ_MODELS]
-        )
-
-    return ollama_models + groq_models
-
-
-def call_groq_api(
-    model,
-    messages,
-    temperature,
-    max_tokens,
-    groq_api_key,
-    retries=5,
-    initial_delay=5,
-    backoff_factor=2,
-):
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": min(
-            max_tokens, 8192 if model != "llama-3.1-405b-reasoning" else 16384
-        ),
-    }
-
-    delay = initial_delay
-    for attempt in range(retries):
-        try:
-            response = requests.post(url, json=data, headers=headers)
-            response.raise_for_status()
-            return response.json()["choices"][0]["message"]["content"]
-        except requests.exceptions.HTTPError as http_err:
-            error_message = f"HTTP error occurred: {http_err}"
-            if response.status_code == 401:
-                error_message += "\nUnauthorized error. Please check your API key."
-            elif response.status_code == 404:
-                error_message += "\nPossible reasons for 404 error:\n"
-                error_message += "1. The API endpoint URL might be incorrect\n"
-                error_message += "2. The model name might be invalid or not available\n"
-                error_message += "3. Your API key might not have access to this model\n"
-                error_message += f"Current model: {model}\n"
-                error_message += f"Current URL: {url}\n"
-            elif response.status_code in (502, 429):
-                console.print(
-                    Panel(
-                        f"Attempt {attempt+1} failed with {response.status_code}. Retrying in {delay} seconds...",
-                        title="[bold yellow]HTTP Error[/bold yellow]",
-                        title_align="left",
-                        border_style="yellow",
-                    )
-                )
-                time.sleep(delay)
-                delay *= backoff_factor
-                continue
-            console.print(
-                Panel(
-                    error_message,
-                    title="[bold red]HTTP Error[/bold red]",
-                    title_align="left",
-                    border_style="red",
-                )
-            )
-            raise
-        except requests.exceptions.RequestException as err:
-            console.print(
-                Panel(
-                    f"An error occurred: {err}",
-                    title="[bold red]Request Error[/bold red]",
-                    title_align="left",
-                    border_style="red",
-                )
-            )
-            raise
-        except Exception as err:
-            console.print(
-                Panel(
-                    f"An unexpected error occurred: {err}",
-                    title="[bold red]Unexpected Error[/bold red]",
-                    title_align="left",
-                    border_style="red",
-                )
-            )
-            raise
-
-    raise requests.exceptions.HTTPError(
-        "Failed to connect to the server after several attempts."
-    )
-
-
-def call_model(model, messages, temperature, max_tokens, groq_api_key=None):
-    if is_groq_model(model):
-        return call_groq_api(
-            model, messages, temperature, max_tokens, groq_api_key
-        )
-    else:
-        response = client.chat(
-            model=model,
-            messages=messages,
-            options={"temperature": temperature, "num_predict": max_tokens},
-        )
-        return response["message"]["content"]
 
 
 def ensure_ruff_installed():
@@ -326,7 +197,7 @@ def create_agent_context(project_state, test_results, current_task):
 
 
 def manager_agent_task(
-    context: Dict[str, Any], model: str, temperature: float, max_tokens: int
+    context: Dict[str, Any], model: str, temperature: float, max_tokens: int, groq_api_key=None, openai_api_key=None
 ) -> Dict[str, Any]:
     prompt = f"""
     You are the manager agent in an Agile software development process. 
@@ -349,7 +220,12 @@ def manager_agent_task(
     """
 
     try:
-        response = call_model(model, [{"role": "user", "content": prompt}], temperature, max_tokens)
+        if model.startswith("gpt-"):
+            response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature, max_tokens, openai_api_key)
+        elif is_groq_model(model):
+            response = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key)
+        else:
+            response = call_model(model, [{"role": "user", "content": prompt}], temperature, max_tokens, groq_api_key)
         return json.loads(response)
     except json.JSONDecodeError as e:
         st.session_state.project_state["errors"].append(
@@ -370,7 +246,7 @@ def manager_agent_task(
 
 
 def sub_agent_task(
-    context, manager_response, model, temperature, max_tokens
+    context, manager_response, model, temperature, max_tokens, groq_api_key=None, openai_api_key=None
 ):
     previous_tasks = context.get("previous_tasks", [])
 
@@ -409,27 +285,27 @@ def sub_agent_task(
     """
 
     try:
-        response = client.chat(
-            model=str(model),  # Ensure model is always a string
-            messages=[{"role": "user", "content": prompt}],
-            options={
-                "temperature": temperature,
-                "num_predict": max_tokens
-            }
-        )
-        response_text = response['message']['content']
-
-        # Attempt to parse the response as JSON
-        try:
-            json_response = json.loads(response_text)
-            return json_response
-        except json.JSONDecodeError as e:
-            st.session_state.project_state["errors"].append(
-                f"Error parsing JSON response from Sub Agent: {e}"
+        if model.startswith("gpt-"):
+            response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature, max_tokens, openai_api_key)
+        elif is_groq_model(model):
+            response = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key)
+        else:
+            response = client.chat(
+                model=str(model),  # Ensure model is always a string
+                messages=[{"role": "user", "content": prompt}],
+                options={
+                    "temperature": temperature,
+                    "num_predict": max_tokens
+                }
             )
-            st.session_state.project_state["errors"].append(f"Raw response: {response_text}")
-            return {}
-
+            response = response['message']['content']
+        return json.loads(response)
+    except json.JSONDecodeError as e:
+        st.session_state.project_state["errors"].append(
+            f"Error parsing JSON response from Sub Agent: {e}"
+        )
+        st.session_state.project_state["errors"].append(f"Raw response: {response}")
+        return {}
     except Exception as e:
         st.session_state.project_state["errors"].append(
             f"An error occurred during the sub-agent task: {str(e)}"
@@ -447,6 +323,7 @@ def manage_task(
     max_tokens=8000,
     search_results=None,
     groq_api_key=None,
+    openai_api_key=None,
     api_keys=None,
 ):
     console.print(f"\n[bold]Calling Manager for your objective[/bold]")
@@ -523,7 +400,9 @@ def manage_task(
     # Add the search tool to the tools list if use_search is True
     tools = [search_tool] if use_search else []
 
-    if is_groq_model(model):
+    if model.startswith("gpt-"):
+        response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key)
+    elif is_groq_model(model):
         response_text = call_groq_api(
             model, messages, temperature, max_tokens, groq_api_key
         )
@@ -621,6 +500,7 @@ def sub_agent_task(
     max_tokens=8000,
     search_results=None,
     groq_api_key=None,
+    openai_api_key=None,
 ):
     if previous_tasks is None:
         previous_tasks = []
@@ -700,7 +580,9 @@ def sub_agent_task(
     # Add the search tool to the tools list if use_search is True
     tools = [search_tool] if use_search else []
 
-    if is_groq_model(model):
+    if model.startswith("gpt-"):
+        response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key)
+    elif is_groq_model(model):
         response_text = call_groq_api(
             model, messages, temperature, max_tokens, groq_api_key
         )
@@ -791,6 +673,7 @@ def sub_agent_task(
             max_tokens=max_tokens,
             search_results=search_results,
             groq_api_key=groq_api_key,
+            openai_api_key=openai_api_key,
         )
         response_text += continuation_response_text
 
@@ -816,6 +699,7 @@ def refine_task(
     temperature=0.2,
     max_tokens=8000,
     groq_api_key=None,
+    openai_api_key=None,
 ):
     print("\nCalling Refiner to provide the refined final output for your objective:")
     messages = [
@@ -830,9 +714,12 @@ def refine_task(
     ]
 
     try:
-        response_text = call_model(
-            model, messages, temperature, max_tokens, groq_api_key
-        )
+        if model.startswith("gpt-"):
+            response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key)
+        elif is_groq_model(model):
+            response_text = call_groq_api(model, messages, temperature, max_tokens, groq_api_key)
+        else:
+            response_text = call_model(model, messages, temperature, max_tokens, groq_api_key)
     except Exception as e:
         st.session_state.project_state["errors"].append(
             f"An error occurred during the refine task: {str(e)}"
@@ -853,6 +740,7 @@ def refine_task(
             temperature=temperature,
             max_tokens=max_tokens,
             groq_api_key=groq_api_key,
+            openai_api_key=openai_api_key,
         )
         response_text += "\n" + continuation_response_text
 
@@ -1228,7 +1116,7 @@ def build_interface():
         st.session_state.api_keys = load_api_keys()
 
     # Get all models
-    all_models = get_all_models(st.session_state.settings, include_advanced=st.session_state.settings.get("has_advanced_access", False))
+    all_models = get_all_models()  # Fixed: Removed unexpected arguments
 
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -1247,9 +1135,7 @@ def build_interface():
                 value=st_ss.settings.get("has_advanced_access", False),
             )
 
-            all_models = get_all_models(
-                st_ss.settings, include_advanced=st_ss.settings["has_advanced_access"]
-            )
+            all_models = get_all_models()  # Fixed: Refreshed all_models after potential Groq API key change
 
             def get_valid_model(model_key, default_index=0):
                 saved_model = st_ss.settings.get(model_key)
@@ -1472,6 +1358,7 @@ def build_interface():
                         max_tokens=st.session_state.settings["manager_max_tokens"],
                         search_results=search_results,
                         groq_api_key=st.session_state.settings.get("groq_api_key"),
+                        openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                         api_keys=st.session_state.api_keys,
                     )
                 else:
@@ -1485,6 +1372,7 @@ def build_interface():
                         max_tokens=st.session_state.settings["manager_max_tokens"],
                         search_results=search_results,
                         groq_api_key=st.session_state.settings.get("groq_api_key"),
+                        openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                         api_keys=st.session_state.api_keys,
                     )
 
@@ -1506,6 +1394,7 @@ def build_interface():
                         max_tokens=st.session_state.settings["subagent_max_tokens"],
                         search_results=search_results,
                         groq_api_key=st.session_state.settings.get("groq_api_key"),
+                        openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                     )
                     worker_tasks.append(
                         {"task": sub_task_prompt, "result": sub_task_result}
@@ -1540,6 +1429,7 @@ def build_interface():
                 temperature=st.session_state.settings["refiner_temperature"],
                 max_tokens=st.session_state.settings["refiner_max_tokens"],
                 groq_api_key=st.session_state.settings.get("groq_api_key"),
+                openai_api_key=st.session_state.api_keys.get("openai_api_key"),
             )
 
             project_name_match = re.search(
@@ -1617,6 +1507,8 @@ def build_interface():
                 st.session_state.settings["manager_model"],
                 st.session_state.settings["manager_temperature"],
                 st.session_state.settings["manager_max_tokens"],
+                st.session_state.settings.get("groq_api_key"),
+                st.session_state.api_keys.get("openai_api_key"),
             )
 
             if "analysis" not in manager_response:
@@ -1635,7 +1527,9 @@ def build_interface():
                     manager_response,
                     st.session_state.settings["subagent_model"],
                     st.session_state.settings["subagent_temperature"],
-                    st.session_state.settings["subagent_max_tokens"]
+                    st.session_state.settings["subagent_max_tokens"],
+                    st.session_state.settings.get("groq_api_key"),
+                    st.session_state.api_keys.get("openai_api_key"),
                 )
 
                 # Process sub_agent_response here
