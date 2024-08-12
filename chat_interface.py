@@ -81,13 +81,28 @@ def get_graphrag_context(user_input, corpus_name):
         
         context = ""
         for result in results:
-            context += f"Similarity: {result['similarity']:.4f}\n"
-            context += f"Content: {result['content']}\n\n"
+            context += f"Relevant Information (Similarity: {result['similarity']:.4f}):\n{result['content']}\n\n"
         
         return context.strip() if context else None
     except Exception as e:
         st.error(f"Error querying GraphRAG corpus: {str(e)}")
         return None
+
+def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
+    prompt = ""
+    
+    if agent_type != "None":
+        prompt += f"You are a {agent_type}. {get_agent_prompt()[agent_type]}\n\n"
+    else:
+        prompt += "You are a helpful AI assistant.\n\n"
+    
+    if metacognitive_type != "None":
+        prompt += f"Use the following metacognitive approach: {get_metacognitive_prompt()[metacognitive_type]}\n\n"
+    
+    if voice_type != "None":
+        prompt += f"Speak in the following voice: {get_voice_prompt()[voice_type]}\n\n"
+    
+    return prompt
 
 def chat_interface():
     load_settings()
@@ -189,25 +204,34 @@ def chat_interface():
         st.session_state.chat_history.append({"role": "user", "content": user_input})
         st.session_state.total_tokens += count_tokens(user_input)
 
-        full_response = ""
-        combined_prompt = ""
-        if st.session_state.agent_type != "None":
-            combined_prompt += get_agent_prompt()[st.session_state.agent_type] + "\n\n"
-        if st.session_state.metacognitive_type != "None":
-            combined_prompt += get_metacognitive_prompt()[st.session_state.metacognitive_type] + "\n\n"
-        if st.session_state.voice_type != "None":
-            combined_prompt += get_voice_prompt()[st.session_state.voice_type] + "\n\n"
+        agent_prompt = construct_agent_prompt(
+            st.session_state.agent_type,
+            st.session_state.metacognitive_type,
+            st.session_state.voice_type
+        )
 
-        chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
+        chat_history = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in st.session_state.chat_history[-5:]])  # Include only the last 5 messages
 
-        final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {user_input}\n\n{combined_prompt}"
-
+        corpus_context = ""
         if st.session_state.selected_corpus != "None":
             graph_response = get_graphrag_context(user_input, st.session_state.selected_corpus)
             if graph_response:
-                final_prompt += f"\n\nGraphRAG Context:\n{graph_response}"
+                corpus_context = f"\nRelevant context from the knowledge base:\n{graph_response}\n"
             else:
                 st.warning(f"No relevant context found in the corpus '{st.session_state.selected_corpus}'. Proceeding without additional context.")
+
+        final_prompt = f"""
+        {agent_prompt}
+        
+        Recent conversation history:
+        {chat_history}
+        
+        {corpus_context}
+        
+        Human: {user_input}
+        
+        Assistant: Let me address your request based on the information provided and my capabilities.
+        """
 
         st.session_state.total_tokens += count_tokens(final_prompt)
         st.info(f"Total Token Count: {st.session_state.total_tokens}")
@@ -215,6 +239,7 @@ def chat_interface():
         with response_placeholder.container():
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
+                full_response = ""
                 for response_chunk in ollama.generate(
                     st.session_state.selected_model,
                     final_prompt,
