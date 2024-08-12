@@ -12,6 +12,8 @@ import re
 from agents import SearchManager, SearchAgent
 from search_libraries import duckduckgo_search, google_search, serpapi_search, serper_search, bing_search
 from ollama_utils import get_available_models
+from openai_utils import call_openai_api, OPENAI_MODELS
+from groq_utils import call_groq_api, GROQ_MODELS
 import sqlite3
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
@@ -166,6 +168,8 @@ def research_interface():
             api_keys["google_api_key"] = st.text_input("Google Custom Search API Key", value=api_keys.get("google_api_key", ""), type="password")
             api_keys["google_cse_id"] = st.text_input("Google Custom Search Engine ID", value=api_keys.get("google_cse_id", ""), type="password")
             api_keys["bing_api_key"] = st.text_input("Bing Search API Key", value=api_keys.get("bing_api_key", ""), type="password")
+            api_keys["openai_api_key"] = st.text_input("OpenAI API Key", value=api_keys.get("openai_api_key", ""), type="password")
+            api_keys["groq_api_key"] = st.text_input("Groq API Key", value=api_keys.get("groq_api_key", ""), type="password")
             
             if st.button("💾 Save API Keys"):
                 save_api_keys(api_keys)
@@ -173,7 +177,7 @@ def research_interface():
 
         # Model Settings in a collapsed section
         with st.expander("🤖 Model Settings", expanded=False):
-            available_models = get_available_models()
+            available_models = get_available_models() + OPENAI_MODELS + GROQ_MODELS
 
             # Load settings or defaults
             manager_model = research_model_settings.get("manager_model", available_models[0])

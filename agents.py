@@ -9,6 +9,8 @@ import re
 import spacy
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
+from openai_utils import call_openai_api, OPENAI_MODELS
+from groq_utils import call_groq_api, GROQ_MODELS
 
 # Set up logging
 logging.basicConfig(filename='agents.log', level=logging.INFO,
@@ -65,16 +67,6 @@ class SearchAgent(Agent):
         return []
 
     def generate_summary(self, query: str, search_results: List[Dict]) -> str:
-        """
-        Generates a summary of the search results using the agent's assigned prompt.
-
-        Args:
-            query: The original search query.
-            search_results: A list of dictionaries containing search results.
-
-        Returns:
-            The generated summary as a string.
-        """
         formatted_results = ""
         for i, result in enumerate(search_results):
             formatted_results += f"[{i+1}] {result['title']}: {result['url']}\n"
@@ -91,8 +83,14 @@ class SearchAgent(Agent):
         """
 
         try:
-            response = ollama.generate(model=self.model, prompt=prompt)
-            return response['response']
+            if self.model in OPENAI_MODELS:
+                response = call_openai_api(self.model, [{"role": "user", "content": prompt}], temperature=0.7, max_tokens=1000, openai_api_key=self.api_key)
+            elif self.model in GROQ_MODELS:
+                response = call_groq_api(self.model, prompt, temperature=0.7, max_tokens=1000, groq_api_key=self.api_key)
+            else:
+                response = ollama.generate(model=self.model, prompt=prompt)
+                response = response['response']
+            return response
         except Exception as e:
             logging.error(f"Summary generation error for agent {self.name}: {str(e)}")
             return f"Error generating summary: {str(e)}"
@@ -111,13 +109,6 @@ class SearchManager(Agent):
         self.api_keys = api_keys
 
     def create_search_agents(self, user_request: str, agent_model: str):
-        """
-        Dynamically creates search agents based on the user's research request.
-
-        Args:
-            user_request: The user's research request.
-            agent_model: The LLM model to use for search agents.
-        """
         search_libraries = {
             "duckduckgo": duckduckgo_search,
             "google": google_search,
@@ -150,15 +141,21 @@ class SearchManager(Agent):
         """
 
         try:
-            response = ollama.generate(
-                model=self.model,
-                prompt=agent_definition_prompt,
-                options={
-                    "temperature": self.temperature,
-                    "max_tokens": self.max_tokens
-                }
-            )
-            agent_definitions = self.parse_json_response(response['response'])
+            if self.model in OPENAI_MODELS:
+                response = call_openai_api(self.model, [{"role": "user", "content": agent_definition_prompt}], temperature=self.temperature, max_tokens=self.max_tokens, openai_api_key=self.api_keys.get("openai_api_key"))
+            elif self.model in GROQ_MODELS:
+                response = call_groq_api(self.model, agent_definition_prompt, temperature=self.temperature, max_tokens=self.max_tokens, groq_api_key=self.api_keys.get("groq_api_key"))
+            else:
+                response = ollama.generate(
+                    model=self.model,
+                    prompt=agent_definition_prompt,
+                    options={
+                        "temperature": self.temperature,
+                        "max_tokens": self.max_tokens
+                    }
+                )
+                response = response['response']
+            agent_definitions = self.parse_json_response(response)
             if not agent_definitions:
                 raise ValueError("Failed to generate valid agent definitions")
         except Exception as e:
@@ -175,13 +172,15 @@ class SearchManager(Agent):
             if agent_name and role and library and prompt:
                 search_function = search_libraries.get(library)
                 if search_function:
-                    if self.api_keys.get(f"{library}_api_key") or (library == "google" and self.api_keys.get("google_api_key") and self.api_keys.get("google_cse_id")) or library == "duckduckgo":
+                    api_key = self.api_keys.get(f"{library}_api_key") or self.api_keys.get("serpapi_api_key")
+                    cse_id = self.api_keys.get("google_cse_id") if library == "google" else None
+                    if api_key or library == "duckduckgo":
                         self.search_agents[agent_name] = SearchAgent(
                             name=agent_name,
                             model=agent_model,
                             search_function=search_function,
-                            api_key=self.api_keys.get(f"{library}_api_key") or self.api_keys.get("serpapi_api_key"),
-                            cse_id=self.api_keys.get("google_cse_id") if library == "google" else None,
+                            api_key=api_key,
+                            cse_id=cse_id,
                             prompt=prompt,
                             role=role
                         )
@@ -248,21 +247,6 @@ class SearchManager(Agent):
         }
 
     def run_research(self, user_request: str, report_length: str = "medium", agent_model: str = None, word_count_target: int = 1000) -> Tuple[str, List[str], List[Dict]]:
-        """
-        Runs the research process, including agent creation, searching, and report generation.
-
-        Args:
-            user_request: The user's research request.
-            report_length: The desired length of the report ("short", "medium", or "long").
-            agent_model: The model to use for search agents.
-            word_count_target: The target word count for the report.
-
-        Returns:
-            A tuple containing:
-                - The generated report as a string.
-                - A list of references extracted from the report.
-                - A list of dictionaries containing agent summaries and search results.
-        """
         self.create_search_agents(user_request, agent_model or self.model)
 
         agent_outputs = []
@@ -298,15 +282,20 @@ class SearchManager(Agent):
         """
         logging.info("Search Manager is generating the final report...")
         try:
-            response = ollama.generate(
-                model=self.model,
-                prompt=final_report_prompt,
-                options={
-                    "temperature": self.temperature,
-                    "max_tokens": self.max_tokens
-                }
-            )
-            final_report = response['response']
+            if self.model in OPENAI_MODELS:
+                final_report = call_openai_api(self.model, [{"role": "user", "content": final_report_prompt}], temperature=self.temperature, max_tokens=self.max_tokens, openai_api_key=self.api_keys.get("openai_api_key"))
+            elif self.model in GROQ_MODELS:
+                final_report = call_groq_api(self.model, final_report_prompt, temperature=self.temperature, max_tokens=self.max_tokens, groq_api_key=self.api_keys.get("groq_api_key"))
+            else:
+                response = ollama.generate(
+                    model=self.model,
+                    prompt=final_report_prompt,
+                    options={
+                        "temperature": self.temperature,
+                        "max_tokens": self.max_tokens
+                    }
+                )
+                final_report = response['response']
         except Exception as e:
             logging.error(f"Error generating final report: {str(e)}")
             final_report = f"Error generating final report: {str(e)}"

@@ -18,25 +18,31 @@ else:
 
 def performance_test(models, prompt, temperature=0.7, max_tokens=1000, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}
-    if models:  # Check if any models are selected
+    api_keys = load_api_keys()
+    if models:
         for model in models:
             start_time = time.time()
-            result, _, eval_count, eval_duration = call_ollama_endpoint(
-                model,
-                prompt,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                presence_penalty=presence_penalty,
-                frequency_penalty=frequency_penalty,
-                context=context,
-            )
+            if model.startswith("gpt-"):
+                result = call_openai_api(model, [{"role": "user", "content": prompt}], temperature, max_tokens, api_keys.get("openai_api_key"))
+            elif model in GROQ_MODELS:
+                result = call_groq_api(model, prompt, temperature, max_tokens, api_keys.get("groq_api_key"))
+            else:
+                result, _, eval_count, eval_duration = call_ollama_endpoint(
+                    model,
+                    prompt,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    presence_penalty=presence_penalty,
+                    frequency_penalty=frequency_penalty,
+                    context=context,
+                )
             end_time = time.time()
             elapsed_time = end_time - start_time
-            results[model] = (result, elapsed_time, eval_count, eval_duration)
+            results[model] = (result, elapsed_time)
             time.sleep(0.1)
         return results
     else:
-        return {}  # Return an empty dictionary if no models are selected
+        return {}
 
 def vision_test(models, image_file, temperature=0.7, max_tokens=1000, presence_penalty=0.0, frequency_penalty=0.0, context=None):
     results = {}

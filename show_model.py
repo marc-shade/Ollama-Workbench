@@ -3,7 +3,7 @@ import streamlit as st
 from ollama_utils import get_available_models
 
 def show_model_details():
-    st.header("🦙 Show Model Information")
+    st.header("🦙 Show Ollama Model Information")
     
     # Refresh available_models list
     available_models = get_available_models()

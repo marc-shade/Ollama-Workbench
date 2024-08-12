@@ -49,7 +49,7 @@ def start_server():
     os.system("sudo systemctl start ollama-server")
 
 def server_configuration():
-    st.header("⚙️ Server Configuration")
+    st.header("⚙️ Ollama Server Configuration")
 
     st.subheader("Host/Bind Address")
     host = st.text_input("OLLAMA_HOST", value="127.0.0.1")

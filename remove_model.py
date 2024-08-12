@@ -3,7 +3,7 @@ import streamlit as st
 from ollama_utils import *
 
 def remove_model_ui():
-    st.header("🗑️ Remove a Model")
+    st.header("🗑️ Remove an Ollama Model")
     
     # Refresh available_models list
     available_models = get_available_models()

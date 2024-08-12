@@ -6,7 +6,7 @@ from ollama_utils import get_available_models, check_json_handling, check_functi
 def feature_test():
     st.header("🧪 Model Feature Test")
     
-    available_models = get_available_models()
+    available_models = get_all_models()  # Use get_all_models()
 
     if "selected_model" not in st.session_state:
         st.session_state.selected_model = available_models[0] if available_models else None
@@ -43,15 +43,18 @@ def feature_test():
     }
 
     if st.button("Run Feature Test", key="run_feature_test"):
-        try:
-            result = asyncio.run(run_tool_test(selected_model, "Test the tool function.", tool_description, test_function, arguments))
+        if not selected_model.startswith("gpt-"): # Only test tool calling for Ollama models
+            try:
+                result = asyncio.run(run_tool_test(selected_model, "Test the tool function.", tool_description, test_function, arguments))
+                st.markdown(f"### 🧰 Tool Test Result: {result}")
+            except Exception as e:
+                st.error(f"An error occurred during the tool test: {e}")
 
-            st.markdown(f"### 🧰 Tool Test Result: {result}")
-        except Exception as e:
-            st.error(f"An error occurred during the tool test: {e}")
+        # Check JSON and function calling for Ollama models only
+        if not selected_model.startswith("gpt-"):  # Exclude OpenAI models
+            json_result = check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
+            st.markdown(f"### 📦 JSON Handling Capability: {'✅ Success!' if json_result else '❌ Failure!'}")
 
-        json_result = check_json_handling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
-        function_result = check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
-
-        st.markdown(f"### 📦 JSON Handling Capability: {'✅ Success!' if json_result else '❌ Failure!'}")
-        st.markdown(f"### ⚙️ Function Calling Capability: {'✅ Success!' if function_result else '❌ Failure!'}")
+        if not selected_model.startswith("gpt-") and selected_model not in GROQ_MODELS:
+            function_result = check_function_calling(selected_model, temperature, max_tokens, presence_penalty, frequency_penalty)
+            st.markdown(f"### ⚙️ Function Calling Capability: {'✅ Success!' if function_result else '❌ Failure!'}")

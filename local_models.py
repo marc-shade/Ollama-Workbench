@@ -6,7 +6,7 @@ from datetime import datetime
 from ollama_utils import *
 
 def list_local_models():
-    st.title("🤖 Local Models")
+    st.title("🤖 Local Ollama Models")
     response = requests.get(f"{OLLAMA_URL}/tags")
     response.raise_for_status()
     models = response.json().get("models", [])

@@ -1,3 +1,4 @@
+# ollama_utils.py
 import requests
 import json
 import io
@@ -10,6 +11,22 @@ import platform
 import socket
 import subprocess
 import os
+from groq_utils import GROQ_MODELS
+from openai_utils import OPENAI_MODELS
+
+API_KEYS_FILE = "api_keys.json"
+
+def load_api_keys():
+    """Loads API keys from the JSON file."""
+    if os.path.exists(API_KEYS_FILE):
+        with open(API_KEYS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_api_keys(api_keys):
+    """Saves API keys to the JSON file."""
+    with open(API_KEYS_FILE, "w") as f:
+        json.dump(api_keys, f, indent=4)
 
 OLLAMA_URL = "http://localhost:11434/api"
 
@@ -312,3 +329,10 @@ def generate_embeddings(model, text):
     except requests.exceptions.RequestException as e:
         st.error(f"Error generating embeddings: {e}")
         return None, None, None, None
+
+def get_all_models():
+    """Gets all available models, including Ollama, Groq, and OpenAI."""
+    ollama_models = get_available_models()
+    groq_models = GROQ_MODELS
+    openai_models = OPENAI_MODELS
+    return ollama_models + groq_models + openai_models

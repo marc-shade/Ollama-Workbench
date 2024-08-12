@@ -66,7 +66,7 @@ def get_ollama_resource_usage():
     }
 
 def server_monitoring():
-    st.header("🖥️ Server Monitoring")
+    st.header("🖥️ Ollama Server Monitoring")
 
     # Resource Usage
     st.subheader("Resource Usage")
