@@ -6,7 +6,7 @@ from ollama_utils import get_available_models, check_json_handling, check_functi
 def feature_test():
     st.header("🧪 Model Feature Test")
     
-    available_models = get_all_models()  # Use get_all_models()
+    available_models = get_available_models()  # Use get_available_models()
 
     if "selected_model" not in st.session_state:
         st.session_state.selected_model = available_models[0] if available_models else None
