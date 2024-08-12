@@ -1,206 +1,247 @@
 # enhanced_corpus.py
+
 import streamlit as st
-from langchain_community.document_loaders import PyPDFLoader, TextLoader, WebBaseLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA
-from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
-from ollama_utils import get_available_models, generate_embeddings
 import os
+import logging
 import shutil
+import json
+import ollama
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+import requests
+from bs4 import BeautifulSoup
+import PyPDF2
+import io
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Constants
+RAGTEST_DIR = "ragtest"
+FILES_DIR = "files"
+
+# Ensure necessary directories exist
+os.makedirs(RAGTEST_DIR, exist_ok=True)
+os.makedirs(FILES_DIR, exist_ok=True)
 
 class DocumentProcessor:
-    def __init__(self):
-        self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    def __init__(self, chunk_size=1000, chunk_overlap=200):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+
+    def split_text(self, text):
+        chunks = []
+        for i in range(0, len(text), self.chunk_size - self.chunk_overlap):
+            chunks.append(text[i:i + self.chunk_size])
+        return chunks
+
+    def load_text_file(self, file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+
+    def load_pdf_file(self, file_path):
+        with open(file_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            return text
 
     def process_file(self, file_path):
-        if file_path.endswith('.pdf'):
-            loader = PyPDFLoader(file_path)
+        if file_path.lower().endswith('.pdf'):
+            text = self.load_pdf_file(file_path)
         else:
-            loader = TextLoader(file_path)
-        return self.text_splitter.split_documents(loader.load())
+            text = self.load_text_file(file_path)
+        return self.split_text(text)
 
     def process_url(self, url):
-        loader = WebBaseLoader(url)
-        return self.text_splitter.split_documents(loader.load())
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        text = soup.get_text()
+        return self.split_text(text)
 
     def process_text(self, text):
-        return self.text_splitter.split_text(text)
+        return self.split_text(text)
 
-class EmbeddingGenerator:
-    def __init__(self, model_name="llama2:latest"):
-        self.model_name = model_name
+class OllamaEmbedder:
+    def __init__(self, model="llama2"):
+        self.model = model
 
-    def generate(self, texts):
-        embeddings = []
-        total_durations = []
-        load_durations = []
-        prompt_eval_counts = []
-        for text in texts:
-            embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(self.model_name, text)
-            if embedding is not None:
-                embeddings.append(embedding)
-                total_durations.append(total_duration)
-                load_durations.append(load_duration)
-                prompt_eval_counts.append(prompt_eval_count)
-        return embeddings, total_durations, load_durations, prompt_eval_counts
+    def get_embedding(self, text):
+        try:
+            response = ollama.embeddings(model=self.model, prompt=text)
+            return response['embedding']
+        except Exception as e:
+            logger.error(f"Error getting embedding: {str(e)}")
+            raise
 
-class VectorDatabase:
-    def __init__(self, embedding_function, persist_directory: str):
-        self.db = Chroma(embedding_function=embedding_function, persist_directory=persist_directory)
+class GraphRAGCorpus:
+    def __init__(self, corpus_name, embedder):
+        self.corpus_name = corpus_name
+        self.corpus_dir = os.path.join(RAGTEST_DIR, corpus_name)
+        self.embedder = embedder
+        self.documents = []
+        self.embeddings = []
 
-    def add_documents(self, documents):
-        self.db.add_documents(documents)
+    def add_document(self, content, metadata=None):
+        embedding = self.embedder.get_embedding(content)
+        doc_id = len(self.documents)
+        self.documents.append({
+            "id": doc_id,
+            "content": content,
+            "metadata": metadata or {}
+        })
+        self.embeddings.append(embedding)
 
-    def similarity_search(self, query, k=4):
-        return self.db.similarity_search(query, k=k)
+    def save(self):
+        os.makedirs(self.corpus_dir, exist_ok=True)
+        
+        # Save documents
+        for doc in self.documents:
+            with open(os.path.join(self.corpus_dir, f"doc_{doc['id']}.txt"), "w", encoding='utf-8') as f:
+                f.write(doc['content'])
 
-class RetrievalEngine:
-    def __init__(self, vector_db):
-        self.vector_db = vector_db
+        # Save metadata and embeddings
+        metadata = {
+            "documents": [{"id": doc["id"], "metadata": doc["metadata"]} for doc in self.documents]
+        }
+        with open(os.path.join(self.corpus_dir, "metadata.json"), "w") as f:
+            json.dump(metadata, f, indent=2)
 
-    def hybrid_search(self, query, k=4):
-        semantic_results = self.vector_db.similarity_search(query, k=k)
-        # Implement additional keyword-based search here
-        # Combine and re-rank results
-        return semantic_results  # Placeholder for combined results
+        with open(os.path.join(self.corpus_dir, "embeddings.json"), "w") as f:
+            json.dump(self.embeddings, f)
 
-class QueryProcessor:
-    def __init__(self, retrieval_engine):
-        self.retrieval_engine = retrieval_engine
+    @classmethod
+    def load(cls, corpus_name, embedder):
+        corpus = cls(corpus_name, embedder)
+        corpus_dir = os.path.join(RAGTEST_DIR, corpus_name)
 
-    def process_query(self, query):
-        # Implement query classification (e.g., factoid, open-ended, etc.)
-        # Adjust retrieval strategy based on query type
-        return self.retrieval_engine.hybrid_search(query)
+        # Load metadata
+        with open(os.path.join(corpus_dir, "metadata.json"), "r") as f:
+            metadata = json.load(f)
 
-class RAGLLMIntegration:
-    def __init__(self, query_processor, model="mistral:latest"):
-        self.query_processor = query_processor
-        self.llm = Ollama(model=model)
-        self.prompt_template = PromptTemplate(
-            template="Answer the question based on the context below:\n\nContext: {context}\n\nQuestion: {question}\n\nAnswer:",
-            input_variables=["context", "question"]
-        )
+        # Load embeddings
+        with open(os.path.join(corpus_dir, "embeddings.json"), "r") as f:
+            corpus.embeddings = json.load(f)
 
-    def generate_response(self, query):
-        context_docs = self.query_processor.process_query(query)
-        context = "\n".join([doc.page_content for doc in context_docs])
-        prompt = self.prompt_template.format(context=context, question=query)
-        return self.llm(prompt)
+        # Load documents
+        for doc_meta in metadata["documents"]:
+            with open(os.path.join(corpus_dir, f"doc_{doc_meta['id']}.txt"), "r", encoding='utf-8') as f:
+                content = f.read()
+            corpus.documents.append({
+                "id": doc_meta["id"],
+                "content": content,
+                "metadata": doc_meta["metadata"]
+            })
 
-def enhance_corpus_ui():
-    st.title("Corpus")
+        return corpus
 
-    # Corpus folder
-    corpus_folder = "corpus"
-    if not os.path.exists(corpus_folder):
-        os.makedirs(corpus_folder)
+    def query(self, query_text, n_results=3):
+        query_embedding = self.embedder.get_embedding(query_text)
+        similarities = cosine_similarity([query_embedding], self.embeddings)[0]
+        top_indices = np.argsort(similarities)[-n_results:][::-1]
+        
+        results = []
+        for idx in top_indices:
+            results.append({
+                "content": self.documents[idx]["content"],
+                "metadata": self.documents[idx]["metadata"],
+                "similarity": similarities[idx]
+            })
+        
+        return results
 
-    # Model Selection in sidebar
-    with st.sidebar:
-        with st.expander("⚠️ Advanced Model Settings", expanded=False):
-            st.warning("Warning: Changing the model may affect corpus compatibility. Only change if you know what you're doing.")
-            available_models = get_available_models()
-            default_index = available_models.index("llama2:latest") if "llama2:latest" in available_models else 0
-            selected_model = st.selectbox("Select Model", available_models, index=default_index, key="corpus_model")
+def create_graphrag_corpus(corpus_name, documents):
+    embedder = OllamaEmbedder()
+    corpus = GraphRAGCorpus(corpus_name, embedder)
 
-    # List existing corpus
-    corpus_list = [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-    if corpus_list:
-        for corpus in corpus_list:
-            col1, col2, col3 = st.columns([20, 1, 1])
-            with col1:
-                st.write("📖 ", corpus)
-            with col2:
-                if st.button("✏️", key=f"rename_corpus_{corpus}"):
-                    st.session_state.rename_corpus = corpus
-                    st.rerun()
-            with col3:
-                if st.button("🗑️", key=f"delete_corpus_{corpus}"):
-                    shutil.rmtree(os.path.join(corpus_folder, corpus))
-                    st.success(f"Corpus '{corpus}' deleted.")
-                    st.rerun()
-    else:
-        st.write("No existing corpus found.")
+    for i, doc in enumerate(documents):
+        corpus.add_document(doc, metadata={"original_id": i})
 
-    # Handle renaming corpus
-    if "rename_corpus" in st.session_state and st.session_state.rename_corpus:
-        corpus_to_rename = st.session_state.rename_corpus
-        new_corpus_name = st.text_input(f"Rename corpus '{corpus_to_rename}' to:", value=corpus_to_rename, key=f"rename_corpus_input_{corpus_to_rename}")
-        if st.button("Confirm Rename", key=f"confirm_rename_{corpus_to_rename}"):
-            if new_corpus_name:
-                os.rename(os.path.join(corpus_folder, corpus_to_rename), os.path.join(corpus_folder, new_corpus_name))
-                st.success(f"Corpus renamed to '{new_corpus_name}'")
-                st.session_state.rename_corpus = None
-                st.rerun()
-            else:
-                st.error("Please enter a new corpus name.")
+    corpus.save()
+    logger.info(f"Corpus '{corpus_name}' created successfully!")
 
-    st.subheader("✚ Create New Corpus")
-
-    # Tabs for different input methods
-    tab1, tab2, tab3 = st.tabs(["From File", "From URL", "From Text"])
-
-    with tab1:
-        # File upload
-        uploaded_file = st.file_uploader("Upload a document", type=["pdf", "txt"])
-        corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_file")
-        if st.button("✚ Create Corpus", key="create_corpus_button_file"):
-            if uploaded_file is not None and corpus_name:
-                process_and_save_corpus(uploaded_file, corpus_name, selected_model)
-            else:
-                st.error("Please upload a file and enter a corpus name.")
-
-    with tab2:
-        # URL input
-        url = st.text_input("Enter a URL to process")
-        corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_url")
-        if st.button("✚ Create Corpus", key="create_corpus_button_url"):
-            if url and corpus_name:
-                process_and_save_corpus(url, corpus_name, selected_model, is_url=True)
-            else:
-                st.error("Please enter a URL and a corpus name.")
-
-    with tab3:
-        # Text input
-        text_input = st.text_area("Enter text to process")
-        corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_text")
-        if st.button("✚ Create Corpus", key="create_corpus_button_text"):
-            if text_input and corpus_name:
-                process_and_save_corpus(text_input, corpus_name, selected_model, is_text=True)
-            else:
-                st.error("Please enter text and a corpus name.")
-
-def process_and_save_corpus(data, corpus_name, selected_model, is_url=False, is_text=False):
-    """Processes the data and saves it as a corpus."""
-    corpus_folder = "corpus"
-    corpus_path = os.path.join(corpus_folder, corpus_name)
-
+def process_and_save_corpus(data, corpus_name, is_url=False, is_text=False):
     doc_processor = DocumentProcessor()
     if is_url:
         documents = doc_processor.process_url(data)
     elif is_text:
         documents = doc_processor.process_text(data)
     else:
-        # Save the uploaded file to disk first
-        file_path = os.path.join("files", data.name)
+        file_path = os.path.join(FILES_DIR, data.name)
         with open(file_path, "wb") as f:
             f.write(data.getbuffer())
         documents = doc_processor.process_file(file_path)
 
-    embedding_generator = EmbeddingGenerator(model_name=selected_model)
-    embeddings, total_durations, load_durations, prompt_eval_counts = embedding_generator.generate([doc.page_content for doc in documents])
-    
-    # Display embedding statistics
-    st.write("Embedding Statistics:")
-    st.write(f"Average Total Duration: {sum(total_durations) / len(total_durations):.4f} seconds")
-    st.write(f"Average Load Duration: {sum(load_durations) / len(load_durations):.4f} seconds")
-    st.write(f"Average Prompt Eval Count: {sum(prompt_eval_counts) / len(prompt_eval_counts):.2f}")
+    try:
+        create_graphrag_corpus(corpus_name, documents)
+        st.success(f"Corpus '{corpus_name}' created successfully!")
+    except Exception as e:
+        logger.error(f"Error creating GraphRAG corpus: {str(e)}")
+        st.error(f"Error creating GraphRAG corpus: {str(e)}")
 
-    vector_db = VectorDatabase(embeddings, persist_directory=corpus_path)
-    vector_db.add_documents(documents)
+def enhance_corpus_ui():
+    st.title("GraphRAG Corpus Management")
 
-    st.success(f"Corpus '{corpus_name}' created successfully!")
+    st.subheader("✚ Create New Corpus")
+    tab1, tab2, tab3 = st.tabs(["From File", "From URL", "From Text"])
+
+    with tab1:
+        uploaded_file = st.file_uploader("Upload a document", type=["pdf", "txt"])
+        corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_file")
+        if st.button("✚ Create Corpus", key="create_corpus_button_file"):
+            if uploaded_file is not None and corpus_name:
+                process_and_save_corpus(uploaded_file, corpus_name)
+            else:
+                st.error("Please upload a file and enter a corpus name.")
+
+    with tab2:
+        url = st.text_input("Enter a URL to process")
+        corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_url")
+        if st.button("✚ Create Corpus", key="create_corpus_button_url"):
+            if url and corpus_name:
+                process_and_save_corpus(url, corpus_name, is_url=True)
+            else:
+                st.error("Please enter a URL and a corpus name.")
+
+    with tab3:
+        text_input = st.text_area("Enter text to process")
+        corpus_name = st.text_input("Enter a name for the corpus:", key="create_corpus_name_text")
+        if st.button("✚ Create Corpus", key="create_corpus_button_text"):
+            if text_input and corpus_name:
+                process_and_save_corpus(text_input, corpus_name, is_text=True)
+            else:
+                st.error("Please enter text and a corpus name.")
+
+    st.subheader("📚 Existing Corpora")
+    corpora = [d for d in os.listdir(RAGTEST_DIR) if os.path.isdir(os.path.join(RAGTEST_DIR, d))]
+    if corpora:
+        for corpus in corpora:
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                st.write(f"- {corpus}")
+            with col2:
+                if st.button("🔍 Query", key=f"query_{corpus}"):
+                    st.session_state[f"show_query_{corpus}"] = True
+            with col3:
+                if st.button("🗑️", key=f"delete_{corpus}"):
+                    shutil.rmtree(os.path.join(RAGTEST_DIR, corpus))
+                    st.success(f"Corpus '{corpus}' deleted.")
+                    st.rerun()
+            
+            if st.session_state.get(f"show_query_{corpus}", False):
+                query = st.text_input(f"Enter query for {corpus}:")
+                if query:
+                    embedder = OllamaEmbedder()
+                    loaded_corpus = GraphRAGCorpus.load(corpus, embedder)
+                    results = loaded_corpus.query(query)
+                    st.write("Query Results:")
+                    for result in results:
+                        st.write(f"Similarity: {result['similarity']:.4f}")
+                        st.write(result['content'])
+                        st.write("---")
+    else:
+        st.write("No existing corpora found.")
+
+if __name__ == "__main__":
+    enhance_corpus_ui()

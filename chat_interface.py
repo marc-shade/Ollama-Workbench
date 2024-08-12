@@ -1,16 +1,19 @@
+# chat_interface.py
+
 import streamlit as st
 import os
 import json
 from datetime import datetime
 import re
 import ollama
-from ollama_utils import get_available_models, generate_embeddings
+from ollama_utils import get_available_models
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
 from streamlit_extras.bottom_container import bottom
-from agents import SearchManager
+from enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
 
 SETTINGS_FILE = "chat-settings.json"
+RAGTEST_DIR = "ragtest"
 
 # Load settings from JSON file
 def load_settings():
@@ -20,7 +23,7 @@ def load_settings():
             for key, value in settings.items():
                 if value != "None":  # Only set non-None values
                     st.session_state[key] = value
-        print(f"Settings loaded: {settings}")
+    print(f"Settings loaded: {st.session_state}")
 
 def save_settings():
     settings = {
@@ -69,6 +72,23 @@ def generate_prompt_suggestion(user_need):
         f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}")
     return response['response'].strip()
 
+def get_graphrag_context(user_input, corpus_name):
+    """Get context from GraphRAG corpus."""
+    try:
+        embedder = OllamaEmbedder()
+        corpus = GraphRAGCorpus.load(corpus_name, embedder)
+        results = corpus.query(user_input, n_results=3)
+        
+        context = ""
+        for result in results:
+            context += f"Similarity: {result['similarity']:.4f}\n"
+            context += f"Content: {result['content']}\n\n"
+        
+        return context.strip() if context else None
+    except Exception as e:
+        st.error(f"Error querying GraphRAG corpus: {str(e)}")
+        return None
+
 def chat_interface():
     load_settings()
 
@@ -114,11 +134,8 @@ def chat_interface():
             st.session_state.metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types, index=metacognitive_types.index(st.session_state.metacognitive_type))
             voice_types = ["None"] + list(get_voice_prompt().keys())
             st.session_state.voice_type = st.selectbox("🗣️ Voice Type:", voice_types, index=voice_types.index(st.session_state.voice_type))
-            corpus_folder = "corpus"
-            if not os.path.exists(corpus_folder):
-                os.makedirs(corpus_folder)
-            corpus_options = ["None"] + [f for f in os.listdir(corpus_folder) if os.path.isdir(os.path.join(corpus_folder, f))]
-            st.session_state.selected_corpus = st.selectbox("📚 Corpus:", corpus_options, index=corpus_options.index(st.session_state.selected_corpus))
+            corpus_options = ["None"] + [d for d in os.listdir(RAGTEST_DIR) if os.path.isdir(os.path.join(RAGTEST_DIR, d))]
+            st.session_state.selected_corpus = st.selectbox("📚 Corpus:", corpus_options, index=corpus_options.index(st.session_state.selected_corpus) if st.session_state.selected_corpus in corpus_options else 0)
             st.button("💾 Save Settings", key="save_settings_general", on_click=save_settings)
 
         with st.expander("🛠️ Advanced Settings", expanded=False):
@@ -182,24 +199,33 @@ def chat_interface():
             combined_prompt += get_voice_prompt()[st.session_state.voice_type] + "\n\n"
 
         chat_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.chat_history])
-        if st.session_state.selected_corpus != "None":
-            embedding, total_duration, load_duration, prompt_eval_count = generate_embeddings(st.session_state.selected_model, user_input)
-            st.write("Embedding Statistics:")
-            st.write(f"Total Duration: {total_duration:.4f} seconds")
-            st.write(f"Load Duration: {load_duration:.4f} seconds")
-            st.write(f"Prompt Eval Count: {prompt_eval_count:.2f}")
 
-            corpus_context = get_corpus_context_from_db(corpus_folder, st.session_state.selected_corpus, user_input)
-            final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nContext: {corpus_context}\n\nUser: {user_input}\n\n{combined_prompt}"
-        else:
-            final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {user_input}\n\n{combined_prompt}"
+        final_prompt = f"{combined_prompt}Conversation History:\n{chat_history}\n\nUser: {user_input}\n\n{combined_prompt}"
+
+        if st.session_state.selected_corpus != "None":
+            graph_response = get_graphrag_context(user_input, st.session_state.selected_corpus)
+            if graph_response:
+                final_prompt += f"\n\nGraphRAG Context:\n{graph_response}"
+            else:
+                st.warning(f"No relevant context found in the corpus '{st.session_state.selected_corpus}'. Proceeding without additional context.")
 
         st.session_state.total_tokens += count_tokens(final_prompt)
         st.info(f"Total Token Count: {st.session_state.total_tokens}")
+
         with response_placeholder.container():
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
-                for response_chunk in ollama.generate(st.session_state.selected_model, final_prompt, stream=True):
+                for response_chunk in ollama.generate(
+                    st.session_state.selected_model,
+                    final_prompt,
+                    stream=True,
+                    options={
+                        "temperature": st.session_state.temperature_slider_chat,
+                        "num_predict": st.session_state.max_tokens_slider_chat,
+                        "presence_penalty": st.session_state.presence_penalty_slider_chat,
+                        "frequency_penalty": st.session_state.frequency_penalty_slider_chat,
+                    }
+                ):
                     full_response += response_chunk["response"]
                     message_placeholder.markdown(full_response + "▌")
                     st.session_state.total_tokens += count_tokens(response_chunk["response"])
@@ -246,15 +272,6 @@ def count_tokens(text):
 def extract_code_blocks(text):
     code_blocks = re.findall(r'```[\s\S]*?```', text)
     return [block.strip('`').strip() for block in code_blocks]
-
-def get_corpus_context_from_db(corpus_folder, corpus_name, query):
-    from langchain_community.embeddings import OllamaEmbeddings
-    from langchain_community.vectorstores import Chroma
-    corpus_path = os.path.join(corpus_folder, corpus_name)
-    embeddings = OllamaEmbeddings(model="llama2:latest")
-    db = Chroma(persist_directory=corpus_path, embedding_function=embeddings)
-    results = db.similarity_search(query, k=3)
-    return "\n".join([doc.page_content for doc in results])
 
 def save_chat_and_workspace():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
