@@ -8,7 +8,7 @@ from ollama_utils import load_api_keys  # Ensure this is imported to manage API 
 import ollama
 
 def feature_test():
-    st.header("🏟️ AI Model Feature Test Arena")
+    st.header("🏟️ AI Model Feature Test")
     
     # Combining models from all sources
     all_models = {
