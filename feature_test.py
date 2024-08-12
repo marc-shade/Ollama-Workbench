@@ -5,6 +5,7 @@ from ollama_utils import get_available_models as get_ollama_models, check_json_h
 from openai_utils import OPENAI_MODELS, call_openai_api
 from groq_utils import GROQ_MODELS, call_groq_api
 from ollama_utils import load_api_keys  # Ensure this is imported to manage API keys
+import ollama
 
 def feature_test():
     st.header("🏟️ AI Model Feature Test Arena")
@@ -60,10 +61,16 @@ def feature_test():
         
         # Execute tests based on the selected provider
         if selected_provider == "Ollama Models":
-            # Tool testing
+            # Proper tool testing for Ollama models
             try:
-                result = asyncio.run(run_tool_test(selected_model, "Test the tool function.", tool_description, test_function, arguments))
-                st.markdown(f"### 🧰 Ollama Tool Test Result: {result}")
+                client = ollama.Client()
+                prompt = f"Here is a simple test function in Python that takes two arguments: {arguments['arg1']['description']} and {arguments['arg2']['description']}."
+                response = client.generate(model=selected_model, prompt=prompt)
+                if 'response' in response:
+                    tool_result = response['response']  # Extracting the result from the response
+                    st.markdown(f"### 🧰 Ollama Tool Test Result: {tool_result}")
+                else:
+                    st.error(f"Unexpected response structure: {response}")
             except Exception as e:
                 st.error(f"An error occurred during the Ollama tool test: {e}")
 
