@@ -525,7 +525,7 @@ def main():
 
     # Input for exclude patterns
     exclude_patterns_str = st.text_input("Enter file/folder patterns to exclude (comma-separated, use regex):", 
-                                        value=".git,node_modules,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.csv,.*\.docx,.*\.zip,.*\.eml,.*\.json,.*\.svg,.*\.vue,.*\.ogg,.*\.eot,.*\.ttf,.*\.ico,.*\.otf,.*\.woff,.*\.woff2,chroma_db,.pytest_cache,project_summary.md,agent_prompts,docs,__init__.py")
+                                        value=".git,node_modules,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,ragtest,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.csv,.*\.docx,.*\.zip,.*\.eml,.*\.json,.*\.svg,.*\.vue,.*\.ogg,.*\.eot,.*\.ttf,.*\.ico,.*\.otf,.*\.woff,.*\.woff2,chroma_db,.pytest_cache,project_summary.md,agent_prompts,docs,__init__.py")
     exclude_patterns = [pattern.strip() for pattern in exclude_patterns_str.split(",")]
 
     # Model Settings in a collapsed section in the sidebar
