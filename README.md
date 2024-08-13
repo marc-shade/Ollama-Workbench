@@ -141,6 +141,3 @@ Contributions are welcome!
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details. 
-```
-
-I hope this updated README.md is clear, comprehensive, and accurately reflects the exciting new capabilities of Ollama Workbench. Feel free to ask if you have any further questions or would like me to refine the document further. 
