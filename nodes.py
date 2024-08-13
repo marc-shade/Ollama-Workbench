@@ -5,7 +5,9 @@ from streamlit_flow import streamlit_flow
 from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
 from streamlit_flow.layouts import TreeLayout, RadialLayout, ForceLayout, StressLayout, RandomLayout
 
-from ollama_utils import get_available_models, call_ollama_endpoint
+from ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
+from openai_utils import OPENAI_MODELS
+from groq_utils import GROQ_MODELS
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 import json
 import os
@@ -18,6 +20,10 @@ from typing import List, Dict
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def get_all_models():
+    ollama_models = get_available_models()
+    all_models = ollama_models + OPENAI_MODELS + GROQ_MODELS
+    return all_models
 
 class StreamlitFlowNode:
     def __init__(self, id: str, position: tuple, data: dict, type: str = 'default', source_position: str = 'right', target_position: str = 'left', connectable: bool = True):
@@ -87,8 +93,9 @@ def create_node(node_id: str, node_type: str, position: tuple) -> StreamlitFlowN
         'position': position,  # Add position to the node's data
     }
     if node_type == 'LLM':
+        all_models = get_all_models()
         base_data.update({
-            'model_name': 'mistral:instruct',
+            'model_name': all_models[0] if all_models else 'gpt-3.5-turbo',  # Use the first available model or a default
             'agent_type': 'None',
             'metacognitive_type': 'None',
             'voice_type': 'None',
@@ -133,6 +140,7 @@ def execute_workflow(nodes: List[StreamlitFlowNode], edges: List[StreamlitFlowEd
     """Executes the workflow based on the nodes and edges."""
     results = {}
     node_map = {node.id: node for node in nodes}
+    api_keys = load_api_keys()
 
     def process_node(node_id):
         """Recursively processes a node and its inputs."""
@@ -148,14 +156,34 @@ def execute_workflow(nodes: List[StreamlitFlowNode], edges: List[StreamlitFlowEd
                 input_text = process_node(incoming_edge.source)
                 prompt = node.data['prompt']
                 complete_prompt = construct_prompt(node, prompt, input_text)
-                response, _, _, _ = call_ollama_endpoint(
-                    node.data['model_name'],
-                    prompt=complete_prompt,
-                    temperature=node.data['temperature'],
-                    max_tokens=node.data['max_tokens'],
-                    presence_penalty=node.data['presence_penalty'],
-                    frequency_penalty=node.data['frequency_penalty']
-                )
+                
+                if node.data['model_name'] in OPENAI_MODELS:
+                    from openai_utils import call_openai_api
+                    response = call_openai_api(
+                        node.data['model_name'], 
+                        [{"role": "user", "content": complete_prompt}],
+                        temperature=node.data['temperature'],
+                        max_tokens=node.data['max_tokens'],
+                        openai_api_key=api_keys.get("openai_api_key")
+                    )
+                elif node.data['model_name'] in GROQ_MODELS:
+                    from groq_utils import call_groq_api
+                    response = call_groq_api(
+                        node.data['model_name'],
+                        complete_prompt,
+                        temperature=node.data['temperature'],
+                        max_tokens=node.data['max_tokens'],
+                        groq_api_key=api_keys.get("groq_api_key")
+                    )
+                else:
+                    response, _, _, _ = call_ollama_endpoint(
+                        node.data['model_name'],
+                        prompt=complete_prompt,
+                        temperature=node.data['temperature'],
+                        max_tokens=node.data['max_tokens'],
+                        presence_penalty=node.data['presence_penalty'],
+                        frequency_penalty=node.data['frequency_penalty']
+                    )
                 results[node_id] = response
             else:
                 results[node_id] = "No input provided."
@@ -166,12 +194,12 @@ def execute_workflow(nodes: List[StreamlitFlowNode], edges: List[StreamlitFlowEd
                 results[node_id] = f"{node.data['output_label']}: {input_text}"
             else:
                 results[node_id] = "No input provided."
-
+        
         return results[node_id]
 
+    # Process all nodes
     for node in nodes:
-        if node.data['type'] == 'Output':
-            process_node(node.id)
+        process_node(node.id)
 
     return results
 
@@ -216,7 +244,13 @@ def render_node_settings(node: StreamlitFlowNode):
     node.data['content'] = st.sidebar.text_input("Node Label", value=node.data['content'], key=f"label_{node.id}")
 
     if node.data['type'] == 'LLM':
-        node.data['model_name'] = st.sidebar.selectbox("Select Model", get_available_models(), index=get_available_models().index(node.data['model_name']), key=f"model_{node.id}")
+        all_models = get_all_models()
+        node.data['model_name'] = st.sidebar.selectbox(
+            "Select Model", 
+            all_models, 
+            index=all_models.index(node.data['model_name']) if node.data['model_name'] in all_models else 0, 
+            key=f"model_{node.id}"
+        )
         node.data['agent_type'] = st.sidebar.selectbox("Agent Type", ["None"] + list(get_agent_prompt().keys()), index=(["None"] + list(get_agent_prompt().keys())).index(node.data['agent_type']), key=f"agent_type_{node.id}")
         node.data['metacognitive_type'] = st.sidebar.selectbox("Metacognitive Type", ["None"] + list(get_metacognitive_prompt().keys()), index=(["None"] + list(get_metacognitive_prompt().keys())).index(node.data['metacognitive_type']), key=f"metacognitive_type_{node.id}")
         node.data['voice_type'] = st.sidebar.selectbox("Voice Type", ["None"] + list(get_voice_prompt().keys()), index=(["None"] + list(get_voice_prompt().keys())).index(node.data['voice_type']), key=f"voice_type_{node.id}")
@@ -242,7 +276,8 @@ def render_node_settings(node: StreamlitFlowNode):
 
 def nodes_interface():
     st.title("LLM Workflow Builder")
-
+    api_keys = load_api_keys()
+    
     if 'nodes' not in st.session_state:
         st.session_state['nodes'] = [
             create_node("1", "Input", (0, 0)),
@@ -331,10 +366,13 @@ def nodes_interface():
             for node_id, result in results.items():
                 node = next(node for node in st.session_state['nodes'] if node.id == node_id)
                 st.subheader(f"Node {node_id} ({node.data['type']}):")
-                if node.data['type'] == 'Output' and node.data['document_format'] == 'Markdown':
-                    st.markdown(result)
-                elif node.data['type'] == 'Output' and node.data['document_format'] == 'HTML':
-                    st.components.v1.html(result, height=300)
+                if node.data['type'] == 'Output':
+                    if node.data['document_format'] == 'Markdown':
+                        st.markdown(result)
+                    elif node.data['document_format'] == 'HTML':
+                        st.components.v1.html(result, height=300)
+                    else:
+                        st.text(result)
                 else:
                     st.text(result)
     with col2:

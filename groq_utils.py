@@ -62,7 +62,7 @@ def call_groq_api(model, prompt, temperature=0.7, max_tokens=1000, groq_api_key=
         return None
 
 def display_groq_settings():
-    """Displays the Groq API key settings in the sidebar."""
+    """Displays the Groq API key settings."""
     st.sidebar.subheader("Groq API Key")
     api_keys = load_api_keys()
     groq_api_key = st.sidebar.text_input(

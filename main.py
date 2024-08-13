@@ -26,6 +26,7 @@ from build import build_interface
 from openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
 from groq_utils import display_groq_settings, call_groq_api
 from nodes import nodes_interface  # Add this import
+from external_providers import external_providers_ui  # Add this import
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
 
@@ -270,7 +271,7 @@ def main_content():
     elif st.session_state.selected_test == "Prompts":
         manage_prompts()
     elif st.session_state.selected_test == "Nodes":
-        nodes_interface()  # Add the Nodes interface
+        nodes_interface()
     elif st.session_state.selected_test == "Corpus":
         enhance_corpus_ui()
     elif st.session_state.selected_test == "Files":
@@ -307,11 +308,6 @@ def main_content():
         display_welcome_message()
     else:
         chat_interface()
-
-def external_providers_ui():
-    st.header("☁️ External Providers")
-    display_openai_settings()
-    display_groq_settings()
 
 def main():
     initialize_session_state()
