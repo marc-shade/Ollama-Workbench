@@ -9,6 +9,7 @@ fpdf
 geocoder
 google-api-python-client
 google_search_results
+GPUtil
 langchain
 langchain_community
 mdutils
@@ -18,7 +19,8 @@ pandas
 pdfkit
 playwright
 plotly
-
+Pygments
+PyYAML
 PyPDF2
 pyautogen
 pytest
@@ -26,6 +28,7 @@ pytest-html
 radon
 reportlab
 requests
+rich
 ruff
 scikit-learn
 selenium
