@@ -28,6 +28,8 @@ def load_settings():
                     st.session_state[key] = value
     print(f"Settings loaded: {st.session_state}")
 
+
+
 def save_settings():
     settings = {
         "selected_model": st.session_state.selected_model,
@@ -63,17 +65,71 @@ def ai_assisted_prompt_writing():
     user_need = st.text_input("What do you need help with?")
     if user_need:
         prompt_suggestion = generate_prompt_suggestion(user_need)
-        st.write("Suggested prompt:")
-        edited_prompt = st.text_area("Edit the prompt before using it:", value=prompt_suggestion)
-        if st.button("Use this prompt"):
-            st.session_state.chat_input = edited_prompt
-            st.session_state.show_prompt_modal = False
-            st.rerun()
+        if prompt_suggestion:
+            st.write("Suggested prompt:")
+            edited_prompt = st.text_area("Edit the prompt before using it:", value=prompt_suggestion)
+            if st.button("Use this prompt"):
+                st.session_state.chat_input = edited_prompt
+                st.session_state.show_prompt_modal = False
+                st.rerun()
+        else:
+            st.warning("Unable to generate a prompt suggestion. Please try again or select a different model.")
+
+def pull_model(model_name):
+    try:
+        st.info(f"Pulling model '{model_name}'. This may take a while...")
+        result = subprocess.run(['ollama', 'pull', model_name], capture_output=True, text=True, check=True)
+        st.success(f"Successfully pulled model '{model_name}'.")
+        return True
+    except subprocess.CalledProcessError as e:
+        st.error(f"Failed to pull model '{model_name}'. Error: {e.stderr}")
+        return False
 
 def generate_prompt_suggestion(user_need):
-    response = ollama.generate(st.session_state.selected_model,
-        f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}")
-    return response['response'].strip()
+    api_keys = load_api_keys()
+    model = st.session_state.selected_model
+    prompt = f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}"
+
+    try:
+        if model.startswith("gpt-"):
+            response = call_openai_api(
+                model,
+                [{"role": "user", "content": prompt}],
+                temperature=st.session_state.temperature_slider_chat,
+                max_tokens=st.session_state.max_tokens_slider_chat,
+                openai_api_key=api_keys.get("openai_api_key")
+            )
+            return response.strip()
+        elif model in GROQ_MODELS:
+            response = call_groq_api(
+                model,
+                prompt,
+                temperature=st.session_state.temperature_slider_chat,
+                max_tokens=st.session_state.max_tokens_slider_chat,
+                groq_api_key=api_keys.get("groq_api_key")
+            )
+            return response.strip()
+        else:
+            response = ollama.generate(
+                model,
+                prompt,
+                temperature=st.session_state.temperature_slider_chat,
+                num_predict=st.session_state.max_tokens_slider_chat
+            )
+            return response['response'].strip()
+    except ollama.ResponseError as e:
+        if "model not found" in str(e).lower():
+            st.error(f"Model '{model}' not found.")
+            if st.button("Pull Model"):
+                if pull_model(model):
+                    st.rerun()
+            return None
+        else:
+            st.error(f"An error occurred: {str(e)}")
+            return None
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        return None
 
 def get_graphrag_context(user_input, corpus_name):
     """Get context from GraphRAG corpus."""
