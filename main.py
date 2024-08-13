@@ -25,6 +25,7 @@ from enhanced_corpus import enhance_corpus_ui
 from build import build_interface
 from openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
 from groq_utils import display_groq_settings, call_groq_api
+from nodes import nodes_interface  # Add this import
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
 
@@ -152,6 +153,7 @@ SIDEBAR_SECTIONS = {
         ("Research", "Research"),
         ("Brainstorm", "Brainstorm"),
         ("Projects", "Projects"),
+        ("Nodes", "Nodes"),  # Add the Nodes option
         ("Build", "Build"),
         ("Prompts", "Prompts"),
     ],
@@ -267,6 +269,8 @@ def main_content():
         projects_main()
     elif st.session_state.selected_test == "Prompts":
         manage_prompts()
+    elif st.session_state.selected_test == "Nodes":
+        nodes_interface()  # Add the Nodes interface
     elif st.session_state.selected_test == "Corpus":
         enhance_corpus_ui()
     elif st.session_state.selected_test == "Files":

@@ -4,7 +4,7 @@ import asyncio
 from ollama_utils import get_available_models as get_ollama_models, check_json_handling, check_function_calling, run_tool_test
 from openai_utils import OPENAI_MODELS, call_openai_api
 from groq_utils import GROQ_MODELS, call_groq_api
-from ollama_utils import load_api_keys  # Ensure this is imported to manage API keys
+from ollama_utils import load_api_keys
 import ollama
 
 def feature_test():
