@@ -4,6 +4,7 @@ from googleapiclient.discovery import build
 import requests
 import json
 from typing import List, Dict
+from ollama_utils import load_api_keys
 
 # Try to import GoogleSearch from serpapi, if it fails, set it to None
 try:
@@ -20,6 +21,9 @@ def duckduckgo_search(query: str, num_results: int = 5) -> List[Dict]:
 
 def google_search(query: str, api_key: str, cse_id: str, num_results: int = 5) -> List[Dict]:
     """Performs a search using Google Custom Search API."""
+    api_keys = load_api_keys()
+    api_key = api_keys.get("google_api_key")
+    cse_id = api_keys.get("google_cse_id")
     service = build("customsearch", "v1", developerKey=api_key)
     res = service.cse().list(q=query, cx=cse_id, num=num_results).execute()
     return [{"title": item["title"], "url": item["link"]} for item in res.get("items", [])]
@@ -31,6 +35,8 @@ def serpapi_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]
         return []
     
     try:
+        api_keys = load_api_keys()
+        api_key = api_keys.get("serpapi_api_key")
         params = {
             "engine": "google",
             "q": query,

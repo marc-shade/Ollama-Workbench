@@ -8,6 +8,7 @@ from datetime import datetime
 import base64
 from ollama_utils import get_available_models, call_ollama_endpoint
 from openai_utils import call_openai_api, OPENAI_MODELS
+from ollama_utils import load_api_keys
 from groq_utils import call_groq_api, GROQ_MODELS
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import re

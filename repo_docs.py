@@ -14,6 +14,7 @@ from radon.complexity import cc_visit, cc_rank
 from radon.metrics import mi_visit, h_visit
 from flake8.api import legacy as flake8
 from ollama_utils import get_available_models as get_ollama_models
+from ollama_utils import load_api_keys
 from openai_utils import OPENAI_MODELS
 from groq_utils import GROQ_MODELS
 
@@ -171,7 +172,8 @@ INSTRUCTION: Use appropriate Markdown formatting to make the project summary vis
 """
     elif task_type == "requirements":
         return None
-
+    api_keys = load_api_keys()
+    
     if model in OPENAI_MODELS:
         from openai_utils import call_openai_api
         response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_key)
@@ -334,6 +336,7 @@ def get_file_info(file_path):
         return None
 
 def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, api_key, update_queue, progress_bar, status_text, output_area):
+    api_keys = load_api_keys()
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
@@ -509,7 +512,8 @@ def save_model_settings(settings):
 def main():
     # Load model settings
     model_settings = load_model_settings()
-
+    api_keys = load_api_keys()
+    
     st.title("🔍 Repository Analyzer")
     st.write("Enter the path to your repository in the box below. Choose the task type (documentation, debug, readme, requirements, or project_summary) from the dropdown menu. Select the desired Ollama model for the task. Adjust the temperature and max tokens using the sliders. Click 'Analyze Repository' to begin. Once complete, a PDF report will be saved in the repository's 'files' folder. If you chose the 'readme' task type, a README.md file will also be created in the repository's 'files' folder. If you chose the 'project_summary' task type, a project_summary.md file will be created in the repository's 'files' folder.")
     
@@ -590,6 +594,7 @@ def main():
                     break
 
         with ThreadPoolExecutor(max_workers=1) as executor:
+            api_keys = load_api_keys()
             futures = {executor.submit(process_file_with_updates, file_path, task_type, model_settings["model"], model_settings["temperature"], model_settings["max_tokens"], model_settings["api_key"], update_queue, progress_bar, status_text, output_area): file_path for file_path in code_files}
             for i, future in enumerate(as_completed(futures)):               
                 file_path, documentation, pylint_report, file_content = future.result()

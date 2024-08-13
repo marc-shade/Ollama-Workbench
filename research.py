@@ -12,6 +12,7 @@ import re
 from agents import SearchManager, SearchAgent
 from search_libraries import duckduckgo_search, google_search, serpapi_search, serper_search, bing_search
 from ollama_utils import get_available_models
+from ollama_utils import load_api_keys
 from openai_utils import call_openai_api, OPENAI_MODELS
 from groq_utils import call_groq_api, GROQ_MODELS
 import sqlite3
