@@ -33,6 +33,7 @@ sentence_transformers
 serpapi
 spacy
 streamlit
+streamlit-cli
 streamlit-extras
 streamlit-javascript
 streamlit-option-menu
