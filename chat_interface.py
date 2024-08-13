@@ -150,14 +150,16 @@ def get_graphrag_context(user_input, corpus_name):
 def extract_content_blocks(text):
     if text is None:
         return [], []
+    
+    # Extract code blocks
     code_blocks = re.findall(r'```[\s\S]*?```', text)
-    # Remove code blocks from the text before extracting articles
+    
+    # Remove code blocks from the text
     text_without_code = re.sub(r'```[\s\S]*?```', '', text)
-    # Extract article blocks
-    article_blocks = re.findall(r'(?:^|\n)Title:[\s\S]*?(?=\n(?:Title:|\Z))', text_without_code, re.DOTALL)
-    # If no article blocks found, check if the entire text (minus code blocks) is an article
-    if not article_blocks and text_without_code.strip().startswith("Title:"):
-        article_blocks = [text_without_code.strip()]
+    
+    # Extract article blocks that start with 'Title:' and include everything until the next 'Title:' or the end of the text
+    article_blocks = re.findall(r'^Title:.*?(?=^Title:|\Z)', text_without_code, re.MULTILINE | re.DOTALL)
+    
     return [block.strip('`').strip() for block in code_blocks], [block.strip() for block in article_blocks]
 
 def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
