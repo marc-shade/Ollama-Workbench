@@ -2,7 +2,7 @@
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
 
-Ollama Workbench is a powerful and versatile platform for managing, testing, and leveraging various AI models from the Ollama library. It goes beyond simple model testing, offering advanced features for creating highly tunable AI agents, orchestrating complex workflows, and facilitating collaborative brainstorming sessions. With an intuitive interface, Ollama Workbench empowers users to harness the full potential of their machine learning models in creative and productive ways.
+Ollama Workbench is a powerful and versatile platform designed to streamline the management, testing, and utilization of various AI models from the Ollama library. It transcends simple model testing, offering advanced features for crafting highly tunable AI agents, orchestrating complex workflows, and facilitating dynamic collaborative brainstorming sessions. With its intuitive interface, Ollama Workbench empowers both novice programmers and experienced developers to harness the full potential of their machine learning models in innovative and productive ways.
 
 **Table of Contents**
 - [Features](#features)
@@ -10,144 +10,137 @@ Ollama Workbench is a powerful and versatile platform for managing, testing, and
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
-- [Acknowledgements](#acknowledgements)
 
 ## Features
 
 ### 💬 Chat and Advanced Agent Interaction
+
 Engage in sophisticated interactions with AI models through a feature-rich chat interface:
+
 - 🧑‍🔧 **Customizable Agent Types:** Choose from pre-defined agent types or create your own, each with specific prompts to guide the model's behavior (e.g., Coder, Analyst, Creative Writer).
 - 🧠 **Metacognitive Enhancements:** Boost the model's reasoning abilities with selectable metacognitive types (e.g., Visualization of Thought, Chain of Thought).
 - 🗣️ **Voice and Personality Customization:** Tailor the tone and style of the model's responses with customizable voice types.
-- 📚 **Dynamic Corpus Integration:** Enhance model responses by loading relevant text corpora for contextual information.
+- 📚 **Dynamic Corpus Integration:** Enhance model responses by loading relevant text corpora for contextual information, leveraging the power of retrieval augmented generation (RAG).
 - 🛠️ **Fine-grained Control:** Adjust advanced parameters like temperature, max tokens, presence penalty, and frequency penalty for precise output tuning.
 - 📜 **Integrated Workspace:** Efficiently manage and save code snippets and text generated during sessions.
 - 💾 **Session Management:** Save and load entire chat histories and workspaces for seamless workflow continuity.
 
 ### ⚙️ Advanced Workflows and Collaboration
-- 🔨 **Build:** Autonomous Multi-Agent Software Development System
-- 🔬 **Research:** Conduct in-depth research using multiple AI agents, each specializing in a different search approach. The agents will generate summaries of their findings, and a final report will be compiled based on their collective insights.
-- 🧠 **Brainstorm Mode:** Create and manage teams of specialized AI agents for collaborative ideation and problem-solving.
-- 🚀 **Project Management:** Develop, manage, and execute complex projects with multiple AI agents. Configure each agent with specific models, types, and parameters.
-- 🤖 **AI-Assisted Project Planning:** Generate tasks, assign agents, and create project structures using natural language descriptions.
-- ✨ **Custom Prompt Management:** Create, edit, and manage custom prompts for various agent types, enabling highly specialized AI behaviors.
+
+Ollama Workbench offers powerful tools for designing and executing complex workflows, enabling seamless collaboration between AI agents:
+
+- 🧠 **Brainstorm Mode:**  Create and manage teams of specialized AI agents for collaborative ideation and problem-solving. This mode leverages AutoGen's 'Teachable Agent' memory feature, allowing agents to recall past brainstorming sessions for enhanced continuity and context.
+- 🔨 **Build:**  A groundbreaking new feature! Build is an autonomous multi-agent software development system that manages the entire lifecycle of software projects. It uses specialized agents for tasks such as project planning, code generation, testing, documentation, and quality review.
+- 🔬 **Research:** Conduct in-depth research using multiple AI agents, each specializing in a different search approach and utilizing diverse search libraries like DuckDuckGo, Google, Bing, SerpApi, and Serper. The agents generate summaries of their findings, which are then compiled into a final, comprehensive report with references.
+- 🚀 **Project Management:** Develop, manage, and execute complex projects with multiple AI agents. Configure each agent with specific models, types, parameters, and even assign them individual tasks within a project.
+- 🤖 **AI-Assisted Project Planning:**  Generate tasks, assign agents, and create project structures using natural language descriptions. Ollama Workbench can understand your project goals and intelligently suggest tasks and agent assignments.
+- ✨ **Custom Prompt Management:** Create, edit, and manage custom prompts for various agent types, enabling highly specialized AI behaviors. This provides granular control over agent interaction and output. 
+- ⛓️ **Nodes:**  A visual workflow builder! Design and execute workflows by connecting different nodes representing AI models, inputs, and outputs. Configure each node's settings, including prompt engineering, model selection, and output formatting. This feature provides a powerful and flexible way to chain together AI models and create custom processing pipelines.
 
 ### 🗄️ Document and Knowledge Management
-- 🗂️ **Corpus Management:** Create, edit, and curate text corpora to enhance AI model knowledge and context.
-- 📂 **File Management System:** Comprehensive system for uploading, viewing, editing, and organizing files used across the platform.
-- 🕸️ **Web Content Integration:** Convert web content into usable corpora for analysis or model training.
-- ✔️ **Intelligent Repository Analysis:** Analyze Python repositories to generate documentation, debug reports, and README files with real-time UI feedback.
+
+- 🗂️ **Corpus Management:** Create, edit, and curate text corpora to enhance AI model knowledge and context, improving performance in tasks like question answering and text summarization. 
+- 📂 **File Management System:**  A comprehensive system for uploading, viewing, editing, and organizing files used across the platform. This centralizes file management, making it easy to access and share data between different features.
+- 🕸️ **Web Content Integration:** Convert web content into usable corpora for analysis or model training. This allows you to leverage online information and tailor AI models to specific domains.
+- ✔️ **Intelligent Repository Analysis:** Analyze Python repositories to generate documentation, debug reports, and README files with real-time UI feedback. This feature automates the documentation process and helps maintain code quality.
 
 ### 🛠️ Maintain
+
 - 📋 **List Local Models:** View a list of all locally available models, including their size and last modified date.
-- 🦙 **Show Model Information:** Display detailed information about a selected model.
-- ⬇ **Pull a Model:** Download a new model from the Ollama library.
-- 🗑️ **Remove a Model**: Delete a selected model from the local storage.
-- 🔄 **Update Models**: Update all local models.
+- 🦙 **Show Model Information:** Display detailed information about a selected model, such as architecture, parameters, and training data.
+- ⬇ **Pull a Model:** Download a new model from the Ollama library, expanding your available AI capabilities. 
+- 🗑️ **Remove a Model**: Delete a selected model from local storage to manage disk space.
+- 🔄 **Update Models**: Update all local models to ensure you're using the latest versions.
+- ⚙️ **Server Configuration:** Configure the Ollama server settings, including host address, allowed origins, model directory, global keep-alive, and concurrency controls.
+- 🖥️ **Server Monitoring:** Monitor the Ollama server's resource usage, including CPU, memory, and GPU utilization, as well as view live server logs for troubleshooting.
+- ☁️ **External Providers:** Configure and manage API keys for external services like OpenAI, Groq, SerpApi, Serper, Google Custom Search, and Bing Search, allowing you to access a wider range of AI models and search capabilities.
 
 ### 📊 Test
-- 🧪 **Model Feature Test**: Test a model's capability to handle JSON and function calls.
-- 🎯 **Model Comparison by Response Quality**: Compare the response quality of multiple models for a given prompt.
-- 💬 **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts.
-- 👁️ **Vision Model Comparison**: Compare the performance of vision models using the same test image.
+
+- 🧪 **Model Feature Test**: Test a model's capability to handle JSON and function calls, essential for advanced AI applications.
+- 🎯 **Model Comparison by Response Quality**:  Compare the response quality and performance of multiple models for a given prompt, helping you choose the best model for your needs.
+- 💬 **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts, assessing its ability to understand and respond coherently in ongoing conversations.
+- 👁️ **Vision Model Comparison**: Compare the performance of vision models by uploading a test image, evaluating their capabilities in image understanding and description.
 
 ## Installation
 
-Create virtual environment (optional but nice):
-```bash
-conda create --name ollamaworkbench python=3.11
-```
+**Prerequisites:**
+
+* **Python 3.11:** We recommend using Python 3.11 for optimal compatibility.
+* **Ollama Server:** Ollama Workbench requires Ollama Server to be installed and running. If you don't have it installed, you can run the included `install_ollama.sh` script to quickly set up Ollama and download recommended models.
+
+**Creating a Virtual Environment (Recommended):**
 
 ```bash
+conda create --name ollamaworkbench python=3.11
 conda activate ollamaworkbench
 ```
 
-### Steps
-1. **Clone the repository, install, and run**
-    ```bash
-    git clone https://github.com/marc-shade/Ollama-Workbench.git
-    cd Ollama-Workbench
-    sh run_ollama_workbench.sh
-    ```
+**Installation Steps:**
 
-2. **Optional Manual Install dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/marc-shade/Ollama-Workbench.git
+   cd Ollama-Workbench
+   ```
 
-3. **Optional Manual run the application**
-    ```bash
-    streamlit run main.py
-    ```
+2. **Install Dependencies:**
+   ```bash
+   sh run_ollama_workbench.sh 
+   ```
+   This script will handle installing dependencies, setting up Ollama if needed, and downloading recommended models.
 
-If you don't have Ollama Server installed, you can run install_ollama.sh and you'll get the best models for working with all the JSON format needed for agents and workflows to work properly. If you use the SH run script, it will perform all the necessary installations, including Ollama and the models.
-
-```bash
-sh install_ollama.sh
-```
+3. **Run the Application:**
+   ```bash
+   streamlit run main.py
+   ```
 
 ## Usage
 
-### Launching the Application
-After installation, you can start the application using the following command:
-```bash
-streamlit run main.py
-```
+**Launching the Application:**
 
-Alternately, you can use the following sh script that runs the app with an automated update if you want to stay updated without thinking about it and always run the latest version.
-```bash
-sh run_ollama_workbench.sh
-```
+* Use the `run_ollama_workbench.sh` script for automated updates and to launch the app:
+   ```bash
+   sh run_ollama_workbench.sh
+   ```
 
-### Navigating the Interface
-- Use the sidebar to access different functionalities.
-- Explore various sections: Chat, Workflow, Document, Maintenance, and Testing.
+* Alternatively, you can run the Streamlit app directly:
+   ```bash
+   streamlit run main.py 
+   ```
 
-### Chat
-- **Chat**: Select a model and start chatting! The chat interface will automatically detect and color code blocks within the assistant's responses.
-- **Custom Agent Creation:** Design specialized agents with unique combinations of agent types, metacognitive abilities, and voice characteristics.
-- **Workspace**: Use the Workspace tab to save and manage code and text generated during your chat sessions. You can add new items manually or save assistant responses directly to the workspace.
-- **Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
+**Navigating the Interface:**
 
-### Workflow
-- **Brainstorm Mode:** Create teams of AI agents for collaborative problem-solving.
-- **Workflow Customization:** Create, save, and load custom workflows for repeated use.
-- **Manage Projects**: Select "Manage Projects" from the Workflow section in the sidebar. You can create new projects, add tasks to projects, assign tasks to AI agents, and run the agents to generate outputs for each task.
-- **Manage Prompts**: Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, and Voice Type. You can also download and upload prompt JSON files for easy sharing and backup.
+* **Sidebar:**  Access all functionalities through the intuitive sidebar.
+* **Main Content Area:** The main content area displays the selected feature, whether it's the chat interface, model comparison tools, or workflow management. 
 
-### Document
-- **Repository Analyzer**: Select "Repository Analyzer" from the Document section in the sidebar. Enter the path to your repository and choose the task type (documentation, debug, or README). Select a model and adjust the temperature and max tokens as needed. Click "Analyze Repository" to generate a PDF report and, if applicable, a README.md file.
-- **Web to Corpus**: Convert web content into a corpus for analysis or training. The generated files will be saved to the 'files' folder, accessible from both the 'Document' section and the 'Chat' section.
-- **Manage Files**: Upload, view, edit, and delete files. These files can be used as corpus in the Chat.
+**Key Sections:**
 
-### Maintain
-- **List Local Models**: Select to view available models.
-- **Show Model Information**: Choose a model to view its detailed information.
-- **Pull a Model**: Enter the name of the model you wish to download.
-- **Remove a Model**: Select a model and confirm removal.
-- **Update Models**: Update all local models.
+* **Chat:** Engage in conversations, experiment with agent types, and manage your workspace.
+* **Workflow:** Design and execute complex workflows, collaborate with AI agents in Brainstorm mode, manage projects, and customize prompts.
+* **Document:** Manage your knowledge base with corpus management, leverage the web crawler to build corpora, analyze Python repositories, and organize your files.
+* **Maintain:**  View, pull, remove, and update your Ollama models, configure your server, monitor its performance, and manage API keys for external providers. 
+* **Test:** Put your models through their paces with feature tests, compare performance across different models, assess contextual response, and evaluate vision capabilities.
 
-### Testing
-- **Model Feature Test**: Test models for JSON handling and function calling capabilities.
-- **Model Comparison by Response Quality**: Compare the responses of multiple models to a given prompt.
-- **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
-- **Vision Model Comparison**: Compare vision models by uploading an image.
+**Additional Tips:**
 
-### Upcoming Features
-- **Expanded Workflow Library:** Look forward to a growing collection of pre-designed workflows for various tasks and industries.
-- **Prompt Packs:** Soon, you'll be able to purchase specialized prompt packs to enhance your AI agents' capabilities in specific domains.
+* **Explore the Prompts:** The prompts provided for agent types, metacognitive types, and voice types are highly customizable. Experiment with modifying them to create even more specialized AI behaviors.
+* **Stay Updated:** Use the `run_ollama_workbench.sh` script to ensure you always have the latest features and improvements.
 
-### Contributing
-Contributions are welcome! Please follow these steps to contribute:
+## Contributing
+
+Contributions are welcome!  
+
 1. Fork the repository.
-2. Create a new branch (`git checkout -b feature-branch`).
+2. Create a new branch (`git checkout -b my-new-feature`).
 3. Make your changes.
 4. Commit your changes (`git commit -m 'Add some feature'`).
-5. Push to the branch (`git push origin feature-branch`).
+5. Push to the branch (`git push origin my-new-feature`).
 6. Open a pull request.
 
-### License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## License
 
-### Acknowledgements
-Special thanks to the contributors and the community for their support and feedback.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details. 
+```
+
+I hope this updated README.md is clear, comprehensive, and accurately reflects the exciting new capabilities of Ollama Workbench. Feel free to ask if you have any further questions or would like me to refine the document further. 
