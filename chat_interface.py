@@ -91,6 +91,19 @@ def get_graphrag_context(user_input, corpus_name):
         st.error(f"Error querying GraphRAG corpus: {str(e)}")
         return None
 
+def extract_content_blocks(text):
+    if text is None:
+        return [], []
+    code_blocks = re.findall(r'```[\s\S]*?```', text)
+    # Remove code blocks from the text before extracting articles
+    text_without_code = re.sub(r'```[\s\S]*?```', '', text)
+    # Extract article blocks
+    article_blocks = re.findall(r'(?:^|\n)Title:[\s\S]*?(?=\n(?:Title:|\Z))', text_without_code, re.DOTALL)
+    # If no article blocks found, check if the entire text (minus code blocks) is an article
+    if not article_blocks and text_without_code.strip().startswith("Title:"):
+        article_blocks = [text_without_code.strip()]
+    return [block.strip('`').strip() for block in code_blocks], [block.strip() for block in article_blocks]
+
 def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
     prompt = ""
     
@@ -104,6 +117,11 @@ def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
     
     if voice_type != "None":
         prompt += f"Speak in the following voice: {get_voice_prompt()[voice_type]}\n\n"
+    
+    prompt += """When you generate code or an article, it will be automatically saved to the user's Workspace. 
+    For code, use triple backticks (```) to enclose the code block. 
+    For articles, start with 'Title:' followed by the article title on a new line, then the content.
+    Keep the formatting clean and consistent for both code and articles.\n\n"""
     
     return prompt
 
@@ -285,21 +303,34 @@ def chat_interface():
 
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
-        code_blocks = extract_code_blocks(full_response)
+        code_blocks, article_blocks = extract_content_blocks(full_response)
+        
         for code_block in code_blocks:
             st.session_state.workspace_items.append({
                 "type": "code",
                 "content": code_block,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-        if code_blocks:
-            st.success(f"{len(code_blocks)} code block(s) automatically saved to Workspace")
+        
+        for article_block in article_blocks:
+            st.session_state.workspace_items.append({
+                "type": "article",
+                "content": article_block,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+        
+        if code_blocks or article_blocks:
+            st.success(f"{len(code_blocks)} code block(s) and {len(article_blocks)} article(s) automatically saved to Workspace")
 
     with workspace_tab:
         for index, item in enumerate(st.session_state.workspace_items):
             with st.expander(f"Item {index + 1} - {item['timestamp']}"):
                 if item['type'] == 'code':
                     st.code(item['content'])
+                elif item['type'] == 'article':
+                    lines = item['content'].split('\n')
+                    st.subheader(lines[0].replace('Title:', '').strip())
+                    st.markdown('\n'.join(lines[1:]))
                 else:
                     st.write(item['content'])
                 if st.button(f"Remove Item {index + 1}"):
