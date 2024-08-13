@@ -133,21 +133,6 @@ sh run_ollama_workbench.sh
 - **Contextual Response Test by Model**: Test the contextual understanding of a model through a series of prompts.
 - **Vision Model Comparison**: Compare vision models by uploading an image.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.26.14 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.41.15 AM-2-1.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.18 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.14.03 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.24 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.45 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.42.54 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.58.22 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.58.46 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-9.59.18 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.00.19 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.00.53 AM-2.png" />
-<img src="https://2acrestudios.com/wp-content/uploads/2024/07/Screenshot-2024-07-07-at-10.03.32 AM-2.png" />
-
-
 ### Upcoming Features
 - **Expanded Workflow Library:** Look forward to a growing collection of pre-designed workflows for various tasks and industries.
 - **Prompt Packs:** Soon, you'll be able to purchase specialized prompt packs to enhance your AI agents' capabilities in specific domains.
