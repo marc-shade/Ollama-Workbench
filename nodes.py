@@ -4,7 +4,7 @@ import json
 import os
 import random
 import logging
-from typing import List, Dict, Union, Tuple  # Add Tuple to the imports
+from typing import List, Dict, Union, Tuple
 from ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
 from openai_utils import OPENAI_MODELS, call_openai_api
 from groq_utils import GROQ_MODELS, call_groq_api
@@ -16,6 +16,7 @@ import io
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import base64
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -167,112 +168,238 @@ def execute_workflow(nodes: List[Node], edges: List[Edge]) -> Dict[str, str]:
         if node_id in results:
             return results[node_id]
 
+        if node_id not in node_map:
+            logger.error(f"Node {node_id} not found in workflow")
+            return f"Error: Node {node_id} not found"
+
         node = node_map[node_id]
-        if node.type == 'Input':
-            if node.data['input_type'] == 'Text':
-                results[node_id] = node.data['input_text']
-            elif node.data['input_type'] == 'File':
-                # Implement file reading logic here
-                results[node_id] = "File content placeholder"
-            elif node.data['input_type'] == 'API':
-                # Implement API call logic here
-                results[node_id] = "API response placeholder"
-        elif node.type == 'Processing':
-            incoming_edge = next((edge for edge in edges if edge.target == node_id), None)
-            if incoming_edge:
-                input_data = process_node(incoming_edge.source)
-                if node.data['processing_type'] == 'Preprocessing':
-                    # Implement preprocessing logic here
-                    results[node_id] = f"Preprocessed: {input_data}"
-                elif node.data['processing_type'] == 'Vectorization':
-                    # Implement vectorization logic here
-                    results[node_id] = f"Vectorized: {input_data}"
-        elif node.type == 'LLM':
-            incoming_edge = next((edge for edge in edges if edge.target == node_id), None)
-            if incoming_edge:
-                input_text = process_node(incoming_edge.source)
-                prompt = node.data['prompt']
-                complete_prompt = construct_prompt(node, prompt, input_text)
-                
-                if node.data['model_name'] in OPENAI_MODELS:
-                    response = call_openai_api(
-                        node.data['model_name'], 
-                        [{"role": "user", "content": complete_prompt}],
-                        temperature=node.data['temperature'],
-                        max_tokens=node.data['max_tokens'],
-                        openai_api_key=api_keys.get("openai_api_key")
-                    )
-                elif node.data['model_name'] in GROQ_MODELS:
-                    response = call_groq_api(
-                        node.data['model_name'],
-                        complete_prompt,
-                        temperature=node.data['temperature'],
-                        max_tokens=node.data['max_tokens'],
-                        groq_api_key=api_keys.get("groq_api_key")
-                    )
-                else:
-                    response, _, _, _ = call_ollama_endpoint(
-                        node.data['model_name'],
-                        prompt=complete_prompt,
-                        temperature=node.data['temperature'],
-                        max_tokens=node.data['max_tokens'],
-                        presence_penalty=node.data['presence_penalty'],
-                        frequency_penalty=node.data['frequency_penalty']
-                    )
-                results[node_id] = response
-                node.data['conversation_history'].append({"role": "user", "content": input_text})
-                node.data['conversation_history'].append({"role": "assistant", "content": response})
-        elif node.type == 'DataRetrieval':
-            if node.data['retrieval_type'] == 'Search':
-                # Implement search logic here
-                results[node_id] = f"Search results for: {node.data['search_query']}"
-            elif node.data['retrieval_type'] == 'RAG':
-                # Implement RAG logic here
-                results[node_id] = "RAG results placeholder"
-        elif node.type == 'Output':
-            incoming_edge = next((edge for edge in edges if edge.target == node_id), None)
-            if incoming_edge:
-                input_data = process_node(incoming_edge.source)
-                if node.data['output_type'] == 'Text':
-                    results[node_id] = f"{node.data['output_label']}: {input_data}"
-                elif node.data['output_type'] == 'File':
-                    # Implement file writing logic here
-                    results[node_id] = f"Output written to file: {node.data['file_format']}"
-                elif node.data['output_type'] == 'Visualization':
-                    # Implement visualization logic here
-                    results[node_id] = f"Visualization created: {node.data['visualization_type']}"
-        elif node.type == 'Control':
-            if node.data['control_type'] == 'Conditional':
-                condition_result = eval(node.data['condition'])
-                next_node = node.data['true_branch'] if condition_result else node.data['false_branch']
-                results[node_id] = process_node(next_node)
-            elif node.data['control_type'] == 'Loop':
-                loop_results = []
-                for _ in range(node.data['loop_count']):
-                    loop_results.append(process_node(node.data['true_branch']))
-                results[node_id] = loop_results
-        elif node.type == 'Integration':
-            if node.data['integration_type'] == 'API':
-                # Implement API call logic here
-                results[node_id] = f"API call to: {node.data['api_endpoint']}"
-            elif node.data['integration_type'] == 'Webhook':
-                # Implement webhook logic here
-                results[node_id] = f"Webhook triggered: {node.data['webhook_url']}"
-        elif node.type == 'Utility':
-            if node.data['utility_type'] == 'Logging':
-                # Implement logging logic here
-                logger.log(getattr(logging, node.data['log_level']), f"Log from node {node_id}")
-                results[node_id] = f"Logged at level: {node.data['log_level']}"
-            elif node.data['utility_type'] == 'Notification':
-                # Implement notification logic here
-                results[node_id] = f"Notification sent to: {node.data['notification_email']}"
-        
+        incoming_edges = [edge for edge in edges if edge.target == node_id]
+
+        try:
+            if node.type == 'Input':
+                results[node_id] = handle_input_node(node)
+            elif node.type == 'Processing':
+                results[node_id] = handle_processing_node(node, incoming_edges, process_node)
+            elif node.type == 'LLM':
+                results[node_id] = handle_llm_node(node, incoming_edges, process_node, api_keys)
+            elif node.type == 'DataRetrieval':
+                results[node_id] = handle_data_retrieval_node(node, incoming_edges, process_node)
+            elif node.type == 'Output':
+                results[node_id] = handle_output_node(node, incoming_edges, process_node)
+            elif node.type == 'Control':
+                results[node_id] = handle_control_node(node, incoming_edges, process_node)
+            elif node.type == 'Integration':
+                results[node_id] = handle_integration_node(node, incoming_edges, process_node)
+            elif node.type == 'Utility':
+                results[node_id] = handle_utility_node(node, incoming_edges, process_node)
+            else:
+                logger.error(f"Unknown node type: {node.type}")
+                results[node_id] = f"Error: Unknown node type {node.type}"
+        except Exception as e:
+            logger.error(f"Error processing node {node_id}: {str(e)}")
+            results[node_id] = f"Error processing node {node_id}: {str(e)}"
+
         return results[node_id]
 
     for node in nodes:
         process_node(node.id)
 
     return results
+
+def handle_input_node(node):
+    if node.data['input_type'] == 'Text':
+        return node.data['input_text']
+    elif node.data['input_type'] == 'File':
+        if node.data['file_upload'] is not None:
+            return node.data['file_upload'].getvalue().decode('utf-8')
+        else:
+            return "Error: No file uploaded"
+    elif node.data['input_type'] == 'API':
+        try:
+            response = requests.get(node.data['api_endpoint'])
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            return f"Error fetching API: {str(e)}"
+    else:
+        return f"Unknown input type: {node.data['input_type']}"
+
+def handle_processing_node(node, incoming_edges, process_node):
+    if not incoming_edges:
+        return "Error: Processing node requires input"
+    input_data = process_node(incoming_edges[0].source)
+    if node.data['processing_type'] == 'Preprocessing':
+        for step in node.data['preprocessing_steps']:
+            if step == 'Tokenization':
+                input_data = input_data.split()
+            elif step == 'Lowercasing':
+                input_data = input_data.lower()
+            elif step == 'Remove Punctuation':
+                input_data = ''.join(char for char in input_data if char.isalnum() or char.isspace())
+            elif step == 'Remove Stopwords':
+                # This is a simplified version. In a real scenario, you'd use a proper NLP library.
+                stopwords = set(['the', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of'])
+                input_data = ' '.join([word for word in input_data.split() if word.lower() not in stopwords])
+        return input_data
+    elif node.data['processing_type'] == 'Vectorization':
+        # This is a placeholder. In a real scenario, you'd use a proper embedding model.
+        return f"Vectorized: {input_data[:50]}..."
+    else:
+        return f"Unknown processing type: {node.data['processing_type']}"
+
+def handle_llm_node(node, incoming_edges, process_node, api_keys):
+    if not incoming_edges:
+        return "Error: LLM node requires input"
+    input_text = process_node(incoming_edges[0].source)
+    prompt = node.data['prompt']
+    complete_prompt = construct_prompt(node, prompt, input_text)
+    
+    if node.data['model_name'] in OPENAI_MODELS:
+        response = call_openai_api(
+            node.data['model_name'], 
+            [{"role": "user", "content": complete_prompt}],
+            temperature=node.data['temperature'],
+            max_tokens=node.data['max_tokens'],
+            openai_api_key=api_keys.get("openai_api_key")
+        )
+    elif node.data['model_name'] in GROQ_MODELS:
+        response = call_groq_api(
+            node.data['model_name'],
+            complete_prompt,
+            temperature=node.data['temperature'],
+            max_tokens=node.data['max_tokens'],
+            groq_api_key=api_keys.get("groq_api_key")
+        )
+    else:
+        response, _, _, _ = call_ollama_endpoint(
+            node.data['model_name'],
+            prompt=complete_prompt,
+            temperature=node.data['temperature'],
+            max_tokens=node.data['max_tokens'],
+            presence_penalty=node.data['presence_penalty'],
+            frequency_penalty=node.data['frequency_penalty']
+        )
+    node.data['conversation_history'].append({"role": "user", "content": input_text})
+    node.data['conversation_history'].append({"role": "assistant", "content": response})
+    return response
+
+def handle_data_retrieval_node(node, incoming_edges, process_node):
+    if node.data['retrieval_type'] == 'Search':
+        # Implement search logic here. This is a placeholder.
+        return f"Search results for: {node.data['search_query']}"
+    elif node.data['retrieval_type'] == 'RAG':
+        # Implement RAG logic here. This is a placeholder.
+        return "RAG results placeholder"
+    elif node.data['retrieval_type'] == 'Corpus':
+        # Implement corpus retrieval logic here. This is a placeholder.
+        return f"Retrieved data from corpus: {node.data['corpus_name']}"
+    else:
+        return f"Unknown retrieval type: {node.data['retrieval_type']}"
+
+def handle_output_node(node, incoming_edges, process_node):
+    if not incoming_edges:
+        return "Error: Output node requires input"
+    input_data = process_node(incoming_edges[0].source)
+    if node.data['output_type'] == 'Text':
+        return f"{node.data['output_label']}: {input_data}"
+    elif node.data['output_type'] == 'File':
+        # In a real scenario, you'd save this to a file. Here we're just returning the content.
+        return f"File content ({node.data['file_format']}): {input_data}"
+    elif node.data['output_type'] == 'Visualization':
+        # This is a placeholder. In a real scenario, you'd create an actual visualization.
+        plt.figure(figsize=(10, 5))
+        plt.plot([1, 2, 3, 4, 5], [1, 4, 2, 3, 5])
+        plt.title(input_data[:30])
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        return base64.b64encode(buf.getvalue()).decode('utf-8')
+    else:
+        return f"Unknown output type: {node.data['output_type']}"
+
+def handle_control_node(node, incoming_edges, process_node):
+    if node.data['control_type'] == 'Conditional':
+        condition_result = eval(node.data['condition'])
+        next_node = node.data['true_branch'] if condition_result else node.data['false_branch']
+        return process_node(next_node)
+    elif node.data['control_type'] == 'Loop':
+        loop_results = []
+        for _ in range(node.data['loop_count']):
+            loop_results.append(process_node(node.data['true_branch']))
+        return loop_results
+    elif node.data['control_type'] == 'Error Handling':
+        try:
+            return process_node(node.data['true_branch'])
+        except Exception as e:
+            if node.data['error_handling'] == 'Continue':
+                return f"Error occurred, but continuing: {str(e)}"
+            elif node.data['error_handling'] == 'Retry':
+                return process_node(node.data['true_branch'])
+            else:  # Stop
+                raise e
+    else:
+        return f"Unknown control type: {node.data['control_type']}"
+
+def handle_integration_node(node, incoming_edges, process_node):
+    if node.data['integration_type'] == 'API':
+        try:
+            response = requests.request(
+                node.data['request_method'],
+                node.data['api_endpoint'],
+                headers=json.loads(node.data['headers']),
+                data=node.data['body']
+            )
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            return f"API call error: {str(e)}"
+    elif node.data['integration_type'] == 'Webhook':
+        try:
+            response = requests.post(node.data['webhook_url'], json={"message": "Webhook triggered"})
+            response.raise_for_status()
+            return f"Webhook triggered: {response.text}"
+        except requests.RequestException as e:
+            return f"Webhook error: {str(e)}"
+    else:
+        return f"Unknown integration type: {node.data['integration_type']}"
+
+def handle_utility_node(node, incoming_edges, process_node):
+    if node.data['utility_type'] == 'Logging':
+        log_message = process_node(incoming_edges[0].source) if incoming_edges else "No input"
+        log_level = getattr(logging, node.data['log_level'])
+        logger.log(log_level, f"Log from node {node.id}: {log_message}")
+        return f"Logged at level {node.data['log_level']}: {log_message}"
+    elif node.data['utility_type'] == 'Notification':
+        notification_message = process_node(incoming_edges[0].source) if incoming_edges else "No input"
+        send_email_notification(node.data['notification_email'], "Workflow Notification", notification_message)
+        return f"Notification sent to {node.data['notification_email']}"
+    else:
+        return f"Unknown utility type: {node.data['utility_type']}"
+
+def send_email_notification(to_email, subject, message):
+    # This is a placeholder. In a real scenario, you'd use actual SMTP settings.
+    logger.info(f"Sending email to {to_email}: {subject} - {message}")
+    # Uncomment and fill in the following lines to send actual emails
+    # smtp_server = "smtp.gmail.com"
+    # port = 587
+    # sender_email = "your_email@gmail.com"
+    # password = "your_password"
+    # 
+    # msg = MIMEMultipart()
+    # msg["From"] = sender_email
+    # msg["To"] = to_email
+    # msg["Subject"] = subject
+    # msg.attach(MIMEText(message, "plain"))
+    # 
+    # try:
+    #     server = smtplib.SMTP(smtp_server, port)
+    #     server.starttls()
+    #     server.login(sender_email, password)
+    #     server.send_message(msg)
+    # except Exception as e:
+    #     logger.error(f"Error sending email: {str(e)}")
+    # finally:
+    #     server.quit()
 
 def construct_prompt(node: Node, base_prompt: str, input_text: str) -> str:
     prompt_parts = []
@@ -287,7 +414,6 @@ def construct_prompt(node: Node, base_prompt: str, input_text: str) -> str:
     prompt_parts.append(base_prompt)
     prompt_parts.append(f"User Input: {input_text}")
     
-    # Add conversation history to the prompt
     if node.data['conversation_history']:
         history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in node.data['conversation_history'][-5:]])
         prompt_parts.append(f"Recent Conversation:\n{history}")
@@ -295,16 +421,80 @@ def construct_prompt(node: Node, base_prompt: str, input_text: str) -> str:
     return "\n\n".join(prompt_parts)
 
 def validate_workflow(nodes: List[Node], edges: List[Edge]) -> Dict[str, Union[bool, str]]:
-    # Implementation remains the same
-    pass
+    if not any(node.type == 'Input' for node in nodes):
+        return {'valid': False, 'error': 'Workflow must have at least one Input node.'}
+
+    if not any(node.type == 'Output' for node in nodes):
+        return {'valid': False, 'error': 'Workflow must have at least one Output node.'}
+
+    node_ids = set(node.id for node in nodes)
+    connected_nodes = set()
+    for edge in edges:
+        connected_nodes.add(edge.source)
+        connected_nodes.add(edge.target)
+    if node_ids != connected_nodes:
+        return {'valid': False, 'error': 'All nodes must be connected in the workflow.'}
+
+    if has_cycle(nodes, edges):
+        return {'valid': False, 'error': 'Workflow contains a cycle. It must be acyclic.'}
+
+    if not path_exists_input_to_output(nodes, edges):
+        return {'valid': False, 'error': 'There must be a path from an Input node to an Output node.'}
+
+    return {'valid': True, 'error': None}
 
 def has_cycle(nodes: List[Node], edges: List[Edge]) -> bool:
-    # Implementation remains the same
-    pass
+    graph = {node.id: set() for node in nodes}
+    for edge in edges:
+        graph[edge.source].add(edge.target)
+
+    visited = set()
+    rec_stack = set()
+
+    def is_cyclic(node_id):
+        visited.add(node_id)
+        rec_stack.add(node_id)
+
+        for neighbor in graph[node_id]:
+            if neighbor not in visited:
+                if is_cyclic(neighbor):
+                    return True
+            elif neighbor in rec_stack:
+                return True
+
+        rec_stack.remove(node_id)
+        return False
+
+    for node in nodes:
+        if node.id not in visited:
+            if is_cyclic(node.id):
+                return True
+
+    return False
 
 def path_exists_input_to_output(nodes: List[Node], edges: List[Edge]) -> bool:
-    # Implementation remains the same
-    pass
+    graph = {node.id: set() for node in nodes}
+    for edge in edges:
+        graph[edge.source].add(edge.target)
+
+    input_nodes = [node.id for node in nodes if node.type == 'Input']
+    output_nodes = [node.id for node in nodes if node.type == 'Output']
+
+    def dfs(node_id, visited):
+        if node_id in output_nodes:
+            return True
+        visited.add(node_id)
+        for neighbor in graph[node_id]:
+            if neighbor not in visited:
+                if dfs(neighbor, visited):
+                    return True
+        return False
+
+    for input_node in input_nodes:
+        if dfs(input_node, set()):
+            return True
+
+    return False
 
 def render_node_settings(node: Node):
     st.sidebar.subheader(f"Configure {NODE_EMOJIS[node.type]} {node.type} Node {node.id}")
@@ -515,7 +705,6 @@ def nodes_interface():
                             mime=f"text/{node.data['file_format']}"
                         )
                     elif node.data['output_type'] == 'Visualization':
-                        # Assuming result is a base64 encoded image
                         st.image(result)
                 else:
                     st.text(result)
@@ -641,6 +830,55 @@ def load_workflow() -> Tuple[List[Node], List[Edge]]:
     except FileNotFoundError:
         st.warning("No saved workflow found.")
         return [], []
+    except json.JSONDecodeError:
+        st.error("Error decoding the saved workflow. The file may be corrupted.")
+        return [], []
 
+# Add a function to export the workflow as a standalone Python script
+def export_workflow_as_script(nodes: List[Node], edges: List[Edge]) -> str:
+    script = """
+import requests
+import json
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def execute_workflow():
+    results = {}
+    """
+
+    for node in nodes:
+        script += f"\n    # Node {node.id}: {node.type}\n"
+        if node.type == 'Input':
+            script += f"    results['{node.id}'] = {json.dumps(node.data['input_text'])}\n"
+        elif node.type == 'Processing':
+            script += f"    input_data = results['{edges[0].source}']\n"
+            script += f"    # Add processing logic here\n"
+            script += f"    results['{node.id}'] = input_data  # Placeholder\n"
+        elif node.type == 'LLM':
+            script += f"    input_data = results['{edges[0].source}']\n"
+            script += f"    # Add LLM API call logic here\n"
+            script += f"    results['{node.id}'] = 'LLM response'  # Placeholder\n"
+        elif node.type == 'DataRetrieval':
+            script += f"    # Add data retrieval logic here\n"
+            script += f"    results['{node.id}'] = 'Retrieved data'  # Placeholder\n"
+        elif node.type == 'Output':
+            script += f"    input_data = results['{edges[0].source}']\n"
+            script += f"    print(f'Output: {{input_data}}')\n"
+        elif node.type == 'Control':
+            script += f"    # Add control logic here\n"
+        elif node.type == 'Integration':
+            script += f"    # Add integration logic here\n"
+        elif node.type == 'Utility':
+            script += f"    # Add utility logic here\n"
+
+    script += "\n    return results\n\n"
+    script += "if __name__ == '__main__':\n"
+    script += "    execute_workflow()\n"
+
+    return script
+
+# Main execution
 if __name__ == "__main__":
     nodes_interface()
