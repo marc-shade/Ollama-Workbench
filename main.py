@@ -84,6 +84,9 @@ st.markdown("""
         .st-emotion-cache-0 summary {
             border: 0!important;
         }
+        div[data-testid="stVerticalBlockBorderWrapper"] > div > div[width="439"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+            background-color: rgb(255,255,255,.2);
+        }
         </style>
 """, unsafe_allow_html=True)
 
@@ -112,12 +115,16 @@ light_mode_css = """
     background-color: #e0e0e0;
     color: #000000;
 }
-button.ef3psqc13 {
-    background-color: rgb(0,0,0,.1);
-    border: solid 1px #999;
+button.ef3psqc13, 
+button.ef3psqc14 {
+    background-color: #1976D2;
+    color: #FFFFFF;
+    border: solid 1px #FFF;
 }
-button.ef3psqc13:hover {
-    background-color: rgb(0,0,0,.05);
+button.ef3psqc13:hover, 
+button.ef3psqc14:hover {
+    background-color: #e16d6d;
+    color: #FFFFFF;
 }
 """
 

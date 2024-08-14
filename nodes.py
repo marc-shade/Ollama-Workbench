@@ -22,9 +22,9 @@ NODE_COLORS = {
 }
 
 NODE_EMOJIS = {
-    "Input": "📥",
+    "Input": "⤵️",
     "LLM": "🧠",
-    "Output": "📤"
+    "Output": "⤴️"
 }
 
 class Node:
@@ -230,9 +230,9 @@ NODE_COLORS = {
 }
 
 NODE_EMOJIS = {
-    "Input": "📥",
+    "Input": "⤵️",
     "LLM": "🧠",
-    "Output": "📤"
+    "Output": "⤴️"
 }
 
 def get_all_models():
@@ -337,7 +337,6 @@ def render_node_settings(node: Node):
         st.rerun()
 
 def render_workflow_canvas(nodes: List[Node], edges: List[Edge]):
-    st.subheader("🔗 Workflow Canvas")
     
     # Create a grid layout for nodes
     cols = st.columns(3)
@@ -368,17 +367,17 @@ def render_workflow_canvas(nodes: List[Node], edges: List[Edge]):
         st.markdown(f"<div style='text-align: center; font-weight: bold;'>Node {edge.source} ➡️ Node {edge.target}</div>", unsafe_allow_html=True)
 
 def nodes_interface():
-    st.title("🧩 LLM Workflow Builder")
+    st.title("🧩 Nodes")
 
     # Add custom CSS for danger buttons
     st.markdown("""
     <style>
     div.stButton > button:first-child.stBtn.secondary {
-        background-color: #dc3545;
+        background-color: blue;
         color: white;
     }
     div.stButton > button:hover:first-child.stBtn.secondary {
-        background-color: #bd2130;
+        background-color: red;
         color: white;
     }
     </style>
