@@ -679,40 +679,47 @@ def nodes_interface() -> None:
     render_workflow_canvas(st.session_state['nodes'], st.session_state['edges'])
 
     st.subheader("🎛️ Workflow Controls")
+    if st.button("▶️ Execute Workflow", type="primary"):
+        validation_result = validate_workflow(st.session_state['nodes'], st.session_state['edges'])
+        if validation_result['valid']:
+            with st.spinner("Executing workflow..."):
+                results = execute_workflow(st.session_state['nodes'], st.session_state['edges'])
+            st.write("Workflow Execution Results:")
+            for node_id, result in results.items():
+                node = next(node for node in st.session_state['nodes'] if node.id == node_id)
+                st.subheader(f"{NODE_EMOJIS[node.type]} Node {node_id} ({node.type}):")
+                if node.type == 'Output':
+                    if node.data['output_type'] == 'Text':
+                        if node.data['document_format'] == 'Markdown':
+                            st.markdown(result)
+                        elif node.data['document_format'] == 'HTML':
+                            st.components.v1.html(result, height=300)
+                        else:
+                            st.text(result)
+                    elif node.data['output_type'] == 'File':
+                        file_contents = result.encode('utf-8')
+                        st.download_button(
+                            label="Download Output File",
+                            data=file_contents,
+                            file_name=f"output.{node.data['file_format']}",
+                            mime=f"text/{node.data['file_format']}"
+                        )
+                    elif node.data['output_type'] == 'Visualization':
+                        st.image(result)
+                else:
+                    st.text(result)
+        else:
+            st.error(f"Workflow validation failed: {validation_result['error']}")
+
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("▶️ Execute Workflow", type="primary"):
+        if st.button("Validate Workflow", type="primary"):
             validation_result = validate_workflow(st.session_state['nodes'], st.session_state['edges'])
             if validation_result['valid']:
-                with st.spinner("Executing workflow..."):
-                    results = execute_workflow(st.session_state['nodes'], st.session_state['edges'])
-                st.write("Workflow Execution Results:")
-                for node_id, result in results.items():
-                    node = next(node for node in st.session_state['nodes'] if node.id == node_id)
-                    st.subheader(f"{NODE_EMOJIS[node.type]} Node {node_id} ({node.type}):")
-                    if node.type == 'Output':
-                        if node.data['output_type'] == 'Text':
-                            if node.data['document_format'] == 'Markdown':
-                                st.markdown(result)
-                            elif node.data['document_format'] == 'HTML':
-                                st.components.v1.html(result, height=300)
-                            else:
-                                st.text(result)
-                        elif node.data['output_type'] == 'File':
-                            file_contents = result.encode('utf-8')
-                            st.download_button(
-                                label="Download Output File",
-                                data=file_contents,
-                                file_name=f"output.{node.data['file_format']}",
-                                mime=f"text/{node.data['file_format']}"
-                            )
-                        elif node.data['output_type'] == 'Visualization':
-                            st.image(result)
-                    else:
-                        st.text(result)
+                st.success("Workflow is valid! ✅")
             else:
                 st.error(f"Workflow validation failed: {validation_result['error']}")
-
     with col2:
         if st.button("💾 Save Workflow", type="secondary"):
             save_workflow(st.session_state['nodes'], st.session_state['edges'])
@@ -737,13 +744,6 @@ def nodes_interface() -> None:
                 mime="text/plain"
             )
 
-    st.subheader("🔍 Workflow Validation")
-    if st.button("Validate Workflow", type="primary"):
-        validation_result = validate_workflow(st.session_state['nodes'], st.session_state['edges'])
-        if validation_result['valid']:
-            st.success("Workflow is valid! ✅")
-        else:
-            st.error(f"Workflow validation failed: {validation_result['error']}")
 
     st.subheader("📊 Workflow Statistics")
     st.write(f"Total Nodes: {len(st.session_state['nodes'])}")
