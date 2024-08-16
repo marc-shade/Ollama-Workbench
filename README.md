@@ -35,7 +35,7 @@ Ollama Workbench offers powerful tools for designing and executing complex workf
 - 🚀 **Project Management:** Develop, manage, and execute complex projects with multiple AI agents. Configure each agent with specific models, types, parameters, and even assign them individual tasks within a project.
 - 🤖 **AI-Assisted Project Planning:**  Generate tasks, assign agents, and create project structures using natural language descriptions. Ollama Workbench can understand your project goals and intelligently suggest tasks and agent assignments.
 - ✨ **Custom Prompt Management:** Create, edit, and manage custom prompts for various agent types, enabling highly specialized AI behaviors. This provides granular control over agent interaction and output. 
-- ⛓️ **Nodes:**  A visual workflow builder! Design and execute workflows by connecting different nodes representing AI models, inputs, and outputs. Configure each node's settings, including prompt engineering, model selection, and output formatting. This feature provides a powerful and flexible way to chain together AI models and create custom processing pipelines.
+- ✳️ **Nodes:**  A visual workflow builder! Design and execute workflows by connecting different nodes representing AI models, inputs, and outputs. Configure each node's settings, including prompt engineering, model selection, and output formatting. This feature provides a powerful and flexible way to chain together AI models and create custom processing pipelines.
 
 ### 🗄️ Document and Knowledge Management
 
