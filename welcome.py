@@ -23,12 +23,12 @@ def display_welcome_message():
             #### 🔄 Workflow
             Ollama Workbench offers a range of tools to design and execute complex AI workflows:
 
-            - 🧠 **Brainstorm:** Engage in interactive brainstorming sessions with multiple AI agents, each with unique roles and perspectives. The agents leverage AutoGen's 'Teachable Agent' memory feature, remembering your past brainstorming sessions for enhanced context and continuity.
-            - 🔨 **Build:** **[New!]** An autonomous multi-agent software development system that manages the entire lifecycle of software projects. Specialized agents handle tasks like project planning, code generation, testing, documentation, and quality review.
             - 🔬 **Research:** Conduct in-depth research using multiple AI agents, each employing a different search approach and utilizing diverse search libraries (DuckDuckGo, Google, Bing, SerpApi, Serper). Agents generate summaries compiled into a comprehensive report with references.
+            - 🧠 **Brainstorm:** Engage in interactive brainstorming sessions with multiple AI agents, each with unique roles and perspectives. The agents leverage AutoGen's 'Teachable Agent' memory feature, remembering your past brainstorming sessions for enhanced context and continuity.
             - 🚀 **Projects:** Create, edit, delete, import, and export projects and tasks. Assign AI agents to tasks and automatically generate responses, streamlining your project management workflow.
+            - 🔨 **Build:** **[New!]** An autonomous multi-agent software development system that manages the entire lifecycle of software projects. Specialized agents handle tasks like project planning, code generation, testing, documentation, and quality review.
+            - ✳️ **Nodes:** **[New!]** A visual workflow builder. Design and execute workflows by connecting different nodes representing AI models, inputs, and outputs. Configure each node's settings, including prompt engineering, model selection, and output formatting. Create powerful processing pipelines by chaining together multiple AI models.
             - ✨ **Prompts:** Create, edit, and delete custom prompts for Agent Type, Metacognitive Type, Voice Type, and Identity, enabling highly specialized AI behaviors and granular control over agent interactions.
-            - ⛓️ **Nodes:** **[New!]** A visual workflow builder. Design and execute workflows by connecting different nodes representing AI models, inputs, and outputs. Configure each node's settings, including prompt engineering, model selection, and output formatting. Create powerful processing pipelines by chaining together multiple AI models.
 
             #### 🗄️ Document
             Manage your knowledge base and streamline document creation:

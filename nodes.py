@@ -605,7 +605,7 @@ def render_workflow_canvas(nodes: List[Node], edges: List[Edge]) -> None:
         
 def nodes_interface() -> None:
     """Provides the Streamlit interface for the LLM workflow builder."""
-    st.title("🧩 Nodes")
+    st.title("✳️ Nodes")
 
     st.markdown("""
     <style>
@@ -711,10 +711,10 @@ def nodes_interface() -> None:
         else:
             st.error(f"Workflow validation failed: {validation_result['error']}")
 
-
+    st.html("<hr />")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("Validate Workflow", type="primary"):
+        if st.button("✅ Validate Workflow", type="primary"):
             validation_result = validate_workflow(st.session_state['nodes'], st.session_state['edges'])
             if validation_result['valid']:
                 st.success("Workflow is valid! ✅")
