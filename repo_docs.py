@@ -335,7 +335,7 @@ def get_file_info(file_path):
     except FileNotFoundError:
         return None
 
-def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, api_key, update_queue, progress_bar, status_text, output_area):
+def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area):
     api_keys = load_api_keys()
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -346,7 +346,7 @@ def process_file_with_updates(file_path, task_type, model, temperature, max_toke
         
         # Generate documentation with real-time updates
         documentation = ""
-        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens, api_key):
+        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
             documentation += chunk
             update_queue.put(("output", documentation))
 
@@ -595,14 +595,26 @@ def main():
 
         with ThreadPoolExecutor(max_workers=1) as executor:
             api_keys = load_api_keys()
-            futures = {executor.submit(process_file_with_updates, file_path, task_type, model_settings["model"], model_settings["temperature"], model_settings["max_tokens"], model_settings["api_key"], update_queue, progress_bar, status_text, output_area): file_path for file_path in code_files}
+            futures = {executor.submit(
+                process_file_with_updates, 
+                file_path, 
+                task_type, 
+                model_settings["model"], 
+                model_settings["temperature"], 
+                model_settings["max_tokens"], 
+                model_settings.get("api_key"),  # Use .get() with a default of None
+                update_queue, 
+                progress_bar, 
+                status_text, 
+                output_area
+            ): file_path for file_path in code_files}
+            
             for i, future in enumerate(as_completed(futures)):               
                 file_path, documentation, pylint_report, file_content = future.result()
                 results.append((file_path, documentation, pylint_report, file_content))
                 progress = (i + 1) / len(code_files)
                 progress_bar.progress(progress)
                 update_ui()
-
         progress_bar.empty()
         status_text.empty()
 
