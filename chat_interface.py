@@ -14,6 +14,7 @@ import tiktoken
 from streamlit_extras.bottom_container import bottom
 from enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
 from groq_utils import GROQ_MODELS
+from openai_utils import OPENAI_MODELS
 
 SETTINGS_FILE = "chat-settings.json"
 RAGTEST_DIR = "ragtest"
@@ -91,7 +92,7 @@ def generate_prompt_suggestion(user_need):
     prompt = f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}"
 
     try:
-        if model.startswith("gpt-"):
+        if model in OPENAI_MODELS:
             response = call_openai_api(
                 model,
                 [{"role": "user", "content": prompt}],
@@ -326,7 +327,7 @@ def chat_interface():
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 full_response = ""
-                if st.session_state.selected_model.startswith("gpt-"):
+                if st.session_state.selected_model in OPENAI_MODELS:
                     full_response = call_openai_api(
                         st.session_state.selected_model,
                         [{"role": "user", "content": final_prompt}],

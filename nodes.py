@@ -1,4 +1,5 @@
 # nodes.py
+
 import json
 import logging
 import streamlit as st
@@ -24,8 +25,8 @@ AVAILABLE_NODE_TYPES = {
     "Input": True,
     "Processing": True,
     "LLM": True,
-    "DataRetrieval": False,  # Set to False until fully implemented
     "Output": True,
+    "DataRetrieval": False,  # Set to False until fully implemented
     "Control": False,  # Set to False until fully implemented
     "Integration": False,  # Set to False until fully implemented
     "Utility": False  # Set to False until fully implemented
@@ -77,7 +78,6 @@ class Node:
             'data': self.data
         }
 
-    @staticmethod
     @staticmethod
     def from_dict(data: dict):
         """Creates a Node object from a dictionary."""
@@ -343,6 +343,7 @@ def handle_processing_node(node: Node, incoming_edges: List[Edge], process_node)
     if not incoming_edges:
         return "Error: Processing node requires input"
     input_data = process_node(incoming_edges[0].source)
+
     if node.data['processing_type'] == 'Preprocessing':
         for step in node.data['preprocessing_steps']:
             if step == 'Tokenization':
@@ -355,6 +356,16 @@ def handle_processing_node(node: Node, incoming_edges: List[Edge], process_node)
                 stopwords = set(['the', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of'])
                 input_data = ' '.join([word for word in input_data.split() if word.lower() not in stopwords])
         return ' '.join(input_data) if isinstance(input_data, list) else input_data
+
+    elif node.data['processing_type'] == 'Logic':
+        logic_type = node.data['logic_type']
+        if logic_type == 'Monte Carlo Tree Search':
+            return execute_mcts_subworkflow(node)
+        elif logic_type in ['Chain of Thought', 'Tree of Thought', 'Visualization of Thought']:
+            return apply_metacognitive_prompt(node, input_data)
+        else:
+            return f"Unknown logic type: {logic_type}"
+
     elif node.data['processing_type'] == 'Vectorization':
         return f"Vectorized: {input_data[:50]}..."
     else:
@@ -521,6 +532,20 @@ def path_exists_input_to_output(nodes: List[Node], edges: List[Edge]) -> bool:
 
     return False
 
+def execute_mcts_subworkflow(node: Node) -> str:
+    """Executes a sub-workflow as part of MCTS logic."""
+    # Placeholder for MCTS logic; this would involve creating and managing a sub-workflow.
+    # For demonstration purposes, we'll mock the MCTS behavior.
+    return "MCTS decision result"
+
+def apply_metacognitive_prompt(node: Node, input_data: str) -> str:
+    """Applies a metacognitive prompt for Chain of Thought, Tree of Thought, or Visualization of Thought."""
+    metacognitive_type = node.data.get('metacognitive_type', 'None')
+    prompt = get_metacognitive_prompt()[metacognitive_type]
+    # Normally, we'd interact with the LLM API here using the prompt and input_data.
+    # For now, we'll mock the LLM response.
+    return f"{metacognitive_type} result based on input: {input_data}"
+
 def render_node_settings(node: Node) -> None:
     """Renders the settings panel for the selected node in the Streamlit sidebar."""
     st.sidebar.subheader(f"Configure {NODE_EMOJIS[node.type]} {node.type} Node {node.id}")
@@ -536,11 +561,15 @@ def render_node_settings(node: Node) -> None:
             node.data['api_endpoint'] = st.sidebar.text_input("API Endpoint", value=node.data['api_endpoint'], key=f"api_endpoint_{node.id}")
 
     elif node.type == 'Processing':
-        node.data['processing_type'] = st.sidebar.selectbox("Processing Type", ["Preprocessing", "Vectorization"], key=f"processing_type_{node.id}")
+        node.data['processing_type'] = st.sidebar.selectbox("Processing Type", ["Preprocessing", "Logic", "Vectorization"], key=f"processing_type_{node.id}")
         if node.data['processing_type'] == 'Preprocessing':
             node.data['preprocessing_steps'] = st.sidebar.multiselect("Preprocessing Steps", ["Tokenization", "Lowercasing", "Remove Punctuation", "Remove Stopwords"], key=f"preprocessing_steps_{node.id}")
         elif node.data['processing_type'] == 'Vectorization':
             node.data['vectorization_model'] = st.sidebar.selectbox("Vectorization Model", ["Word2Vec", "GloVe", "FastText"], key=f"vectorization_model_{node.id}")
+        elif node.data['processing_type'] == 'Logic':
+            metacognitive_types = list(get_metacognitive_prompt().keys())
+            logic_types = ["Monte Carlo Tree Search"] + metacognitive_types
+            node.data['logic_type'] = st.sidebar.selectbox("Logic Type", logic_types, key=f"logic_type_{node.id}")
 
     elif node.type == 'LLM':
         all_models = get_all_models()
@@ -551,7 +580,6 @@ def render_node_settings(node: Node) -> None:
             key=f"model_{node.id}"
         )
         node.data['agent_type'] = st.sidebar.selectbox("Agent Type", ["None"] + list(get_agent_prompt().keys()), index=(["None"] + list(get_agent_prompt().keys())).index(node.data['agent_type']), key=f"agent_type_{node.id}")
-        node.data['metacognitive_type'] = st.sidebar.selectbox("Metacognitive Type", ["None"] + list(get_metacognitive_prompt().keys()), index=(["None"] + list(get_metacognitive_prompt().keys())).index(node.data['metacognitive_type']), key=f"metacognitive_type_{node.id}")
         node.data['voice_type'] = st.sidebar.selectbox("Voice Type", ["None"] + list(get_voice_prompt().keys()), index=(["None"] + list(get_voice_prompt().keys())).index(node.data['voice_type']), key=f"voice_type_{node.id}")
         node.data['identity_type'] = st.sidebar.selectbox("Identity Type", ["None"] + list(get_identity_prompt().keys()), index=(["None"] + list(get_identity_prompt().keys())).index(node.data['identity_type']), key=f"identity_type_{node.id}")
         node.data['temperature'] = st.sidebar.slider("Temperature", 0.0, 1.0, node.data['temperature'], key=f"temperature_{node.id}")
@@ -574,6 +602,8 @@ def render_node_settings(node: Node) -> None:
     if st.sidebar.button("Update Node", key=f"update_node_{node.id}"):
         st.success(f"Node {node.id} updated successfully!")
         st.rerun()
+
+
 
 def render_workflow_canvas(nodes: List[Node], edges: List[Edge]) -> None:
     """Renders the workflow canvas, displaying nodes and connections."""
@@ -605,7 +635,7 @@ def render_workflow_canvas(nodes: List[Node], edges: List[Edge]) -> None:
         
 def nodes_interface() -> None:
     """Provides the Streamlit interface for the LLM workflow builder."""
-    st.title("✳️ Nodes")
+    st.title("✳️ Compound Elemental Framework (CEF)")
 
     st.markdown("""
     <style>
@@ -907,7 +937,7 @@ def execute_workflow():
 
 def main() -> None:
     """The main function to run the Streamlit app."""
-    st.set_page_config(page_title="LLM Workflow Builder", page_icon="🧩", layout="wide")
+    st.set_page_config(page_title="Compound Elemental Framework (CEF)", page_icon="✳️", layout="wide")
     nodes_interface()
 
 if __name__ == "__main__":
