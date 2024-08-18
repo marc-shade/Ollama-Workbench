@@ -1,4 +1,5 @@
 # main.py
+
 import streamlit as st
 
 # Set page config for wide layout
@@ -117,7 +118,7 @@ light_mode_css = """
 }
 button.ef3psqc13, 
 button.ef3psqc14 {
-    background-color: #1976D2;
+    background-color: #2c4755;
     color: #FFFFFF;
     border: solid 1px #FFF;
 }
@@ -161,7 +162,7 @@ SIDEBAR_SECTIONS = {
         ("Research", "Research"),
         ("Brainstorm", "Brainstorm"),
         ("Projects", "Projects"),
-        ("Nodes", "Nodes"),  # Add the Nodes option
+        ("CEF", "CEF"),
         ("Build", "Build"),
         ("Prompts", "Prompts"),
     ],
@@ -277,7 +278,7 @@ def main_content():
         projects_main()
     elif st.session_state.selected_test == "Prompts":
         manage_prompts()
-    elif st.session_state.selected_test == "Nodes":
+    elif st.session_state.selected_test == "CEF":
         nodes_interface()
     elif st.session_state.selected_test == "Corpus":
         enhance_corpus_ui()
