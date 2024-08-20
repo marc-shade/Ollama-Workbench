@@ -38,10 +38,10 @@ def save_settings():
         "voice_type": st.session_state.voice_type,
         "selected_corpus": st.session_state.selected_corpus,
         "temperature_slider_chat": st.session_state.temperature_slider_chat,
-        "max_tokens_slider_chat": st.session_state.max_tokens_slider_chat,
+        "max_tokens_slider_chat": min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
         "presence_penalty_slider_chat": st.session_state.presence_penalty_slider_chat,
         "frequency_penalty_slider_chat": st.session_state.frequency_penalty_slider_chat,
-        "episodic_memory_enabled": st.session_state.episodic_memory_enabled,  # Add episodic memory setting
+        "episodic_memory_enabled": st.session_state.episodic_memory_enabled,
     }
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f)
@@ -79,7 +79,7 @@ def ai_assisted_prompt_writing():
 def generate_prompt_suggestion(user_need):
     api_keys = load_api_keys()
     model = st.session_state.selected_model
-    prompt = f"Your task is to improve the user's prompt and send it to another AI agent to process. Do not respond directly to the user's response, assume whatever they give you is a prompt that needs to be improved for maximum effiency and effectiveness. Create a prompt that will give the user the best results. Create a detailed and effective improved prompt for an AI assistant based on this user need: {user_need}"
+    prompt = f"Your task is to improve the user's prompt and send it to another AI agent to process. Do not respond directly to the user's response, assume whatever they give you is a prompt that needs to be improved for maximum efficiency and effectiveness. Create a prompt that will give the user the best results. Create a detailed and effective improved prompt for an AI assistant based on this user need: {user_need}"
 
     try:
         if model in OPENAI_MODELS:
@@ -87,7 +87,7 @@ def generate_prompt_suggestion(user_need):
                 model,
                 [{"role": "user", "content": prompt}],
                 temperature=st.session_state.temperature_slider_chat,
-                max_tokens=st.session_state.max_tokens_slider_chat,
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
                 openai_api_key=api_keys.get("openai_api_key")
             )
             return response.strip()
@@ -96,7 +96,7 @@ def generate_prompt_suggestion(user_need):
                 model,
                 prompt,
                 temperature=st.session_state.temperature_slider_chat,
-                max_tokens=st.session_state.max_tokens_slider_chat,
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
                 groq_api_key=api_keys.get("groq_api_key")
             )
             return response.strip()
@@ -106,7 +106,7 @@ def generate_prompt_suggestion(user_need):
                 prompt=prompt,
                 options={
                     "temperature": st.session_state.temperature_slider_chat,
-                    "num_predict": st.session_state.max_tokens_slider_chat
+                    "num_predict": min(st.session_state.max_tokens_slider_chat, 16000)  # Enforce max token limit
                 }
             )
             return response['response'].strip()
@@ -172,10 +172,10 @@ def get_token_embeddings(model: str, text: str) -> np.ndarray:
     try:
         response = ollama.embeddings(model=model, prompt=text)
         embeddings = np.array(response['embedding'])
-        return embeddings
+        return embeddings.reshape(1, -1)  # Ensure it's a 2D array
     except Exception as e:
         st.error(f"An error occurred while getting token embeddings: {e}")
-        return np.array([]).reshape(0, 1)
+        return np.array([]).reshape(1, 0)  # Return an empty 2D array
 
 def calculate_modularity(similarity_matrix: np.ndarray, communities: list) -> float:
     """Calculates the modularity of a graph given its similarity matrix and community structure."""
@@ -231,7 +231,6 @@ def refine_boundaries(embeddings: np.ndarray, surprise_indices: list) -> list:
                 best_boundaries = temp_boundaries.copy()
 
     return best_boundaries
-
 
 class EpisodicMemory:
     def __init__(self, similarity_buffer_size: int = 5, contiguity_buffer_size: int = 3):
@@ -318,7 +317,7 @@ def chat_interface():
 
     st.session_state.selected_corpus = st.session_state.get("selected_corpus", "None")
     st.session_state.temperature_slider_chat = st.session_state.get("temperature_slider_chat", 0.7)
-    st.session_state.max_tokens_slider_chat = st.session_state.get("max_tokens_slider_chat", 4000)
+    st.session_state.max_tokens_slider_chat = min(st.session_state.get("max_tokens_slider_chat", 4000), 16000)  # Enforce max token limit
     st.session_state.presence_penalty_slider_chat = st.session_state.get("presence_penalty_slider_chat", 0.0)
     st.session_state.frequency_penalty_slider_chat = st.session_state.get("frequency_penalty_slider_chat", 0.0)
 
@@ -349,7 +348,7 @@ def chat_interface():
 
         with st.expander("🛠️ Advanced Settings", expanded=False):
             st.session_state.temperature_slider_chat = st.slider("🌡️ Temperature", min_value=0.0, max_value=1.0, value=st.session_state.temperature_slider_chat, step=0.1)
-            st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=st.session_state.max_tokens_slider_chat, step=1000)
+            st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=16000, value=st.session_state.max_tokens_slider_chat, step=1000)  # Enforce max token limit
             st.session_state.presence_penalty_slider_chat = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.presence_penalty_slider_chat, step=0.1)
             st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.frequency_penalty_slider_chat, step=0.1)
             st.session_state.episodic_memory_enabled = st.checkbox("Enable Episodic Memory", value=st.session_state.episodic_memory_enabled)
@@ -422,16 +421,22 @@ def chat_interface():
             else:
                 st.warning(f"No relevant context found in the corpus '{st.session_state.selected_corpus}'. Proceeding without additional context.")
 
-        # Episodic memory retrieval
+        # Episodic memory retrieval with error handling
         episodic_context = ""
         if st.session_state.episodic_memory_enabled:
-            # Segment the chat history
-            st.session_state.episodic_memory.segment_text_into_events(st.session_state.selected_model, "\n".join([msg['content'] for msg in st.session_state.chat_history]), 0.01)
-            query_embedding = get_token_embeddings(st.session_state.selected_model, user_input)
-            retrieved_events = st.session_state.episodic_memory.retrieve_events(query_embedding)
-
-            for event in retrieved_events:
-                episodic_context += f" {event['text']}"
+            try:
+                # Segment the chat history
+                st.session_state.episodic_memory.segment_text_into_events(st.session_state.selected_model, "\n".join([msg['content'] for msg in st.session_state.chat_history]), 0.01)
+                query_embedding = get_token_embeddings(st.session_state.selected_model, user_input)
+                
+                if query_embedding.size > 0:  # Check if the embedding is not empty
+                    retrieved_events = st.session_state.episodic_memory.retrieve_events(query_embedding)
+                    for event in retrieved_events:
+                        episodic_context += f" {event['text']}"
+                else:
+                    st.warning("Failed to generate embeddings for episodic memory. Proceeding without episodic context.")
+            except Exception as e:
+                st.error(f"Error in episodic memory processing: {str(e)}. Proceeding without episodic context.")
 
         final_prompt = f"""
         {agent_prompt}
@@ -458,42 +463,51 @@ def chat_interface():
                 full_response = ""
 
                 if st.session_state.selected_model in OPENAI_MODELS:
-                    full_response = call_openai_api(
-                        st.session_state.selected_model,
-                        [{"role": "user", "content": final_prompt}],
-                        temperature=st.session_state.temperature_slider_chat,
-                        max_tokens=st.session_state.max_tokens_slider_chat,
-                        openai_api_key=api_keys.get("openai_api_key")
-                    )
-                    message_placeholder.markdown(full_response)
+                    try:
+                        full_response = call_openai_api(
+                            st.session_state.selected_model,
+                            [{"role": "user", "content": final_prompt}],
+                            temperature=st.session_state.temperature_slider_chat,
+                            max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
+                            openai_api_key=api_keys.get("openai_api_key")
+                        )
+                        message_placeholder.markdown(full_response)
+                    except Exception as e:
+                        st.error(f"Error calling OpenAI API: {e}")
 
                 elif st.session_state.selected_model in GROQ_MODELS:
-                    full_response = call_groq_api(
-                        st.session_state.selected_model,
-                        final_prompt,
-                        temperature=st.session_state.temperature_slider_chat,
-                        max_tokens=st.session_state.max_tokens_slider_chat,
-                        groq_api_key=api_keys.get("groq_api_key")
-                    )
-                    message_placeholder.markdown(full_response)
+                    try:
+                        full_response = call_groq_api(
+                            st.session_state.selected_model,
+                            final_prompt,
+                            temperature=st.session_state.temperature_slider_chat,
+                            max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
+                            groq_api_key=api_keys.get("groq_api_key")
+                        )
+                        message_placeholder.markdown(full_response)
+                    except Exception as e:
+                        st.error(f"Error calling Groq API: {e}")
 
                 else:
-                    for response_chunk in ollama.generate(
-                        st.session_state.selected_model,
-                        final_prompt,
-                        stream=True,
-                        options={
-                            "temperature": st.session_state.temperature_slider_chat,
-                            "num_predict": st.session_state.max_tokens_slider_chat,
-                            "presence_penalty": st.session_state.presence_penalty_slider_chat,
-                            "frequency_penalty": st.session_state.frequency_penalty_slider_chat,
-                        }
-                    ):
-                        full_response += response_chunk["response"]
-                        message_placeholder.markdown(full_response + "▌")
-                        st.session_state.total_tokens += count_tokens(response_chunk["response"])
+                    try:
+                        for response_chunk in ollama.generate(
+                            st.session_state.selected_model,
+                            final_prompt,
+                            stream=True,
+                            options={
+                                "temperature": st.session_state.temperature_slider_chat,
+                                "num_predict": min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
+                                "presence_penalty": st.session_state.presence_penalty_slider_chat,
+                                "frequency_penalty": st.session_state.frequency_penalty_slider_chat,
+                            }
+                        ):
+                            full_response += response_chunk["response"]
+                            message_placeholder.markdown(full_response + "▌")
+                            st.session_state.total_tokens += count_tokens(response_chunk["response"])
 
-                    message_placeholder.markdown(full_response)
+                        message_placeholder.markdown(full_response)
+                    except Exception as e:
+                        st.error(f"Error during response generation: {e}")
 
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
