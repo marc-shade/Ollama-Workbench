@@ -79,7 +79,7 @@ def ai_assisted_prompt_writing():
 def generate_prompt_suggestion(user_need):
     api_keys = load_api_keys()
     model = st.session_state.selected_model
-    prompt = f"Create a detailed and effective prompt for an AI assistant based on this user need: {user_need}"
+    prompt = f"Your task is to improve the user's prompt and send it to another AI agent to process. Do not respond directly to the user's response, assume whatever they give you is a prompt that needs to be improved for maximum effiency and effectiveness. Create a prompt that will give the user the best results. Create a detailed and effective improved prompt for an AI assistant based on this user need: {user_need}"
 
     try:
         if model in OPENAI_MODELS:
