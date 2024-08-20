@@ -171,7 +171,7 @@ class WebsiteCrawler:
 def main():
     st.title("🕸️ Web Crawler")
     st.write("Enter the website URL you want to crawl in the box below. Choose your preferred output format (TXT, JSON, or PDF) from the dropdown menu. Click 'Start Crawling' to begin. Once complete, the generated file will be saved to the 'files' folder. You can access and manage this file in the 'Files' tab under the 'Chat' section or through the 'Document' section.")
-    col1, col2, col3 = st.columns([3,3,1], vertical_alignment="bottom")
+    col1, col2 = st.columns([3,3], vertical_alignment="bottom")
     with col1:
         root_url = st.text_input("Enter the root URL to crawl:")
     with col2:
@@ -179,30 +179,30 @@ def main():
         "Choose output format",
         ("TXT", "JSON", "PDF")
         )
-    with col3:
-        if st.button("🕷️ Start Crawling"):
-            if root_url:
-                crawler = WebsiteCrawler(root_url, output_format)
-                crawler.crawl()
+
+    if st.button("🕷️ Start Crawling"):
+        if root_url:
+            crawler = WebsiteCrawler(root_url, output_format)
+            crawler.crawl()
+        
+            st.success("🕷️ Crawling completed! Generating output file...")
             
-                st.success("🕷️ Crawling completed! Generating output file...")
-                
-                output_filename = f"{urlparse(root_url).netloc}.{output_format.lower()}"
-                
-                crawler.generate_output(output_filename)
-                
-                st.success(f"🟢 {output_format} generation completed! File saved as {output_filename}")
-                
-                output_path = os.path.join(SCRIPT_DIR, "files", output_filename)
-                with open(output_path, "rb") as file:
-                    st.download_button(
-                        label=f"Download {output_format} File",
-                        data=file,
-                        file_name=output_filename,
-                        mime=f"application/{output_format.lower()}"
-                    )
-            else:
-                st.error("Please enter a valid URL.")
+            output_filename = f"{urlparse(root_url).netloc}.{output_format.lower()}"
+            
+            crawler.generate_output(output_filename)
+            
+            st.success(f"🟢 {output_format} generation completed! File saved as {output_filename}")
+            
+            output_path = os.path.join(SCRIPT_DIR, "files", output_filename)
+            with open(output_path, "rb") as file:
+                st.download_button(
+                    label=f"Download {output_format} File",
+                    data=file,
+                    file_name=output_filename,
+                    mime=f"application/{output_format.lower()}"
+                )
+        else:
+            st.error("Please enter a valid URL.")
 
 if __name__ == "__main__":
     main()

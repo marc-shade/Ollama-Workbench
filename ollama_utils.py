@@ -69,7 +69,7 @@ def get_available_models():
     ]
     return models
 
-def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None, tools=None):
+def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None, tools=None, episodic_memory=None):
     payload = {
         "model": model,
         "temperature": temperature,

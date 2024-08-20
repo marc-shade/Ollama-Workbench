@@ -1,5 +1,3 @@
-# chat_interface.py
-
 import streamlit as st
 import os
 import json
@@ -15,6 +13,9 @@ from streamlit_extras.bottom_container import bottom
 from enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
 from groq_utils import GROQ_MODELS
 from openai_utils import OPENAI_MODELS
+from collections import deque
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 SETTINGS_FILE = "chat-settings.json"
 RAGTEST_DIR = "ragtest"
@@ -29,8 +30,6 @@ def load_settings():
                     st.session_state[key] = value
     print(f"Settings loaded: {st.session_state}")
 
-
-
 def save_settings():
     settings = {
         "selected_model": st.session_state.selected_model,
@@ -42,6 +41,7 @@ def save_settings():
         "max_tokens_slider_chat": st.session_state.max_tokens_slider_chat,
         "presence_penalty_slider_chat": st.session_state.presence_penalty_slider_chat,
         "frequency_penalty_slider_chat": st.session_state.frequency_penalty_slider_chat,
+        "episodic_memory_enabled": st.session_state.episodic_memory_enabled,  # Add episodic memory setting
     }
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f)
@@ -76,16 +76,6 @@ def ai_assisted_prompt_writing():
         else:
             st.warning("Unable to generate a prompt suggestion. Please try again or select a different model.")
 
-def pull_model(model_name):
-    try:
-        st.info(f"Pulling model '{model_name}'. This may take a while...")
-        result = subprocess.run(['ollama', 'pull', model_name], capture_output=True, text=True, check=True)
-        st.success(f"Successfully pulled model '{model_name}'.")
-        return True
-    except subprocess.CalledProcessError as e:
-        st.error(f"Failed to pull model '{model_name}'. Error: {e.stderr}")
-        return False
-
 def generate_prompt_suggestion(user_need):
     api_keys = load_api_keys()
     model = st.session_state.selected_model
@@ -118,16 +108,6 @@ def generate_prompt_suggestion(user_need):
                 num_predict=st.session_state.max_tokens_slider_chat
             )
             return response['response'].strip()
-    except ollama.ResponseError as e:
-        if "model not found" in str(e).lower():
-            st.error(f"Model '{model}' not found.")
-            if st.button("Pull Model"):
-                if pull_model(model):
-                    st.rerun()
-            return None
-        else:
-            st.error(f"An error occurred: {str(e)}")
-            return None
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         return None
@@ -184,6 +164,118 @@ def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
     
     return prompt
 
+# Episodic Memory Implementation
+def get_token_embeddings(model: str, text: str) -> np.ndarray:
+    """Gets embeddings for each token in the text and returns a 2D array."""
+    try:
+        response = ollama.embeddings(model=model, prompt=text)
+        embeddings = np.array(response['embedding'])
+        return embeddings
+    except Exception as e:
+        st.error(f"An error occurred while getting token embeddings: {e}")
+        return np.array([]).reshape(0, 1)
+
+def calculate_modularity(similarity_matrix: np.ndarray, communities: list) -> float:
+    """Calculates the modularity of a graph given its similarity matrix and community structure."""
+    m = np.sum(similarity_matrix) / 2  # Total edge weight
+    Q = 0
+    for i in range(len(communities)):
+        for j in range(len(communities)):
+            if i == j:
+                for k in communities[i]:
+                    for l in communities[i]:
+                        Q += similarity_matrix[k, l] - (np.sum(similarity_matrix[k, :]) * np.sum(similarity_matrix[:, l])) / m
+    return Q / (2 * m)
+
+def refine_boundaries(embeddings: np.ndarray, surprise_indices: list) -> list:
+    """Refines event boundaries using modularity."""
+    similarity_matrix = cosine_similarity(embeddings)
+    communities = []
+    start = 0
+    for end in surprise_indices:
+        communities.append(list(range(start, end)))
+        start = end
+    communities.append(list(range(start, len(embeddings))))
+
+    best_boundaries = surprise_indices.copy()
+    best_modularity = calculate_modularity(similarity_matrix, communities)
+
+    for i in range(len(surprise_indices) - 1):
+        for j in range(surprise_indices[i] + 1, surprise_indices[i + 1]):
+            temp_boundaries = best_boundaries.copy()
+            temp_boundaries[i] = j
+            temp_communities = []
+            start = 0
+            for end in temp_boundaries:
+                temp_communities.append(list(range(start, end)))
+                start = end
+            temp_communities.append(list(range(start, len(embeddings))))
+            temp_modularity = calculate_modularity(similarity_matrix, temp_communities)
+            if temp_modularity > best_modularity:
+                best_modularity = temp_modularity
+                best_boundaries = temp_boundaries.copy()
+
+    return best_boundaries
+
+class EpisodicMemory:
+    def __init__(self, similarity_buffer_size: int = 5, contiguity_buffer_size: int = 3):
+        self.similarity_buffer = deque(maxlen=similarity_buffer_size)
+        self.contiguity_buffer = deque(maxlen=contiguity_buffer_size)
+        self.events = []  # Assuming events are pre-calculated and stored here
+
+    def segment_text_into_events(self, model: str, text: str, threshold: float = 0.01):
+        """Segments the text into events based on surprise and refines boundaries."""
+        try:
+            tokenizer = tiktoken.encoding_for_model(model)
+        except KeyError:
+            tokenizer = tiktoken.get_encoding("gpt2")
+        
+        num_tokens = len(tokenizer.encode(text))
+        surprise_indices = [i for i in range(1, num_tokens) if i % 50 == 0]
+        embeddings = get_token_embeddings(model, text)
+
+        # Ensure embeddings are 2D
+        if embeddings.ndim == 1:
+            embeddings = embeddings.reshape(1, -1)
+
+        if len(embeddings) > 0:
+            refined_boundaries = refine_boundaries(embeddings, surprise_indices)
+
+            self.events = []
+            start = 0
+            for end in refined_boundaries:
+                event_text = text[start:end]
+                event_embedding = np.mean(embeddings[start:end], axis=0)
+                self.events.append({'text': event_text, 'embedding': event_embedding})
+                start = end
+            # Handle the last segment
+            event_text = text[start:]
+            event_embedding = np.mean(embeddings[start:], axis=0)
+            self.events.append({'text': event_text, 'embedding': event_embedding})
+
+    def retrieve_events(self, query_embedding: np.ndarray) -> list:
+        """Retrieves relevant events based on the query embedding."""
+        retrieved_events = []
+        if len(self.events) > 0:
+            query_embedding = query_embedding.reshape(1, -1)
+            event_embeddings = np.array([event['embedding'] for event in self.events])
+
+            if event_embeddings.ndim == 1:
+                event_embeddings = event_embeddings.reshape(1, -1)
+
+            similarity_scores = cosine_similarity(query_embedding, event_embeddings)[0]
+            top_event_indices = np.argsort(similarity_scores)[-len(self.similarity_buffer):][::-1]
+            for index in top_event_indices:
+                event = self.events[index]
+                retrieved_events.append(event)
+                self.similarity_buffer.append(event)
+                # Add neighboring events to the contiguity buffer
+                for i in range(index - 1, index + 2):
+                    if 0 <= i < len(self.events) and i != index:
+                        self.contiguity_buffer.append(self.events[i])
+            return retrieved_events + list(self.contiguity_buffer)
+        return retrieved_events
+
 def chat_interface():
     load_settings()
 
@@ -197,6 +289,8 @@ def chat_interface():
         st.session_state.suggested_prompt = ""
     if "show_prompt_modal" not in st.session_state:
         st.session_state.show_prompt_modal = False
+    if "episodic_memory_enabled" not in st.session_state:
+        st.session_state.episodic_memory_enabled = False  # Initialize episodic memory setting
 
     st.session_state.agent_type = st.session_state.get("agent_type", "None")
     st.session_state.metacognitive_type = st.session_state.get("metacognitive_type", "None")
@@ -214,6 +308,10 @@ def chat_interface():
 
     if "total_tokens" not in st.session_state:
         st.session_state.total_tokens = 0
+    
+    # Initialize episodic memory
+    if "episodic_memory" not in st.session_state:
+        st.session_state.episodic_memory = EpisodicMemory()
 
     with st.sidebar:
         with st.expander("⚙️ Chat Agent Settings", expanded=False):
@@ -238,6 +336,7 @@ def chat_interface():
             st.session_state.max_tokens_slider_chat = st.slider("📊 Max Tokens", min_value=1000, max_value=128000, value=st.session_state.max_tokens_slider_chat, step=1000)
             st.session_state.presence_penalty_slider_chat = st.slider("🚫 Presence Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.presence_penalty_slider_chat, step=0.1)
             st.session_state.frequency_penalty_slider_chat = st.slider("🔁 Frequency Penalty", min_value=-2.0, max_value=2.0, value=st.session_state.frequency_penalty_slider_chat, step=0.1)
+            st.session_state.episodic_memory_enabled = st.checkbox("Enable Episodic Memory", value=st.session_state.episodic_memory_enabled)
             st.button("💾 Save Settings", key="save_settings_advanced", on_click=save_settings)
 
         with st.expander("📁 Saved Chats", expanded=False):
@@ -307,6 +406,17 @@ def chat_interface():
             else:
                 st.warning(f"No relevant context found in the corpus '{st.session_state.selected_corpus}'. Proceeding without additional context.")
 
+        # Episodic memory retrieval
+        episodic_context = ""
+        if st.session_state.episodic_memory_enabled:
+            # Segment the chat history
+            st.session_state.episodic_memory.segment_text_into_events(st.session_state.selected_model, "\n".join([msg['content'] for msg in st.session_state.chat_history]), 0.01)
+            query_embedding = get_token_embeddings(st.session_state.selected_model, user_input)
+            retrieved_events = st.session_state.episodic_memory.retrieve_events(query_embedding)
+
+            for event in retrieved_events:
+                episodic_context += f" {event['text']}"
+
         final_prompt = f"""
         {agent_prompt}
         
@@ -314,6 +424,9 @@ def chat_interface():
         {chat_history}
         
         {corpus_context}
+
+        Episodic Memory Context:
+        {episodic_context}
         
         Human: {user_input}
         
@@ -327,7 +440,9 @@ def chat_interface():
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 full_response = ""
+
                 if st.session_state.selected_model in OPENAI_MODELS:
+                    # Handle OpenAI API response
                     full_response = call_openai_api(
                         st.session_state.selected_model,
                         [{"role": "user", "content": final_prompt}],
@@ -335,7 +450,10 @@ def chat_interface():
                         max_tokens=st.session_state.max_tokens_slider_chat,
                         openai_api_key=api_keys.get("openai_api_key")
                     )
+                    message_placeholder.markdown(full_response)
+
                 elif st.session_state.selected_model in GROQ_MODELS:
+                    # Handle Groq API response
                     full_response = call_groq_api(
                         st.session_state.selected_model,
                         final_prompt,
@@ -343,7 +461,10 @@ def chat_interface():
                         max_tokens=st.session_state.max_tokens_slider_chat,
                         groq_api_key=api_keys.get("groq_api_key")
                     )
+                    message_placeholder.markdown(full_response)
+
                 else:
+                    # Handle Ollama streaming response
                     for response_chunk in ollama.generate(
                         st.session_state.selected_model,
                         final_prompt,
@@ -358,26 +479,29 @@ def chat_interface():
                         full_response += response_chunk["response"]
                         message_placeholder.markdown(full_response + "▌")
                         st.session_state.total_tokens += count_tokens(response_chunk["response"])
-                message_placeholder.markdown(full_response)
 
+                    # Finalize the message once streaming is done
+                    message_placeholder.markdown(full_response)
+
+        # Append the final response to chat history
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
         code_blocks, article_blocks = extract_content_blocks(full_response)
-        
+
         for code_block in code_blocks:
             st.session_state.workspace_items.append({
                 "type": "code",
                 "content": code_block,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-        
+
         for article_block in article_blocks:
             st.session_state.workspace_items.append({
                 "type": "article",
                 "content": article_block,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-        
+
         if code_blocks or article_blocks:
             st.success(f"{len(code_blocks)} code block(s) and {len(article_blocks)} article(s) automatically saved to Workspace")
 
