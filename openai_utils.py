@@ -74,3 +74,16 @@ def display_openai_settings():
         api_keys["openai_api_key"] = openai_api_key
         save_api_keys(api_keys)
         st.success("OpenAI API key saved!")
+        
+def call_openai_embeddings(model, text):
+    """Calls the OpenAI API to generate embeddings for the given text."""
+    set_openai_api_key(openai.api_key)
+    try:
+        response = openai.Embedding.create(
+            model=model,
+            input=text
+        )
+        return response['data'][0]['embedding']
+    except Exception as e:
+        st.error(f"Error generating OpenAI embeddings: {e}")
+        return None

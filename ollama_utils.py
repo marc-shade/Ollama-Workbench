@@ -322,13 +322,22 @@ def get_resource_usage():
 def generate_embeddings(model, text):
     """Generates embeddings for the given text using the specified model."""
     try:
-        response = requests.post(f"{OLLAMA_URL}/embed", json={"model": model, "text": text})
-        response.raise_for_status()
-        embedding_data = response.json()
-        return embedding_data["embedding"], embedding_data["total_duration"], embedding_data["load_duration"], embedding_data["prompt_eval_count"]
+        if model in GROQ_MODELS:
+            # Use Groq API for embedding
+            return call_groq_embeddings(model, text)
+        elif model in OPENAI_MODELS:
+            # Use OpenAI API for embedding
+            return call_openai_embeddings(model, text)
+        else:
+            # Default to Ollama API for embedding
+            response = requests.post(f"{OLLAMA_URL}/embed", json={"model": model, "text": text})
+            response.raise_for_status()
+            embedding_data = response.json()
+            return embedding_data["embedding"], embedding_data["total_duration"], embedding_data["load_duration"], embedding_data["prompt_eval_count"]
     except requests.exceptions.RequestException as e:
         st.error(f"Error generating embeddings: {e}")
         return None, None, None, None
+
 
 def get_all_models():
     """Gets all available models, including Ollama, Groq, and OpenAI."""

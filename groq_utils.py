@@ -93,3 +93,25 @@ def list_groq_models(groq_api_key=None):
     except Exception as e:
         st.error(f"Error retrieving models from Groq API: {e}")
         return []
+
+def call_groq_embeddings(model, text, groq_api_key=None):
+    """Calls the Groq API to generate embeddings for the given text."""
+    url = f"{GROQ_API_URL}/embeddings"
+    headers = {
+        "Authorization": f"Bearer {groq_api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": model,
+        "input": text
+    }
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()
+        return response.json()['embedding']
+    except requests.exceptions.HTTPError as http_err:
+        st.error(f"HTTP error occurred while generating Groq embeddings: {http_err}")
+        return None
+    except Exception as e:
+        st.error(f"Error generating Groq embeddings: {e}")
+        return None
