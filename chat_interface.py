@@ -432,7 +432,8 @@ def chat_interface():
                 if query_embedding.size > 0:  # Check if the embedding is not empty
                     retrieved_events = st.session_state.episodic_memory.retrieve_events(query_embedding)
                     for event in retrieved_events:
-                        episodic_context += f" {event['text']}"
+                        if event['text'] is not None:
+                            episodic_context += f" {event['text']}"
                 else:
                     st.warning("Failed to generate embeddings for episodic memory. Proceeding without episodic context.")
             except Exception as e:
