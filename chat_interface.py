@@ -102,10 +102,12 @@ def generate_prompt_suggestion(user_need):
             return response.strip()
         else:
             response = ollama.generate(
-                model,
-                prompt,
-                temperature=st.session_state.temperature_slider_chat,
-                num_predict=st.session_state.max_tokens_slider_chat
+                model=model,
+                prompt=prompt,
+                options={
+                    "temperature": st.session_state.temperature_slider_chat,
+                    "num_predict": st.session_state.max_tokens_slider_chat
+                }
             )
             return response['response'].strip()
     except Exception as e:
