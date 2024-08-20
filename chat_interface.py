@@ -140,8 +140,8 @@ def extract_content_blocks(text):
     # Remove code blocks from the text
     text_without_code = re.sub(r'```[\s\S]*?```', '', text)
     
-    # Extract article blocks that start with 'Title:' and include everything until the next 'Title:' or the end of the text
-    article_blocks = re.findall(r'^Title:.*?(?=^Title:|\Z)', text_without_code, re.MULTILINE | re.DOTALL)
+    # Extract article blocks that start with 'Title:' and continue until the next 'Title:' or the end of the text
+    article_blocks = re.findall(r'^Title:.*?(?=\n^Title:|\Z)', text_without_code, re.MULTILINE | re.DOTALL)
     
     return [block.strip('`').strip() for block in code_blocks], [block.strip() for block in article_blocks]
 
@@ -161,7 +161,7 @@ def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
     
     prompt += """When you generate code or an article, it will be automatically saved to the user's Workspace. 
     For code, use triple backticks (```) to enclose the code block. 
-    For articles, start with 'Title:' followed by the article title on a new line, then the content.
+    For articles, start with (Title:) followed by the article title on a new line, then the content.
     Keep the formatting clean and consistent for both code and articles.\n\n"""
     
     return prompt
@@ -179,6 +179,10 @@ def get_token_embeddings(model: str, text: str) -> np.ndarray:
 
 def calculate_modularity(similarity_matrix: np.ndarray, communities: list) -> float:
     """Calculates the modularity of a graph given its similarity matrix and community structure."""
+    if similarity_matrix.ndim != 2:
+        print(f"Error: similarity_matrix should be 2D, but has {similarity_matrix.ndim} dimensions")
+        return 0.0
+
     m = np.sum(similarity_matrix) / 2  # Total edge weight
     Q = 0
     for i in range(len(communities)):
@@ -186,18 +190,27 @@ def calculate_modularity(similarity_matrix: np.ndarray, communities: list) -> fl
             if i == j:
                 for k in communities[i]:
                     for l in communities[i]:
+                        if k >= similarity_matrix.shape[0] or l >= similarity_matrix.shape[1]:
+                            print(f"Error: Index out of bounds. k={k}, l={l}, matrix shape={similarity_matrix.shape}")
+                            continue
                         Q += similarity_matrix[k, l] - (np.sum(similarity_matrix[k, :]) * np.sum(similarity_matrix[:, l])) / m
     return Q / (2 * m)
 
 def refine_boundaries(embeddings: np.ndarray, surprise_indices: list) -> list:
     """Refines event boundaries using modularity."""
+    print(f"Embeddings shape: {embeddings.shape}")
+    print(f"Surprise indices: {surprise_indices}")
+    
     similarity_matrix = cosine_similarity(embeddings)
+    print(f"Similarity matrix shape: {similarity_matrix.shape}")
+    
     communities = []
     start = 0
     for end in surprise_indices:
         communities.append(list(range(start, end)))
         start = end
     communities.append(list(range(start, len(embeddings))))
+    print(f"Number of communities: {len(communities)}")
 
     best_boundaries = surprise_indices.copy()
     best_modularity = calculate_modularity(similarity_matrix, communities)
@@ -218,6 +231,7 @@ def refine_boundaries(embeddings: np.ndarray, surprise_indices: list) -> list:
                 best_boundaries = temp_boundaries.copy()
 
     return best_boundaries
+
 
 class EpisodicMemory:
     def __init__(self, similarity_buffer_size: int = 5, contiguity_buffer_size: int = 3):
@@ -444,7 +458,6 @@ def chat_interface():
                 full_response = ""
 
                 if st.session_state.selected_model in OPENAI_MODELS:
-                    # Handle OpenAI API response
                     full_response = call_openai_api(
                         st.session_state.selected_model,
                         [{"role": "user", "content": final_prompt}],
@@ -455,7 +468,6 @@ def chat_interface():
                     message_placeholder.markdown(full_response)
 
                 elif st.session_state.selected_model in GROQ_MODELS:
-                    # Handle Groq API response
                     full_response = call_groq_api(
                         st.session_state.selected_model,
                         final_prompt,
@@ -466,7 +478,6 @@ def chat_interface():
                     message_placeholder.markdown(full_response)
 
                 else:
-                    # Handle Ollama streaming response
                     for response_chunk in ollama.generate(
                         st.session_state.selected_model,
                         final_prompt,
@@ -482,12 +493,11 @@ def chat_interface():
                         message_placeholder.markdown(full_response + "▌")
                         st.session_state.total_tokens += count_tokens(response_chunk["response"])
 
-                    # Finalize the message once streaming is done
                     message_placeholder.markdown(full_response)
 
-        # Append the final response to chat history
         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
 
+        # Extract and save content blocks
         code_blocks, article_blocks = extract_content_blocks(full_response)
 
         for code_block in code_blocks:
