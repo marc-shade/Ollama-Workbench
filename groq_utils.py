@@ -1,9 +1,10 @@
-#groq_utils.py
-
-import requests
+# groq_utils.py
 import os
 import json
 import streamlit as st
+from groq import Groq
+from typing import List, Dict
+from sentence_transformers import SentenceTransformer
 
 GROQ_MODELS = [
     "llama-3.1-70b-versatile",
@@ -16,11 +17,14 @@ GROQ_MODELS = [
     "mixtral-8x7b-32768",
     "gemma-7b-it",
     "gemma2-9b-it",
-    "whisper-large-v3"
 ]
 
 API_KEYS_FILE = "api_keys.json"
-GROQ_API_URL = "https://api.groq.com/openai/v1"
+
+# Load the embedding model
+@st.cache_resource
+def load_embedding_model():
+    return SentenceTransformer('all-MiniLM-L6-v2')
 
 def load_api_keys():
     """Loads API keys from the JSON file."""
@@ -34,33 +38,28 @@ def save_api_keys(api_keys):
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
 
-def call_groq_api(model, prompt, temperature=0.7, max_tokens=1000, groq_api_key=None):
+def get_groq_client(api_key: str):
+    """Returns a Groq client instance."""
+    return Groq(api_key=api_key)
+
+def call_groq_api(client: Groq, model: str, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 1000) -> str:
     """Calls the Groq API for chat completions."""
-    url = f"{GROQ_API_URL}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": temperature,
-        "max_tokens": max_tokens
-    }
     try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        return response.json()['choices'][0]['message']['content'].strip()
-    except requests.exceptions.HTTPError as http_err:
-        if response.status_code == 429:
-            retry_after = response.headers.get('retry-after', 1)
-            st.error(f"Rate limit exceeded. Please retry after {retry_after} seconds.")
-        else:
-            st.error(f"HTTP error occurred: {http_err}")
-        return None
+        chat_completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        return chat_completion.choices[0].message.content.strip()
     except Exception as e:
         st.error(f"Error calling Groq API: {e}")
         return None
+
+def get_local_embeddings(text: str) -> List[float]:
+    """Generates embeddings using a local model."""
+    model = load_embedding_model()
+    return model.encode(text).tolist()
 
 def display_groq_settings():
     """Displays the Groq API key settings."""
@@ -75,44 +74,3 @@ def display_groq_settings():
         api_keys["groq_api_key"] = groq_api_key
         save_api_keys(api_keys)
         st.success("Groq API key saved!")
-
-def list_groq_models(groq_api_key=None):
-    """Lists all available models from the Groq API."""
-    url = f"{GROQ_API_URL}/models"
-    headers = {
-        "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        models = response.json()
-        return models
-    except requests.exceptions.HTTPError as http_err:
-        st.error(f"HTTP error occurred: {http_err}")
-        return []
-    except Exception as e:
-        st.error(f"Error retrieving models from Groq API: {e}")
-        return []
-
-def call_groq_embeddings(model, text, groq_api_key=None):
-    """Calls the Groq API to generate embeddings for the given text."""
-    url = f"{GROQ_API_URL}/embeddings"
-    headers = {
-        "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": model,
-        "input": text
-    }
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        return response.json()['embedding']
-    except requests.exceptions.HTTPError as http_err:
-        st.error(f"HTTP error occurred while generating Groq embeddings: {http_err}")
-        return None
-    except Exception as e:
-        st.error(f"Error generating Groq embeddings: {e}")
-        return None

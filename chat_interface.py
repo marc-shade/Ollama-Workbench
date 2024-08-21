@@ -8,7 +8,7 @@ import re
 import ollama
 from ollama_utils import get_available_models, get_all_models, load_api_keys, call_ollama_endpoint, get_token_embeddings
 from openai_utils import call_openai_api, call_openai_embeddings, OPENAI_MODELS
-from groq_utils import call_groq_api, GROQ_MODELS
+from groq_utils import get_groq_client, call_groq_api, get_local_embeddings, GROQ_MODELS
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import tiktoken
 from streamlit_extras.bottom_container import bottom
@@ -123,9 +123,9 @@ def save_settings():
         "voice_type": st.session_state.voice_type,
         "selected_corpus": st.session_state.selected_corpus,
         "temperature_slider_chat": st.session_state.temperature_slider_chat,
-        "max_tokens_slider_chat": min(st.session_state.max_tokens_slider_chat, 16000),  # Enforce max token limit
+        "max_tokens_slider_chat": min(st.session_state.max_tokens_slider_chat, 8000),  # Enforce max token limit
         "presence_penalty_slider_chat": st.session_state.presence_penalty_slider_chat,
-        "frequency_penalty_slider_chat": st.session_state.frequency_penalty_chat,
+        "frequency_penalty_slider_chat": st.session_state.frequency_penalty_slider_chat,  # Fixed this line
         "episodic_memory_enabled": st.session_state.episodic_memory_enabled,
     }
     with open(SETTINGS_FILE, "w") as f:
@@ -366,17 +366,16 @@ class EpisodicMemory:
             return retrieved_events + list(self.contiguity_buffer)
         return retrieved_events
 
-# Update the get_token_embeddings function
 def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
     """Gets embeddings for each token in the text and returns a 2D array."""
     try:
         if model in OPENAI_MODELS:
             embeddings = call_openai_embeddings(
-                model="text-embedding-ada-002",  # OpenAI's embedding model
+                model="text-embedding-ada-002",
                 input_text=text
             )
         elif model in GROQ_MODELS:
-            embeddings = call_groq_embeddings(model, text, api_keys.get("groq_api_key"))
+            embeddings = get_local_embeddings(text)
         else:
             response = ollama.embeddings(model=model, prompt=text)
             embeddings = np.array(response['embedding'])
@@ -403,6 +402,9 @@ def chat_interface():
         st.session_state.episodic_memory_enabled = False  # Initialize episodic memory setting
     if "model_memory_handler" not in st.session_state:
         st.session_state.model_memory_handler = ModelMemoryHandler("ollama")
+    if "groq_client" not in st.session_state:
+        api_keys = load_api_keys()
+        st.session_state.groq_client = get_groq_client(api_keys.get("groq_api_key"))
 
     st.session_state.agent_type = st.session_state.get("agent_type", "None")
     st.session_state.metacognitive_type = st.session_state.get("metacognitive_type", "None")
@@ -576,11 +578,11 @@ def chat_interface():
                                 message_placeholder.markdown(full_response + "▌")
                     elif st.session_state.selected_model in GROQ_MODELS:
                         full_response = call_groq_api(
-                            st.session_state.selected_model,
-                            final_prompt,
+                            client=st.session_state.groq_client,
+                            model=st.session_state.selected_model,
+                            messages=[{"role": "user", "content": final_prompt}],
                             temperature=st.session_state.temperature_slider_chat,
-                            max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),
-                            groq_api_key=api_keys.get("groq_api_key")
+                            max_tokens=min(st.session_state.max_tokens_slider_chat, 8000)
                         )
                         message_placeholder.markdown(full_response)
                     else:

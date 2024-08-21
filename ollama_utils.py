@@ -20,7 +20,7 @@ from openai_utils import (
     OPENAI_MODELS,
 )
 
-from groq_utils import call_groq_embeddings, GROQ_MODELS
+from groq_utils import get_local_embeddings, GROQ_MODELS
 
 API_KEYS_FILE = "api_keys.json"
 
