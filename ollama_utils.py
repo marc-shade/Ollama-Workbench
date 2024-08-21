@@ -1,9 +1,11 @@
 # ollama_utils.py
+
 import requests
 import json
 import io
 import time
 import streamlit as st
+import numpy as np
 import ollama
 from datetime import datetime
 import psutil
@@ -11,8 +13,14 @@ import platform
 import socket
 import subprocess
 import os
-from groq_utils import GROQ_MODELS
-from openai_utils import OPENAI_MODELS
+from openai_utils import (
+    set_openai_api_key,
+    call_openai_api,
+    call_openai_embeddings,
+    OPENAI_MODELS,
+)
+
+from groq_utils import call_groq_embeddings, GROQ_MODELS
 
 API_KEYS_FILE = "api_keys.json"
 
@@ -119,6 +127,28 @@ def check_json_handling(model, temperature, max_tokens, presence_penalty, freque
         return True
     except json.JSONDecodeError:
         return False
+
+def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
+    """Gets embeddings for each token in the text and returns a 2D array."""
+    try:
+        if model in OPENAI_MODELS:
+            response = call_openai_api(
+                "text-embedding-ada-002",  # OpenAI's embedding model
+                prompt=[{"role": "user", "content": text}],
+                openai_api_key=api_keys.get("openai_api_key"),
+                use_chat=False
+            )
+            embeddings = np.array(response['data'][0]['embedding'])
+        elif model in GROQ_MODELS:
+            embeddings = call_groq_embeddings(model, text, api_keys.get("groq_api_key"))
+        else:
+            response = ollama.embeddings(model=model, prompt=text)
+            embeddings = np.array(response['embedding'])
+        
+        return embeddings.reshape(1, -1)  # Ensure it's a 2D array
+    except Exception as e:
+        st.error(f"An error occurred while getting token embeddings: {e}")
+        return np.zeros((1, 1536))  # Return a default 2D array with 1536 features (common embedding size)
 
 def check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Define a function named 'add' that takes two numbers and returns their sum. Then call the function with arguments 5 and 3."
@@ -327,7 +357,7 @@ def generate_embeddings(model, text):
             return call_groq_embeddings(model, text)
         elif model in OPENAI_MODELS:
             # Use OpenAI API for embedding
-            return call_openai_embeddings(model, text)
+            return call_openai_api(model, prompt=[{"role": "user", "content": text}], use_chat=False)
         else:
             # Default to Ollama API for embedding
             response = requests.post(f"{OLLAMA_URL}/embed", json={"model": model, "text": text})
@@ -337,7 +367,6 @@ def generate_embeddings(model, text):
     except requests.exceptions.RequestException as e:
         st.error(f"Error generating embeddings: {e}")
         return None, None, None, None
-
 
 def get_all_models():
     """Gets all available models, including Ollama, Groq, and OpenAI."""

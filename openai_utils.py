@@ -1,8 +1,8 @@
 # openai_utils.py
-import openai
 import os
 import json
 import streamlit as st
+from openai import OpenAI
 
 OPENAI_MODELS = [
     "gpt-4-1106-preview",
@@ -17,15 +17,9 @@ OPENAI_MODELS = [
     "gpt-3.5-turbo",
     "gpt-3.5-turbo-1106",
     "gpt-3.5-turbo-0125",
-    "gpt-3.5-turbo-instruct",
-    "text-davinci-003",
-    "text-davinci-002",
-    "text-curie-001",
-    "text-babbage-001",
-    "text-ada-001",
-    "code-davinci-002",
-    "code-cushman-001"
+    "gpt-3.5-turbo-instruct"
 ]
+
 
 API_KEYS_FILE = "api_keys.json"
 
@@ -43,20 +37,44 @@ def save_api_keys(api_keys):
 
 def set_openai_api_key(api_key):
     """Sets the OpenAI API key."""
-    openai.api_key = api_key
+    api_keys = load_api_keys()
+    api_keys['openai_api_key'] = api_key
+    save_api_keys(api_keys)
+    st.success("OpenAI API key has been set.")
 
-def call_openai_api(model, messages, temperature=0.7, max_tokens=1000, openai_api_key=None):
-    """Calls the OpenAI Chat Completion API."""
-    set_openai_api_key(openai_api_key)
+def call_openai_api(model, messages, temperature=0.7, max_tokens=1000, frequency_penalty=0.0, presence_penalty=0.0, stream=False, openai_api_key=None):
+    """Wrapper function to call the OpenAI Chat API with a unified interface."""
+    client = OpenAI(api_key=openai_api_key)
+    
     try:
-        client = openai.OpenAI(api_key=openai_api_key)
         response = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stream=stream
         )
-        return response.choices[0].message.content.strip()
+        
+        if stream:
+            return response  # Return the stream object
+        else:
+            return response.choices[0].message.content.strip()
+    except Exception as e:
+        st.error(f"Error calling OpenAI API: {e}")
+        return None
+
+def call_openai_embeddings(model, input_text):
+    """Calls the OpenAI Embeddings API."""
+    client = OpenAI(api_key=load_api_keys().get('openai_api_key'))
+    
+    try:
+        response = client.embeddings.create(
+            model=model,
+            input=input_text
+        )
+        return response.data[0].embedding
     except Exception as e:
         st.error(f"Error calling OpenAI API: {e}")
         return None
@@ -71,19 +89,4 @@ def display_openai_settings():
         type="password",
     )
     if st.sidebar.button("Save OpenAI API Key"):
-        api_keys["openai_api_key"] = openai_api_key
-        save_api_keys(api_keys)
-        st.success("OpenAI API key saved!")
-        
-def call_openai_embeddings(model, text):
-    """Calls the OpenAI API to generate embeddings for the given text."""
-    set_openai_api_key(openai.api_key)
-    try:
-        response = openai.Embedding.create(
-            model=model,
-            input=text
-        )
-        return response['data'][0]['embedding']
-    except Exception as e:
-        st.error(f"Error generating OpenAI embeddings: {e}")
-        return None
+        set_openai_api_key(openai_api_key)
