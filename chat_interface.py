@@ -182,7 +182,7 @@ def generate_prompt_suggestion(user_need):
                 model,
                 prompt,
                 temperature=st.session_state.temperature_slider_chat,
-                max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 8000),
                 groq_api_key=api_keys.get("groq_api_key")
             )
             return response.strip()
