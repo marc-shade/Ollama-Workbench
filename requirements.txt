@@ -48,3 +48,8 @@ tqdm
 torch
 transformers
 openai
+
+groq
+transformers
+torch
+sentence-transformers
