@@ -25,9 +25,10 @@ from rich.panel import Panel
 from serpapi import GoogleSearch
 from streamlit import session_state as st_ss
 
-from ollama_utils import get_available_models, get_all_models, load_api_keys, call_ollama_endpoint
-from groq_utils import call_groq_api
-from openai_utils import call_openai_api, set_openai_api_key
+from ollama_utils import *
+from groq_utils import *
+from openai_utils import *
+from external_providers import get_available_groq_models
 
 API_KEYS_FILE = "api_keys.json"
 SETTINGS_FILE = "build_settings.json"
@@ -35,29 +36,8 @@ SETTINGS_FILE = "build_settings.json"
 # Initialize the Rich Console
 console = Console()
 
-# Define Groq models
-GROQ_MODELS = [
-    "llama-3.1-405b-reasoning",
-    "llama-3.1-70b-versatile",
-    "llama-3.1-8b-instant",
-    "llama3-8b-8192",
-    "llama3-70b-8192",
-    "llama3-groq-8b-8192-tool-use-preview",
-    "llama3-groq-70b-8192-tool-use-preview",
-    "mixtral-8x7b-32768",
-    "gemma-7b-it",
-    "gemma2-9b-it",
-]
-
-ADVANCED_GROQ_MODELS = [
-    "llama-3.1-405b-reasoning",
-    "llama-3.1-70b-versatile",
-    "llama-3.1-8b-instant",
-]
-
 # Initialize the Ollama client
 client = Client(host="http://localhost:11434")
-
 
 def load_settings():
     if os.path.exists(SETTINGS_FILE):
@@ -65,18 +45,14 @@ def load_settings():
             return json.load(f)
     return {}
 
-
 def save_settings(settings):
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f, indent=4)
 
-
 def is_groq_model(model_name):
-    return model_name in GROQ_MODELS
-
-
-def is_advanced_groq_model(model_name):
-    return model_name in ADVANCED_GROQ_MODELS
+    api_keys = load_api_keys()
+    available_groq_models = get_available_groq_models(api_keys)
+    return model_name in available_groq_models
 
 
 def ensure_ruff_installed():
@@ -1116,7 +1092,13 @@ def build_interface():
         st.session_state.api_keys = load_api_keys()
 
     # Get all models
-    all_models = get_all_models()  # Fixed: Removed unexpected arguments
+    all_models = get_all_models()
+
+    # Get available Groq models
+    available_groq_models = get_available_groq_models(st.session_state.api_keys)
+
+    # Update all_models to include only available Groq models
+    all_models = [model for model in all_models if model not in GROQ_MODELS or model in available_groq_models]
 
     progress_bar = st.progress(0)
     status_text = st.empty()
