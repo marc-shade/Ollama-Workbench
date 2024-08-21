@@ -1123,32 +1123,7 @@ def build_interface():
 
     # Sidebar
     with st.sidebar:
-        with st.expander("🇬 Groq"):
-            st.form(key="settings_form")
-            st_ss.settings["groq_api_key"] = st.text_input(
-                "🔑 Groq API Key",
-                value=st_ss.settings.get("groq_api_key", ""),
-                type="password",
-            )
-            st_ss.settings["has_advanced_access"] = st.checkbox(
-                "I have access to advanced Groq models (Early API access)",
-                value=st_ss.settings.get("has_advanced_access", False),
-            )
 
-            all_models = get_all_models()  # Fixed: Refreshed all_models after potential Groq API key change
-
-            def get_valid_model(model_key, default_index=0):
-                saved_model = st_ss.settings.get(model_key)
-                try:
-                    index = all_models.index(saved_model)
-                except ValueError:
-                    index = default_index
-                return st.selectbox(
-                    f"{model_key.replace('_', ' ').title()}",
-                    all_models,
-                    index=index,
-                )
-    
         with st.expander("🤖 Model Selection"):
             
             def get_valid_model(model_key, default_index=0):
