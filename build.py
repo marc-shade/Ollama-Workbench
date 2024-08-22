@@ -946,10 +946,18 @@ def build_interface() -> None:
             project_dir.mkdir(parents=True, exist_ok=True)
             st.success(f"Created project folder: {project_dir}")
 
+            # Create folder structure
+            if folder_structure:
+                create_folder_structure(project_dir, folder_structure)
+                st.success("Created folder structure")
+
+            # Create code files
             if code_blocks:
                 for filename, code in code_blocks.items():
-                    save_file(code, filename, str(project_dir))
-                    st.success(f"Created file: {filename}")
+                    file_path = project_dir / "code" / filename
+                    file_path.parent.mkdir(parents=True, exist_ok=True)
+                    file_path.write_text(code, encoding="utf-8")
+                    st.success(f"Created file: {file_path}")
 
             # Generate README.md
             readme_content = generate_readme(
@@ -987,8 +995,8 @@ def build_interface() -> None:
             st.subheader("Generated Files")
             for root, dirs, files in os.walk(project_dir):
                 for file in files:
-                    file_path = os.path.join(root, file)
-                    relative_path = os.path.relpath(file_path, project_dir)
+                    file_path = Path(root) / file
+                    relative_path = file_path.relative_to(project_dir)
                     st.markdown(f"[{relative_path}]({file_path})")
 
         else:
@@ -1020,6 +1028,16 @@ def build_interface() -> None:
         st.header("Errors")
         for error in st.session_state.project_state["errors"]:
             st.error(error)
+
+# Add this function to create the folder structure
+def create_folder_structure(base_path: Path, structure: dict) -> None:
+    for name, content in structure.items():
+        path = base_path / name
+        if content is None:
+            path.touch()
+        elif isinstance(content, dict):
+            path.mkdir(parents=True, exist_ok=True)
+            create_folder_structure(path, content)
 
 def main():
     try:
