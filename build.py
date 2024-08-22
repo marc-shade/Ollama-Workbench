@@ -66,7 +66,7 @@ def set_openai_api_key(api_key: str) -> None:
     api_keys = load_api_keys()
     api_keys['openai_api_key'] = api_key
     save_api_keys(api_keys)
-    st.success("OpenAI API key has been set.")
+    console.print("[bold green]OpenAI API key has been set.[/bold green]")
 
 def call_openai_api(
     model: str,
@@ -93,10 +93,10 @@ def call_openai_api(
         if not openai_api_key or not isinstance(openai_api_key, str):
             raise ValueError("Invalid or missing OpenAI API key.")
 
-    client = OpenAI(api_key=openai_api_key)
+    openai.api_key = openai_api_key
 
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model=model,
             messages=messages,
             temperature=temperature,
@@ -109,12 +109,12 @@ def call_openai_api(
         if stream:
             return response  # Return the stream object
         else:
-            return response.choices[0].message.content.strip()
+            return response.choices[0].message['content'].strip()
 
     except json.JSONDecodeError as json_err:
         raise ValueError(f"Failed to parse response as JSON: {json_err}")
     except Exception as e:
-        st.error(f"Error calling OpenAI API: {e}")
+        console.print(f"[bold red]Error calling OpenAI API:[/bold red] {e}")
         return "Error occurred while calling OpenAI API"
 
 def is_groq_model(model_name: str) -> bool:
@@ -168,10 +168,9 @@ def perform_search(
 
 def create_agent_context(
     project_state: dict,
-    test_results: dict,
     current_task: str
 ) -> dict:
-    """Creates the context for agents based on the project state and test results."""
+    """Creates the context for agents based on the project state."""
     return {
         "project_state": {
             "status": project_state["status"],
@@ -188,7 +187,6 @@ def manager_agent_task(
     model: str,
     temperature: float,
     max_tokens: int,
-    groq_api_key=None,
     openai_api_key=None
 ) -> Tuple[Dict[str, Any], Any]:
     """Handles the manager agent task based on the context."""
@@ -201,12 +199,14 @@ def manager_agent_task(
     1. Analyze the current project step.
     2. Update the work plan for the next sprint.
     3. Prioritize tasks for the coding agents.
+    4. If repository files haven't been created yet, make this the top priority.
 
     Respond with a JSON object containing:
     1. "analysis": Your analysis of the current state.
     2. "work_plan": The updated work plan for the next sprint.
     3. "priorities": A list of prioritized tasks.
     4. "instructions": Clear instructions for the coding agents.
+    5. "create_files": true if repository files should be created, false otherwise.
 
     Your response must be a valid JSON object.
     """
@@ -215,26 +215,34 @@ def manager_agent_task(
         temperature = float(temperature)
         max_tokens = int(max_tokens)
 
-        client = OpenAI(api_key=openai_api_key)
-
-        response = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            response_format={"type": "json_object"}
-        )
-
-        response_content = response.choices[0].message.content
+        if model.startswith("gpt-"):
+            client = OpenAI(api_key=openai_api_key)
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"}
+            )
+            response_content = response.choices[0].message.content
+        elif model in GROQ_MODELS:
+            response_content = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key=openai_api_key)
+        else:
+            # Assume it's an Ollama model
+            response_content, _, _, _ = call_ollama_endpoint(
+                model=model,
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
 
         parsed_response = json.loads(response_content)
-
         return parsed_response, None
 
     except json.JSONDecodeError as e:
         error_msg = f"Error parsing JSON response from Manager Agent: {e}"
-        print(error_msg)
-        print(f"Raw response that caused the error: {response_content}")
+        console.print(error_msg)
+        console.print(f"Raw response that caused the error: {response_content}")
         return {
             "analysis": "Error parsing response. Please review the raw output.",
             "work_plan": "Unable to generate work plan due to parsing error.",
@@ -243,8 +251,30 @@ def manager_agent_task(
         }, None
     except Exception as e:
         error_msg = f"An error occurred during the manager agent task: {str(e)}"
-        print(error_msg)
+        console.print(error_msg)
         return {}, None
+
+def create_repository_files(project_dir: Path, refined_output: str) -> Dict[str, str]:
+    """
+    Creates repository files based on the refined output.
+    Returns a dictionary of filenames and their contents.
+    """
+    created_files = {}
+    
+    # Extract folder structure
+    folder_structure = parse_folder_structure(refined_output)
+    if folder_structure:
+        create_folder_structure(project_dir, folder_structure)
+    
+    # Extract and create code files
+    code_blocks = extract_code_blocks(refined_output)
+    for filename, code in code_blocks.items():
+        file_path = project_dir / filename
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(code, encoding="utf-8")
+        created_files[str(file_path.relative_to(project_dir))] = code
+    
+    return created_files
 
 def coding_agent_task(
     prompt: str,
@@ -294,42 +324,41 @@ def coding_agent_task(
     messages = [{"role": "user", "content": full_prompt}]
 
     try:
-        api_keys = load_api_keys()
-        openai_api_key = openai_api_key or api_keys.get('openai_api_key')
-
-        if not openai_api_key:
-            raise ValueError("OpenAI API key is not set")
-
         temperature = float(temperature)
         max_tokens = int(max_tokens)
 
-        client = OpenAI(api_key=openai_api_key)
+        if model.startswith("gpt-"):
+            client = OpenAI(api_key=openai_api_key)
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"}
+            )
+            response_content = response.choices[0].message.content
+        elif model in GROQ_MODELS:
+            response_content = call_groq_api(model, full_prompt, temperature, max_tokens, groq_api_key=groq_api_key)
+        else:
+            # Assume it's an Ollama model
+            response_content, _, _, _ = call_ollama_endpoint(
+                model=model,
+                prompt=full_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            response_format={"type": "json_object"}
-        )
-
-        response_content = response.choices[0].message.content
         parsed_response = json.loads(response_content)
-
         return parsed_response
 
-    except ValueError as ve:
-        error_msg = f"API Key Error: {str(ve)}"
-        print(error_msg)
-        return {"error": error_msg}
     except json.JSONDecodeError as e:
         error_msg = f"Error parsing JSON response from Coding Agent: {e}"
-        print(error_msg)
-        print(f"Raw response that caused the error: {response_content}")
+        console.print(error_msg)
+        console.print(f"Raw response that caused the error: {response_content}")
         return {"error": error_msg, "raw_response": response_content}
     except Exception as e:
         error_msg = f"An error occurred during the coding agent task: {str(e)}"
-        print(error_msg)
+        console.print(error_msg)
         return {"error": error_msg}
 
 def refine_task(
@@ -345,7 +374,7 @@ def refine_task(
     openai_api_key=None
 ) -> str:
     """Handles the task refinement process for the final output."""
-    print("\nCalling Refiner to provide the refined final output for your objective:")
+    console.print("\nCalling Refiner to provide the refined final output for your objective:")
     messages = [
         {
             "role": "user",
@@ -370,8 +399,15 @@ def refine_task(
                 max_tokens=max_tokens
             )
 
+        # Ensure response_text is a string
+        if isinstance(response_text, tuple):
+            response_text = response_text[0]
+        
+        if not isinstance(response_text, str):
+            response_text = str(response_text)
+
         if len(response_text) >= 8000 and not continuation:
-            print("Warning: Output may be truncated. Attempting to continue the response.")
+            console.print("Warning: Output may be truncated. Attempting to continue the response.")
             continuation_response_text = refine_task(
                 objective,
                 model,
@@ -389,10 +425,9 @@ def refine_task(
         return response_text
 
     except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"An error occurred during the refine task: {str(e)}"
-        )
-        return ""
+        error_msg = f"An error occurred during the refine task: {str(e)}"
+        console.print(error_msg)
+        return error_msg
 
 def parse_folder_structure(structure_string: str) -> dict:
     """Parses the folder structure from the response string."""
@@ -407,8 +442,8 @@ def parse_folder_structure(structure_string: str) -> dict:
         structure = json.loads(json_string)
         return structure
     except json.JSONDecodeError as e:
-        st.error(f"Error parsing JSON: {e}")
-        st.error(f"Invalid JSON string: {json_string}")
+        console.print(f"[bold red]Error parsing JSON:[/bold red] {e}")
+        console.print(f"[bold red]Invalid JSON string:[/bold red] {json_string}")
         return None
 
 def extract_code_blocks(refined_output: str) -> Dict[str, str]:
@@ -428,11 +463,9 @@ def save_file(content: str, filename: str, project_dir: str) -> None:
         file_path = Path(project_dir) / "code" / filename
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding="utf-8")
-        st.success(f"Saved file: {file_path}")
+        console.print(f"[bold green]Saved file: {file_path}[/bold green]")
     except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"Error saving file '{filename}': {str(e)}"
-        )
+        console.print(f"[bold red]Error saving file '{filename}': {str(e)}[/bold red]")
 
 def dump_repository(repo_path: str) -> Dict[str, str]:
     """Dumps the contents of a repository to a dictionary."""
@@ -447,7 +480,7 @@ def dump_repository(repo_path: str) -> Dict[str, str]:
                         relative_path = os.path.relpath(file_path, repo_path)
                         repo_contents[relative_path] = content
                     except UnicodeDecodeError:
-                        st.warning(f"Skipping binary file: {file_path}")
+                        console.print(f"[bold yellow]Skipping binary file: {file_path}[/bold yellow]")
     return repo_contents
 
 def generate_test_cases(code_analysis: Dict[str, List[str]]) -> str:
@@ -511,9 +544,7 @@ def run_tests(project_dir: str) -> Dict[str, Any]:
             "warnings": pytest_result.stdout.count("WARN"),
         }
     except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"An error occurred during testing: {str(e)}"
-        )
+        console.print(f"[bold red]An error occurred during testing: {str(e)}[/bold red]")
         return {}
 
 def generate_readme(
@@ -574,16 +605,19 @@ def generate_readme(
                 max_tokens=2000
             )
 
-        if isinstance(readme_content, tuple) and readme_content[0].startswith("An error occurred:"):
-            error_msg = readme_content[0]
-            raise Exception(error_msg)
+        # Ensure readme_content is a string
+        if isinstance(readme_content, tuple):
+            readme_content = readme_content[0]
+        
+        if not isinstance(readme_content, str):
+            readme_content = str(readme_content)
+
         return readme_content
     except Exception as e:
         error_msg = f"An error occurred during README generation: {str(e)}"
-        print(error_msg)
-        st.session_state.project_state["errors"].append(error_msg)
+        console.print(error_msg)
         return f"# README\n\nError generating README: {error_msg}\n\nPlease check the API connection and try again."
-
+    
 def execute_code(code: str, project_type: str) -> str:
     """Executes the generated code based on the project type."""
     if project_type == "Command-line Tool":
@@ -842,6 +876,13 @@ def build_interface() -> None:
             st.session_state.project_state["iterations"] = 0
             st.session_state.project_state["errors"].clear()
 
+            # Create project directory
+            sanitized_objective = re.sub(r"\W+", "_", user_request if user_request else "repository_improvement")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            project_dir = Path("generated_projects") / f"{sanitized_objective}_{timestamp}"
+            project_dir.mkdir(parents=True, exist_ok=True)
+            st.success(f"Created project folder: {project_dir}")
+
             search_results = None
             if use_search:
                 search_query = user_request or "Repository improvement techniques"
@@ -852,31 +893,32 @@ def build_interface() -> None:
 
             task_exchanges = []
             worker_tasks = []
+            refined_output = ""
 
             while (
                 st.session_state.project_state["iterations"] < st.session_state.project_state["max_iterations"]
             ):
-                previous_results = [result for _, result in task_exchanges]
                 manager_response, _ = manager_agent_task(
                     create_agent_context(
                         st.session_state.project_state,
-                        st.session_state.project_state["test_results"],
                         user_request or "Analyze and improve the provided repository",
                     ),
                     model=st.session_state.settings["manager_model"],
                     temperature=float(st.session_state.settings["manager_temperature"]),
                     max_tokens=int(st.session_state.settings["manager_max_tokens"]),
-                    groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                     openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                 )
 
                 st.subheader(f"Manager Response - Iteration {st.session_state.project_state['iterations'] + 1}")
                 st.json(manager_response)
 
-                if "analysis" not in manager_response:
-                    st.error(
-                        "Manager response is incomplete. Please check the logs for details."
-                    )
+                if manager_response.get("create_files", False):
+                    st.subheader("Creating Repository Files")
+                    created_files = create_repository_files(project_dir, refined_output)
+                    st.success(f"Created {len(created_files)} repository files")
+                    for filename, content in created_files.items():
+                        st.text(f"Created file: {filename}")
+                        st.code(content, language="python")
                 else:
                     sub_agent_response = coding_agent_task(
                         manager_response["instructions"],
@@ -886,38 +928,27 @@ def build_interface() -> None:
                         temperature=float(st.session_state.settings["subagent_temperature"]),
                         max_tokens=int(st.session_state.settings["subagent_max_tokens"]),
                         search_results=search_results,
-                        groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                         openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                     )
 
                     st.subheader(f"Sub-agent Response - Iteration {st.session_state.project_state['iterations'] + 1}")
                     st.json(sub_agent_response)
 
-                    if "error" in sub_agent_response:
-                        st.error(f"Error in sub-agent response: {sub_agent_response['error']}")
-                        if "raw_response" in sub_agent_response:
-                            st.text("Raw response:")
-                            st.text(sub_agent_response["raw_response"])
-                    else:
-                        worker_tasks.append({"task": manager_response["instructions"], "result": sub_agent_response})
-                        task_exchanges.append((manager_response["instructions"], sub_agent_response))
+                    worker_tasks.append({"task": manager_response["instructions"], "result": sub_agent_response})
+                    task_exchanges.append((manager_response["instructions"], sub_agent_response))
 
-                        st.session_state.project_state["iterations"] += 1
-                        st.session_state.project_state["progress"] = min(
-                            st.session_state.project_state["iterations"]
-                            / st.session_state.project_state["max_iterations"],
-                            1.0
-                        )
-                        progress_bar.progress(st.session_state.project_state["progress"])
-                        status_text.text(
-                            f"Iteration {st.session_state.project_state['iterations']} of {st.session_state.project_state['max_iterations']}"
-                        )
+                st.session_state.project_state["iterations"] += 1
+                st.session_state.project_state["progress"] = min(
+                    st.session_state.project_state["iterations"]
+                    / st.session_state.project_state["max_iterations"],
+                    1.0
+                )
+                progress_bar.progress(st.session_state.project_state["progress"])
+                status_text.text(
+                    f"Iteration {st.session_state.project_state['iterations']} of {st.session_state.project_state['max_iterations']}"
+                )
 
-            sanitized_objective = re.sub(
-                r"\W+", "_", user_request if user_request else "repository_improvement"
-            )
-            timestamp = datetime.now().strftime("%H-%M-%S")
-            
+            # Refiner task
             st.subheader("Refiner Task")
             refined_output = refine_task(
                 user_request or "Analyze and improve the provided repository",
@@ -927,9 +958,12 @@ def build_interface() -> None:
                 projectname=sanitized_objective,
                 temperature=float(st.session_state.settings["refiner_temperature"]),
                 max_tokens=int(st.session_state.settings["refiner_max_tokens"]),
-                groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                 openai_api_key=st.session_state.api_keys.get("openai_api_key"),
             )
+
+            if isinstance(refined_output, tuple):
+                refined_output = refined_output[0]
+
             st.text_area("Refined Output:", refined_output, height=400)
 
             project_name_match = re.search(r"Project Name: (.*)", refined_output)
@@ -954,7 +988,7 @@ def build_interface() -> None:
             # Create code files
             if code_blocks:
                 for filename, code in code_blocks.items():
-                    file_path = project_dir / "code" / filename
+                    file_path = project_dir / filename
                     file_path.parent.mkdir(parents=True, exist_ok=True)
                     file_path.write_text(code, encoding="utf-8")
                     st.success(f"Created file: {file_path}")
@@ -967,6 +1001,14 @@ def build_interface() -> None:
                 refined_output,
                 st.session_state.settings["refiner_model"],
             )
+
+            # Ensure readme_content is a string
+            if isinstance(readme_content, tuple):
+                readme_content = readme_content[0]
+
+            if not isinstance(readme_content, str):
+                readme_content = str(readme_content)
+
             readme_path = project_dir / "README.md"
             readme_path.write_text(readme_content, encoding="utf-8")
             st.success(f"Created README.md: {readme_path}")
@@ -1043,8 +1085,7 @@ def main():
     try:
         build_interface()
     except Exception as e:
-        st.error(f"An unexpected error occurred: {str(e)}")
-        st.error("Please check the console for more details.")
+        console.print(f"[bold red]An unexpected error occurred: {str(e)}[/bold red]")
         raise e
 
 if __name__ == "__main__":
