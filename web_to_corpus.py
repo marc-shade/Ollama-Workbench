@@ -14,9 +14,26 @@ import tempfile
 import shutil
 from PyPDF2 import PdfMerger
 import json
+import random
+from fake_useragent import UserAgent
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def get_random_user_agent() -> str:
+    """Return a random user agent string to avoid detection."""
+    try:
+        ua = UserAgent()
+        return ua.random
+    except:
+        # Fallback to a predefined list if fake_useragent fails
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+        ]
+        return random.choice(user_agents)
 
 class WebsiteCrawler:
     def __init__(self, root_url, output_format):
@@ -34,6 +51,7 @@ class WebsiteCrawler:
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920x1080")
+        chrome_options.add_argument(f"user-agent={get_random_user_agent()}")
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
         if self.output_format == "PDF":
@@ -48,10 +66,16 @@ class WebsiteCrawler:
 
     def fetch_page(self, url):
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': get_random_user_agent(),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Referer': 'https://www.google.com/',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
         }
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             return response.text
         except requests.RequestException as e:
@@ -61,7 +85,7 @@ class WebsiteCrawler:
     def fetch_page_selenium(self, url):
         try:
             self.driver.get(url)
-            time.sleep(3)
+            time.sleep(random.uniform(3, 5))  # Randomize wait time
             return self.driver.page_source
         except Exception as e:
             st.error(f"Failed to fetch {url} with Selenium: {e}")
@@ -118,6 +142,9 @@ class WebsiteCrawler:
 
             progress = len(self.visited_links) / (len(self.to_visit_links) + len(self.visited_links))
             progress_bar.progress(progress)
+
+            # Add a random delay between requests
+            time.sleep(random.uniform(1, 3))
 
         status_text.text("Crawling completed!")
 
