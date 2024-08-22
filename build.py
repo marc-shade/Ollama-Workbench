@@ -1,5 +1,3 @@
-# build.py
-
 import ast
 import json
 import os
@@ -72,18 +70,6 @@ def set_openai_api_key(api_key: str) -> None:
     save_api_keys(api_keys)
     st.success("OpenAI API key has been set.")
 
-def ensure_ruff_installed() -> None:
-    """Ensures that Ruff is installed, and installs it if not found."""
-    try:
-        subprocess.run(["ruff", "--version"], check=True, capture_output=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print("Ruff is not installed. Installing...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "ruff"], check=True)
-    print("Ruff is ready.")
-
-# Call this at the beginning of build_interface()
-ensure_ruff_installed()
-
 def call_openai_api(
     model: str,
     messages: List[Dict[str, Any]],
@@ -95,7 +81,6 @@ def call_openai_api(
     openai_api_key: str = None
 ) -> Any:
     """Wrapper function to call the OpenAI Chat API with a unified interface."""
-    # Validate and ensure the correct types for numerical parameters
     try:
         temperature = float(temperature)
         max_tokens = int(max_tokens)
@@ -104,7 +89,6 @@ def call_openai_api(
     except ValueError as ve:
         raise ValueError(f"Invalid value for one of the numerical parameters: {ve}")
 
-    # Ensure the API key is valid
     if not openai_api_key or not isinstance(openai_api_key, str):
         api_keys = load_api_keys()
         openai_api_key = api_keys.get('openai_api_key')
@@ -197,32 +181,9 @@ def create_agent_context(
             "iterations": project_state["iterations"],
             "max_iterations": project_state["max_iterations"],
         },
-        "test_results": {
-            "pytest_summary": {
-                "passed": test_results.get("passed", 0),
-                "failed": test_results.get("failed", 0),
-                "errors": test_results.get("errors", 0),
-                "warnings": test_results.get("warnings", 0),
-            },
-            "ruff_summary": {
-                "total_violations": test_results.get("ruff_violations", 0),
-            },
-            "detailed_reports": {
-                "pytest_output": test_results.get("pytest_output", ""),
-                "ruff_report": test_results.get("ruff_report", ""),
-            },
-        },
         "current_task": current_task,
-        "agile_process": {
-            "sprint": project_state["iterations"],
-            "total_sprints": project_state["max_iterations"],
-            "phase": "Development"
-            if project_state["iterations"] < project_state["max_iterations"]
-            else "Final Review",
-        },
         "previous_tasks": project_state.get("previous_tasks", []),
     }
-
 
 def manager_agent_task(
     context: Dict[str, Any],
@@ -236,18 +197,15 @@ def manager_agent_task(
     prompt = f"""
     You are the manager agent in an Agile software development process. 
     Current project state: {json.dumps(context['project_state'], indent=2)}
-    Latest test results: {json.dumps(context['test_results'], indent=2)}
     Current task: {context['current_task']}
-    Agile process: {json.dumps(context['agile_process'], indent=2)}
 
-    Based on the current state and test results, please:
-    1. Analyze the test results and code quality issues.
+    Based on the current state, please:
+    1. Analyze the current project step.
     2. Update the work plan for the next sprint.
-    3. Prioritize tasks to address failed tests and code quality issues.
-    4. Provide clear instructions for the coding agents.
+    3. Prioritize tasks for the coding agents.
 
     Respond with a JSON object containing:
-    1. "analysis": Your analysis of the current state and test results.
+    1. "analysis": Your analysis of the current state.
     2. "work_plan": The updated work plan for the next sprint.
     3. "priorities": A list of prioritized tasks.
     4. "instructions": Clear instructions for the coding agents.
@@ -269,10 +227,8 @@ def manager_agent_task(
             response_format={"type": "json_object"}
         )
 
-        # Extract the content from the response
         response_content = response.choices[0].message.content
 
-        # Parse the JSON content
         parsed_response = json.loads(response_content)
 
         return parsed_response, None
@@ -308,7 +264,6 @@ def coding_agent_task(
     if previous_tasks is None:
         previous_tasks = []
 
-    # Convert previous tasks to a string representation
     previous_tasks_str = "\n".join(
         [
             f"Task: {task.get('task', '')}\nResult: {task.get('result', '')}"
@@ -438,83 +393,6 @@ def refine_task(
         )
         return ""
 
-def coding_agent_task(
-    prompt: str,
-    model: str,
-    previous_tasks=None,
-    use_search=False,
-    continuation=False,
-    temperature: float = 0.2,
-    max_tokens: int = 8000,
-    search_results=None,
-    groq_api_key=None,
-    openai_api_key=None
-) -> Dict[str, Any]:
-    """Handles the coding agent task based on the provided prompt and context."""
-    if previous_tasks is None:
-        previous_tasks = []
-
-    # Convert previous tasks to a string representation
-    previous_tasks_str = "\n".join(
-        [
-            f"Task: {task.get('task', '')}\nResult: {task.get('result', '')}"
-            for task in previous_tasks
-            if isinstance(task, dict)
-        ]
-    )
-
-    continuation_prompt = (
-        "Continuing from the previous answer, please complete the response."
-    )
-    previous_tasks_summary = (
-        f"Previous Sub-agent tasks:\n{previous_tasks_str}"
-        if previous_tasks_str
-        else "No previous sub-agent tasks."
-    )
-    if continuation:
-        prompt = continuation_prompt
-
-    full_prompt = f"{previous_tasks_summary}\n\n{prompt}"
-    if use_search and search_results:
-        full_prompt += f"\n\nSearch Results:\n{json.dumps(search_results, indent=2)}"
-
-    if not full_prompt.strip():
-        raise ValueError("Prompt cannot be empty")
-
-    full_prompt += "\n\nRespond with a JSON object containing your implementation details and any necessary explanations. Your response must be a valid JSON object."
-
-    messages = [
-        {"role": "system", "content": "You are a coding assistant that always responds with valid JSON."},
-        {"role": "user", "content": full_prompt}
-    ]
-
-    try:
-        client = OpenAI(api_key=openai_api_key)
-
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=float(temperature),
-            max_tokens=int(max_tokens),
-            response_format={"type": "json_object"}
-        )
-
-        response_content = response.choices[0].message.content
-        parsed_response = json.loads(response_content)
-
-        return parsed_response
-
-    except json.JSONDecodeError as e:
-        error_msg = f"Error parsing JSON response from Coding Agent: {e}"
-        print(error_msg)
-        print(f"Raw response that caused the error: {response_content}")
-        return {"error": error_msg, "raw_response": response_content}
-    except Exception as e:
-        error_msg = f"An error occurred during the coding agent task: {str(e)}"
-        print(error_msg)
-        return {"error": error_msg}
-
-
 def parse_folder_structure(structure_string: str) -> dict:
     """Parses the folder structure from the response string."""
     structure_string = re.sub(r"\s+", " ", structure_string)
@@ -592,58 +470,6 @@ def dump_repository(repo_path: str) -> Dict[str, str]:
                         console.print(f"Skipping binary file: {file_path}", style="yellow")
     return repo_contents
 
-def analyze_code(code: str) -> Dict[str, List[str]]:
-    """Analyzes the code to extract functions and classes."""
-    try:
-        tree = ast.parse(code)
-        functions = [
-            node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
-        ]
-        classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
-        return {"functions": functions, "classes": classes}
-    except SyntaxError as e:
-        st.session_state.project_state["errors"].append(
-            f"Syntax error in code analysis: {e}"
-        )
-        return {"functions": [], "classes": []}
-
-def analyze_code_with_ruff(file_path: str) -> List[Dict]:
-    """Analyzes code files with Ruff and returns violations."""
-    if shutil.which("ruff") is None:
-        print("Ruff is not installed or not in PATH. Skipping Ruff analysis.")
-        return []
-
-    try:
-        result = subprocess.run(
-            ["ruff", "check", file_path, "--format=json"], capture_output=True, text=True
-        )
-        return json.loads(result.stdout)
-    except FileNotFoundError:
-        print("Ruff command not found. Skipping Ruff analysis.")
-        return []
-    except json.JSONDecodeError:
-        print("Error parsing Ruff output. Skipping Ruff analysis.")
-        return []
-    except Exception as e:
-        print(f"An error occurred while running Ruff: {str(e)}")
-        return []
-
-def generate_ruff_report(violations: List[Dict]) -> str:
-    """Generates a report based on Ruff violations."""
-    report = "Code Analysis Report:\n\n"
-    for violation in violations:
-        report += f"File: {violation['filename']}\n"
-        report += f"Line: {violation['location']['row']}\n"
-        report += f"Column: {violation['location']['column']}\n"
-        report += f"Error Code: {violation['code']}\n"
-        report += f"Description: {violation['message']}\n"
-        report += f"Suggested Fix: {generate_fix_suggestion(violation)}\n\n"
-    return report
-
-def generate_fix_suggestion(violation: Dict) -> str:
-    """Generates a fix suggestion based on the violation code."""
-    return "Review the code and address the issue according to the error description."
-
 def generate_test_cases(code_analysis: Dict[str, List[str]]) -> str:
     """Generates test cases based on the analyzed code."""
     test_cases = []
@@ -697,32 +523,12 @@ def run_tests(project_dir: str) -> Dict[str, Any]:
             ["pytest", "-v", test_dir], capture_output=True, text=True
         )
 
-        ruff_violations = []
-        for root, _, files in os.walk(project_dir):
-            for file in files:
-                if file.endswith(".py"):
-                    file_path = os.path.join(root, file)
-                    result = subprocess.run(
-                        ["ruff", "check", file_path, "--format=json"],
-                        capture_output=True,
-                        text=True,
-                    )
-                    try:
-                        violations = json.loads(result.stdout)
-                        ruff_violations.extend(violations)
-                    except json.JSONDecodeError:
-                        print(f"Error parsing Ruff output for {file_path}")
-
-        ruff_report = generate_ruff_report(ruff_violations)
-
         return {
             "pytest_output": pytest_result.stdout,
-            "ruff_report": ruff_report,
             "passed": pytest_result.stdout.count("PASSED"),
             "failed": pytest_result.stdout.count("FAILED"),
             "errors": pytest_result.stdout.count("ERROR"),
             "warnings": pytest_result.stdout.count("WARN"),
-            "ruff_violations": len(ruff_violations),
         }
     except Exception as e:
         st.session_state.project_state["errors"].append(
@@ -797,6 +603,7 @@ def generate_readme(
         print(error_msg)
         st.session_state.project_state["errors"].append(error_msg)
         return f"# README\n\nError generating README: {error_msg}\n\nPlease check the API connection and try again."
+
 def execute_code(code: str, project_type: str) -> str:
     """Executes the generated code based on the project type."""
     if project_type == "Command-line Tool":
@@ -1201,9 +1008,34 @@ def build_interface() -> None:
 
             st_ss.project_state["documentation"] = readme_content
 
-            # Run tests
-            test_results = run_tests(project_dir)
-            st_ss.project_state["test_results"] = test_results
+            # Option to run tests separately
+            if st.button("🔍 Run Tests"):
+                test_results = run_tests(project_dir)
+                st_ss.project_state["test_results"] = test_results
+
+                if (
+                    test_results.get("failed", 0) > 0
+                    or test_results.get("errors", 0) > 0
+                ):
+                    console.print(
+                        Panel(
+                            f"[bold red]Tests failed or errors encountered. Please review the test results.[/bold red]",
+                            title="[bold red]Test Results[/bold red]",
+                            title_align="left",
+                            border_style="red",
+                        )
+                    )
+                    st.warning("Tests failed or errors encountered. Review the results and consider additional iterations.")
+                else:
+                    console.print(
+                        Panel(
+                            "[bold green]All tests passed successfully![/bold green]",
+                            title="[bold green]Test Results[/bold green]",
+                            title_align="left",
+                            border_style="green",
+                        )
+                    )
+                    st.success("All tests passed successfully!")
 
             # Update current task
             current_task = "Implement initial project structure"
@@ -1253,29 +1085,10 @@ def build_interface() -> None:
                         sub_agent_response.get("explanation", "")
                     )
 
-            if (
-                test_results.get("failed", 0) > 0
-                or test_results.get("errors", 0) > 0
-                or test_results.get("ruff_violations", 0) > 0
-            ):
-                console.print(
-                    Panel(
-                        f"[bold red]Tests failed, encountered errors, or Ruff violations detected. Asking user for additional iterations.[/bold red]",
-                        title="[bold red]Test Results[/bold red]",
-                        title_align="left",
-                        border_style="red",
-                    )
-                )
-                st.warning(
-                    "Tests failed, encountered errors, or Ruff violations detected. Click the button below to run additional iterations."
-                )
-                if st.button("Run Additional Iterations to Fix Issues"):
-                    st_ss.project_state["max_iterations"] += 3
-            else:
-                st_ss.project_state["status"] = "Completed"
-                st.session_state.project_state["progress"] = 1.0
-                progress_bar.progress(1.0)
-                st.success("Project build completed successfully!")
+            st_ss.project_state["status"] = "Completed"
+            st.session_state.project_state["progress"] = 1.0
+            progress_bar.progress(1.0)
+            st.success("Project build completed successfully!")
         else:
             st.error("Please enter a valid project request or repository directory.")
 
