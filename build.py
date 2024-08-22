@@ -1,5 +1,5 @@
 # build.py
-import streamlit as st
+
 import ast
 import json
 import os
@@ -8,15 +8,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 from datetime import datetime
-from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import ollama
 import pytest
-import requests
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build
 from ollama import Client
@@ -25,9 +22,9 @@ from rich.panel import Panel
 from serpapi import GoogleSearch
 from streamlit import session_state as st_ss
 
-from ollama_utils import *
-from groq_utils import *
 from openai_utils import *
+from groq_utils import *
+from ollama_utils import *
 from external_providers import get_available_groq_models
 
 API_KEYS_FILE = "api_keys.json"
@@ -39,105 +36,157 @@ console = Console()
 # Initialize the Ollama client
 client = Client(host="http://localhost:11434")
 
-def load_settings():
-    if os.path.exists(SETTINGS_FILE):
-        with open(SETTINGS_FILE, "r") as f:
+def load_json_file(filepath: str) -> dict:
+    """Loads JSON data from a file if it exists."""
+    if os.path.exists(filepath):
+        with open(filepath, "r") as f:
             return json.load(f)
     return {}
 
-def save_settings(settings):
-    with open(SETTINGS_FILE, "w") as f:
-        json.dump(settings, f, indent=4)
+def save_json_file(filepath: str, data: dict) -> None:
+    """Saves JSON data to a file."""
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=4)
 
-def is_groq_model(model_name):
+def load_api_keys() -> dict:
+    """Loads API keys from the JSON file."""
+    return load_json_file(API_KEYS_FILE)
+
+def save_api_keys(api_keys: dict) -> None:
+    """Saves API keys to the JSON file."""
+    save_json_file(API_KEYS_FILE, api_keys)
+
+def load_settings() -> dict:
+    """Loads settings from the JSON file."""
+    return load_json_file(SETTINGS_FILE)
+
+def save_settings(settings: dict) -> None:
+    """Saves settings to the JSON file."""
+    save_json_file(SETTINGS_FILE, settings)
+
+def set_openai_api_key(api_key: str) -> None:
+    """Sets the OpenAI API key."""
     api_keys = load_api_keys()
-    available_groq_models = get_available_groq_models(api_keys)
-    return model_name in available_groq_models
+    api_keys['openai_api_key'] = api_key
+    save_api_keys(api_keys)
+    st.success("OpenAI API key has been set.")
 
-
-def ensure_ruff_installed():
+def ensure_ruff_installed() -> None:
+    """Ensures that Ruff is installed, and installs it if not found."""
     try:
-        subprocess.run(
-            ["ruff", "--version"], check=True, capture_output=True
-        )
+        subprocess.run(["ruff", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Ruff is not installed. Installing...")
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "ruff"], check=True
-        )
+        subprocess.run([sys.executable, "-m", "pip", "install", "ruff"], check=True)
     print("Ruff is ready.")
-
 
 # Call this at the beginning of build_interface()
 ensure_ruff_installed()
 
-
-def duckduckgo_search(query: str, num_results: int = 5) -> List[Dict]:
-    with DDGS() as ddgs:
-        results = list(ddgs.text(query, max_results=num_results))
-    return [{"title": result["title"], "url": result["href"]} for result in results]
-
-
-def google_search(
-    query: str, api_key: str, cse_id: str, num_results: int = 5
-) -> List[Dict]:
-    service = build("customsearch", "v1", developerKey=api_key)
-    res = service.cse().list(q=query, cx=cse_id, num=num_results).execute()
-    return [
-        {"title": item["title"], "url": item["link"]}
-        for item in res.get("items", [])
-    ]
-
-
-def serpapi_search(query: str, api_key: str, num_results: int = 5) -> List[Dict]:
+def call_openai_api(
+    model: str,
+    messages: List[Dict[str, Any]],
+    temperature: float = 0.7,
+    max_tokens: int = 1000,
+    frequency_penalty: float = 0.0,
+    presence_penalty: float = 0.0,
+    stream: bool = False,
+    openai_api_key: str = None
+) -> Any:
+    """Wrapper function to call the OpenAI Chat API with a unified interface."""
+    # Validate and ensure the correct types for numerical parameters
     try:
-        params = {
-            "engine": "google",
-            "q": query,
-            "api_key": api_key,
-            "num": num_results,
-        }
-        search = GoogleSearch(params)
-        results = search.get_dict()
-        organic_results = results.get("organic_results", [])
-        if not organic_results:
-            print(f"SerpApi returned no results. Full response: {results}")
-        return [
-            {"title": result["title"], "url": result["link"]}
-            for result in organic_results
-        ]
-    except Exception as e:
-        print(f"Error in SerpApi search: {str(e)}")
-        return []
+        temperature = float(temperature)
+        max_tokens = int(max_tokens)
+        frequency_penalty = float(frequency_penalty)
+        presence_penalty = float(presence_penalty)
+    except ValueError as ve:
+        raise ValueError(f"Invalid value for one of the numerical parameters: {ve}")
 
+    # Ensure the API key is valid
+    if not openai_api_key or not isinstance(openai_api_key, str):
+        api_keys = load_api_keys()
+        openai_api_key = api_keys.get('openai_api_key')
+        if not openai_api_key or not isinstance(openai_api_key, str):
+            raise ValueError("Invalid or missing OpenAI API key.")
+
+    client = OpenAI(api_key=openai_api_key)
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stream=stream
+        )
+
+        if stream:
+            return response  # Return the stream object
+        else:
+            return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        st.error(f"Error calling OpenAI API: {e}")
+        return "Error occurred while calling OpenAI API"
+
+def is_groq_model(model_name: str) -> bool:
+    """Determines if a given model name is a Groq model."""
+    api_keys = load_api_keys()
+    available_groq_models = get_available_groq_models(api_keys)
+    return model_name in available_groq_models
 
 def perform_search(
-    query: str, search_method: str, api_keys: Dict[str, str], num_results: int = 5
-) -> List[Dict]:
+    query: str,
+    search_method: str,
+    api_keys: Dict[str, str],
+    num_results: int = 5
+) -> List[Dict[str, str]]:
+    """Performs a web search using the specified method."""
     if search_method == "duckduckgo":
-        return duckduckgo_search(query, num_results)
+        with DDGS() as ddgs:
+            results = list(ddgs.text(query, max_results=num_results))
+        return [{"title": result["title"], "url": result["href"]} for result in results]
+
     elif search_method == "google":
         if "google_api_key" not in api_keys or "google_cse_id" not in api_keys:
-            console.print(
-                "[bold red]Error: Google API Key or CSE ID not provided.[/bold red]"
-            )
+            console.print("[bold red]Error: Google API Key or CSE ID not provided.[/bold red]")
             return []
-        return google_search(
-            query, api_keys["google_api_key"], api_keys["google_cse_id"], num_results
-        )
+        service = build("customsearch", "v1", developerKey=api_keys["google_api_key"])
+        res = service.cse().list(q=query, cx=api_keys["google_cse_id"], num=num_results).execute()
+        return [{"title": item["title"], "url": item["link"]} for item in res.get("items", [])]
+
     elif search_method == "serpapi":
         if "serpapi_api_key" not in api_keys:
             console.print("[bold red]Error: SerpAPI Key not provided.[/bold red]")
             return []
-        return serpapi_search(query, api_keys["serpapi_api_key"], num_results)
+        try:
+            params = {
+                "engine": "google",
+                "q": query,
+                "api_key": api_keys["serpapi_api_key"],
+                "num": num_results,
+            }
+            search = GoogleSearch(params)
+            results = search.get_dict()
+            organic_results = results.get("organic_results", [])
+            return [{"title": result["title"], "url": result["link"]} for result in organic_results]
+        except Exception as e:
+            console.print(f"Error in SerpApi search: {str(e)}")
+            return []
+
     else:
-        console.print(
-            f"[bold red]Unsupported search method: {search_method}[/bold red]"
-        )
+        console.print(f"[bold red]Unsupported search method: {search_method}[/bold red]")
         return []
 
-
-def create_agent_context(project_state, test_results, current_task):
+def create_agent_context(
+    project_state: dict,
+    test_results: dict,
+    current_task: str
+) -> dict:
+    """Creates the context for agents based on the project state and test results."""
     return {
         "project_state": {
             "status": project_state["status"],
@@ -173,8 +222,14 @@ def create_agent_context(project_state, test_results, current_task):
 
 
 def manager_agent_task(
-    context: Dict[str, Any], model: str, temperature: float, max_tokens: int, groq_api_key=None, openai_api_key=None
-) -> Dict[str, Any]:
+    context: Dict[str, Any],
+    model: str,
+    temperature: float,
+    max_tokens: int,
+    groq_api_key=None,
+    openai_api_key=None
+) -> Tuple[Dict[str, Any], Any]:
+    """Handles the manager agent task based on the context."""
     prompt = f"""
     You are the manager agent in an Agile software development process. 
     Current project state: {json.dumps(context['project_state'], indent=2)}
@@ -196,288 +251,145 @@ def manager_agent_task(
     """
 
     try:
+        temperature = float(temperature)
+        max_tokens = int(max_tokens)
+
         if model.startswith("gpt-"):
-            response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature, max_tokens, openai_api_key)
-        elif is_groq_model(model):
-            response = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key)
-        else:
-            response = call_model(model, [{"role": "user", "content": prompt}], temperature, max_tokens, groq_api_key)
-        return json.loads(response)
-    except json.JSONDecodeError as e:
-        st.session_state.project_state["errors"].append(
-            f"Error parsing JSON response from Manager Agent: {e}"
-        )
-        st.session_state.project_state["errors"].append(f"Raw response: {response}")
-        return {
-            "analysis": "Error parsing response. Please review the raw output.",
-            "work_plan": "Unable to generate work plan due to parsing error.",
-            "priorities": ["Review and fix JSON parsing issues"],
-            "instructions": "Please review the raw output and manually extract relevant information.",
-        }
-    except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"An error occurred during the manager agent task: {str(e)}"
-        )
-        return {}
-
-
-def sub_agent_task(
-    context, manager_response, model, temperature, max_tokens, groq_api_key=None, openai_api_key=None
-):
-    previous_tasks = context.get("previous_tasks", [])
-
-    # Convert previous tasks to a string representation
-    previous_tasks_str = "\n".join(
-        [
-            f"Task: {task.get('task', '')}\nResult: {task.get('result', '')}"
-            for task in previous_tasks
-            if isinstance(task, dict)
-        ]
-    )
-
-    prompt = f"""
-    You are a coding agent in an Agile software development process.
-    Current project state: {json.dumps(context['project_state'], indent=2)}
-    Latest test results: {json.dumps(context['test_results'], indent=2)}
-    Current task: {context['current_task']}
-    Agile process: {json.dumps(context['agile_process'], indent=2)}
-
-    Manager's analysis: {manager_response['analysis']}
-    Work plan: {manager_response['work_plan']}
-    Priorities: {json.dumps(manager_response['priorities'], indent=2)}
-    Instructions: {manager_response['instructions']}
-
-    Previous tasks:
-    {previous_tasks_str}
-
-    Based on the provided information and instructions, please:
-    1. Implement the necessary code changes to address the current task and priorities.
-    2. Focus on fixing failed tests and improving code quality.
-    3. Provide a brief explanation of your changes.
-
-    Respond with a JSON object containing:
-    1. "code_changes": The implemented code changes.
-    2. "explanation": A brief explanation of your changes.
-    """
-
-    try:
-        if model.startswith("gpt-"):
-            response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature, max_tokens, openai_api_key)
-        elif is_groq_model(model):
-            response = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key)
-        else:
-            response = client.chat(
-                model=str(model),  # Ensure model is always a string
-                messages=[{"role": "user", "content": prompt}],
-                options={
-                    "temperature": temperature,
-                    "num_predict": max_tokens
-                }
+            response = call_openai_api(
+                model, [{"role": "user", "content": prompt}], temperature, max_tokens, openai_api_key=openai_api_key
             )
-            response = response['message']['content']
-        return json.loads(response)
-    except json.JSONDecodeError as e:
-        st.session_state.project_state["errors"].append(
-            f"Error parsing JSON response from Sub Agent: {e}"
-        )
-        st.session_state.project_state["errors"].append(f"Raw response: {response}")
-        return {}
+        elif is_groq_model(model):
+            response = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key=groq_api_key)
+        else:
+            response = call_ollama_endpoint(
+                model=model,
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+
+        # Log the raw response for debugging
+        print(f"Raw response: {response}")
+
+        # Check if the response is empty or invalid
+        if not response or response.strip() == "" or response.startswith("Error"):
+            error_msg = f"Received an invalid response from the model: {response}"
+            print(error_msg)
+            st.session_state.project_state["errors"].append(error_msg)
+            return {}, None
+
+        try:
+            parsed_response = json.loads(response)
+            return parsed_response, None
+        except json.JSONDecodeError as e:
+            error_msg = f"Error parsing JSON response from Manager Agent: {e}"
+            print(error_msg)
+            print(f"Raw response that caused the error: {response}")
+            st.session_state.project_state["errors"].append(error_msg)
+            return {
+                "analysis": "Error parsing response. Please review the raw output.",
+                "work_plan": "Unable to generate work plan due to parsing error.",
+                "priorities": ["Review and fix JSON parsing issues"],
+                "instructions": "Please review the raw output and manually extract relevant information.",
+            }, None
+
+    except ValueError as ve:
+        error_msg = f"Invalid value for one of the numerical parameters: {ve}"
+        print(error_msg)
+        st.session_state.project_state["errors"].append(error_msg)
+        return {}, None
     except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"An error occurred during the sub-agent task: {str(e)}"
-        )
-        return {}
+        error_msg = f"An error occurred during the manager agent task: {str(e)}"
+        print(error_msg)
+        st.session_state.project_state["errors"].append(error_msg)
+        return {}, None
 
 
-def manage_task(
-    objective,
-    model,
-    file_content=None,
-    previous_results=None,
-    use_search=False,
-    temperature=0.2,
-    max_tokens=8000,
-    search_results=None,
+def refine_task(
+    objective: str,
+    model: str,
+    sub_task_results: List[str],
+    filename: str,
+    projectname: str,
+    continuation=False,
+    temperature: float = 0.2,
+    max_tokens: int = 8000,
     groq_api_key=None,
-    openai_api_key=None,
-    api_keys=None,
-):
-    console.print(f"\n[bold]Calling Manager for your objective[/bold]")
-    previous_results_text = (
-        "\n".join(previous_results) if previous_results else "None"
-    )
-    if file_content:
-        console.print(
-            Panel(
-                f"File content:\n{file_content}",
-                title="[bold blue]File Content[/bold blue]",
-                title_align="left",
-                border_style="blue",
-            )
-        )
-
+    openai_api_key=None
+) -> str:
+    """Handles the task refinement process for the final output."""
+    print("\nCalling Refiner to provide the refined final output for your objective:")
     messages = [
         {
             "role": "user",
-            "content": f"Based on the following objective{' and file content' if file_content else ''}, and the previous sub-task results (if any), please break down the objective into the next sub-task, and create a concise and detailed prompt for a subagent so it can execute that task. IMPORTANT!!! when dealing with code tasks make sure you check the code for errors and provide fixes and support as part of the next sub-task. If you find any bugs or have suggestions for better code, please include them in the next sub-task prompt. Please assess if the objective has been fully achieved. If the previous sub-task results comprehensively address all aspects of the objective, include the phrase 'The task is complete:' at the beginning of your response. If the objective is not yet fully achieved, break it down into the next sub-task and create a concise and detailed prompt for a subagent to execute that task.:\n\nObjective: {objective}"
-            + (f"\nFile content:\n{file_content}" if file_content else "")
-            + f"\n\nPrevious sub-task results:\n{previous_results_text}",
+            "content": "Objective: "
+            + objective
+            + "\n\nSub-task results:\n"
+            + "\n".join(sub_task_results)
+            + "\n\nPlease review and refine the sub-task results into a cohesive final output. Add any missing information or details as needed. When working on code projects, ONLY AND ONLY IF THE PROJECT IS CLEARLY A CODING ONE please provide the following:\n1. Project Name: Create a concise and appropriate project name that fits the project based on what it's creating. The project name should be no more than 20 characters long.\n2. Folder Structure: Provide the folder structure as a valid JSON object, where each key represents a folder or file, and nested keys represent subfolders. Use null values for files. Ensure the JSON is properly formatted without any syntax errors. Please make sure all keys are enclosed in double quotes, and ensure objects are correctly encapsulated with braces, separating items with commas as necessary.\nWrap the JSON object in <folder_structure> tags.\n3. Code Files: For each code file, include ONLY the file name NEVER EVER USE THE FILE PATH OR ANY OTHER FORMATTING YOU ONLY USE THE FOLLOWING format 'Filename: <filename>' followed by the code block enclosed in triple backticks, with the language identifier after the opening backticks, like this:\n\nFilename: <filename>\n```python\n<code>\n```",
         }
     ]
 
-    if use_search and search_results:
-        messages[0][
-            "content"
-        ] += f"\n\nSearch Results:\n{json.dumps(search_results, indent=2)}"
-
-    # Define the search tool
-    search_tool = {
-        "type": "function",
-        "function": {
-            "name": "perform_search",
-            "description": "Performs a web search using the specified search method and API keys.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "The search query."},
-                    "search_method": {
-                        "type": "string",
-                        "description": "The search method to use (duckduckgo, google, serpapi).",
-                        "enum": ["duckduckgo", "google", "serpapi"],
-                    },
-                    "api_keys": {
-                        "type": "object",
-                        "description": "API keys for the selected search methods.",
-                        "properties": {
-                            "google_api_key": {
-                                "type": "string",
-                                "description": "Google API key.",
-                            },
-                            "google_cse_id": {
-                                "type": "string",
-                                "description": "Google Custom Search Engine ID.",
-                            },
-                            "serpapi_api_key": {
-                                "type": "string",
-                                "description": "SerpApi API key.",
-                            },
-                        },
-                    },
-                    "num_results": {
-                        "type": "integer",
-                        "description": "The number of search results to return.",
-                    },
-                },
-                "required": ["query", "search_method", "api_keys", "num_results"],
-            },
-        },
-    }
-
-    # Add the search tool to the tools list if use_search is True
-    tools = [search_tool] if use_search else []
-
-    if model.startswith("gpt-"):
-        response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key)
-    elif is_groq_model(model):
-        response_text = call_groq_api(
-            model, messages, temperature, max_tokens, groq_api_key
-        )
-    else:
-        try:
-            response = client.chat(
+    try:
+        if isinstance(model, str) and model.startswith("gpt-"):
+            response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key=openai_api_key)
+        elif isinstance(model, str) and is_groq_model(model):
+            response_text = call_groq_api(model, messages[0]["content"], temperature, max_tokens, groq_api_key=groq_api_key)
+        else:
+            response_text = call_ollama_endpoint(
                 model=model,
-                messages=messages,
-                tools=tools,
-                options={"temperature": temperature, "num_predict": max_tokens},
+                prompt=messages[0]["content"],
+                temperature=temperature,
+                max_tokens=max_tokens
             )
-            response_text = response["message"]["content"]
-            tool_calls = response["message"].get("tool_calls")
 
-            if tool_calls:
-                # Process tool calls
-                for tool_call in tool_calls:
-                    function_name = tool_call["function"]["name"]
-                    arguments = tool_call["function"]["arguments"]
+        if len(response_text) >= 8000 and not continuation:
+            console.print(
+                "[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response."
+            )
+            continuation_response_text = refine_task(
+                objective,
+                model,
+                sub_task_results + [response_text],
+                filename,
+                projectname,
+                continuation=True,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                groq_api_key=groq_api_key,
+                openai_api_key=openai_api_key,
+            )
+            response_text += "\n" + continuation_response_text
 
-                    if function_name == "perform_search":
-                        search_query = arguments.get("query", "")
-                        search_method = arguments.get(
-                            "search_method", "duckduckgo"
-                        )
-                        num_results = arguments.get("num_results", 5)
-
-                        search_results = perform_search(
-                            search_query, search_method, st_ss.api_keys, num_results
-                        )
-                        if search_results:
-                            console.print(
-                                Panel(
-                                    f"Search Results: {json.dumps(search_results, indent=2)}",
-                                    title="[bold green]Search Results[/bold green]",
-                                    title_align="left",
-                                    border_style="green",
-                                )
-                            )
-
-                            # Append search results to the messages
-                            messages.append(
-                                {"role": "tool", "content": json.dumps(search_results)}
-                            )
-
-                            # Call the model again with the search results
-                            response = client.chat(
-                                model=model,
-                                messages=messages,
-                                tools=tools,
-                                options={
-                                    "temperature": temperature,
-                                    "num_predict": max_tokens,
-                                },
-                            )
-                            response_text = response["message"]["content"]
-                        else:
-                            console.print(
-                                "[bold yellow]Warning: Search returned no results.[/bold yellow]"
-                            )
-        except Exception as e:
-            if "does not support tools" in str(e):
-                # If the model doesn't support tools, fall back to a regular chat without tools
-                response = client.chat(
-                    model=model,
-                    messages=messages,
-                    options={"temperature": temperature, "num_predict": max_tokens},
-                )
-                response_text = response["message"]["content"]
-            else:
-                st.session_state.project_state["errors"].append(
-                    f"An error occurred during the manager task: {str(e)}"
-                )
-                response_text = ""
-
-    console.print(
-        Panel(
-            response_text,
-            title=f"[bold green]Manager Response[/bold green]",
-            title_align="left",
-            border_style="green",
-            subtitle="Sending task to sub-agent 👇",
+        console.print(
+            Panel(
+                response_text,
+                title="[bold green]Final Output[/bold green]",
+                title_align="left",
+                border_style="green",
+            )
         )
-    )
-    return response_text, file_content
+        return response_text
 
+    except Exception as e:
+        st.session_state.project_state["errors"].append(
+            f"An error occurred during the refine task: {str(e)}"
+        )
+        return ""
 
-def sub_agent_task(
-    prompt,
-    model,
+def coding_agent_task(
+    prompt: str,
+    model: str,
     previous_tasks=None,
     use_search=False,
     continuation=False,
-    temperature=0.2,
-    max_tokens=8000,
+    temperature: float = 0.2,
+    max_tokens: int = 8000,
     search_results=None,
     groq_api_key=None,
-    openai_api_key=None,
-):
+    openai_api_key=None
+) -> Dict[str, Any]:
+    """Handles the coding agent task based on the provided prompt and context."""
     if previous_tasks is None:
         previous_tasks = []
 
@@ -529,18 +441,12 @@ def sub_agent_task(
                         "type": "object",
                         "description": "API keys for the selected search methods.",
                         "properties": {
-                            "google_api_key": {
-                                "type": "string",
-                                "description": "Google API key.",
-                            },
+                            "google_api_key": {"type": "string", "description": "Google API key."},
                             "google_cse_id": {
                                 "type": "string",
                                 "description": "Google Custom Search Engine ID.",
                             },
-                            "serpapi_api_key": {
-                                "type": "string",
-                                "description": "SerpApi API key.",
-                            },
+                            "serpapi_api_key": {"type": "string", "description": "SerpApi API key."},
                         },
                     },
                     "num_results": {
@@ -556,16 +462,26 @@ def sub_agent_task(
     # Add the search tool to the tools list if use_search is True
     tools = [search_tool] if use_search else []
 
-    if model.startswith("gpt-"):
-        response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key)
-    elif is_groq_model(model):
-        response_text = call_groq_api(
-            model, messages, temperature, max_tokens, groq_api_key
-        )
-    else:
-        try:
+    try:
+        if isinstance(model, str) and model.startswith("gpt-"):
+            response_text = call_openai_api(
+                model,
+                messages,
+                temperature=float(temperature),
+                max_tokens=int(max_tokens),
+                openai_api_key=openai_api_key
+            )
+        elif isinstance(model, str) and is_groq_model(model):
+            response_text = call_groq_api(
+                model,
+                messages[0]["content"],
+                temperature=float(temperature),
+                max_tokens=int(max_tokens),
+                groq_api_key=groq_api_key
+            )
+        else:
             response = client.chat(
-                model=str(model),  # Ensure model is always a string
+                model=model,
                 messages=messages,
                 tools=tools,
                 options={"temperature": temperature, "num_predict": max_tokens},
@@ -574,16 +490,13 @@ def sub_agent_task(
             tool_calls = response["message"].get("tool_calls")
 
             if tool_calls:
-                # Process tool calls
                 for tool_call in tool_calls:
                     function_name = tool_call["function"]["name"]
                     arguments = json.loads(tool_call["function"]["arguments"])
 
                     if function_name == "perform_search":
                         search_query = arguments.get("query", "")
-                        search_method = arguments.get(
-                            "search_method", "duckduckgo"
-                        )
+                        search_method = arguments.get("search_method", "duckduckgo")
                         api_keys = arguments.get("api_keys", {})
                         num_results = arguments.get("num_results", 5)
 
@@ -600,148 +513,71 @@ def sub_agent_task(
                                 )
                             )
 
-                            # Append search results to the messages
-                            messages.append(
-                                {"role": "tool", "content": json.dumps(search_results)}
-                            )
-
-                            # Call the model again with the search results
+                            messages.append({"role": "tool", "content": json.dumps(search_results)})
                             response = client.chat(
-                                model=str(model),  # Ensure model is always a string
+                                model=model,
                                 messages=messages,
                                 tools=tools,
-                                options={
-                                    "temperature": temperature,
-                                    "num_predict": max_tokens,
-                                },
+                                options={"temperature": temperature, "num_predict": max_tokens},
                             )
                             response_text = response["message"]["content"]
                         else:
-                            console.print(
-                                "[bold yellow]Warning: Search returned no results.[/bold yellow]"
-                            )
-        except Exception as e:
-            if "does not support tools" in str(e):
-                # If the model doesn't support tools, fall back to a regular chat without tools
-                response = client.chat(
-                    model=str(model),  # Ensure model is always a string
-                    messages=messages,
-                    options={"temperature": temperature, "num_predict": max_tokens},
-                )
-                response_text = response["message"]["content"]
-            else:
-                st.session_state.project_state["errors"].append(
-                    f"An error occurred during the sub-agent task: {str(e)}"
-                )
-                response_text = ""
+                            console.print("[bold yellow]Warning: Search returned no results.[/bold yellow]")
 
-    if len(response_text) >= 8000:
+        if len(response_text) >= 8000:
+            console.print(
+                "[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response."
+            )
+            continuation_response_text = coding_agent_task(
+                continuation_prompt,
+                model,
+                previous_tasks,
+                use_search,
+                continuation=True,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                search_results=search_results,
+                groq_api_key=groq_api_key,
+                openai_api_key=openai_api_key,
+            )
+            response_text += continuation_response_text
+
         console.print(
-            "[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response."
+            Panel(
+                response_text,
+                title="[bold blue]Sub-agent Result[/bold blue]",
+                title_align="left",
+                border_style="blue",
+                subtitle="Task completed, sending result to Manager 👇",
+            )
         )
-        continuation_response_text = sub_agent_task(
-            continuation_prompt,
-            model,
-            previous_tasks,
-            use_search,
-            continuation=True,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            search_results=search_results,
-            groq_api_key=groq_api_key,
-            openai_api_key=openai_api_key,
-        )
-        response_text += continuation_response_text
+        return response_text
 
-    console.print(
-        Panel(
-            response_text,
-            title="[bold blue]Sub-agent Result[/bold blue]",
-            title_align="left",
-            border_style="blue",
-            subtitle="Task completed, sending result to Manager 👇",
-        )
-    )
-    return response_text
-
-
-def refine_task(
-    objective,
-    model,
-    sub_task_results,
-    filename,
-    projectname,
-    continuation=False,
-    temperature=0.2,
-    max_tokens=8000,
-    groq_api_key=None,
-    openai_api_key=None,
-):
-    print("\nCalling Refiner to provide the refined final output for your objective:")
-    messages = [
-        {
-            "role": "user",
-            "content": "Objective: "
-            + objective
-            + "\n\nSub-task results:\n"
-            + "\n".join(sub_task_results)
-            + "\n\nPlease review and refine the sub-task results into a cohesive final output. Add any missing information or details as needed. When working on code projects, ONLY AND ONLY IF THE PROJECT IS CLEARLY A CODING ONE please provide the following:\n1. Project Name: Create a concise and appropriate project name that fits the project based on what it's creating. The project name should be no more than 20 characters long.\n2. Folder Structure: Provide the folder structure as a valid JSON object, where each key represents a folder or file, and nested keys represent subfolders. Use null values for files. Ensure the JSON is properly formatted without any syntax errors. Please make sure all keys are enclosed in double quotes, and ensure objects are correctly encapsulated with braces, separating items with commas as necessary.\nWrap the JSON object in <folder_structure> tags.\n3. Code Files: For each code file, include ONLY the file name NEVER EVER USE THE FILE PATH OR ANY OTHER FORMATTING YOU ONLY USE THE FOLLOWING format 'Filename: <filename>' followed by the code block enclosed in triple backticks, with the language identifier after the opening backticks, like this:\n\nFilename: <filename>\n```python\n<code>\n```",
-        }
-    ]
-
-    try:
-        if model.startswith("gpt-"):
-            response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key)
-        elif is_groq_model(model):
-            response_text = call_groq_api(model, messages, temperature, max_tokens, groq_api_key)
-        else:
-            response_text = call_model(model, messages, temperature, max_tokens, groq_api_key)
     except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"An error occurred during the refine task: {str(e)}"
-        )
-        response_text = ""
-
-    if len(response_text) >= 8000 and not continuation:
-        console.print(
-            "[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response."
-        )
-        continuation_response_text = refine_task(
-            objective,
-            model,
-            sub_task_results + [response_text],
-            filename,
-            projectname,
-            continuation=True,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            groq_api_key=groq_api_key,
-            openai_api_key=openai_api_key,
-        )
-        response_text += "\n" + continuation_response_text
-
-    console.print(
-        Panel(
-            response_text,
-            title="[bold green]Final Output[/bold green]",
-            title_align="left",
-            border_style="green",
-        )
-    )
-    return response_text
+        if "does not support tools" in str(e):
+            response = client.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": temperature, "num_predict": max_tokens},
+            )
+            response_text = response["message"]["content"]
+        else:
+            st.session_state.project_state["errors"].append(
+                f"An error occurred during the sub-agent task: {str(e)}"
+            )
+            return {}
 
 
-def parse_folder_structure(structure_string):
+def parse_folder_structure(structure_string: str) -> dict:
+    """Parses the folder structure from the response string."""
     structure_string = re.sub(r"\s+", " ", structure_string)
-    match = re.search(
-        r"<folder_structure>(.*?)</folder_structure>", structure_string
-    )
+    match = re.search(r"<folder_structure>(.*?)</folder_structure>", structure_string)
     if not match:
         return None
 
     json_string = match.group(1)
 
-    try: 
+    try:
         structure = json.loads(json_string)
         return structure
     except json.JSONDecodeError as e:
@@ -763,19 +599,19 @@ def parse_folder_structure(structure_string):
         )
         return None
 
-
-def extract_code_blocks(refined_output):
+def extract_code_blocks(refined_output: str) -> Dict[str, str]:
+    """Extracts code blocks from the refined output."""
     code_blocks = {}
-    pattern = r"Filename: ([\w.-]+)\n```[\w]*\n(.*?)\n```"
+    pattern = r"Filename: (.*?)\n```(.*?)\n```"
     matches = re.finditer(pattern, refined_output, re.DOTALL)
     for match in matches:
-        filename = match.group(1)
+        filename = match.group(1).strip()
         code = match.group(2).strip()
         code_blocks[filename] = code
     return code_blocks
 
-
 def save_file(content: str, filename: str, project_dir: str) -> None:
+    """Saves content to a file within the specified project directory."""
     try:
         file_path = Path(project_dir) / "code" / filename
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -793,8 +629,8 @@ def save_file(content: str, filename: str, project_dir: str) -> None:
             f"Error saving file '{filename}': {str(e)}"
         )
 
-
 def dump_repository(repo_path: str) -> Dict[str, str]:
+    """Dumps the contents of a repository to a dictionary."""
     repo_contents = {}
     for root, _, files in os.walk(repo_path):
         for file in files:
@@ -806,21 +642,17 @@ def dump_repository(repo_path: str) -> Dict[str, str]:
                         relative_path = os.path.relpath(file_path, repo_path)
                         repo_contents[relative_path] = content
                     except UnicodeDecodeError:
-                        console.print(
-                            f"Skipping binary file: {file_path}", style="yellow"
-                        )
+                        console.print(f"Skipping binary file: {file_path}", style="yellow")
     return repo_contents
 
-
 def analyze_code(code: str) -> Dict[str, List[str]]:
+    """Analyzes the code to extract functions and classes."""
     try:
         tree = ast.parse(code)
         functions = [
             node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
         ]
-        classes = [
-            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-        ]
+        classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
         return {"functions": functions, "classes": classes}
     except SyntaxError as e:
         st.session_state.project_state["errors"].append(
@@ -828,19 +660,15 @@ def analyze_code(code: str) -> Dict[str, List[str]]:
         )
         return {"functions": [], "classes": []}
 
-
 def analyze_code_with_ruff(file_path: str) -> List[Dict]:
+    """Analyzes code files with Ruff and returns violations."""
     if shutil.which("ruff") is None:
-        print(
-            "Ruff is not installed or not in PATH. Skipping Ruff analysis."
-        )
+        print("Ruff is not installed or not in PATH. Skipping Ruff analysis.")
         return []
 
     try:
         result = subprocess.run(
-            ["ruff", "check", file_path, "--format=json"],
-            capture_output=True,
-            text=True,
+            ["ruff", "check", file_path, "--format=json"], capture_output=True, text=True
         )
         return json.loads(result.stdout)
     except FileNotFoundError:
@@ -853,8 +681,8 @@ def analyze_code_with_ruff(file_path: str) -> List[Dict]:
         print(f"An error occurred while running Ruff: {str(e)}")
         return []
 
-
 def generate_ruff_report(violations: List[Dict]) -> str:
+    """Generates a report based on Ruff violations."""
     report = "Code Analysis Report:\n\n"
     for violation in violations:
         report += f"File: {violation['filename']}\n"
@@ -865,14 +693,12 @@ def generate_ruff_report(violations: List[Dict]) -> str:
         report += f"Suggested Fix: {generate_fix_suggestion(violation)}\n\n"
     return report
 
-
 def generate_fix_suggestion(violation: Dict) -> str:
-    # This function would contain logic to suggest fixes based on the error code
-    # For simplicity, we'll just return a placeholder message
+    """Generates a fix suggestion based on the violation code."""
     return "Review the code and address the issue according to the error description."
 
-
 def generate_test_cases(code_analysis: Dict[str, List[str]]) -> str:
+    """Generates test cases based on the analyzed code."""
     test_cases = []
     for func in code_analysis["functions"]:
         test_cases.append(
@@ -897,13 +723,12 @@ class Test{cls}:
         )
     return "\n".join(test_cases)
 
-
 def run_tests(project_dir: str) -> Dict[str, Any]:
+    """Runs tests in the project directory and returns the results."""
     test_dir = os.path.join(project_dir, "tests")
     if not os.path.exists(test_dir):
         os.makedirs(test_dir)
 
-    # Generate test files for each Python file in the project
     for root, _, files in os.walk(project_dir):
         for file in files:
             if file.endswith(".py") and not file.startswith("test_"):
@@ -921,12 +746,10 @@ def run_tests(project_dir: str) -> Dict[str, Any]:
                     f.write(test_cases)
 
     try:
-        # Run pytest
         pytest_result = subprocess.run(
             ["pytest", "-v", test_dir], capture_output=True, text=True
         )
 
-        # Run Ruff on all Python files
         ruff_violations = []
         for root, _, files in os.walk(project_dir):
             for file in files:
@@ -960,10 +783,14 @@ def run_tests(project_dir: str) -> Dict[str, Any]:
         )
         return {}
 
-
 def generate_readme(
-    project_name, user_request, project_type, refined_output, refiner_model
-):
+    project_name: str,
+    user_request: str,
+    project_type: str,
+    refined_output: str,
+    refiner_model: str
+) -> str:
+    """Generates a README.md file for the project."""
     readme_prompt = f"""
     Create a comprehensive README.md file for the following project:
 
@@ -989,42 +816,58 @@ def generate_readme(
 
     messages = [{"role": "user", "content": readme_prompt}]
     try:
-        readme_content = call_model(
-            refiner_model, messages, temperature=0.7, max_tokens=2000
-        )
+        api_keys = load_api_keys()
+        if refiner_model.startswith("gpt-"):
+            readme_content = call_openai_api(
+                model=refiner_model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000,
+                openai_api_key=api_keys.get("openai_api_key")
+            )
+        elif is_groq_model(refiner_model):
+            readme_content = call_groq_api(
+                model=refiner_model,
+                prompt=messages[0]["content"],
+                temperature=0.7,
+                max_tokens=2000,
+                groq_api_key=api_keys.get("groq_api_key")
+            )
+        else:
+            readme_content = call_ollama_endpoint(
+                model=refiner_model,
+                prompt=messages[0]["content"],
+                temperature=0.7,
+                max_tokens=2000
+            )
+
+        if isinstance(readme_content, tuple) and readme_content[0].startswith("An error occurred:"):
+            error_msg = readme_content[0]
+            raise Exception(error_msg)
         return readme_content
     except Exception as e:
-        st.session_state.project_state["errors"].append(
-            f"An error occurred during README generation: {str(e)}"
-        )
-        return ""
-
-
+        error_msg = f"An error occurred during README generation: {str(e)}"
+        print(error_msg)
+        st.session_state.project_state["errors"].append(error_msg)
+        return f"# README\n\nError generating README: {error_msg}\n\nPlease check the API connection and try again."
 def execute_code(code: str, project_type: str) -> str:
     """Executes the generated code based on the project type."""
     if project_type == "Command-line Tool":
-        # For command-line tools, execute the code in a subprocess and capture the output
-        with tempfile.NamedTemporaryFile(
-            mode="w+", delete=False, suffix=".py"
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".py") as temp_file:
             temp_file.write(code)
             temp_file_path = temp_file.name
         try:
             result = subprocess.run(
-                [sys.executable, temp_file_path],
-                capture_output=True,
-                text=True,
+                [sys.executable, temp_file_path], capture_output=True, text=True
             )
             return result.stdout
         except Exception as e:
             return f"Error executing command-line tool: {str(e)}"
         finally:
             os.remove(temp_file_path)
+
     elif project_type == "Streamlit App":
-        # For Streamlit apps, save the code to a file and run it with Streamlit
-        with tempfile.NamedTemporaryFile(
-            mode="w+", delete=False, suffix=".py"
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".py") as temp_file:
             temp_file.write(code)
             temp_file_path = temp_file.name
         try:
@@ -1036,38 +879,54 @@ def execute_code(code: str, project_type: str) -> str:
             return f"Error launching Streamlit app: {str(e)}"
         finally:
             os.remove(temp_file_path)
+
     elif project_type == "API":
-        # For APIs, you'll need to determine how to execute them based on the framework used
-        # For example, if using Flask, you could save the code to a file and run it with Flask
         return "API execution not yet implemented."
+
     elif project_type == "Data Analysis Script":
-        # For data analysis scripts, execute the code in a subprocess and capture the output
-        with tempfile.NamedTemporaryFile(
-            mode="w+", delete=False, suffix=".py"
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".py") as temp_file:
             temp_file.write(code)
             temp_file_path = temp_file.name
         try:
             result = subprocess.run(
-                [sys.executable, temp_file_path],
-                capture_output=True,
-                text=True,
+                [sys.executable, temp_file_path], capture_output=True, text=True
             )
             return result.stdout
         except Exception as e:
             return f"Error executing data analysis script: {str(e)}"
         finally:
             os.remove(temp_file_path)
+
     else:
         return "Unsupported project type for execution."
 
+def build_project(user_request: str, repo_contents: dict, project_type: str) -> Dict[str, Any]:
+    """
+    Implements the core build logic without running tests.
 
-def build_interface():
+    Args:
+        user_request (str): The user's project request.
+        repo_contents (dict): The contents of the repository.
+        project_type (str): The type of the project.
+
+    Returns:
+        dict: A dictionary containing the build results.
+    """
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        project_dir = Path("generated_projects") / f"project_{timestamp}"
+        project_dir.mkdir(parents=True, exist_ok=True)
+
+        return {"success": True, "project_dir": project_dir}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def build_interface() -> None:
+    """The main interface for the build system."""
     os.environ["USER_AGENT"] = "BuildAgent/1.0"
 
     st.title("🔨 Build: Autonomous Multi-Agent Software Development System")
 
-    # Initialize session state variables
     if "project_state" not in st.session_state:
         st.session_state.project_state = {
             "status": "Not Started",
@@ -1083,6 +942,7 @@ def build_interface():
             "warnings": [],
             "agent_logs": [],
             "progress": 0,
+            "previous_tasks": [],
         }
 
     if "settings" not in st.session_state:
@@ -1091,23 +951,19 @@ def build_interface():
     if "api_keys" not in st.session_state:
         st.session_state.api_keys = load_api_keys()
 
-    # Get all models
     all_models = get_all_models()
-
-    # Get available Groq models
     available_groq_models = get_available_groq_models(st.session_state.api_keys)
-
-    # Update all_models to include only available Groq models
-    all_models = [model for model in all_models if model not in GROQ_MODELS or model in available_groq_models]
+    all_models = [
+        model for model in all_models if model not in GROQ_MODELS or model in available_groq_models
+    ]
 
     progress_bar = st.progress(0)
     status_text = st.empty()
 
     # Sidebar
     with st.sidebar:
-
         with st.expander("🤖 Model Selection"):
-            
+
             def get_valid_model(model_key, default_index=0):
                 saved_model = st.session_state.settings.get(model_key)
                 try:
@@ -1115,9 +971,7 @@ def build_interface():
                 except ValueError:
                     index = default_index
                 return st.selectbox(
-                    f"{model_key.replace('_', ' ').title()}",
-                    all_models,
-                    index=index,
+                    f"{model_key.replace('_', ' ').title()}", all_models, index=index
                 )
 
             # Manager settings
@@ -1126,14 +980,14 @@ def build_interface():
                 "Manager Temperature",
                 min_value=0.0,
                 max_value=1.0,
-                value=st.session_state.settings.get("manager_temperature", 0.2),
+                value=float(st.session_state.settings.get("manager_temperature", 0.2)),
                 step=0.1,
             )
             st.session_state.settings["manager_max_tokens"] = st.slider(
                 "Manager Max Tokens",
                 min_value=1000,
                 max_value=128000,
-                value=st.session_state.settings.get("manager_max_tokens", 8000),
+                value=int(st.session_state.settings.get("manager_max_tokens", 8000)),
                 step=1000,
             )
 
@@ -1143,14 +997,14 @@ def build_interface():
                 "Subagent Temperature",
                 min_value=0.0,
                 max_value=1.0,
-                value=st.session_state.settings.get("subagent_temperature", 0.2),
+                value=float(st.session_state.settings.get("subagent_temperature", 0.2)),
                 step=0.1,
             )
             st.session_state.settings["subagent_max_tokens"] = st.slider(
                 "Subagent Max Tokens",
                 min_value=1000,
                 max_value=128000,
-                value=st.session_state.settings.get("subagent_max_tokens", 8000),
+                value=int(st.session_state.settings.get("subagent_max_tokens", 8000)),
                 step=1000,
             )
 
@@ -1160,14 +1014,14 @@ def build_interface():
                 "Refiner Temperature",
                 min_value=0.0,
                 max_value=1.0,
-                value=st.session_state.settings.get("refiner_temperature", 0.2),
+                value=float(st.session_state.settings.get("refiner_temperature", 0.2)),
                 step=0.1,
             )
             st.session_state.settings["refiner_max_tokens"] = st.slider(
                 "Refiner Max Tokens",
                 min_value=1000,
                 max_value=128000,
-                value=st.session_state.settings.get("refiner_max_tokens", 8000),
+                value=int(st.session_state.settings.get("refiner_max_tokens", 8000)),
                 step=1000,
             )
 
@@ -1190,9 +1044,7 @@ def build_interface():
         )
         repo_contents = None
     else:
-        repo_dir = st.text_input(
-            "Enter the path to your repository directory:"
-        )
+        repo_dir = st.text_input("Enter the path to your repository directory:")
         if repo_dir and os.path.isdir(repo_dir):
             repo_contents = dump_repository(repo_dir)
             st.success(
@@ -1201,9 +1053,7 @@ def build_interface():
         else:
             repo_contents = None
             if repo_dir:
-                st.error(
-                    "Invalid directory path. Please enter a valid directory."
-                )
+                st.error("Invalid directory path. Please enter a valid directory.")
         user_request = None
         project_type = None
 
@@ -1213,7 +1063,6 @@ def build_interface():
             "Select search method", ["duckduckgo", "google", "serpapi"]
         )
 
-        # Display current API keys and allow editing
         if search_method == "google":
             st_ss.api_keys["google_api_key"] = st.text_input(
                 "Google API Key",
@@ -1232,47 +1081,28 @@ def build_interface():
                 type="password",
             )
 
-        # Add num_results input
         num_results = st.number_input(
             "Number of search results", min_value=1, max_value=20, value=5
         )
 
-        # Save API keys if they have changed
         save_api_keys(st_ss.api_keys)
     else:
         search_method = None
         num_results = None
 
-    agent_logs = st.empty()
-
-    (
-        tab1,
-        tab2,
-        tab3,
-        tab4,
-        tab5,
-    ) = st.tabs(
-        [
-            "Code",
-            "Documentation",
-            "Test Results",
-            "Quality Review",
-            "Execution",
-        ]
+    (tab1, tab2, tab3, tab4, tab5) = st.tabs(
+        ["Code", "Documentation", "Test Results", "Quality Review", "Execution"]
     )
 
     if st.button("🚀 Build Project"):
         if user_request or repo_contents:
-            console.print(
-                f"Starting new project build", style="bold white on blue"
-            )
+            console.print(f"Starting new project build", style="bold white on blue")
             if user_request:
                 console.print(f"User Request: {user_request}", style="cyan")
                 console.print(f"Project Type: {project_type}", style="cyan")
             else:
                 console.print(
-                    f"Repository loaded with {len(repo_contents)} files",
-                    style="cyan",
+                    f"Repository loaded with {len(repo_contents)} files", style="cyan"
                 )
 
             st_ss.project_state["status"] = "In Progress"
@@ -1300,65 +1130,58 @@ def build_interface():
             worker_tasks = []
 
             while (
-                st_ss.project_state["iterations"]
-                < st_ss.project_state["max_iterations"]
+                st_ss.project_state["iterations"] < st_ss.project_state["max_iterations"]
             ):
                 previous_results = [result for _, result in task_exchanges]
                 if not task_exchanges:
-                    agent_result, file_content_for_worker = manage_task(
-                        user_request or "Analyze and improve the provided repository",
+                    agent_result, file_content_for_worker = manager_agent_task(
+                        create_agent_context(
+                            st.session_state.project_state,
+                            st.session_state.project_state["test_results"],
+                            user_request or "Analyze and improve the provided repository",
+                        ),
                         model=st.session_state.settings["manager_model"],
-                        file_content=repo_contents,
-                        previous_results=previous_results,
-                        use_search=use_search,
                         temperature=st.session_state.settings["manager_temperature"],
                         max_tokens=st.session_state.settings["manager_max_tokens"],
-                        search_results=search_results,
-                        groq_api_key=st.session_state.settings.get("groq_api_key"),
+                        groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                         openai_api_key=st.session_state.api_keys.get("openai_api_key"),
-                        api_keys=st.session_state.api_keys,
                     )
                 else:
-                    agent_result, _ = manage_task(
-                        user_request
-                        or "Analyze and improve the provided repository",
-                        model=st_ss.settings["manager_model"],
-                        previous_results=previous_results,
-                        use_search=use_search,
-                        temperature=st.session_state.settings["manager_temperature"],
-                        max_tokens=st.session_state.settings["manager_max_tokens"],
-                        search_results=search_results,
-                        groq_api_key=st.session_state.settings.get("groq_api_key"),
-                        openai_api_key=st.session_state.api_keys.get("openai_api_key"),
-                        api_keys=st.session_state.api_keys,
-                    )
+                    agent_result, _ = manager_agent_task(
+                    create_agent_context(
+                        st.session_state.project_state,
+                        st.session_state.project_state["test_results"],
+                        user_request or "Analyze and improve the provided repository",
+                    ),
+                    model=st.session_state.settings["manager_model"],
+                    temperature=st.session_state.settings["manager_temperature"],
+                    max_tokens=st.session_state.settings["manager_max_tokens"],
+                    groq_api_key=st.session_state.api_keys.get("groq_api_key"),
+                    openai_api_key=st.session_state.api_keys.get("openai_api_key"),
+                )
 
                 if "The task is complete:" in agent_result:
-                    final_output = agent_result.replace(
-                        "The task is complete:", ""
-                    ).strip()
+                    final_output = agent_result.replace("The task is complete:", "").strip()
                     break
                 else:
                     sub_task_prompt = agent_result
                     if file_content_for_worker and not worker_tasks:
-                        sub_task_prompt = f"{sub_task_prompt}\n\nFile content:\n{file_content_for_worker}"
-                    sub_task_result = sub_agent_task(
+                        sub_task_prompt = (
+                            f"{sub_task_prompt}\n\nFile content:\n{file_content_for_worker}"
+                        )
+                    sub_task_result = coding_agent_task(
                         sub_task_prompt,
                         model=st.session_state.settings["subagent_model"],
                         previous_tasks=worker_tasks,
                         use_search=use_search,
-                        temperature=st.session_state.settings["subagent_temperature"],
-                        max_tokens=st.session_state.settings["subagent_max_tokens"],
+                        temperature=float(st.session_state.settings["subagent_temperature"]),
+                        max_tokens=int(st.session_state.settings["subagent_max_tokens"]),
                         search_results=search_results,
-                        groq_api_key=st.session_state.settings.get("groq_api_key"),
+                        groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                         openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                     )
-                    worker_tasks.append(
-                        {"task": sub_task_prompt, "result": sub_task_result}
-                    )
-                    task_exchanges.append(
-                        (sub_task_prompt, sub_task_result)
-                    )
+                    worker_tasks.append({"task": sub_task_prompt, "result": sub_task_result})
+                    task_exchanges.append((sub_task_prompt, sub_task_result))
                     file_content_for_worker = None
 
                 st_ss.project_state["iterations"] += 1
@@ -1372,9 +1195,7 @@ def build_interface():
                 )
 
             sanitized_objective = re.sub(
-                r"\W+",
-                "_",
-                user_request if user_request else "repository_improvement",
+                r"\W+", "_", user_request if user_request else "repository_improvement"
             )
             timestamp = datetime.now().strftime("%H-%M-%S")
             refined_output = refine_task(
@@ -1385,13 +1206,11 @@ def build_interface():
                 projectname=sanitized_objective,
                 temperature=st.session_state.settings["refiner_temperature"],
                 max_tokens=st.session_state.settings["refiner_max_tokens"],
-                groq_api_key=st.session_state.settings.get("groq_api_key"),
+                groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                 openai_api_key=st.session_state.api_keys.get("openai_api_key"),
             )
 
-            project_name_match = re.search(
-                r"Project Name: (.*)", refined_output
-            )
+            project_name_match = re.search(r"Project Name: (.*)", refined_output)
             project_name = (
                 project_name_match.group(1).strip()
                 if project_name_match
@@ -1401,9 +1220,7 @@ def build_interface():
             folder_structure = parse_folder_structure(refined_output)
             code_blocks = extract_code_blocks(refined_output)
 
-            project_dir = (
-                Path("generated_projects") / f"{project_name}_{timestamp}"
-            )
+            project_dir = Path("generated_projects") / f"{project_name}_{timestamp}"
             project_dir.mkdir(parents=True, exist_ok=True)
             console.print(
                 Panel(
@@ -1451,11 +1268,11 @@ def build_interface():
             test_results = run_tests(project_dir)
             st_ss.project_state["test_results"] = test_results
 
-            # Update current task (you might want to define this based on the current state of the project)
+            # Update current task
             current_task = "Implement initial project structure"
 
             # Call manager agent
-            manager_response = manager_agent_task(
+            manager_response, _ = manager_agent_task(
                 create_agent_context(
                     st.session_state.project_state,
                     st.session_state.project_state["test_results"],
@@ -1474,12 +1291,11 @@ def build_interface():
                 )
                 st.json(manager_response)
             else:
-                # Proceed with sub_agent_task
-                sub_agent_response = sub_agent_task(
+                sub_agent_response = coding_agent_task(
                     create_agent_context(
                         st.session_state.project_state,
                         st.session_state.project_state["test_results"],
-                        current_task
+                        current_task,
                     ),
                     manager_response,
                     st.session_state.settings["subagent_model"],
@@ -1489,12 +1305,10 @@ def build_interface():
                     st.session_state.api_keys.get("openai_api_key"),
                 )
 
-                # Process sub_agent_response here
                 st.write("Sub-agent Response:")
                 st.json(sub_agent_response)
 
-                # Update project state with sub-agent results
-                if sub_agent_response:  # Check if sub_agent_response is not empty
+                if sub_agent_response:
                     st.session_state.project_state["code"] = sub_agent_response.get(
                         "code_changes", ""
                     )
@@ -1502,7 +1316,6 @@ def build_interface():
                         sub_agent_response.get("explanation", "")
                     )
 
-            # Check if there are any failed tests, errors, or Ruff violations
             if (
                 test_results.get("failed", 0) > 0
                 or test_results.get("errors", 0) > 0
@@ -1539,20 +1352,27 @@ def build_interface():
 
     with tab2:
         st.subheader("Documentation")
-        st.text_area("Generated Documentation:", st.session_state.project_state["documentation"], height=400)
+        st.text_area(
+            "Generated Documentation:", st.session_state.project_state["documentation"], height=400
+        )
 
     with tab3:
         st.subheader("Test Results")
-        st.text_area("Test Results:", st.session_state.project_state["test_results"].get("pytest_output", ""), height=400)
+        st.text_area(
+            "Test Results:",
+            st.session_state.project_state["test_results"].get("pytest_output", ""),
+            height=400,
+        )
 
     with tab4:
         st.subheader("Quality Review")
-        st.text_area("Quality Review:", st.session_state.project_state["quality_review"], height=400)
+        st.text_area(
+            "Quality Review:", st.session_state.project_state["quality_review"], height=400
+        )
 
     with tab5:
         st.subheader("Execution")
         st.text_area("Execution Output:", "", height=400)
-
 
 if __name__ == "__main__":
     build_interface()
