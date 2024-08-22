@@ -17,14 +17,12 @@ from googleapiclient.discovery import build
 from ollama import Client
 from openai import ChatCompletion, OpenAI
 from rich.console import Console
-from rich.panel import Panel
-from serpapi import GoogleSearch
 from streamlit import session_state as st_ss
 
 from openai_utils import *
 from groq_utils import *
 from ollama_utils import *
-from external_providers import get_available_groq_models
+from external_providers import *
 
 API_KEYS_FILE = "api_keys.json"
 SETTINGS_FILE = "build_settings.json"
@@ -261,6 +259,7 @@ def coding_agent_task(
     openai_api_key=None
 ) -> Dict[str, Any]:
     """Handles the coding agent task based on the provided prompt and context."""
+    
     if previous_tasks is None:
         previous_tasks = []
 
@@ -295,13 +294,22 @@ def coding_agent_task(
     messages = [{"role": "user", "content": full_prompt}]
 
     try:
+        api_keys = load_api_keys()
+        openai_api_key = openai_api_key or api_keys.get('openai_api_key')
+
+        if not openai_api_key:
+            raise ValueError("OpenAI API key is not set")
+
+        temperature = float(temperature)
+        max_tokens = int(max_tokens)
+
         client = OpenAI(api_key=openai_api_key)
 
         response = client.chat.completions.create(
             model=model,
             messages=messages,
-            temperature=float(temperature),
-            max_tokens=int(max_tokens),
+            temperature=temperature,
+            max_tokens=max_tokens,
             response_format={"type": "json_object"}
         )
 
@@ -310,6 +318,10 @@ def coding_agent_task(
 
         return parsed_response
 
+    except ValueError as ve:
+        error_msg = f"API Key Error: {str(ve)}"
+        print(error_msg)
+        return {"error": error_msg}
     except json.JSONDecodeError as e:
         error_msg = f"Error parsing JSON response from Coding Agent: {e}"
         print(error_msg)
@@ -319,7 +331,6 @@ def coding_agent_task(
         error_msg = f"An error occurred during the coding agent task: {str(e)}"
         print(error_msg)
         return {"error": error_msg}
-
 
 def refine_task(
     objective: str,
@@ -360,9 +371,7 @@ def refine_task(
             )
 
         if len(response_text) >= 8000 and not continuation:
-            console.print(
-                "[bold yellow]Warning:[/bold yellow] Output may be truncated. Attempting to continue the response."
-            )
+            print("Warning: Output may be truncated. Attempting to continue the response.")
             continuation_response_text = refine_task(
                 objective,
                 model,
@@ -377,14 +386,6 @@ def refine_task(
             )
             response_text += "\n" + continuation_response_text
 
-        console.print(
-            Panel(
-                response_text,
-                title="[bold green]Final Output[/bold green]",
-                title_align="left",
-                border_style="green",
-            )
-        )
         return response_text
 
     except Exception as e:
@@ -406,22 +407,8 @@ def parse_folder_structure(structure_string: str) -> dict:
         structure = json.loads(json_string)
         return structure
     except json.JSONDecodeError as e:
-        console.print(
-            Panel(
-                f"Error parsing JSON: {e}",
-                title="[bold red]JSON Parsing Error[/bold red]",
-                title_align="left",
-                border_style="red",
-            )
-        )
-        console.print(
-            Panel(
-                f"Invalid JSON string: [bold]{json_string}[/bold]",
-                title="[bold red]Invalid JSON String[/bold red]",
-                title_align="left",
-                border_style="red",
-            )
-        )
+        st.error(f"Error parsing JSON: {e}")
+        st.error(f"Invalid JSON string: {json_string}")
         return None
 
 def extract_code_blocks(refined_output: str) -> Dict[str, str]:
@@ -441,14 +428,7 @@ def save_file(content: str, filename: str, project_dir: str) -> None:
         file_path = Path(project_dir) / "code" / filename
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(content, encoding="utf-8")
-        console.print(
-            Panel(
-                f"[yellow]Saved file: [bold]{file_path}[/bold]",
-                title="[bold green]File Saved[/bold green]",
-                title_align="left",
-                border_style="yellow",
-            )
-        )
+        st.success(f"Saved file: {file_path}")
     except Exception as e:
         st.session_state.project_state["errors"].append(
             f"Error saving file '{filename}': {str(e)}"
@@ -467,7 +447,7 @@ def dump_repository(repo_path: str) -> Dict[str, str]:
                         relative_path = os.path.relpath(file_path, repo_path)
                         repo_contents[relative_path] = content
                     except UnicodeDecodeError:
-                        console.print(f"Skipping binary file: {file_path}", style="yellow")
+                        st.warning(f"Skipping binary file: {file_path}")
     return repo_contents
 
 def generate_test_cases(code_analysis: Dict[str, List[str]]) -> str:
@@ -817,20 +797,20 @@ def build_interface() -> None:
         )
 
         if search_method == "google":
-            st_ss.api_keys["google_api_key"] = st.text_input(
+            st.session_state.api_keys["google_api_key"] = st.text_input(
                 "Google API Key",
-                value=st_ss.api_keys.get("google_api_key", ""),
+                value=st.session_state.api_keys.get("google_api_key", ""),
                 type="password",
             )
-            st_ss.api_keys["google_cse_id"] = st.text_input(
+            st.session_state.api_keys["google_cse_id"] = st.text_input(
                 "Google Custom Search Engine ID",
-                value=st_ss.api_keys.get("google_cse_id", ""),
+                value=st.session_state.api_keys.get("google_cse_id", ""),
                 type="password",
             )
         elif search_method == "serpapi":
-            st_ss.api_keys["serpapi_api_key"] = st.text_input(
+            st.session_state.api_keys["serpapi_api_key"] = st.text_input(
                 "SerpApi API Key",
-                value=st_ss.api_keys.get("serpapi_api_key", ""),
+                value=st.session_state.api_keys.get("serpapi_api_key", ""),
                 type="password",
             )
 
@@ -838,52 +818,43 @@ def build_interface() -> None:
             "Number of search results", min_value=1, max_value=20, value=5
         )
 
-        save_api_keys(st_ss.api_keys)
+        save_api_keys(st.session_state.api_keys)
     else:
         search_method = None
         num_results = None
 
-    (tab1, tab2, tab3, tab4, tab5) = st.tabs(
-        ["Code", "Documentation", "Test Results", "Quality Review", "Execution"]
+    (tab1, tab2, tab3) = st.tabs(
+        ["Workflow", "Documentation", "Test Results"]
     )
 
     if st.button("🚀 Build Project"):
         if user_request or repo_contents:
-            console.print(f"Starting new project build", style="bold white on blue")
+            st.info(f"Starting new project build")
             if user_request:
-                console.print(f"User Request: {user_request}", style="cyan")
-                console.print(f"Project Type: {project_type}", style="cyan")
+                st.info(f"User Request: {user_request}")
+                st.info(f"Project Type: {project_type}")
             else:
-                console.print(
-                    f"Repository loaded with {len(repo_contents)} files", style="cyan"
-                )
+                st.info(f"Repository loaded with {len(repo_contents)} files")
 
-            st_ss.project_state["status"] = "In Progress"
-            st_ss.project_state["agent_logs"] = []
-            st_ss.project_state["progress"] = 0
-            st_ss.project_state["iterations"] = 0
-            st_ss.project_state["errors"].clear()
+            st.session_state.project_state["status"] = "In Progress"
+            st.session_state.project_state["agent_logs"] = []
+            st.session_state.project_state["progress"] = 0
+            st.session_state.project_state["iterations"] = 0
+            st.session_state.project_state["errors"].clear()
 
             search_results = None
             if use_search:
                 search_query = user_request or "Repository improvement techniques"
                 search_results = perform_search(
-                    search_query, search_method, st_ss.api_keys, num_results
+                    search_query, search_method, st.session_state.api_keys, num_results
                 )
-                console.print(
-                    Panel(
-                        f"Search Results: {json.dumps(search_results, indent=2)}",
-                        title="[bold green]Search Results[/bold green]",
-                        title_align="left",
-                        border_style="green",
-                    )
-                )
+                st.json(search_results)
 
             task_exchanges = []
             worker_tasks = []
 
             while (
-                st_ss.project_state["iterations"] < st_ss.project_state["max_iterations"]
+                st.session_state.project_state["iterations"] < st.session_state.project_state["max_iterations"]
             ):
                 previous_results = [result for _, result in task_exchanges]
                 manager_response, _ = manager_agent_task(
@@ -893,17 +864,19 @@ def build_interface() -> None:
                         user_request or "Analyze and improve the provided repository",
                     ),
                     model=st.session_state.settings["manager_model"],
-                    temperature=st.session_state.settings["manager_temperature"],
-                    max_tokens=st.session_state.settings["manager_max_tokens"],
+                    temperature=float(st.session_state.settings["manager_temperature"]),
+                    max_tokens=int(st.session_state.settings["manager_max_tokens"]),
                     groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                     openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                 )
+
+                st.subheader(f"Manager Response - Iteration {st.session_state.project_state['iterations'] + 1}")
+                st.json(manager_response)
 
                 if "analysis" not in manager_response:
                     st.error(
                         "Manager response is incomplete. Please check the logs for details."
                     )
-                    st.json(manager_response)
                 else:
                     sub_agent_response = coding_agent_task(
                         manager_response["instructions"],
@@ -917,6 +890,9 @@ def build_interface() -> None:
                         openai_api_key=st.session_state.api_keys.get("openai_api_key"),
                     )
 
+                    st.subheader(f"Sub-agent Response - Iteration {st.session_state.project_state['iterations'] + 1}")
+                    st.json(sub_agent_response)
+
                     if "error" in sub_agent_response:
                         st.error(f"Error in sub-agent response: {sub_agent_response['error']}")
                         if "raw_response" in sub_agent_response:
@@ -926,33 +902,35 @@ def build_interface() -> None:
                         worker_tasks.append({"task": manager_response["instructions"], "result": sub_agent_response})
                         task_exchanges.append((manager_response["instructions"], sub_agent_response))
 
-                        st_ss.project_state["iterations"] += 1
-                        st_ss.project_state["progress"] = min(
-                            st_ss.project_state["iterations"]
-                            / st_ss.project_state["max_iterations"],
+                        st.session_state.project_state["iterations"] += 1
+                        st.session_state.project_state["progress"] = min(
+                            st.session_state.project_state["iterations"]
+                            / st.session_state.project_state["max_iterations"],
                             1.0
                         )
-                        progress_bar.progress(st_ss.project_state["progress"])
+                        progress_bar.progress(st.session_state.project_state["progress"])
                         status_text.text(
-                            f"Iteration {st_ss.project_state['iterations']} of {st_ss.project_state['max_iterations']}"
+                            f"Iteration {st.session_state.project_state['iterations']} of {st.session_state.project_state['max_iterations']}"
                         )
 
             sanitized_objective = re.sub(
                 r"\W+", "_", user_request if user_request else "repository_improvement"
             )
             timestamp = datetime.now().strftime("%H-%M-%S")
+            
+            st.subheader("Refiner Task")
             refined_output = refine_task(
                 user_request or "Analyze and improve the provided repository",
                 model=st.session_state.settings["refiner_model"],
                 sub_task_results=[json.dumps(result) if isinstance(result, dict) else str(result) for _, result in task_exchanges],
                 filename=timestamp,
                 projectname=sanitized_objective,
-                temperature=st.session_state.settings["refiner_temperature"],
-                max_tokens=st.session_state.settings["refiner_max_tokens"],
+                temperature=float(st.session_state.settings["refiner_temperature"]),
+                max_tokens=int(st.session_state.settings["refiner_max_tokens"]),
                 groq_api_key=st.session_state.api_keys.get("groq_api_key"),
                 openai_api_key=st.session_state.api_keys.get("openai_api_key"),
             )
-
+            st.text_area("Refined Output:", refined_output, height=400)
 
             project_name_match = re.search(r"Project Name: (.*)", refined_output)
             project_name = (
@@ -966,26 +944,12 @@ def build_interface() -> None:
 
             project_dir = Path("generated_projects") / f"{project_name}_{timestamp}"
             project_dir.mkdir(parents=True, exist_ok=True)
-            console.print(
-                Panel(
-                    f"Created project folder: [bold]{project_dir}[/bold]",
-                    title="[bold green]Project Folder[/bold green]",
-                    title_align="left",
-                    border_style="green",
-                )
-            )
+            st.success(f"Created project folder: {project_dir}")
 
             if code_blocks:
                 for filename, code in code_blocks.items():
                     save_file(code, filename, str(project_dir))
-                    console.print(
-                        Panel(
-                            f"Created file: [bold]{filename}[/bold]",
-                            title="[bold green]Project Files[/bold green]",
-                            title_align="left",
-                            border_style="yellow",
-                        )
-                    )
+                    st.success(f"Created file: {filename}")
 
             # Generate README.md
             readme_content = generate_readme(
@@ -993,112 +957,49 @@ def build_interface() -> None:
                 user_request,
                 project_type,
                 refined_output,
-                st_ss.settings["refiner_model"],
+                st.session_state.settings["refiner_model"],
             )
             readme_path = project_dir / "README.md"
             readme_path.write_text(readme_content, encoding="utf-8")
-            console.print(
-                Panel(
-                    f"Created README.md: [bold]{readme_path}[/bold]",
-                    title="[bold green]README.md Created[/bold green]",
-                    title_align="left",
-                    border_style="green",
-                )
-            )
+            st.success(f"Created README.md: {readme_path}")
 
-            st_ss.project_state["documentation"] = readme_content
+            st.session_state.project_state["documentation"] = readme_content
 
             # Option to run tests separately
             if st.button("🔍 Run Tests"):
                 test_results = run_tests(project_dir)
-                st_ss.project_state["test_results"] = test_results
+                st.session_state.project_state["test_results"] = test_results
 
                 if (
                     test_results.get("failed", 0) > 0
                     or test_results.get("errors", 0) > 0
                 ):
-                    console.print(
-                        Panel(
-                            f"[bold red]Tests failed or errors encountered. Please review the test results.[/bold red]",
-                            title="[bold red]Test Results[/bold red]",
-                            title_align="left",
-                            border_style="red",
-                        )
-                    )
                     st.warning("Tests failed or errors encountered. Review the results and consider additional iterations.")
                 else:
-                    console.print(
-                        Panel(
-                            "[bold green]All tests passed successfully![/bold green]",
-                            title="[bold green]Test Results[/bold green]",
-                            title_align="left",
-                            border_style="green",
-                        )
-                    )
                     st.success("All tests passed successfully!")
 
-            # Update current task
-            current_task = "Implement initial project structure"
-
-            # Call manager agent
-            manager_response, _ = manager_agent_task(
-                create_agent_context(
-                    st.session_state.project_state,
-                    st.session_state.project_state["test_results"],
-                    current_task,
-                ),
-                st.session_state.settings["manager_model"],
-                st.session_state.settings["manager_temperature"],
-                st.session_state.settings["manager_max_tokens"],
-                st.session_state.settings.get("groq_api_key"),
-                st.session_state.api_keys.get("openai_api_key"),
-            )
-
-            if "analysis" not in manager_response:
-                st.error(
-                    "Manager response is incomplete. Please check the logs for details."
-                )
-                st.json(manager_response)
-            else:
-                sub_agent_response = coding_agent_task(
-                    create_agent_context(
-                        st.session_state.project_state,
-                        st.session_state.project_state["test_results"],
-                        current_task,
-                    ),
-                    manager_response,
-                    st.session_state.settings["subagent_model"],
-                    st.session_state.settings["subagent_temperature"],
-                    st.session_state.settings["subagent_max_tokens"],
-                    st.session_state.settings.get("groq_api_key"),
-                    st.session_state.api_keys.get("openai_api_key"),
-                )
-
-                st.write("Sub-agent Response:")
-                st.json(sub_agent_response)
-
-                if sub_agent_response:
-                    st.session_state.project_state["code"] = sub_agent_response.get(
-                        "code_changes", ""
-                    )
-                    st.session_state.project_state["quality_review"] = (
-                        sub_agent_response.get("explanation", "")
-                    )
-
-            st_ss.project_state["status"] = "Completed"
+            st.session_state.project_state["status"] = "Completed"
             st.session_state.project_state["progress"] = 1.0
             progress_bar.progress(1.0)
             st.success("Project build completed successfully!")
+
+            # Display list of generated files
+            st.subheader("Generated Files")
+            for root, dirs, files in os.walk(project_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(file_path, project_dir)
+                    st.markdown(f"[{relative_path}]({file_path})")
+
         else:
             st.error("Please enter a valid project request or repository directory.")
 
     with tab1:
-        st.subheader("Code")
-        if st.session_state.project_state["errors"]:
-            st.error("Errors encountered during code generation:")
-            for error in st.session_state.project_state["errors"]:
-                st.write(error)
-        st.text_area("Generated Code:", st.session_state.project_state["code"], height=400)
+        st.subheader("Workflow")
+        for i, (task, response) in enumerate(st.session_state.project_state.get("agent_logs", [])):
+            st.subheader(f"Iteration {i+1}")
+            st.text_area(f"Task {i+1}", task, height=100)
+            st.text_area(f"Response {i+1}", json.dumps(response, indent=2), height=200)
 
     with tab2:
         st.subheader("Documentation")
@@ -1114,15 +1015,19 @@ def build_interface() -> None:
             height=400,
         )
 
-    with tab4:
-        st.subheader("Quality Review")
-        st.text_area(
-            "Quality Review:", st.session_state.project_state["quality_review"], height=400
-        )
+    # Display any errors
+    if st.session_state.project_state["errors"]:
+        st.header("Errors")
+        for error in st.session_state.project_state["errors"]:
+            st.error(error)
 
-    with tab5:
-        st.subheader("Execution")
-        st.text_area("Execution Output:", "", height=400)
+def main():
+    try:
+        build_interface()
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {str(e)}")
+        st.error("Please check the console for more details.")
+        raise e
 
 if __name__ == "__main__":
-    build_interface()
+    main()
