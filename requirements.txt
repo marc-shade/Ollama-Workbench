@@ -41,7 +41,7 @@ streamlit-javascript
 streamlit-option-menu
 tiktoken
 webdriver-manager
-
+fake_useragent
 beautifulsoup4
 numpy
 tqdm
