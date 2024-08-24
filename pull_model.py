@@ -78,7 +78,7 @@ def pull_models():
     The progress of the download will be displayed below.
     """)
 
-    col1, col2 = st.columns([4, 1])
+    col1, col2 = st.columns([4, 1], vertical_alignment="bottom")
 
     with col1:
         model_input = st.text_input("Enter the name of the model you want to pull:")
