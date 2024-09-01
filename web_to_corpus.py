@@ -95,7 +95,7 @@ class WebsiteCrawler:
         filename = self.get_filename(url, "pdf")
         st.info(f"Saving {url} as PDF")
         try:
-            pdfkit.from_string(content, filename, options=self.pdf_options)
+            pdfkit.from_string(f"<h1>{url}</h1><pre>{content}</pre>", filename, options=self.pdf_options)
             return filename
         except IOError as e:
             st.error(f"Failed to convert {url} to PDF: {e}")
@@ -130,13 +130,16 @@ class WebsiteCrawler:
                 continue
 
             self.visited_links.add(current_url)
-            
+
+            # Extract main content
+            main_content = self.extract_main_content(page_content)
+
             if self.output_format == "PDF":
-                pdf_file = self.save_page_as_pdf(current_url, page_content)
+                pdf_file = self.save_page_as_pdf(current_url, main_content)
                 if pdf_file:
                     self.crawled_data.append({"url": current_url, "file": pdf_file})
             else:
-                self.crawled_data.append({"url": current_url, "content": page_content})
+                self.crawled_data.append({"url": current_url, "content": main_content})
 
             self.find_links_on_page(current_url, page_content)
 
@@ -195,6 +198,27 @@ class WebsiteCrawler:
                 f.write(f"Content:\n{item['content']}\n\n")
                 f.write("-" * 80 + "\n\n")
 
+    def extract_main_content(self, html_content):
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        # Remove script and style elements
+        for script in soup(["script", "style"]):
+            script.decompose()
+
+        # Get text
+        text = soup.get_text()
+
+        # Break into lines and remove leading and trailing space on each
+        lines = (line.strip() for line in text.splitlines())
+
+        # Break multi-headlines into a line each
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+
+        # Drop blank lines
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+
+        return text
+
 def main():
     st.title("🕸️ Web Crawler")
     st.write("Enter the website URL you want to crawl in the box below. Choose your preferred output format (TXT, JSON, or PDF) from the dropdown menu. Click 'Start Crawling' to begin. Once complete, the generated file will be saved to the 'files' folder. You can access and manage this file in the 'Files' tab under the 'Chat' section or through the 'Document' section.")
@@ -211,15 +235,15 @@ def main():
         if root_url:
             crawler = WebsiteCrawler(root_url, output_format)
             crawler.crawl()
-        
+
             st.success("🕷️ Crawling completed! Generating output file...")
-            
+
             output_filename = f"{urlparse(root_url).netloc}.{output_format.lower()}"
-            
+
             crawler.generate_output(output_filename)
-            
+
             st.success(f"🟢 {output_format} generation completed! File saved as {output_filename}")
-            
+
             output_path = os.path.join(SCRIPT_DIR, "files", output_filename)
             with open(output_path, "rb") as file:
                 st.download_button(
