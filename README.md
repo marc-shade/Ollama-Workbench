@@ -25,6 +25,10 @@ Engage in sophisticated interactions with AI models through a feature-rich chat 
 - 📜 **Integrated Workspace:** Efficiently manage and save code snippets and text generated during sessions.
 - 💾 **Session Management:** Save and load entire chat histories and workspaces for seamless workflow continuity.
 
+
+<img src="https://github.com/user-attachments/assets/7f55c77e-9e3e-4b96-b27f-84615b4ba21c" />
+
+
 ### ⚙️ Advanced Workflows and Collaboration
 
 Ollama Workbench offers powerful tools for designing and executing complex workflows, enabling seamless collaboration between AI agents:
