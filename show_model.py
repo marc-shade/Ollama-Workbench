@@ -1,6 +1,6 @@
 # show_model.py
 import streamlit as st
-from ollama_utils import get_available_models
+from ollama_utils import get_available_models, show_model_info  # Import show_model_info
 
 def show_model_details():
     st.header("🦙 Show Ollama Model Information")
