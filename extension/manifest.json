@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Ollama AI Assistant",
+    "version": "1.0",
+    "description": "Integrates Ollama Workbench AI agent for webpage interaction.",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "contextMenus"
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"]
+      }
+    ],
+    "host_permissions": [
+      "http://localhost:8502/*",
+      "http://localhost:8503/*",
+      "http://localhost:11434/*"
+    ]
+  }
