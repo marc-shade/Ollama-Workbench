@@ -1,6 +1,8 @@
 # main.py
 
 import streamlit as st
+import threading
+from flask import Flask, jsonify
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -18,7 +20,7 @@ from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
 from welcome import display_welcome_message
 from projects import projects_main, Task
-from prompts import manage_prompts
+from prompts import manage_prompts, get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 from brainstorm import brainstorm_interface
 from ollama_utils import get_ollama_resource_usage
 from research import research_interface
@@ -317,10 +319,35 @@ def main_content():
     else:
         chat_interface()
 
+# Create a Flask app for the API
+app = Flask(__name__)
+
+@app.route('/prompts')
+def get_prompts():
+    """Returns a JSON with all prompt types."""
+    return jsonify({
+        "agent": get_agent_prompt(),
+        "metacognitive": get_metacognitive_prompt(),
+        "voice": get_voice_prompt(),
+        "identity": get_identity_prompt()
+    })
+
+@app.route('/openai-key')
+def get_openai_key():
+    """Returns the OpenAI API key."""
+    api_keys = load_api_keys()
+    return jsonify({"openai_api_key": api_keys.get("openai_api_key")})
+
 def main():
     initialize_session_state()
     create_sidebar()
     main_content()
 
+# Run the Flask app in a separate thread
+def run_flask():
+    app.run(port=8503)  # Use a different port for the API
+
 if __name__ == "__main__":
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
     main()
