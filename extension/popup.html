@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ollama AI Assistant</title>
+    <style>
+        body { width: 300px; padding: 10px; font-family: Arial, sans-serif; }
+        select, input { width: 100%; margin-bottom: 10px; padding: 5px; }
+        button { width: 100%; padding: 10px; margin-top: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        label { display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Ollama AI Assistant</h2>
+    
+    <button id="toggleSidebar">Toggle AI Sidebar</button>
+    
+    <label for="modelSelect">Model:</label>
+    <select id="modelSelect"></select>
+    
+    <label for="agentTypeSelect">Agent Type:</label>
+    <select id="agentTypeSelect"></select>
+    
+    <label for="metacognitiveTypeSelect">Metacognitive Type:</label>
+    <select id="metacognitiveTypeSelect"></select>
+    
+    <label for="voiceTypeSelect">Voice Type:</label>
+    <select id="voiceTypeSelect"></select>
+    
+    <label for="temperatureInput">Temperature:</label>
+    <input type="number" id="temperatureInput" min="0" max="1" step="0.1" value="0.7">
+    
+    <label for="maxTokensInput">Max Tokens:</label>
+    <input type="number" id="maxTokensInput" min="1" max="128000" value="1000">
+
+    <script src="popup.js"></script>
+</body>
+</html>
