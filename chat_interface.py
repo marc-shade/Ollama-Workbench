@@ -428,7 +428,7 @@ def chat_interface():
         st.session_state.episodic_memory = EpisodicMemory()
 
     with st.sidebar:
-        with st.expander("⚙️ Chat Agent Settings", expanded=False):
+        with st.expander("🤖 Chat Agent Settings", expanded=False):
             available_models = get_all_models()  # Update available models
             st.session_state.selected_model = st.selectbox(
                 "📦 Model:",
@@ -538,17 +538,42 @@ def chat_interface():
             except Exception as e:
                 st.error(f"Error in episodic memory processing: {str(e)}. Proceeding without episodic context.")
 
-        final_prompt = f"""
-        {agent_prompt}
+        # Get webpage context from query parameters
+        web_page_url = st.session_state.get('web_page_url')
+        is_extension = st.session_state.get('is_extension', False)
+
+        # Construct the initial prompt
+        if is_extension and web_page_url:
+            initial_prompt = f"You are an AI assistant working within a browser extension. The user is currently on the webpage: {web_page_url}. How can I help you with information related to this page?\n\n"
+        else:
+            initial_prompt = "You are an AI assistant. How can I help you today?\n\n"
+
+        # Initialize chat history if empty
+        if "chat_history" not in st.session_state or not st.session_state.chat_history:
+            st.session_state.chat_history = [{"role": "assistant", "content": initial_prompt}]
+
+        # Check if the request is from the extension
+        is_extension = st.query_params.get('extension', ['false'])[0].lower() == 'true'
+
+        # Construct the final prompt
+        final_prompt = ""
         
+        # Conditionally add browser extension meta-context
+        if is_extension:
+            final_prompt += "You are an AI assistant working within a browser extension. You have access to the current web page's content. Please use this information to answer the user's question.\n\n"
+            final_prompt += f"Webpage URL: {web_page_url}\nWebpage Content:\n{web_page_content}\n\n" 
+
+        final_prompt += f"""
+        {agent_prompt}
+
         Recent conversation history:
         {chat_history}
-        
+
         {corpus_context}
 
         Episodic Memory Context:
         {episodic_context}
-        
+
         Human: {user_input}
         
         Assistant: Let me address your request based on the information provided and my capabilities.
