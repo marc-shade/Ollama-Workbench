@@ -2,7 +2,10 @@
 
 import streamlit as st
 import threading
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+import os
+import subprocess
+import json 
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
@@ -28,10 +31,23 @@ from enhanced_corpus import enhance_corpus_ui
 from build import build_interface
 from openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
 from groq_utils import display_groq_settings, call_groq_api
-from nodes import nodes_interface  # Add this import
-from external_providers import external_providers_ui  # Add this import
+from nodes import nodes_interface  
+from external_providers import external_providers_ui 
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
+
+# Global variable to store the port number
+ollama_port = None 
+
+# Create a native messaging host manifest 
+NATIVE_HOST_MANIFEST = "native_host_manifest.json" 
+with open(NATIVE_HOST_MANIFEST, "w") as f:
+    json.dump({
+        "name": "ollama_workbench_host",
+        "description": "Native messaging host for Ollama Workbench",
+        "path": os.path.abspath(__file__), 
+        "type": "stdio"
+    }, f, indent=4)
 
 # Custom CSS
 st.markdown("""
@@ -41,7 +57,7 @@ st.markdown("""
             font-weight: 400;
         }
         .app-title {
-            font-size: 40px!important; /* Adjust font size as needed */
+            font-size: 40px!important;
             font-family: Open Sans, Helvetica, Arial, sans-serif!important;
         }
         .app-title span {
@@ -51,16 +67,16 @@ st.markdown("""
             display: block;
             color: inherit;
             border: 0!important;
-            padding: 10px; /* Add padding for better visual appeal */
+            padding: 10px; 
             text-align: left!important;
             cursor: pointer;
             font-size: 16px;
             box-sizing: border-box;
             white-space: nowrap;
-            text-decoration: none; /* Remove default link underline */
+            text-decoration: none; 
         }
         .nav-link.active {
-            background-color: orange!important; /* Orange background for active link */
+            background-color: orange!important; 
             color: white;
         }
         .nav-button {
@@ -207,6 +223,8 @@ def initialize_session_state():
         st.session_state.bm_tasks = []
     if 'show_resource_usage' not in st.session_state:
         st.session_state.show_resource_usage = False
+    if 'web_page_content' not in st.session_state: 
+        st.session_state.web_page_content = None
 
 def create_sidebar():
     """Create and populate the sidebar."""
@@ -338,16 +356,70 @@ def get_openai_key():
     api_keys = load_api_keys()
     return jsonify({"openai_api_key": api_keys.get("openai_api_key")})
 
+@app.route('/identifier')
+def get_identifier():
+    """Returns a unique identifier for Ollama Workbench."""
+    return "Ollama Workbench" 
+
+@app.route('/port')
+def get_port():
+    """Returns the dynamically allocated port number."""
+    global ollama_port
+    return str(ollama_port)
+
 def main():
     initialize_session_state()
     create_sidebar()
+    
+    web_page_content = st.query_params.get('web_page_content', [None])[0] 
+    if web_page_content:
+        st.session_state.web_page_content = web_page_content
+
     main_content()
 
-# Run the Flask app in a separate thread
+    # Get parameters from URL
+    web_page_url = st.query_params.get('url', None)
+    is_extension = st.query_params.get('extension', 'false').lower() == 'true'
+
+    if is_extension and web_page_url:
+        st.session_state.web_page_url = web_page_url
+        st.session_state.is_extension = is_extension
+
+# Function to send a message to the Chrome extension
+def send_port_to_extension(port):
+    """Sends the port number to the background script of the extension."""
+    try:
+        # Use the 'chrome-extension' protocol to send a message to the extension
+        cmd = f'chrome-extension://{os.environ.get("EXTENSION_ID", "gddghhhklfnhijhhagfgnfiehidcdnba")}/background.js'
+        message = {"message": "ollamaPort", "port": port}
+
+        # Use subprocess to send the message. Requires 'npx' which comes with Node.js.
+        process = subprocess.Popen(['npx', 'chrome-remote-interface', 'sendMessage', cmd, '--json', json.dumps(message)], 
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if stderr:
+            print(f"Error sending message to extension: {stderr.decode('utf-8')}") 
+        else:
+            print(f"Successfully sent port number to extension: {stdout.decode('utf-8')}")
+
+    except Exception as e:
+        print(f"Error sending message to extension: {e}")
+
 def run_flask():
-    app.run(port=8503)  # Use a different port for the API
+    global ollama_port
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('', 0))
+    ollama_port = sock.getsockname()[1] 
+    sock.close()
+    app.run(port=ollama_port)
+    print(f"Flask running on port: {ollama_port}") 
+
+    # Send the port to the extension once Flask is running
+    send_port_to_extension(ollama_port)
 
 if __name__ == "__main__":
+    # Start Flask before Streamlit
     flask_thread = threading.Thread(target=run_flask)
-    flask_thread.start()
-    main()
+    flask_thread.start() 
+    main() 
