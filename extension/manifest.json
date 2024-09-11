@@ -1,12 +1,13 @@
 {
     "manifest_version": 3,
-    "name": "Ollama AI Assistant",
+    "name": "Ollama Workbench Extension",
     "version": "1.0",
     "description": "Integrates Ollama Workbench AI agent for webpage interaction.",
     "permissions": [
       "activeTab",
       "storage",
-      "contextMenus"
+      "contextMenus",
+      "nativeMessaging"
     ],
     "action": {
       "default_popup": "popup.html"
@@ -23,6 +24,9 @@
     "host_permissions": [
       "http://localhost:8502/*",
       "http://localhost:8503/*",
-      "http://localhost:11434/*"
-    ]
+      "https://api.openai.com/*"
+    ],
+    "externally_connectable": {
+      "matches": ["http://localhost:*/*"]
+    }
   }
