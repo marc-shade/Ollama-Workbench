@@ -494,15 +494,27 @@ def write_file_details(summary_file, file_info):
 # Function to load model settings
 def load_model_settings():
     if os.path.exists(MODEL_SETTINGS_FILE):
-        with open(MODEL_SETTINGS_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(MODEL_SETTINGS_FILE, "r") as f:
+                settings = json.load(f)
+        except json.JSONDecodeError:
+            st.warning("Invalid JSON in model settings file. Loading default settings.")
+            settings = {}
     else:
-        return {
-            "model": "mistral:instruct",
-            "temperature": 0.7,
-            "max_tokens": 4000,
-            "api_key": ""  # Add this line
-        }
+        settings = {}
+
+    # Set default values if keys are missing
+    default_settings = {
+        "model": "mistral:instruct",
+        "temperature": 0.7,
+        "max_tokens": 4000,
+        "api_key": ""
+    }
+
+    for key, value in default_settings.items():
+        settings.setdefault(key, value)
+
+    return settings
 
 # Function to save model settings
 def save_model_settings(settings):
