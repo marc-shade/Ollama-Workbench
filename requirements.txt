@@ -5,6 +5,7 @@ chromadb
 cursor
 duckduckgo_search
 flake8
+flask
 fpdf
 geocoder
 google-api-python-client
