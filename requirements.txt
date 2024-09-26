@@ -20,6 +20,7 @@ pandas
 pdfkit
 playwright
 plotly
+psutil
 Pygments
 PyYAML
 PyPDF2
