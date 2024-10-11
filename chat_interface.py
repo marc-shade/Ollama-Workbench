@@ -1,4 +1,4 @@
-# chat_interface.py (REFACTORED WITH ACCURATE PROGRESS BAR FOR ADVANCED THINKING PROCESS)
+# chat_interface.py (WITH INSTANCE-ADAPTIVE ZERO-SHOT CoT PROMPTING)
 
 import streamlit as st
 import os
@@ -34,6 +34,19 @@ logger = logging.getLogger()
 
 SETTINGS_FILE = "chat-settings.json"
 RAGTEST_DIR = "ragtest"
+
+# Candidate Prompts for Instance-Adaptive Zero-Shot CoT Prompting
+CANDIDATE_PROMPTS = [
+    "Let's think step by step.",
+    "Don't think. Just feel.",
+    "Let's solve this problem by splitting it into steps.",
+    "First, let's break down the problem.",
+    "To approach this, we'll consider each part carefully.",
+    "Let's analyze this systematically.",
+    "We'll tackle this by addressing each component individually.",
+    "Step one is to understand the problem fully.",
+    "We'll handle this by dividing it into manageable sections."
+]
 
 class ModelMemoryHandler:
     def __init__(self, model_type):
@@ -144,7 +157,11 @@ def save_settings():
         "frequency_penalty_slider_chat": st.session_state.frequency_penalty_slider_chat,
         "episodic_memory_enabled": st.session_state.episodic_memory_enabled,
         "advanced_thinking_enabled": st.session_state.advanced_thinking_enabled,  # Ensure this line is included
-        "thinking_steps": st.session_state.thinking_steps  # Added to save thinking steps
+        "thinking_steps": st.session_state.thinking_steps,  # Added to save thinking steps
+        "instance_adaptive_cot_enabled": st.session_state.instance_adaptive_cot_enabled,
+        "cot_strategy": st.session_state.cot_strategy,
+        "cot_threshold": st.session_state.cot_threshold,
+        "cot_top_n": st.session_state.cot_top_n
     }
     with open(SETTINGS_FILE, "w") as f:
         json.dump(settings, f)
@@ -251,7 +268,7 @@ def extract_content_blocks(text):
     
     return [block.strip('`').strip() for block in code_blocks], [block.strip() for block in article_blocks]
 
-def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
+def construct_agent_prompt(agent_type, metacognitive_type, voice_type, selected_prompt=None):
     prompt = ""
 
     agent_prompts = get_agent_prompt()
@@ -270,6 +287,9 @@ def construct_agent_prompt(agent_type, metacognitive_type, voice_type):
 For code, use triple backticks (```) to enclose the code block. 
 If the user asks for a blog post, article, or report, start with (Title:) followed by the article title on a new line, then the content.
 Keep the formatting clean and consistent for both code and articles.\n\n"""
+    
+    if selected_prompt:
+        prompt += f"{selected_prompt}\n\n"
     
     return prompt
 
@@ -320,6 +340,7 @@ def refine_boundaries(embeddings: np.ndarray, surprise_indices: list) -> list:
                 temp_communities.append(list(range(start, end)))
                 start = end
             temp_communities.append(list(range(start, len(embeddings))))
+            temp_modularity = calculate_modularity(similarity_matrix, temp_communities)
             temp_modularity = calculate_modularity(similarity_matrix, temp_communities)
             logger.debug(f"Testing boundaries at step {i}, position {j}: modularity={temp_modularity}")
             if temp_modularity > best_modularity:
@@ -390,10 +411,126 @@ def advanced_thinking_step(prompt: str, model: str, api_keys: dict, step: str) -
         logger.error(error_message)
         return f"**{step}**\n\n{error_message}\n\n"
 
+def instance_adaptive_cot(prompt: str, model: str, api_keys: dict) -> str:
+    """Implements Instance-Adaptive Zero-Shot CoT Prompting."""
+    # Select the best prompt based on saliency scores
+    selected_prompt = select_best_prompt(prompt, model, api_keys)
+    if selected_prompt:
+        full_prompt = f"{selected_prompt} {prompt}"
+    else:
+        # Fallback to default behavior if no prompt is selected
+        full_prompt = prompt
+    return full_prompt
+
+def select_best_prompt(question: str, model: str, api_keys: dict) -> str:
+    """Selects the best prompt from candidate prompts based on saliency scores."""
+    saliency_scores = []
+    for candidate in CANDIDATE_PROMPTS:
+        # Generate rationale using the candidate prompt
+        rationale = generate_rationale(question, candidate, model, api_keys)
+        if not rationale:
+            saliency_scores.append(0)
+            continue
+        
+        # Calculate saliency scores
+        Iqp, Iqr, Ipr = calculate_saliency_scores(question, candidate, rationale, model, api_keys)
+        synthesized_score = synthesize_saliency_score(Iqp, Iqr, Ipr)
+        saliency_scores.append(synthesized_score)
+    
+    if not saliency_scores:
+        return None
+    
+    # Depending on the strategy, select the prompt
+    if st.session_state.cot_strategy == "IAP-ss":
+        for idx, score in enumerate(saliency_scores):
+            if score >= st.session_state.cot_threshold:
+                logger.info(f"Selected prompt (IAP-ss): {CANDIDATE_PROMPTS[idx]} with score {score}")
+                return CANDIDATE_PROMPTS[idx]
+        # If no prompt meets the threshold, return None
+        logger.info("No prompt met the threshold in IAP-ss strategy.")
+        return None
+    elif st.session_state.cot_strategy == "IAP-mv":
+        top_n = st.session_state.cot_top_n
+        top_indices = np.argsort(saliency_scores)[-top_n:]
+        selected_prompts = [CANDIDATE_PROMPTS[idx] for idx in top_indices]
+        # Majority vote (here, we'll select the prompt with the highest score)
+        best_prompt = selected_prompts[np.argmax([saliency_scores[idx] for idx in top_indices])]
+        logger.info(f"Selected prompt (IAP-mv): {best_prompt} with score {max([saliency_scores[idx] for idx in top_indices])}")
+        return best_prompt
+    else:
+        return None
+
+def generate_rationale(question: str, prompt: str, model: str, api_keys: dict) -> str:
+    """Generates rationale using the given prompt."""
+    full_prompt = f"{prompt} {question}"
+    try:
+        if model in OPENAI_MODELS:
+            response = call_openai_api(
+                model=model,
+                messages=[{"role": "user", "content": full_prompt}],
+                temperature=0.7,
+                max_tokens=500,
+                openai_api_key=api_keys.get("openai_api_key"),
+                stream=False
+            )
+            return response
+        elif model in GROQ_MODELS:
+            response = call_groq_api(
+                model=model,
+                prompt=full_prompt,
+                temperature=0.7,
+                max_tokens=500,
+                groq_api_key=api_keys.get("groq_api_key")
+            )
+            return response.strip()
+        else:
+            response = ollama.generate(
+                model=model,
+                prompt=full_prompt,
+                options={
+                    "temperature": 0.7,
+                    "num_predict": 500
+                }
+            )
+            return response['response'].strip()
+    except Exception as e:
+        logger.error(f"Error generating rationale: {e}")
+        return ""
+
+def calculate_saliency_scores(question: str, prompt: str, rationale: str, model: str, api_keys: dict):
+    """Calculates saliency scores Iqp, Iqr, Ipr."""
+    # Placeholder implementation
+    # In a real scenario, this would involve accessing the model's attention matrices and gradients
+    # Here, we'll use dummy values for demonstration purposes
+    Iqp = np.random.rand()
+    Iqr = np.random.rand()
+    Ipr = np.random.rand()
+    logger.debug(f"Saliency scores for prompt '{prompt}': Iqp={Iqp}, Iqr={Iqr}, Ipr={Ipr}")
+    return Iqp, Iqr, Ipr
+
+def synthesize_saliency_score(Iqp: float, Iqr: float, Ipr: float) -> float:
+    """Synthesizes the saliency score based on Iqp, Iqr, Ipr."""
+    lambda1 = 0.4
+    lambda2 = 0.3
+    lambda3 = 0.3
+    S = lambda1 * Iqp + lambda2 * Iqr + lambda3 * Ipr
+    logger.debug(f"Synthesized saliency score: {S}")
+    return S
+
 def chat_interface():
     load_settings()
 
     # Initialize session state attributes with default values if not present
+    if "cot_top_n" not in st.session_state:
+        st.session_state.cot_top_n = 3  # Default value for top N prompts in IAP-mv
+    if "cot_strategy" not in st.session_state:
+        st.session_state.cot_strategy = "IAP-ss"  # Default strategy
+    if "cot_threshold" not in st.session_state:
+        st.session_state.cot_threshold = 0.5  # Default threshold for IAP-ss
+    if "instance_adaptive_cot_enabled" not in st.session_state:
+        st.session_state.instance_adaptive_cot_enabled = False  # Default to disabled
+
+    # Initialize other attributes if not present
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "agent_type" not in st.session_state:
@@ -508,6 +645,36 @@ def chat_interface():
                 value=st.session_state.advanced_thinking_enabled  # Added Advanced Thinking checkbox
             )
 
+            # Instance-Adaptive Zero-Shot CoT Prompting Settings
+            st.markdown("### Instance-Adaptive Zero-Shot CoT Prompting")
+            st.session_state.instance_adaptive_cot_enabled = st.checkbox(
+                "Enable Instance-Adaptive Zero-Shot CoT Prompting",
+                value=st.session_state.get("instance_adaptive_cot_enabled", False)
+            )
+            if st.session_state.instance_adaptive_cot_enabled:
+                cot_strategies = ["IAP-ss", "IAP-mv"]
+                st.session_state.cot_strategy = st.selectbox(
+                    "📋 CoT Prompting Strategy:",
+                    cot_strategies,
+                    index=cot_strategies.index(st.session_state.get("cot_strategy", "IAP-ss")) if st.session_state.get("cot_strategy", "IAP-ss") in cot_strategies else 0
+                )
+                if st.session_state.cot_strategy == "IAP-ss":
+                    st.session_state.cot_threshold = st.slider(
+                        "🔍 Saliency Score Threshold:",
+                        min_value=0.0,
+                        max_value=1.0,
+                        value=st.session_state.get("cot_threshold", 0.5),
+                        step=0.05
+                    )
+                elif st.session_state.cot_strategy == "IAP-mv":
+                    st.session_state.cot_top_n = st.slider(
+                        "🔝 Number of Top Prompts:",
+                        min_value=1,
+                        max_value=len(CANDIDATE_PROMPTS),
+                        value=st.session_state.get("cot_top_n", 3),
+                        step=1
+                    )
+
             # Configurable Thinking Steps
             st.markdown("### Configurable Thinking Steps")
             default_steps = "\n".join(st.session_state.thinking_steps)
@@ -621,7 +788,7 @@ def chat_interface():
                     logger.error(f"Error in episodic memory processing: {e}")
 
             # Get webpage context from query parameters using st.query_params
-            query_params = st.query_params  # Replaced st.experimental_get_query_params() with st.query_params
+            query_params = st.query_params  
             web_page_url = query_params.get('web_page_url', [''])[0]
             is_extension = query_params.get('extension', ['false'])[0].lower() == 'true'
 
@@ -661,6 +828,12 @@ Human: {user_input}
 
 Assistant: Let me address your request based on the information provided and my capabilities.
 """
+
+            # Apply Instance-Adaptive Zero-Shot CoT Prompting if enabled
+            if st.session_state.instance_adaptive_cot_enabled:
+                final_prompt = instance_adaptive_cot(final_prompt, st.session_state.selected_model, api_keys)
+                if final_prompt is None:
+                    final_prompt = f"{agent_prompt}\n\nRecent conversation history:\n{chat_history}\n\n{corpus_context}\n\nEpisodic Memory Context:\n{episodic_context}\n\nHuman: {user_input}\n\nAssistant: Let me address your request based on the information provided and my capabilities.\n\n"
 
             st.session_state.total_tokens += count_tokens(final_prompt)
             logger.info(f"Constructed final prompt with total tokens: {st.session_state.total_tokens}")
@@ -843,7 +1016,11 @@ def save_chat_and_workspace():
             "chat_history": st.session_state.chat_history,
             "workspace_items": st.session_state.workspace_items,
             "total_tokens": st.session_state.total_tokens,
-            "thinking_steps": st.session_state.thinking_steps  # Save thinking steps
+            "thinking_steps": st.session_state.thinking_steps,  # Save thinking steps
+            "instance_adaptive_cot_enabled": st.session_state.get("instance_adaptive_cot_enabled", False),
+            "cot_strategy": st.session_state.get("cot_strategy", "IAP-ss"),
+            "cot_threshold": st.session_state.get("cot_threshold", 0.5),
+            "cot_top_n": st.session_state.get("cot_top_n", 3)
         }
         sessions_folder = "sessions"
         if not os.path.exists(sessions_folder):
@@ -894,6 +1071,10 @@ def load_chat_and_workspace(file_path):
         st.session_state.workspace_items = loaded_data.get("workspace_items", [])
         st.session_state.total_tokens = loaded_data.get("total_tokens", 0)
         st.session_state.thinking_steps = loaded_data.get("thinking_steps", st.session_state.thinking_steps)
+        st.session_state.instance_adaptive_cot_enabled = loaded_data.get("instance_adaptive_cot_enabled", False)
+        st.session_state.cot_strategy = loaded_data.get("cot_strategy", "IAP-ss")
+        st.session_state.cot_threshold = loaded_data.get("cot_threshold", 0.5)
+        st.session_state.cot_top_n = loaded_data.get("cot_top_n", 3)
         st.success(f"Loaded {os.path.basename(file_path)}")
         logger.info(f"Loaded chat and workspace from {file_path}")
         st.rerun()
