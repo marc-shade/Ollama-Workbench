@@ -427,7 +427,7 @@ def select_best_prompt(question: str, model: str, api_keys: dict) -> str:
     saliency_scores = []
     for candidate in CANDIDATE_PROMPTS:
         # Generate rationale using the candidate prompt
-        rationale = generate_rationale(question, candidate, model, api_keys)
+        rationale = generate_rationale(question, candidate,       model, api_keys)
         if not rationale:
             saliency_scores.append(0)
             continue
