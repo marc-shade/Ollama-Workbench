@@ -36,7 +36,6 @@ scikit-learn
 selenium
 sentence_transformers
 serpapi
-spacy
 streamlit
 streamlit-extras
 streamlit-javascript
