@@ -61,5 +61,7 @@ python "$LOCAL_DIR/loading_screen.py" bash "$TEMP_SCRIPT"
 # Remove the temporary script
 rm "$TEMP_SCRIPT"
 
+/opt/anaconda3/envs/ollamaworkbench/bin/python -m spacy download en_core_web_sm
+
 # Run the Streamlit app
 streamlit run "$LOCAL_DIR/main.py"
