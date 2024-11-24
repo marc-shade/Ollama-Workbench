@@ -55,3 +55,5 @@ transformers
 torch
 sentence-transformers
 humanize
+
+spacy
