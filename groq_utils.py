@@ -39,11 +39,19 @@ def save_api_keys(api_keys):
         json.dump(api_keys, f, indent=4)
 
 def get_groq_client(api_key: str):
-    """Returns a Groq client instance."""
-    return Groq(api_key=api_key)
+    """Returns a Groq client instance if API key is available, otherwise returns None."""
+    if not api_key:
+        return None
+    try:
+        return Groq(api_key=api_key)
+    except Exception as e:
+        st.warning("Groq API key not configured. Some features will be limited to local models.")
+        return None
 
 def call_groq_api(client: Groq, model: str, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 1000) -> str:
     """Calls the Groq API for chat completions."""
+    if not client:
+        return None
     try:
         chat_completion = client.chat.completions.create(
             model=model,
@@ -51,9 +59,9 @@ def call_groq_api(client: Groq, model: str, messages: List[Dict[str, str]], temp
             temperature=temperature,
             max_tokens=max_tokens
         )
-        return chat_completion.choices[0].message.content.strip()
+        return chat_completion.choices[0].message.content
     except Exception as e:
-        st.error(f"Error calling Groq API: {e}")
+        st.warning(f"Error calling Groq API: {str(e)}")
         return None
 
 def get_local_embeddings(text: str) -> List[float]:

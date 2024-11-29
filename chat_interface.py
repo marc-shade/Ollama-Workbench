@@ -559,13 +559,23 @@ def chat_interface():
         st.session_state.model_memory_handler = ModelMemoryHandler("ollama")
     if "groq_client" not in st.session_state:
         api_keys = load_api_keys()
-        st.session_state.groq_client = get_groq_client(api_keys.get("groq_api_key"))
+        groq_key = api_keys.get("groq_api_key")
+        st.session_state.groq_client = get_groq_client(groq_key)
+        if not groq_key:
+            st.session_state.providers = {"ollama": True, "groq": False}
+        else:
+            st.session_state.providers = {"ollama": True, "groq": True}
 
-    # Ensure 'selected_model' is initialized
+    # Ensure 'selected_model' is initialized with Ollama as default
     if "selected_model" not in st.session_state or st.session_state.selected_model is None:
         available_models = get_available_models()
         if available_models:
-            st.session_state.selected_model = available_models[0]
+            # Default to an Ollama model
+            ollama_models = [m for m in available_models if not m.startswith(("groq/", "openai/"))]
+            if ollama_models:
+                st.session_state.selected_model = ollama_models[0]
+            else:
+                st.session_state.selected_model = available_models[0]
             logger.info(f"Initialized selected_model to default: {st.session_state.selected_model}")
         else:
             st.session_state.selected_model = None
