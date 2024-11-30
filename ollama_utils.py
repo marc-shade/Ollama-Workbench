@@ -3,26 +3,23 @@
 import requests
 import json
 import io
-import time
+
 import streamlit as st
 import numpy as np
 import ollama
-from datetime import datetime
 import psutil
 import platform
-import socket
 import subprocess
 import os
-from openai_utils import (
-    set_openai_api_key,
-    call_openai_api,
-    call_openai_embeddings,
-    OPENAI_MODELS,
-)
 
+from openai_utils import (
+    call_openai_api,
+    OPENAI_MODELS
+)
 from groq_utils import get_local_embeddings, GROQ_MODELS
 
 API_KEYS_FILE = "api_keys.json"
+MODEL_SETTINGS_FILE = "model_settings.json"
 
 def load_api_keys():
     """Loads API keys from the JSON file."""
@@ -35,6 +32,18 @@ def save_api_keys(api_keys):
     """Saves API keys to the JSON file."""
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
+
+def load_model_settings():
+    """Loads model settings from the JSON file."""
+    if os.path.exists(MODEL_SETTINGS_FILE):
+        with open(MODEL_SETTINGS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_model_settings(settings):
+    """Saves model settings to the JSON file."""
+    with open(MODEL_SETTINGS_FILE, "w") as f:
+        json.dump(settings, f, indent=4)
 
 OLLAMA_URL = "http://localhost:11434/api"
 
@@ -140,7 +149,7 @@ def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
             )
             embeddings = np.array(response['data'][0]['embedding'])
         elif model in GROQ_MODELS:
-            embeddings = call_groq_embeddings(model, text, api_keys.get("groq_api_key"))
+            embeddings = get_local_embeddings(text)
         else:
             response = ollama.embeddings(model=model, prompt=text)
             embeddings = np.array(response['embedding'])
@@ -354,7 +363,7 @@ def generate_embeddings(model, text):
     try:
         if model in GROQ_MODELS:
             # Use Groq API for embedding
-            return call_groq_embeddings(model, text)
+            return get_local_embeddings(text)
         elif model in OPENAI_MODELS:
             # Use OpenAI API for embedding
             return call_openai_api(model, prompt=[{"role": "user", "content": text}], use_chat=False)

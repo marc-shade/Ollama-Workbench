@@ -1,4 +1,4 @@
-# chat_interface.py (WITH INSTANCE-ADAPTIVE ZERO-SHOT CoT PROMPTING)
+# chat_interface.py
 
 import streamlit as st
 import os
@@ -7,12 +7,13 @@ from datetime import datetime
 import re
 import ollama
 from ollama_utils import (
-    get_available_models, get_all_models, load_api_keys, call_ollama_endpoint, get_token_embeddings
+    get_available_models, get_all_models, load_api_keys, get_token_embeddings
 )
-from openai_utils import call_openai_api, call_openai_embeddings, OPENAI_MODELS
-from groq_utils import get_groq_client, call_groq_api, get_local_embeddings, GROQ_MODELS
+from openai_utils import call_openai_api, OPENAI_MODELS
+from groq_utils import get_groq_client, call_groq_api, GROQ_MODELS
+from mistral_utils import  call_mistral_api, MISTRAL_MODELS
 from prompts import (
-    get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
+    get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 )
 import tiktoken
 from streamlit_extras.bottom_container import bottom
@@ -20,8 +21,10 @@ from enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
 from collections import deque
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-import logging  # Added for logging
-import time  # Added for sleep in progress simulation
+import logging 
+import time  
+from tts_utils import text_to_speech, play_speech
+import sqlite3
 
 # Setup logging
 logging.basicConfig(
@@ -58,6 +61,8 @@ class ModelMemoryHandler:
             return self.segment_text_openai(model, text, api_keys)
         elif self.model_type == "groq":
             return self.segment_text_groq(model, text, api_keys)
+        elif self.model_type == "mistral":
+            return self.segment_text_mistral(model, text, api_keys)
         else:
             return self.segment_text_ollama(model, text, api_keys)
 
@@ -67,6 +72,10 @@ class ModelMemoryHandler:
 
     def segment_text_groq(self, model, text, api_keys):
         # Implementation for Groq models
+        pass
+
+    def segment_text_mistral(self, model, text, api_keys):
+        # Implementation for Mistral models
         pass
 
     def segment_text_ollama(self, model, text, api_keys):
@@ -81,59 +90,191 @@ class EpisodicMemory:
         self.similarity_buffer = deque(maxlen=similarity_buffer_size)
         self.contiguity_buffer = deque(maxlen=contiguity_buffer_size)
         self.events = []
+        self.threshold_history = deque(maxlen=10)
+        self.min_segment_length = 20
+        self.max_segment_length = 200
 
     def segment_text_into_events(self, model: str, text: str, threshold: float = 0.01, api_keys: dict = None):
         """Segments the text into events based on surprise and refines boundaries."""
         try:
-            tokenizer = tiktoken.encoding_for_model(model)
-        except KeyError:
-            tokenizer = tiktoken.get_encoding("gpt2")
+            # Get appropriate tokenizer
+            try:
+                tokenizer = tiktoken.encoding_for_model(model)
+            except KeyError:
+                tokenizer = tiktoken.get_encoding("gpt2")
+            
+            # Tokenize text
+            tokens = tokenizer.encode(text)
+            num_tokens = len(tokens)
+            
+            # Dynamic segmentation based on text length
+            segment_size = min(max(num_tokens // 10, self.min_segment_length), self.max_segment_length)
+            surprise_indices = []
+            
+            # Get embeddings for token windows
+            embeddings = get_token_embeddings(model, text, api_keys)
+            if embeddings.ndim == 1:
+                embeddings = embeddings.reshape(1, -1)
+            
+            # Calculate surprise at each potential boundary
+            for i in range(segment_size, num_tokens - segment_size, segment_size):
+                prev_window = embeddings[max(0, i-segment_size):i]
+                next_window = embeddings[i:min(i+segment_size, num_tokens)]
+                
+                if len(prev_window) > 0 and len(next_window) > 0:
+                    prev_centroid = np.mean(prev_window, axis=0)
+                    next_centroid = np.mean(next_window, axis=0)
+                    surprise = 1 - cosine_similarity(prev_centroid.reshape(1, -1), next_centroid.reshape(1, -1))[0][0]
+                    
+                    # Adaptive thresholding
+                    current_threshold = np.mean(self.threshold_history) if self.threshold_history else threshold
+                    if surprise > current_threshold:
+                        surprise_indices.append(i)
+                        self.threshold_history.append(surprise)
+            
+            # Refine boundaries using modularity
+            if len(embeddings) > 0 and surprise_indices:
+                refined_boundaries = refine_boundaries(embeddings, surprise_indices)
+                
+                # Create events with metadata
+                self.events = []
+                start = 0
+                for end in refined_boundaries:
+                    event_text = text[start:end]
+                    event_embedding = np.mean(embeddings[start:end], axis=0)
+                    timestamp = datetime.now().isoformat()
+                    
+                    # Calculate importance score based on surprise and length
+                    importance = np.mean([
+                        1 - cosine_similarity(embeddings[max(0, start-1):start],
+                                           embeddings[start:min(start+1, len(embeddings))])[0][0]
+                        if start > 0 else 0.5
+                    ])
+                    
+                    self.events.append({
+                        'text': event_text,
+                        'embedding': event_embedding,
+                        'timestamp': timestamp,
+                        'importance': importance,
+                        'length': len(event_text)
+                    })
+                    start = end
+                
+                # Handle the last segment
+                if start < len(text):
+                    event_text = text[start:]
+                    event_embedding = np.mean(embeddings[start:], axis=0)
+                    self.events.append({
+                        'text': event_text,
+                        'embedding': event_embedding,
+                        'timestamp': datetime.now().isoformat(),
+                        'importance': 0.5,  # Default importance for last segment
+                        'length': len(event_text)
+                    })
         
-        num_tokens = len(tokenizer.encode(text))
-        surprise_indices = [i for i in range(1, num_tokens) if i % 50 == 0]
-        embeddings = get_token_embeddings(model, text, api_keys)
+        except Exception as e:
+            logger.error(f"Error in segment_text_into_events: {str(e)}")
+            # Fallback: create a single event if segmentation fails
+            if len(text) > 0:
+                self.events = [{
+                    'text': text,
+                    'embedding': np.mean(embeddings, axis=0) if len(embeddings) > 0 else np.zeros(1536),
+                    'timestamp': datetime.now().isoformat(),
+                    'importance': 0.5,
+                    'length': len(text)
+                }]
 
-        # Ensure embeddings are 2D
-        if embeddings.ndim == 1:
-            embeddings = embeddings.reshape(1, -1)
-
-        if len(embeddings) > 0:
-            refined_boundaries = refine_boundaries(embeddings, surprise_indices)
-
-            self.events = []
-            start = 0
-            for end in refined_boundaries:
-                event_text = text[start:end]
-                event_embedding = np.mean(embeddings[start:end], axis=0)
-                self.events.append({'text': event_text, 'embedding': event_embedding})
-                start = end
-            # Handle the last segment
-            event_text = text[start:]
-            event_embedding = np.mean(embeddings[start:], axis=0)
-            self.events.append({'text': event_text, 'embedding': event_embedding})
-
-    def retrieve_events(self, query_embedding: np.ndarray) -> list:
-        """Retrieves relevant events based on the query embedding."""
-        retrieved_events = []
-        if len(self.events) > 0:
+    def retrieve_events(self, query_embedding: np.ndarray, top_k: int = None) -> list:
+        """Retrieves relevant events based on the query embedding with advanced filtering."""
+        if not self.events:
+            return []
+        
+        try:
             query_embedding = query_embedding.reshape(1, -1)
             event_embeddings = np.array([event['embedding'] for event in self.events])
-
+            
             if event_embeddings.ndim == 1:
                 event_embeddings = event_embeddings.reshape(1, -1)
-
+            
+            # Calculate similarity scores
             similarity_scores = cosine_similarity(query_embedding, event_embeddings)[0]
-            top_event_indices = np.argsort(similarity_scores)[-len(self.similarity_buffer):][::-1]
-            for index in top_event_indices:
-                event = self.events[index]
+            
+            # Calculate recency scores (normalized)
+            timestamps = [datetime.fromisoformat(event['timestamp']) for event in self.events]
+            max_time = max(timestamps)
+            time_diffs = [(max_time - t).total_seconds() for t in timestamps]
+            max_diff = max(time_diffs) if time_diffs else 1
+            recency_scores = [1 - (diff / max_diff) for diff in time_diffs]
+            
+            # Combine scores with weights
+            importance_scores = [event['importance'] for event in self.events]
+            final_scores = (
+                0.6 * similarity_scores +
+                0.2 * np.array(recency_scores) +
+                0.2 * np.array(importance_scores)
+            )
+            
+            # Select top events
+            if top_k is None:
+                top_k = len(self.similarity_buffer)
+            
+            top_indices = np.argsort(final_scores)[-top_k:][::-1]
+            
+            # Retrieve events and update buffers
+            retrieved_events = []
+            for idx in top_indices:
+                event = self.events[idx]
                 retrieved_events.append(event)
                 self.similarity_buffer.append(event)
-                # Add neighboring events to the contiguity buffer
-                for i in range(index - 1, index + 2):
-                    if 0 <= i < len(self.events) and i != index:
-                        self.contiguity_buffer.append(self.events[i])
-            return retrieved_events + list(self.contiguity_buffer)
-        return retrieved_events
+                
+                # Add contextually relevant neighboring events
+                start_idx = max(0, idx - 1)
+                end_idx = min(len(self.events), idx + 2)
+                for i in range(start_idx, end_idx):
+                    if i != idx:
+                        neighbor = self.events[i]
+                        self.contiguity_buffer.append(neighbor)
+                        if len(retrieved_events) < top_k * 2:  # Include some context but not too much
+                            retrieved_events.append(neighbor)
+            
+            return retrieved_events
+            
+        except Exception as e:
+            logger.error(f"Error in retrieve_events: {str(e)}")
+            return list(self.similarity_buffer) + list(self.contiguity_buffer)
+
+    def save_to_disk(self, filepath: str):
+        """Save memory state to disk."""
+        try:
+            save_data = {
+                'events': [{
+                    **event,
+                    'embedding': event['embedding'].tolist()  # Convert numpy array to list
+                } for event in self.events],
+                'threshold_history': list(self.threshold_history)
+            }
+            with open(filepath, 'w') as f:
+                json.dump(save_data, f)
+        except Exception as e:
+            logger.error(f"Error saving memory to disk: {str(e)}")
+
+    def load_from_disk(self, filepath: str):
+        """Load memory state from disk."""
+        try:
+            with open(filepath, 'r') as f:
+                save_data = json.load(f)
+            
+            self.events = [{
+                **event,
+                'embedding': np.array(event['embedding'])  # Convert list back to numpy array
+            } for event in save_data['events']]
+            
+            self.threshold_history = deque(save_data['threshold_history'], maxlen=10)
+        except Exception as e:
+            logger.error(f"Error loading memory from disk: {str(e)}")
+            # Initialize empty state if load fails
+            self.events = []
+            self.threshold_history = deque(maxlen=10)
 
 def load_settings():
     if os.path.exists(SETTINGS_FILE):
@@ -199,13 +340,21 @@ def ai_assisted_prompt_writing():
 def generate_prompt_suggestion(user_need):
     api_keys = load_api_keys()
     model = st.session_state.selected_model
-    prompt = f"Your task is to improve the user's prompt and send it to another AI agent to process. Do not respond directly to the user's response, assume whatever they give you is a prompt that needs to be improved for maximum efficiency and effectiveness. Create a prompt that will give the user the best results. Create a detailed and effective improved prompt for an AI assistant based on this user need: {user_need}"
+    base_prompt = f"Your task is to improve the user's prompt and send it to another AI agent to process. Do not respond directly to the user's response, assume whatever they give you is a prompt that needs to be improved for maximum efficiency and effectiveness. Create a prompt that will give the user the best results. Create a detailed and effective improved prompt for an AI assistant based on this user need: {user_need}"
+    
+    # Construct the full prompt using the agent prompt builder
+    full_prompt = construct_agent_prompt(
+        st.session_state.get('agent_type', 'None'),
+        st.session_state.get('metacognitive_type', 'None'),
+        st.session_state.get('voice_type', 'None'),
+        base_prompt
+    )
 
     try:
         if model in OPENAI_MODELS:
             response = call_openai_api(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": full_prompt}],
                 temperature=st.session_state.temperature_slider_chat,
                 max_tokens=min(st.session_state.max_tokens_slider_chat, 16000),
                 openai_api_key=api_keys.get("openai_api_key"),
@@ -214,17 +363,26 @@ def generate_prompt_suggestion(user_need):
             return response
         elif model in GROQ_MODELS:
             response = call_groq_api(
-                model,
-                prompt,
+                model=model,
+                prompt=full_prompt,
                 temperature=st.session_state.temperature_slider_chat,
                 max_tokens=min(st.session_state.max_tokens_slider_chat, 8000),
                 groq_api_key=api_keys.get("groq_api_key")
             )
             return response.strip()
+        elif model in MISTRAL_MODELS:
+            response = call_mistral_api(
+                model=model,
+                prompt=full_prompt,
+                temperature=st.session_state.temperature_slider_chat,
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 8000),
+                mistral_api_key=api_keys.get("mistral_api_key")
+            )
+            return response.strip()
         else:
             response = ollama.generate(
                 model=model,
-                prompt=prompt,
+                prompt=full_prompt,
                 options={
                     "temperature": st.session_state.temperature_slider_chat,
                     "num_predict": min(st.session_state.max_tokens_slider_chat, 16000)
@@ -269,29 +427,44 @@ def extract_content_blocks(text):
     return [block.strip('`').strip() for block in code_blocks], [block.strip() for block in article_blocks]
 
 def construct_agent_prompt(agent_type, metacognitive_type, voice_type, selected_prompt=None):
-    prompt = ""
-
-    agent_prompts = get_agent_prompt()
-    if agent_type != "None" and agent_type in agent_prompts:
-        prompt += f"You are a {agent_type}. {agent_prompts[agent_type]['prompt']}\n\n"
-    else:
-        prompt += "You are a helpful AI assistant.\n\n"
+    """Constructs the agent prompt based on selected types and chat mode."""
+    prompt_parts = []
     
+    # Only include workspace context if in code mode and workspace is enabled
+    if st.session_state.chat_mode == "code" and st.session_state.workspace_enabled:
+        if st.session_state.workspace_items:
+            prompt_parts.append("Current workspace context:")
+            for item in st.session_state.workspace_items:
+                prompt_parts.append(f"- {item}")
+            prompt_parts.append("")
+    
+    # Add agent type prompt if selected
+    if agent_type != "None":
+        agent_prompts = get_agent_prompt()
+        if agent_type in agent_prompts:
+            if isinstance(agent_prompts[agent_type], dict):
+                prompt_parts.append(agent_prompts[agent_type]["prompt"])
+            else:
+                prompt_parts.append(agent_prompts[agent_type])
+    
+    # Add metacognitive type prompt if selected
     if metacognitive_type != "None":
-        prompt += f"Use the following metacognitive approach: {get_metacognitive_prompt()[metacognitive_type]}\n\n"
+        metacog_prompts = get_metacognitive_prompt()
+        if metacognitive_type in metacog_prompts:
+            prompt_parts.append(metacog_prompts[metacognitive_type])
     
+    # Add voice type prompt if selected
     if voice_type != "None":
-        prompt += f"Speak in the following voice: {get_voice_prompt()[voice_type]}\n\n"
-    
-    prompt += """When you generate code or an article, it will be automatically saved to the user's Workspace. 
-For code, use triple backticks (```) to enclose the code block. 
-If the user asks for a blog post, article, or report, start with (Title:) followed by the article title on a new line, then the content.
-Keep the formatting clean and consistent for both code and articles.\n\n"""
-    
+        voice_prompts = get_voice_prompt()
+        if voice_type in voice_prompts:
+            prompt_parts.append(voice_prompts[voice_type])
+            
+    # Add selected prompt if provided
     if selected_prompt:
-        prompt += f"{selected_prompt}\n\n"
+        prompt_parts.append(selected_prompt)
     
-    return prompt
+    # Return combined prompt
+    return "\n\n".join(prompt_parts) if prompt_parts else ""
 
 def calculate_modularity(similarity_matrix: np.ndarray, communities: list) -> float:
     """Calculates the modularity of a graph given its similarity matrix and community structure."""
@@ -350,62 +523,55 @@ def refine_boundaries(embeddings: np.ndarray, surprise_indices: list) -> list:
 
     return best_boundaries
 
-def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
-    """Gets embeddings for each token in the text and returns a 2D array."""
-    try:
-        if model in OPENAI_MODELS:
-            embeddings = call_openai_embeddings(
-                model="text-embedding-ada-002",
-                input_text=text
-            )
-        elif model in GROQ_MODELS:
-            embeddings = get_local_embeddings(text)
-        else:
-            response = ollama.embeddings(model=model, prompt=text)
-            embeddings = np.array(response['embedding'])
-        
-        return np.array(embeddings).reshape(-1, embeddings.shape[-1])  # Ensure it's a 2D array
-    except Exception as e:
-        st.error(f"An error occurred while getting token embeddings: {e}")
-        logger.error(f"Error getting token embeddings: {e}")
-        return np.zeros((1, 1536))  # Return a default 2D array with 1536 features (common embedding size)
-
 def advanced_thinking_step(prompt: str, model: str, api_keys: dict, step: str) -> str:
     """Processes a single thinking step and returns the result."""
-    step_prompt = f"{prompt}\n\nCurrent thinking step: {step}\nProvide your thoughts for this step:"
-    logger.info(f"Executing thinking step: {step}")
-
     try:
-        if model in OPENAI_MODELS:
+        logger.info(f"Starting thinking step: {step}")
+        
+        # Construct the prompt for this thinking step
+        step_prompt = f"{prompt}\n\nThinking step: {step}\n\nPlease provide your thoughts for this step."
+        
+        # Call the appropriate API based on the model
+        if model.startswith("openai/"):
             response = call_openai_api(
-                model=model,
-                messages=[{"role": "user", "content": step_prompt}],
-                temperature=0.7,
-                max_tokens=200,
-                openai_api_key=api_keys.get("openai_api_key"),
-                stream=False
+                model,
+                step_prompt,
+                temperature=st.session_state.temperature_slider_chat,
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 4000),
+                openai_api_key=api_keys.get("openai_api_key")
             )
-        elif model in GROQ_MODELS:
+            return f"**{step}**\n\n{response}\n\n"
+        elif model.startswith("groq/"):
             response = call_groq_api(
-                model=model,
-                prompt=step_prompt,
-                temperature=0.7,
-                max_tokens=200,
+                model,
+                step_prompt,
+                temperature=st.session_state.temperature_slider_chat,
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 8000),
                 groq_api_key=api_keys.get("groq_api_key")
             )
+            return f"**{step}**\n\n{response.strip()}\n\n"
+        elif model.startswith("mistral/"):
+            response = call_mistral_api(
+                model,
+                step_prompt,
+                temperature=st.session_state.temperature_slider_chat,
+                max_tokens=min(st.session_state.max_tokens_slider_chat, 8000),
+                mistral_api_key=api_keys.get("mistral_api_key")
+            )
+            return f"**{step}**\n\n{response.strip()}\n\n"
         else:
             response = ollama.generate(
                 model=model,
                 prompt=step_prompt,
                 options={
-                    "temperature": 0.7,
-                    "num_predict": 200
+                    "temperature": st.session_state.temperature_slider_chat,
+                    "num_predict": min(st.session_state.max_tokens_slider_chat, 16000)
                 }
             )
-            response = response['response']
+            return f"**{step}**\n\n{response.response}\n\n"
         
         logger.info(f"Completed thinking step: {step}")
-        return f"**{step}**\n\n{response}\n\n"
+        
     except Exception as e:
         error_message = f"Error during {step}: {e}"
         logger.error(error_message)
@@ -413,21 +579,32 @@ def advanced_thinking_step(prompt: str, model: str, api_keys: dict, step: str) -
 
 def instance_adaptive_cot(prompt: str, model: str, api_keys: dict) -> str:
     """Implements Instance-Adaptive Zero-Shot CoT Prompting."""
-    # Select the best prompt based on saliency scores
-    selected_prompt = select_best_prompt(prompt, model, api_keys)
-    if selected_prompt:
-        full_prompt = f"{selected_prompt} {prompt}"
-    else:
-        # Fallback to default behavior if no prompt is selected
-        full_prompt = prompt
-    return full_prompt
+    try:
+        # Generate initial rationale
+        initial_rationale = generate_rationale(prompt, "", model, api_keys)
+        
+        # Select the best prompt based on saliency scores
+        selected_prompt = select_best_prompt(prompt, model, api_keys)
+        
+        if selected_prompt:
+            # Construct full prompt with selected CoT prompt
+            full_prompt = f"{selected_prompt}\n\nQuestion: {prompt}\n\nLet's approach this step-by-step:\n1. First, {initial_rationale}"
+        else:
+            # Fallback to default behavior with basic CoT structure
+            full_prompt = f"Question: {prompt}\n\nLet's solve this step-by-step:\n1. {initial_rationale}"
+        
+        return full_prompt
+    except Exception as e:
+        logger.error(f"Error in instance_adaptive_cot: {str(e)}")
+        # Fallback to original prompt if anything fails
+        return prompt
 
 def select_best_prompt(question: str, model: str, api_keys: dict) -> str:
     """Selects the best prompt from candidate prompts based on saliency scores."""
     saliency_scores = []
     for candidate in CANDIDATE_PROMPTS:
         # Generate rationale using the candidate prompt
-        rationale = generate_rationale(question, candidate,       model, api_keys)
+        rationale = generate_rationale(question, candidate, model, api_keys)
         if not rationale:
             saliency_scores.append(0)
             continue
@@ -477,16 +654,25 @@ def generate_rationale(question: str, prompt: str, model: str, api_keys: dict) -
         elif model in GROQ_MODELS:
             response = call_groq_api(
                 model=model,
-                prompt=full_prompt,
+                prompt=prompt,
                 temperature=0.7,
                 max_tokens=500,
                 groq_api_key=api_keys.get("groq_api_key")
             )
             return response.strip()
+        elif model in MISTRAL_MODELS:
+            response = call_mistral_api(
+                model=model,
+                prompt=prompt,
+                temperature=0.7,
+                max_tokens=500,
+                mistral_api_key=api_keys.get("mistral_api_key")
+            )
+            return response.strip()
         else:
             response = ollama.generate(
                 model=model,
-                prompt=full_prompt,
+                prompt=prompt,
                 options={
                     "temperature": 0.7,
                     "num_predict": 500
@@ -521,6 +707,10 @@ def chat_interface():
     load_settings()
 
     # Initialize session state attributes with default values if not present
+    if "chat_mode" not in st.session_state:
+        st.session_state.chat_mode = "general"  # Can be 'general' or 'code'
+    if "workspace_enabled" not in st.session_state:
+        st.session_state.workspace_enabled = False
     if "cot_top_n" not in st.session_state:
         st.session_state.cot_top_n = 3  # Default value for top N prompts in IAP-mv
     if "cot_strategy" not in st.session_state:
@@ -571,7 +761,7 @@ def chat_interface():
         available_models = get_available_models()
         if available_models:
             # Default to an Ollama model
-            ollama_models = [m for m in available_models if not m.startswith(("groq/", "openai/"))]
+            ollama_models = [m for m in available_models if not m.startswith(("groq/", "openai/", "mistral/"))]
             if ollama_models:
                 st.session_state.selected_model = ollama_models[0]
             else:
@@ -600,14 +790,59 @@ def chat_interface():
 
     with st.sidebar:
         with st.expander("🤖 Chat Agent Settings", expanded=False):
-            available_models = get_all_models()  # Update available models
+            # Add chat mode selector
+            st.session_state.chat_mode = st.selectbox(
+                "💭 Chat Mode:",
+                ["general", "code"],
+                index=0 if st.session_state.chat_mode == "general" else 1
+            )
+            
+            # Only show workspace toggle in code mode
+            if st.session_state.chat_mode == "code":
+                st.session_state.workspace_enabled = st.checkbox(
+                    "Enable Workspace Context",
+                    value=st.session_state.workspace_enabled
+                )
+            
+            # Get available models and their info
+            available_models = get_all_models()
+            
+            # Connect to the models database
+            conn = sqlite3.connect('ollama_models.db')
+            cursor = conn.cursor()
+            
+            # Get model descriptions
+            model_descriptions = {}
+            for model in available_models:
+                cursor.execute('SELECT description, capabilities FROM models WHERE model_name = ?', (model,))
+                result = cursor.fetchone()
+                if result:
+                    desc, caps = result
+                    model_descriptions[model] = f"{desc}\n\nCapabilities: {caps}" if caps else desc
+                else:
+                    model_descriptions[model] = "An Ollama model"
+            
+            conn.close()
+            
+            # Show model selector with descriptions
             st.session_state.selected_model = st.selectbox(
                 "📦 Model:",
                 available_models,
-                index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0
+                index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0,
+                help=model_descriptions.get(st.session_state.selected_model, "An Ollama model")
             )
-            agent_types = ["None"] + list(get_agent_prompt().keys())
-            st.session_state.agent_type = st.selectbox("🧑‍🔧 Agent Type:", agent_types, index=agent_types.index(st.session_state.agent_type))
+            agent_prompts = get_agent_prompt()
+            agent_types = ["None"] + list(agent_prompts.keys())
+            agent_type_descriptions = {
+                "None": "No special agent behavior",
+                **{k: v.get("description", v.get("prompt", "")[:100] + "...") for k, v in agent_prompts.items()}
+            }
+            st.session_state.agent_type = st.selectbox(
+                "🧑‍🔧 Agent Type:",
+                agent_types,
+                index=agent_types.index(st.session_state.agent_type),
+                help=agent_type_descriptions.get(st.session_state.agent_type, "")
+            )
             metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
             st.session_state.metacognitive_type = st.selectbox("🧠 Metacognitive Type:", metacognitive_types, index=metacognitive_types.index(st.session_state.metacognitive_type))
             voice_options = ["None"] + list(get_voice_prompt().keys())
@@ -707,38 +942,47 @@ def chat_interface():
     chat_tab, workspace_tab = st.tabs(["💬 Chat", "📜 Workspace"])
 
     with chat_tab:
+        # Initialize placeholders for each message at the start
+        message_placeholders = []
         for i, message in enumerate(st.session_state.chat_history):
-            with st.chat_message(message["role"]):
-                if message["role"] == "assistant":
-                    if message.get("content"):
-                        code_blocks, article_blocks = extract_content_blocks(message["content"])
-                        for code_block in code_blocks:
-                            st.code(code_block)
-                        non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
-                        for part in non_code_parts:
-                            st.markdown(part.strip())
-
-                        # Add TTS button for AI responses that are not code
-                        if not code_blocks and i == len(st.session_state.chat_history) - 1:  # Only for the last response
-                            if st.button("🔊 Speak"):
-                                try:
-                                    agent_prompts = get_agent_prompt()
-                                    model_voice = agent_prompts.get(st.session_state.agent_type, {}).get('model_voice')
-                                    if model_voice:
-                                        speech_file = text_to_speech(part.strip(), voice=model_voice)
-                                        play_speech(speech_file)
-                                    else:
-                                        st.warning(f"No Model Voice found for {st.session_state.agent_type}")
-                                except Exception as e:
-                                    st.error(f"Error generating or playing speech: {str(e)}")
+            placeholder = st.empty()
+            message_placeholders.append(placeholder)
+            
+            with placeholder.container():
+                with st.chat_message(message["role"]):
+                    if message["role"] == "assistant":
+                        if message.get("content"):
+                            # Add TTS button first if this is the last message and not a code block
+                            code_blocks, article_blocks = extract_content_blocks(message["content"])
+                            button_col, content_col = st.columns([1, 20])
+                            
+                            if not code_blocks and i == len(st.session_state.chat_history) - 1:
+                                with button_col:
+                                    if st.button("🔊", key=f"speak_button_{i}", help="Click to hear this response"):
+                                        try:
+                                            agent_prompts = get_agent_prompt()
+                                            model_voice = agent_prompts.get(st.session_state.agent_type, {}).get('model_voice', 'en-US-Wavenet-A')
+                                            speech_file = text_to_speech(message["content"].strip(), voice=model_voice)
+                                            play_speech(speech_file)
+                                        except Exception as e:
+                                            st.error(f"Error generating or playing speech: {str(e)}")
+                            
+                            # Display the message content
+                            with content_col:
+                                for code_block in code_blocks:
+                                    st.code(code_block)
+                                non_code_parts = re.split(r'```[\s\S]*?```', message["content"])
+                                for part in non_code_parts:
+                                    if part.strip():
+                                        st.markdown(part.strip())
+                        else:
+                            st.warning("This message has no content.")
                     else:
-                        st.warning("This message has no content.")
-                else:
-                    if message.get("content"):
-                        st.markdown(message["content"])
-                    else:
-                        st.warning("This message has no content.")
-
+                        if message.get("content"):
+                            st.markdown(message["content"])
+                        else:
+                            st.warning("This message has no content.")
+        
         with bottom():
             col1, col2 = st.columns([1, 20])
             with col1:
@@ -911,6 +1155,11 @@ Assistant: Let me address your request based on the information provided and my 
                                 message_placeholder.markdown(full_response + "▌")
                                 st.session_state.total_tokens += count_tokens(chunk.choices[0].delta.content)
                         message_placeholder.markdown(full_response)
+                        
+                        # Add response to history and rerun for OpenAI
+                        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+                        st.rerun()
+                        
                     elif st.session_state.selected_model in GROQ_MODELS:
                         full_response = call_groq_api(
                             client=st.session_state.groq_client,
@@ -920,6 +1169,25 @@ Assistant: Let me address your request based on the information provided and my 
                             max_tokens=min(st.session_state.max_tokens_slider_chat, 8000)
                         )
                         message_placeholder.markdown(full_response)
+                        
+                        # Add response to history and rerun for Groq
+                        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+                        st.rerun()
+                        
+                    elif st.session_state.selected_model in MISTRAL_MODELS:
+                        full_response = call_mistral_api(
+                            model=st.session_state.selected_model,
+                            prompt=final_prompt,
+                            temperature=st.session_state.temperature_slider_chat,
+                            max_tokens=min(st.session_state.max_tokens_slider_chat, 8000),
+                            mistral_api_key=api_keys.get("mistral_api_key")
+                        )
+                        message_placeholder.markdown(full_response)
+                        
+                        # Add response to history and rerun for Mistral
+                        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+                        st.rerun()
+                        
                     else:
                         for response_chunk in ollama.generate(
                             st.session_state.selected_model,
@@ -938,13 +1206,20 @@ Assistant: Let me address your request based on the information provided and my 
                             st.session_state.total_tokens += count_tokens(content)
 
                         message_placeholder.markdown(full_response)
-                    
-                    logger.info("Assistant response generated successfully.")
-                except Exception as e:
-                    st.error(f"Error during response generation: {e}")
-                    logger.error(f"Error during response generation: {e}")
+                        
+                        # Add response to history and rerun for Ollama
+                        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+                        st.rerun()
 
-                st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+                except Exception as e:
+                    error_message = f"Error: {str(e)}"
+                    message_placeholder.error(error_message)
+                    logger.error(error_message)
+                    st.session_state.chat_history.append({"role": "assistant", "content": error_message})
+                    st.rerun()
+
+                st.session_state.total_tokens += count_tokens(full_response)
+                st.rerun()
 
                 # Extract and save content blocks
                 code_blocks, article_blocks = extract_content_blocks(full_response)
@@ -1001,6 +1276,8 @@ Assistant: Let me address your request based on the information provided and my 
             st.session_state.model_memory_handler = ModelMemoryHandler("openai")
         elif st.session_state.selected_model in GROQ_MODELS:
             st.session_state.model_memory_handler = ModelMemoryHandler("groq")
+        elif st.session_state.selected_model in MISTRAL_MODELS:
+            st.session_state.model_memory_handler = ModelMemoryHandler("mistral")
         else:
             st.session_state.model_memory_handler = ModelMemoryHandler("ollama")
         st.session_state.previous_model = st.session_state.selected_model

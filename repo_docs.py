@@ -91,7 +91,7 @@ def get_available_models():
     all_models = ollama_models + OPENAI_MODELS + GROQ_MODELS
     return all_models
 
-def generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
+def generate_documentation_stream(file_content, task_type, model, temperature, max_tokens, repo_info=None):
     if task_type == "documentation":
         prompt = f"""
 You are an expert in programming and technical writing. Your task is to generate comprehensive documentation and insightful commentary for the provided code. 
@@ -122,31 +122,112 @@ Generate a comprehensive and neatly formatted debug report for the following cod
 {file_content}
 """
     elif task_type == "readme":
-        prompt = f"""
-You are an expert writer and programmer, skilled at writing README.md content for GitHub. 
-Create a comprehensive README.md file for a GitHub repository containing the following code. 
-Pay close attention to how the UI is executed in the code and write the documentation accordingly. 
-As a prime example, if the app uses Streamlit, assume the user will interface with it via a browser and give directions on how to use based on How Streamlit works, not how direct access via Python works to interface with the app.
+        existing_readme = repo_info.get('existing_readme', '') if repo_info else ''
+        requirements = repo_info.get('requirements', '') if repo_info else ''
+        file_structure = '\n'.join(repo_info.get('file_structure', [])) if repo_info else ''
+        
+        # Create a summary of key files content
+        key_files_summary = ""
+        for filename, content in (repo_info.get('key_files', {}) if repo_info else {}).items():
+            key_files_summary += f"\n### {filename}:\n```python\n{content[:500]}...\n```\n"
 
-The README will include:
+        if existing_readme:
+            prompt = f"""
+You are an expert technical writer and programmer, tasked with updating an existing README.md file for a GitHub repository.
+The repository has evolved, and the README needs to be updated to reflect the current state of the project.
+
+Here is the current state of the repository:
+
+1. Existing README.md:
+```markdown
+{existing_readme}
+```
+
+2. Current Repository Structure:
+```
+{file_structure}
+```
+
+3. Key Files:
+{key_files_summary}
+
+4. Requirements (if available):
+```
+{requirements}
+```
+
+Task: Update the README.md while maintaining its current structure and style. Make the following improvements:
+1. Update any outdated information based on the current repository structure
+2. Add any new features or components that are visible in the current codebase
+3. Update installation instructions if new dependencies are present
+4. Maintain any custom sections or formatting from the original README
+5. Ensure all links and references are still valid
+6. Add any missing but important sections that a good README should have
+
+Keep what works from the existing README, but enhance it based on the current state of the repository.
+The output should be a complete, updated README.md file.
+"""
+        else:
+            prompt = f"""
+You are an expert technical writer and programmer, tasked with creating a comprehensive README.md file for a GitHub repository.
+Based on the repository structure and contents, create a clear and informative README that will help users understand and use this project.
+
+Repository Analysis:
+
+1. Repository Structure:
+```
+{file_structure}
+```
+
+2. Key Files:
+{key_files_summary}
+
+3. Requirements (if available):
+```
+{requirements}
+```
+
+Create a comprehensive README.md that includes:
 
 1. Project Title and Description
-    - The repository name should be on the first line of the main.py file. If not, then create a funny name that will make people laugh.
-2. Installation Instructions
-    - Give standard GitHub command line instructions.
-3. Usage Guide
-4. Features
+   - Analyze the code to determine the project's main purpose
+   - Provide a clear, concise description of what the project does
+   - Highlight key features and capabilities
+
+2. Installation
+   - List all prerequisites
+   - Step-by-step installation instructions
+   - Environment setup requirements
+
+3. Usage
+   - Getting started guide
+   - Common use cases and examples
+   - Configuration options
+   - Command-line arguments (if applicable)
+
+4. Project Structure
+   - Explain the main components
+   - Describe how different parts work together
+   - Document key files and their purposes
+
 5. Dependencies
-    - List in code block
-6. Contributing Guidelines
-7. License Information
-    - Assume MIT license
-8. Contact/Support Information
-    - Create a generic template using me@mydomain.com, etc.
+   - List major dependencies with versions
+   - Explain why each major dependency is needed
 
-INSTRUCTION: Use appropriate Markdown formatting to make the README visually appealing and easy to read. Here's the code to base the README on:
+6. Contributing
+   - Guidelines for contributing
+   - Development setup
+   - Testing instructions
 
-{file_content}
+7. License
+   - Include MIT license information
+
+8. Contact/Support
+   - How to get help
+   - Where to report issues
+
+Make the README clear, professional, and well-formatted using Markdown.
+Focus on helping users understand and use the project effectively.
 """
     elif task_type == "project_summary":
         prompt = f"""
@@ -176,11 +257,11 @@ INSTRUCTION: Use appropriate Markdown formatting to make the project summary vis
     
     if model in OPENAI_MODELS:
         from openai_utils import call_openai_api
-        response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_key)
+        response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_keys.get('openai_api_key'))
         yield response
     elif model in GROQ_MODELS:
         from groq_utils import call_groq_api
-        response = call_groq_api(model, prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_key)
+        response = call_groq_api(model, prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_keys.get('groq_api_key'))
         yield response
     else:
         url = "http://localhost:11434/api/generate"
@@ -224,10 +305,11 @@ def get_all_code_files(root_dir, exclude_patterns):
             file_path = os.path.join(subdir, file)
             if file.endswith(('.py', '.php', '.js', '.css', '.html')):
                 try:
-                    if not any(re.search(pattern, file_path) for pattern in exclude_patterns):
+                    if not any(re.search(bad_pattern, file_path) for bad_pattern in exclude_patterns):
                         code_files.append(file_path)
                 except re.error as e:
-                    st.warning(f"Invalid exclude pattern: '{pattern}'. Error: {e}. Skipping this pattern.")
+                    problematic_patterns = [bad_pattern for bad_pattern in exclude_patterns if re.search(bad_pattern, file_path)]
+                    st.warning(f"Invalid exclude pattern(s): {problematic_patterns}. Error: {e}. Skipping these pattern(s).")
     return code_files
 
 def get_file_info(file_path):
@@ -335,8 +417,7 @@ def get_file_info(file_path):
     except FileNotFoundError:
         return None
 
-def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, update_queue, progress_bar, status_text, output_area):
-    api_keys = load_api_keys()
+def process_file_with_updates(file_path, task_type, model, temperature, max_tokens, api_key, update_queue, progress_bar, status_text, output_area, repo_info=None):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
@@ -346,7 +427,7 @@ def process_file_with_updates(file_path, task_type, model, temperature, max_toke
         
         # Generate documentation with real-time updates
         documentation = ""
-        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens):
+        for chunk in generate_documentation_stream(file_content, task_type, model, temperature, max_tokens, repo_info):
             documentation += chunk
             update_queue.put(("output", documentation))
 
@@ -358,6 +439,65 @@ def process_file_with_updates(file_path, task_type, model, temperature, max_toke
     except UnicodeDecodeError:
         print(f"Error reading file {file_path}: UnicodeDecodeError")
         return file_path, f"Error reading file: UnicodeDecodeError", "", ""
+
+def analyze_repository_structure(repo_path, code_files):
+    """Analyze the repository structure and return key information."""
+    repo_info = {
+        'main_files': [],
+        'key_files': {},
+        'file_structure': [],
+        'existing_readme': None,
+        'existing_readme_path': None,
+        'requirements': None,
+        'setup_file': None,
+        'entry_points': []
+    }
+    
+    # First, explicitly check for README.md in the repository root
+    root_readme_path = os.path.join(repo_path, 'README.md')
+    if os.path.exists(root_readme_path):
+        try:
+            with open(root_readme_path, 'r', encoding='utf-8') as f:
+                repo_info['existing_readme'] = f.read()
+                repo_info['existing_readme_path'] = root_readme_path
+        except Exception as e:
+            print(f"Error reading root README.md: {str(e)}")
+    
+    # Look for key files
+    for file_path in code_files:
+        rel_path = os.path.relpath(file_path, repo_path)
+        repo_info['file_structure'].append(rel_path)
+        
+        filename = os.path.basename(file_path)
+        # Only look for README in other locations if we haven't found it in root
+        if filename.lower() == 'readme.md' and not repo_info['existing_readme']:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    repo_info['existing_readme'] = f.read()
+                    repo_info['existing_readme_path'] = file_path
+            except Exception as e:
+                print(f"Error reading README.md at {file_path}: {str(e)}")
+        elif filename in ['setup.py', 'pyproject.toml']:
+            repo_info['setup_file'] = file_path
+        elif filename.endswith('requirements.txt'):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    repo_info['requirements'] = f.read()
+            except Exception:
+                pass
+        elif filename in ['main.py', 'app.py', 'index.py']:
+            repo_info['entry_points'].append(file_path)
+            repo_info['main_files'].append(file_path)
+    
+    # Read content of main files
+    for file_path in repo_info['main_files']:
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                repo_info['key_files'][os.path.basename(file_path)] = f.read()
+        except Exception:
+            continue
+    
+    return repo_info
 
 def generate_pdf(results, output_path, task_type):
     pdf = PDF()
@@ -380,30 +520,143 @@ def generate_pdf(results, output_path, task_type):
     pdf.output(output_path, 'F')
 
 def generate_requirements_file(repo_path, exclude_patterns):
-    requirements = set()
-    code_files = get_all_code_files(repo_path, exclude_patterns)
-    for code_file in code_files:
-        with open(code_file, 'r') as file:
-            for line in file:
-                if line.startswith('import ') or line.startswith('from '):
-                    parts = line.split()
-                    if parts[0] == 'import':
-                        module = parts[1].split('.')[0]
-                        if '_' not in module:
-                            requirements.add(module)
-                    elif parts[0] == 'from':
-                        module = parts[1].split('.')[0]
-                        if '_' not in module:
-                            requirements.add(module)
-
-    # Create 'files' directory if it doesn't exist
-    files_dir = os.path.join(repo_path, 'files')
-    os.makedirs(files_dir, exist_ok=True)
+    import importlib.util
+    import pkg_resources
+    from importlib.metadata import distribution, PackageNotFoundError
+    import sys
+    from pathlib import Path
+    import subprocess
+    import re
+    from collections import defaultdict
     
-    requirements_path = os.path.join(files_dir, 'requirements.txt')
-    with open(requirements_path, 'w') as req_file:
-        for requirement in sorted(requirements):
-            req_file.write(requirement + '\n')
+    # Categories with their common packages
+    PACKAGE_CATEGORIES = {
+        'Core Dependencies': {
+            'streamlit', 'streamlit-option-menu', 'streamlit-extras', 'streamlit-javascript',
+            'ollama', 'openai', 'streamlit-flow'
+        },
+        'Machine Learning & Data Science': {
+            'numpy', 'scipy', 'pandas', 'scikit-learn', 'torch', 'transformers',
+            'sentence-transformers', 'spacy', 'tiktoken', 'plotly', 'pydantic'
+        },
+        'Language Models & AI': {
+            'langchain', 'langchain-community', 'groq', 'autogen', 'pyautogen',
+            'mistralai'
+        },
+        'Web & API': {
+            'requests', 'httpx', 'beautifulsoup4', 'bs4', 'fake-useragent', 'flask',
+            'Flask-Cors', 'duckduckgo-search', 'google-api-python-client',
+            'serpapi', 'selenium', 'webdriver-manager', 'playwright', 'gTTS'
+        },
+        'System & Utilities': {
+            'psutil', 'GPUtil', 'rich', 'tqdm', 'humanize', 'schedule', 'cursor',
+            'pydub', 'networkx', 'bleach'
+        },
+        'Document Processing': {
+            'PyPDF2', 'fpdf', 'pdfkit', 'reportlab', 'mdutils', 'Markdown'
+        },
+        'Development & Testing': {
+            'pytest', 'pytest-html', 'flake8', 'radon', 'ruff', 'Pygments', 'PyYAML'
+        }
+    }
+    
+    def get_installed_version(package_name):
+        """Get the installed version of a package."""
+        try:
+            return pkg_resources.get_distribution(package_name).version
+        except pkg_resources.DistributionNotFound:
+            return None
+    
+    def normalize_package_name(name):
+        """Normalize package names to handle different formats."""
+        return re.sub(r'[-_.]+', '-', name).lower()
+    
+    def get_package_category(package_name):
+        """Determine the category of a package."""
+        normalized_name = normalize_package_name(package_name)
+        for category, packages in PACKAGE_CATEGORIES.items():
+            if any(normalize_package_name(pkg) == normalized_name for pkg in packages):
+                return category
+        return 'Utilities'  # Default category
+    
+    def get_imports_from_pipreqs():
+        """Use pipreqs to get imports from the codebase."""
+        try:
+            # Create a temporary requirements file
+            temp_req_file = os.path.join(repo_path, 'temp_requirements.txt')
+            
+            # Run pipreqs
+            subprocess.run([
+                'pipreqs',
+                '--savepath', temp_req_file,
+                '--force',
+                '--ignore', ','.join(exclude_patterns),
+                repo_path
+            ], capture_output=True)
+            
+            # Read the requirements
+            with open(temp_req_file, 'r') as f:
+                requirements = [line.strip() for line in f if line.strip()]
+            
+            # Clean up
+            os.remove(temp_req_file)
+            return requirements
+        except Exception as e:
+            print(f"Error running pipreqs: {str(e)}")
+            return []
+    
+    def get_installed_packages():
+        """Get all installed packages in the current environment."""
+        return {pkg.key: pkg.version for pkg in pkg_resources.working_set}
+    
+    # Get dependencies using multiple methods
+    requirements_dict = defaultdict(set)
+    
+    # Method 1: Use pipreqs to find imports
+    pipreqs_requirements = get_imports_from_pipreqs()
+    for req in pipreqs_requirements:
+        # Parse package name and version
+        match = re.match(r'([^>=<]+).*', req)
+        if match:
+            package_name = match.group(1).strip()
+            version = get_installed_version(package_name)
+            if version:
+                category = get_package_category(package_name)
+                requirements_dict[category].add(f'{package_name}=={version}')
+    
+    # Method 2: Check installed packages against our known packages
+    installed_packages = get_installed_packages()
+    for category, packages in PACKAGE_CATEGORIES.items():
+        for package in packages:
+            normalized_name = normalize_package_name(package)
+            if normalized_name in installed_packages:
+                requirements_dict[category].add(
+                    f'{package}=={installed_packages[normalized_name]}'
+                )
+    
+    # Write requirements.txt with categorized sections
+    requirements_path = os.path.join(repo_path, 'requirements.txt')
+    with open(requirements_path, 'w', encoding='utf-8') as req_file:
+        req_file.write('# Generated by Ollama Workbench Repository Analyzer\n')
+        req_file.write('# This file contains verified package dependencies\n\n')
+        
+        # Write requirements in category order
+        for category in PACKAGE_CATEGORIES.keys():
+            packages = requirements_dict[category]
+            if packages:
+                req_file.write(f'# {category}\n')
+                for package in sorted(packages):
+                    req_file.write(f'{package}\n')
+                req_file.write('\n')
+        
+        # Write any remaining packages in Utilities
+        other_packages = requirements_dict['Utilities']
+        if other_packages:
+            req_file.write('# Utilities\n')
+            for package in sorted(other_packages):
+                req_file.write(f'{package}\n')
+            req_file.write('\n')
+    
     return requirements_path
 
 def generate_project_summary(repo_path, exclude_patterns):
@@ -537,7 +790,7 @@ def main():
 
     # Input for exclude patterns
     exclude_patterns_str = st.text_input("Enter file/folder patterns to exclude (comma-separated, use regex):", 
-                                        value=".git,node_modules,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,.*\.log,files,venv,.*\.ipynb,notebooks,ragtest,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.csv,.*\.docx,.*\.zip,.*\.eml,.*\.json,.*\.svg,.*\.vue,.*\.ogg,.*\.eot,.*\.ttf,.*\.ico,.*\.otf,.*\.woff,.*\.woff2,chroma_db,.pytest_cache,project_summary.md,agent_prompts,docs,__init__.py")
+                                        value=".pythonlibs,.cache,.git,node_modules,__pycache__,cli,.*\.pkl,tmp,.*\.bin,.*\.sqlite3,.*\.db,.DS_Store,files,venv,.*\.ipynb,notebooks,ragtest,LICENSE,checkpoints,.*\.pdf,.*\.png,.*\.jpg,.*\.jpeg,.*\.gif,.*\.csv,.*\.docx,.*\.zip,.*\.eml,.*\.json,.*\.svg,.*\.vue,.*\.ogg,.*\.eot,.*\.ttf,.*\.ico,.*\.otf,.*\.woff,.*\.woff2,chroma_db,.pytest_cache,project_summary.md,agent_prompts,docs,__init__.py")
     exclude_patterns = [pattern.strip() for pattern in exclude_patterns_str.split(",")]
 
     # Model Settings in a collapsed section in the sidebar
@@ -614,7 +867,7 @@ def main():
                 model_settings["model"], 
                 model_settings["temperature"], 
                 model_settings["max_tokens"], 
-                model_settings.get("api_key"),  # Use .get() with a default of None
+                model_settings.get("api_key"),  
                 update_queue, 
                 progress_bar, 
                 status_text, 
@@ -638,13 +891,59 @@ def main():
         st.success(f"Analysis complete! PDF report saved as {pdf_filename} in the repository's 'files' folder.")
 
         if task_type == "readme":
-            readme_content = results[0][1] if results else "No content generated"
-            readme_path = os.path.join(files_dir, "README.md")
-            with open(readme_path, "w") as readme_file:
+            # Analyze repository structure
+            repo_info = analyze_repository_structure(repo_path, code_files)
+            
+            # Report README status
+            if repo_info['existing_readme']:
+                st.info(f"Found existing README.md at: {os.path.relpath(repo_info['existing_readme_path'], repo_path)}")
+                st.write("Will update the existing README while preserving its structure.")
+            else:
+                st.warning("No existing README.md found. Will create a new one based on repository analysis.")
+            
+            # Process the entire repository as one
+            future = executor.submit(
+                process_file_with_updates,
+                "README.md",  # Just a placeholder filename
+                task_type,
+                model_settings["model"],
+                model_settings["temperature"],
+                model_settings["max_tokens"],
+                model_settings.get("api_key"),
+                update_queue,
+                progress_bar,
+                status_text,
+                output_area,
+                repo_info  # Pass repository information to the generation function
+            )
+            
+            _, readme_content, _, _ = future.result()
+            
+            # Save the README
+            if repo_info['existing_readme_path']:
+                # Create backup of existing README
+                backup_path = repo_info['existing_readme_path'] + '.backup'
+                try:
+                    with open(repo_info['existing_readme_path'], 'r', encoding='utf-8') as src:
+                        with open(backup_path, 'w', encoding='utf-8') as dst:
+                            dst.write(src.read())
+                    st.info(f"Created backup of existing README at: {os.path.relpath(backup_path, repo_path)}")
+                except Exception as e:
+                    st.warning(f"Failed to create backup of existing README: {str(e)}")
+                
+                # Update existing README
+                readme_path = repo_info['existing_readme_path']
+            else:
+                # Create new README in repository root
+                readme_path = os.path.join(repo_path, 'README.md')
+            
+            with open(readme_path, 'w', encoding='utf-8') as readme_file:
                 readme_file.write(readme_content)
-            st.success(f"README.md file has been created in the repository's 'files' folder.")
+            
+            st.success(f"README.md has been {'updated' if repo_info['existing_readme'] else 'created'} at: {os.path.relpath(readme_path, repo_path)}")
             st.markdown("## Generated README.md")
             st.markdown(readme_content)
+            return
 
 if __name__ == "__main__":
     main()
