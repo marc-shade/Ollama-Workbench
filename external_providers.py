@@ -27,6 +27,7 @@ def external_providers_ui():
         st.header("AI Model Providers")
         api_keys["openai_api_key"] = st.text_input("OpenAI API Key", value=api_keys.get("openai_api_key", ""), type="password")
         api_keys["groq_api_key"] = st.text_input("Groq API Key", value=api_keys.get("groq_api_key", ""), type="password")
+        api_keys["mistral_api_key"] = st.text_input("Mistral API Key", value=api_keys.get("mistral_api_key", ""), type="password")
         
         # Add checkbox for advanced Groq models
         api_keys["use_advanced_groq_models"] = st.checkbox(
