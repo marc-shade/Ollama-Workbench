@@ -47,10 +47,20 @@ def get_agent_prompt():
         }
         save_prompts("agent", prompts)
     else:
-        # Ensure all prompts have a default voice model
-        for key in prompts:
-            if 'model_voice' not in prompts[key]:
-                prompts[key]['model_voice'] = 'en-US-Wavenet-A'
+        # Create a new dictionary with updated prompts
+        updated_prompts = {}
+        for key, value in prompts.items():
+            if isinstance(value, dict):
+                if 'model_voice' not in value:
+                    value['model_voice'] = 'en-US-Wavenet-A'
+                updated_prompts[key] = value
+            else:
+                # Convert string prompts to dict format
+                updated_prompts[key] = {
+                    "prompt": value,
+                    "model_voice": "en-US-Wavenet-A"
+                }
+        prompts = updated_prompts
         save_prompts("agent", prompts)
     return prompts
 

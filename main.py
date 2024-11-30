@@ -35,6 +35,10 @@ from nodes import nodes_interface
 from external_providers import external_providers_ui 
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
+from db_init import init_db
+
+# Initialize the database
+init_db()
 
 # Global variable to store the port number
 ollama_port = None 
