@@ -17,6 +17,7 @@ from openai_utils import (
     OPENAI_MODELS
 )
 from groq_utils import get_local_embeddings, GROQ_MODELS
+from mistral_utils import MISTRAL_MODELS
 
 API_KEYS_FILE = "api_keys.json"
 MODEL_SETTINGS_FILE = "model_settings.json"
@@ -378,8 +379,9 @@ def generate_embeddings(model, text):
         return None, None, None, None
 
 def get_all_models():
-    """Gets all available models, including Ollama, Groq, and OpenAI."""
-    ollama_models = get_available_models()
-    groq_models = GROQ_MODELS
-    openai_models = OPENAI_MODELS
-    return ollama_models + groq_models + openai_models
+    """Gets all available models, including Ollama, Groq, OpenAI, and Mistral."""
+    ollama_models = ["🦙 Ollama Models"] + get_available_models()
+    groq_models = ["🚀 Groq Models"] + GROQ_MODELS
+    openai_models = ["🤖 OpenAI Models"] + OPENAI_MODELS
+    mistral_models = ["🌟 Mistral Models"] + MISTRAL_MODELS
+    return ollama_models + groq_models + openai_models + mistral_models
