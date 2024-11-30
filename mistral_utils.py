@@ -42,7 +42,8 @@ def get_mistral_client(api_key: str = None) -> Union[Mistral, None]:
 
 def call_mistral_api(
     model: str,
-    messages: List[Dict[str, str]],
+    messages: List[Dict[str, str]] = None,
+    prompt: str = None,
     temperature: float = 0.7,
     max_tokens: int = 1000,
     stream: bool = False,
@@ -57,11 +58,18 @@ def call_mistral_api(
     try:
         kwargs = {
             "model": model,
-            "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
         
+        # Convert prompt to messages format if needed
+        if prompt is not None:
+            kwargs["messages"] = [{"role": "user", "content": prompt}]
+        elif messages is not None:
+            kwargs["messages"] = messages
+        else:
+            raise ValueError("Either prompt or messages must be provided")
+
         if json_response:
             kwargs["response_format"] = {"type": "json_object"}
 
