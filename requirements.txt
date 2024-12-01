@@ -60,6 +60,10 @@ selenium==4.24.0
 serpapi==0.1.5
 webdriver-manager==4.0.2
 webdriver_manager==4.0.2
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-multipart>=0.0.5
+aiofiles>=0.7.0
 
 # Audio & Speech
 gTTS==2.5.4
@@ -99,4 +103,6 @@ chromadb==0.5.5
 google_search_results==2.4.2
 matplotlib==3.9.2
 setuptools==69.5.1
-streamlit_flow_component==1.2.9
+streamlit-flow-component==1.2.9
+streamlit>=1.24.0
+streamlit-option-menu>=0.3.2
