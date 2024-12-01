@@ -3,12 +3,22 @@
 import streamlit as st
 import threading
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 import subprocess
 import json 
+import socket
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 # Set page config for wide layout
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
+
+# Enable CORS for Streamlit
+if 'STREAMLIT_SERVER_ENABLE_CORS' not in os.environ:
+    os.environ['STREAMLIT_SERVER_ENABLE_CORS'] = 'true'
 
 from streamlit_option_menu import option_menu
 from ollama_utils import *
@@ -344,6 +354,24 @@ def main_content():
 # Create a Flask app for the API
 app = Flask(__name__)
 
+def run_flask():
+    global ollama_port
+    try:
+        print("Initializing Flask server...")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('127.0.0.1', 0))  # Bind to localhost
+        ollama_port = sock.getsockname()[1] 
+        sock.close()
+        
+        print(f"Reserved port {ollama_port} for Flask server")
+        
+        print(f"Starting Flask server on http://127.0.0.1:{ollama_port}")
+        app.run(host='127.0.0.1', port=ollama_port, debug=False, threaded=True)
+        print(f"Flask server is running on http://127.0.0.1:{ollama_port}")
+    except Exception as e:
+        print(f"Error starting Flask server: {str(e)}")
+        raise
+
 @app.route('/prompts')
 def get_prompts():
     """Returns a JSON with all prompt types."""
@@ -365,11 +393,58 @@ def get_identifier():
     """Returns a unique identifier for Ollama Workbench."""
     return "Ollama Workbench" 
 
-@app.route('/port')
+@app.route('/port', methods=['GET', 'OPTIONS'])
 def get_port():
-    """Returns the dynamically allocated port number."""
-    global ollama_port
-    return str(ollama_port)
+    """Returns the port number for the Streamlit server (8501)."""
+    try:
+        print(f"Received {request.method} request to /port endpoint")
+        print(f"Request headers: {dict(request.headers)}")
+        
+        if request.method == 'OPTIONS':
+            print("Handling OPTIONS preflight request")
+            response = app.make_default_options_response()
+        else:
+            # Return the Streamlit port (8501) instead of the Flask port
+            print("Returning Streamlit port: 8501")
+            response = jsonify(8501)
+        
+        # Add CORS headers
+        origin = request.headers.get('Origin', '*')
+        print(f"Setting CORS headers for origin: {origin}")
+        
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Accept'
+        
+        print(f"Response headers: {dict(response.headers)}")
+        return response
+    except Exception as e:
+        print(f"Error in /port endpoint: {str(e)}")
+        raise
+
+def wait_for_flask_server(timeout=10):
+    """Wait for Flask server to start and return the port number."""
+    import time
+    import requests
+    from requests.exceptions import RequestException
+    
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if ollama_port is None:
+            time.sleep(0.1)
+            continue
+            
+        try:
+            response = requests.get(f'http://127.0.0.1:{ollama_port}/port')
+            if response.ok:
+                print(f"Flask server is running on port {ollama_port}")
+                return ollama_port
+        except RequestException:
+            pass
+        time.sleep(0.5)
+    
+    raise RuntimeError("Flask server failed to start within timeout")
 
 def main():
     initialize_session_state()
@@ -388,6 +463,24 @@ def main():
     if is_extension and web_page_url:
         st.session_state.web_page_url = web_page_url
         st.session_state.is_extension = is_extension
+
+if __name__ == "__main__":
+    try:
+        print("Starting Flask server thread...")
+        flask_thread = threading.Thread(target=run_flask)
+        flask_thread.daemon = True  # Make thread daemon so it exits when main thread exits
+        flask_thread.start()
+        
+        # Wait for Flask server to start
+        port = wait_for_flask_server()
+        print(f"Flask server confirmed running on port {port}")
+        
+        # Start Streamlit
+        print("Starting Streamlit application...")
+        main()
+    except Exception as e:
+        print(f"Error during startup: {str(e)}")
+        raise
 
 # Function to send a message to the Chrome extension
 def send_port_to_extension(port):
@@ -408,22 +501,3 @@ def send_port_to_extension(port):
 
     except Exception as e:
         print(f"Error sending message to extension: {e}")
-
-def run_flask():
-    global ollama_port
-    import socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('', 0))
-    ollama_port = sock.getsockname()[1] 
-    sock.close()
-    app.run(port=ollama_port)
-    print(f"Flask running on port: {ollama_port}") 
-
-    # Send the port to the extension once Flask is running
-    send_port_to_extension(ollama_port)
-
-if __name__ == "__main__":
-    # Start Flask before Streamlit
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.start() 
-    main() 
