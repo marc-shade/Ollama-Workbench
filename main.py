@@ -189,8 +189,6 @@ SIDEBAR_SECTIONS = {
         ("CEF", "CEF"),
         ("Build", "Build"),
         ("Prompts", "Prompts"),
-        ("Persona Group Chat", "Persona Group Chat"),
-        ("Persona Lab", "Persona Lab"),
     ],
     "Document": [
         ("Repository Analyzer", "Repository Analyzer"),
@@ -340,10 +338,6 @@ def main_content():
         contextual_response_test()
     elif st.session_state.selected_test == "Vision":
         vision_comparison_test()
-    elif st.session_state.selected_test == "Persona Group Chat":
-        persona_group_chat()
-    elif st.session_state.selected_test == "Persona Lab":
-        persona_lab_interface()
     elif st.session_state.selected_test == "Help":
         display_welcome_message()
     else:
