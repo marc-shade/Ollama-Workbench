@@ -432,7 +432,9 @@ show_menu() {
             ;;
         2)
             show_header
-            run_app
+            log_message "INFO" "Starting Ollama Workbench..."
+            cd "$LOCAL_DIR"
+            $VENV_DIR/bin/streamlit run "$LOCAL_DIR/main.py"
             ;;
         3)
             show_header
