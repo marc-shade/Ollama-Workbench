@@ -146,12 +146,19 @@ setup_python_env() {
 }
 
 # Function to install/update dependencies
+# Function to install/update dependencies
 install_dependencies() {
     log_message "INFO" "Installing Python dependencies..."
     
     # Install required packages from requirements.txt
     $VENV_DIR/bin/pip install -r "$LOCAL_DIR/requirements.txt"
     
+    # Install Flask explicitly
+    if ! is_package_installed "Flask"; then
+        log_message "INFO" "Installing Flask..."
+        $VENV_DIR/bin/pip install Flask
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
