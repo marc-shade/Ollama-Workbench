@@ -236,6 +236,13 @@ install_dependencies() {
         $VENV_DIR/bin/pip install selenium
     fi
 
+    # Install webdriver-manager explicitly
+    if ! is_package_installed "webdriver-manager"; then
+        log_message "INFO" "Installing  webdriver-manager..."
+        $VENV_DIR/bin/pip install webdriver-manager
+    fi
+
+
 
     log_message "SUCCESS" "Package installation complete"
 }
