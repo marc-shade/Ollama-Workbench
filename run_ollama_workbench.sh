@@ -266,6 +266,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install radon
     fi
 
+    # Install flake8 explicitly
+    if ! is_package_installed "flake8"; then
+        log_message "INFO" "Installing  flake8..."
+        $VENV_DIR/bin/pip install flake8
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
