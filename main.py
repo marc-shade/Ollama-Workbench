@@ -231,6 +231,8 @@ def initialize_session_state():
         st.session_state.show_resource_usage = False
     if 'web_page_content' not in st.session_state: 
         st.session_state.web_page_content = None
+    if 'show_prompt' not in st.session_state:
+        st.session_state.show_prompt = True
 
 def create_sidebar():
     """Create and populate the sidebar."""

@@ -9,6 +9,7 @@ import ollama
 
 def feature_test():
     st.header("🏟️ AI Model Feature Test")
+    model_tool_test_ui() # Call it inside feature_test
     
     # Combining models from all sources
     all_models = {
@@ -161,5 +162,6 @@ def feature_test():
                 st.error(f"An error occurred during the Groq model test: {e}")
 
 # Main function to run the app
+    
 if __name__ == "__main__":
     feature_test()
