@@ -248,6 +248,14 @@ install_dependencies() {
         $VENV_DIR/bin/pip install fake-useragent
     fi
 
+    # Install humanize explicitly
+    if ! is_package_installed "humanize"; then
+        log_message "INFO" "Installing  humanize..."
+        $VENV_DIR/bin/pip install humanize
+    fi
+
+
+
     log_message "SUCCESS" "Package installation complete"
 }
 
