@@ -260,6 +260,11 @@ install_dependencies() {
         $VENV_DIR/bin/pip install fpdf
     fi
 
+    # Install radon explicitly
+    if ! is_package_installed "radon"; then
+        log_message "INFO" "Installing  radon..."
+        $VENV_DIR/bin/pip install radon
+    fi
 
     log_message "SUCCESS" "Package installation complete"
 }
