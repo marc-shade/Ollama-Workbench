@@ -194,6 +194,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install mistralai
     fi
 
+    # Install tiktoken explicitly
+    if ! is_package_installed "tiktoken"; then
+        log_message "INFO" "Installing tiktoken..."
+        $VENV_DIR/bin/pip install tiktoken
+    fi
+
 
     log_message "SUCCESS" "Package installation complete"
 }
