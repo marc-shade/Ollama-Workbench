@@ -278,6 +278,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install langchain-community
     fi
 
+    # Install duckduckgo-search explicitly
+    if ! is_package_installed "duckduckgo-search"; then
+        log_message "INFO" "Installing  duckduckgo-search..."
+        $VENV_DIR/bin/pip install duckduckgo-search
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
