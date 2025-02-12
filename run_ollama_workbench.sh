@@ -212,6 +212,11 @@ install_dependencies() {
         $VENV_DIR/bin/pip install gtts
     fi
 
+    # Install pygame explicitly
+    if ! is_package_installed "pygame"; then
+        log_message "INFO" "Installing  pygame..."
+        $VENV_DIR/bin/pip install pygame
+    fi
 
 
     log_message "SUCCESS" "Package installation complete"
