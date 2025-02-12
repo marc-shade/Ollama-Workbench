@@ -284,6 +284,13 @@ install_dependencies() {
         $VENV_DIR/bin/pip install duckduckgo-search
     fi
 
+    # Install googleapiclient explicitly
+    if ! is_package_installed "googleapiclient"; then
+        log_message "INFO" "Installing  googleapiclient..."
+        $VENV_DIR/bin/pip install googleapiclient
+    fi
+
+
     log_message "SUCCESS" "Package installation complete"
 }
 
