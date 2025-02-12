@@ -218,6 +218,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install pygame
     fi
 
+    # Install autogen explicitly
+    if ! is_package_installed "autogen"; then
+        log_message "INFO" "Installing  autogen..."
+        $VENV_DIR/bin/pip install autogen
+    fi
+
 
     log_message "SUCCESS" "Package installation complete"
 }
