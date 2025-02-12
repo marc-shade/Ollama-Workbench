@@ -206,6 +206,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install PyPDF2
     fi
 
+    # Install gtts explicitly
+    if ! is_package_installed "gtts"; then
+        log_message "INFO" "Installing  gtts..."
+        $VENV_DIR/bin/pip install gtts
+    fi
+
 
 
     log_message "SUCCESS" "Package installation complete"
