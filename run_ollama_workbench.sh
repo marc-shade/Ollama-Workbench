@@ -242,7 +242,11 @@ install_dependencies() {
         $VENV_DIR/bin/pip install webdriver-manager
     fi
 
-
+    # Install fake-useragent explicitly
+    if ! is_package_installed "fake-useragent"; then
+        log_message "INFO" "Installing  fake-useragent..."
+        $VENV_DIR/bin/pip install fake-useragent
+    fi
 
     log_message "SUCCESS" "Package installation complete"
 }
