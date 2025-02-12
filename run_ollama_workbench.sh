@@ -308,6 +308,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install streamlit-javascript
     fi
 
+    # Install streamlit explicitly
+    if ! is_package_installed "streamlit"; then
+        log_message "INFO" "Installing streamlit..."
+        $VENV_DIR/bin/pip install streamlit
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
