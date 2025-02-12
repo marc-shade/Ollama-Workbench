@@ -286,8 +286,8 @@ install_dependencies() {
 
     # Install googleapiclient explicitly
     if ! is_package_installed "googleapiclient"; then
-        log_message "INFO" "Installing  googleapiclient..."
-        $VENV_DIR/bin/pip install googleapiclient
+        log_message "INFO" "Installing googleapiclient..."
+        $VENV_DIR/bin/pip install google-api-python-client
     fi
 
 
