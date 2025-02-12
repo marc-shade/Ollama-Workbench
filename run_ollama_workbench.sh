@@ -302,6 +302,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install pytest
     fi
 
+    # Install streamlit-javascript explicitly
+    if ! is_package_installed "streamlit-javascript"; then
+        log_message "INFO" "Installing streamlit-javascript..."
+        $VENV_DIR/bin/pip install streamlit-javascript
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
