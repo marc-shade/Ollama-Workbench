@@ -188,6 +188,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install sentence_transformers
     fi
 
+    # Install mistralai explicitly
+    if ! is_package_installed "mistralai"; then
+        log_message "INFO" "Installing mistralai..."
+        $VENV_DIR/bin/pip install mistralai
+    fi
+
 
     log_message "SUCCESS" "Package installation complete"
 }
