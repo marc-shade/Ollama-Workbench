@@ -200,6 +200,13 @@ install_dependencies() {
         $VENV_DIR/bin/pip install tiktoken
     fi
 
+    # Install PyPDF2 explicitly
+    if ! is_package_installed "PyPDF2"; then
+        log_message "INFO" "Installing  PyPDF2..."
+        $VENV_DIR/bin/pip install PyPDF2
+    fi
+
+
 
     log_message "SUCCESS" "Package installation complete"
 }
