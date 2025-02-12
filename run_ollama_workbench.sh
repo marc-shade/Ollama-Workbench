@@ -146,7 +146,6 @@ setup_python_env() {
 }
 
 # Function to install/update dependencies
-# Function to install/update dependencies
 install_dependencies() {
     log_message "INFO" "Installing Python dependencies..."
     
@@ -157,6 +156,12 @@ install_dependencies() {
     if ! is_package_installed "Flask"; then
         log_message "INFO" "Installing Flask..."
         $VENV_DIR/bin/pip install Flask
+    fi
+
+    # Install Ollama explicitly
+    if ! is_package_installed "ollama"; then
+        log_message "INFO" "Installing Ollama..."
+        $VENV_DIR/bin/pip install ollama
     fi
 
     log_message "SUCCESS" "Package installation complete"
