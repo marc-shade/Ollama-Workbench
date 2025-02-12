@@ -290,6 +290,11 @@ install_dependencies() {
         $VENV_DIR/bin/pip install google-api-python-client
     fi
 
+    # Install reportlab explicitly
+    if ! is_package_installed "reportlab"; then
+        log_message "INFO" "Installing reportlab..."
+        $VENV_DIR/bin/pip install reportlab
+    fi
 
     log_message "SUCCESS" "Package installation complete"
 }
