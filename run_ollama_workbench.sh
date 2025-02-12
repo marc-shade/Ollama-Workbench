@@ -182,6 +182,13 @@ install_dependencies() {
         $VENV_DIR/bin/pip install groq
     fi
 
+    # Install sentence_transformers explicitly
+    if ! is_package_installed "sentence_transformers"; then
+        log_message "INFO" "Installing sentence_transformers..."
+        $VENV_DIR/bin/pip install sentence_transformers
+    fi
+
+
     log_message "SUCCESS" "Package installation complete"
 }
 
