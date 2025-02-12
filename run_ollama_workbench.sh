@@ -254,10 +254,10 @@ install_dependencies() {
         $VENV_DIR/bin/pip install humanize
     fi
 
-    # Install pdf explicitly
-    if ! is_package_installed "pdf"; then
-        log_message "INFO" "Installing  pdf..."
-        $VENV_DIR/bin/pip install pdf
+    # Install fpdf explicitly
+    if ! is_package_installed "fpdf"; then
+        log_message "INFO" "Installing  fpdf..."
+        $VENV_DIR/bin/pip install fpdf
     fi
 
 
