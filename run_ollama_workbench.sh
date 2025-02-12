@@ -254,6 +254,11 @@ install_dependencies() {
         $VENV_DIR/bin/pip install humanize
     fi
 
+    # Install pdf explicitly
+    if ! is_package_installed "pdf"; then
+        log_message "INFO" "Installing  pdf..."
+        $VENV_DIR/bin/pip install pdf
+    fi
 
 
     log_message "SUCCESS" "Package installation complete"
