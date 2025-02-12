@@ -230,6 +230,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install pdfkit
     fi
 
+    # Install selenium explicitly
+    if ! is_package_installed "selenium"; then
+        log_message "INFO" "Installing  selenium..."
+        $VENV_DIR/bin/pip install selenium
+    fi
+
 
     log_message "SUCCESS" "Package installation complete"
 }
