@@ -172,8 +172,14 @@ install_dependencies() {
 
     # Install openai explicitly
     if ! is_package_installed "openai"; then
-        log_message "INFO" "Installing psutil..."
+        log_message "INFO" "Installing openai..."
         $VENV_DIR/bin/pip install openai
+    fi
+
+    # Install groq explicitly
+    if ! is_package_installed "groq"; then
+        log_message "INFO" "Installing groq..."
+        $VENV_DIR/bin/pip install groq
     fi
 
     log_message "SUCCESS" "Package installation complete"
