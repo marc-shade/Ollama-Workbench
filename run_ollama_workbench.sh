@@ -272,6 +272,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install flake8
     fi
 
+    # Install langchain-community explicitly
+    if ! is_package_installed "langchain-community"; then
+        log_message "INFO" "Installing  langchain-community..."
+        $VENV_DIR/bin/pip install langchain-community
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
