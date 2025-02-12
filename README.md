@@ -90,6 +90,7 @@ conda activate ollamaworkbench
 
 2. **Install Dependencies:**
    ```bash
+   pip install -r requirements.txt
    sh run_ollama_workbench.sh 
    ```
    This script will handle installing dependencies, setting up Ollama if needed, and downloading recommended models.
