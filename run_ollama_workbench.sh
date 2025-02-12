@@ -165,7 +165,16 @@ install_dependencies() {
     fi
 
     log_message "SUCCESS" "Package installation complete"
+
+    # Install psutil explicitly
+    if ! is_package_installed "psutil"; then
+        log_message "INFO" "Installing psutil..."
+        $VENV_DIR/bin/pip install psutil
+    fi
+
+    log_message "SUCCESS" "Package installation complete"
 }
+
 
 # Function to check and install Ollama
 setup_ollama() {
