@@ -224,6 +224,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install autogen
     fi
 
+    # Install pdfkit explicitly
+    if ! is_package_installed "pdfkit"; then
+        log_message "INFO" "Installing  pdfkit..."
+        $VENV_DIR/bin/pip install pdfkit
+    fi
+
 
     log_message "SUCCESS" "Package installation complete"
 }
