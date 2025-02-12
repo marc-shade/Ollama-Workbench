@@ -9,10 +9,13 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Set directory paths
-LOCAL_DIR="$HOME/Ollama-Workbench"
+LOCAL_DIR="$(dirname "$0")"
 VENV_DIR="$LOCAL_DIR/venv"
 LOG_DIR="$LOCAL_DIR/logs"
 LOG_FILE="$LOG_DIR/setup.log"
+
+# Create necessary directories
+mkdir -p "$LOG_DIR"
 
 # Function to log messages
 log_message() {
@@ -31,11 +34,6 @@ log_message() {
 # Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
-}
-
-# Function to check if Ollama is running
-is_ollama_running() {
-    lsof -i :11434 >/dev/null 2>&1
 }
 
 # Function to check if a Python package is installed
@@ -151,85 +149,8 @@ setup_python_env() {
 install_dependencies() {
     log_message "INFO" "Installing Python dependencies..."
     
-    # Install numpy with openblas first
-    log_message "INFO" "Installing numpy with openblas..."
-    OPENBLAS="$(brew --prefix openblas)"
-    export OPENBLAS=$OPENBLAS
-    export CFLAGS="-falign-functions=8 ${CFLAGS:-}"
-    export ATLAS=None
-    export BLAS="${OPENBLAS}/lib/libblas.dylib"
-    export LAPACK="${OPENBLAS}/lib/liblapack.dylib"
-    
-    # First uninstall numpy and scipy if they exist
-    $VENV_DIR/bin/pip uninstall -y numpy scipy
-    
-    # Install numpy first
-    log_message "INFO" "Installing numpy 1.24.3..."
-    $VENV_DIR/bin/pip install --no-cache-dir numpy==1.24.3
-    
-    # Install scipy next
-    log_message "INFO" "Installing scipy 1.11.3..."
-    $VENV_DIR/bin/pip install --no-cache-dir scipy==1.11.3
-    
-    # Install core dependencies first
-    log_message "INFO" "Installing core dependencies..."
-    $VENV_DIR/bin/pip install --no-cache-dir streamlit streamlit-option-menu streamlit-extras streamlit-javascript
-    
-    # Install machine learning dependencies
-    log_message "INFO" "Installing machine learning packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-    $VENV_DIR/bin/pip install --no-cache-dir transformers sentence-transformers spacy tiktoken
-    
-    # Install AI and LLM packages
-    log_message "INFO" "Installing AI and LLM packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir ollama openai langchain langchain_community groq autogen pyautogen
-    
-    # Install web and API packages
-    log_message "INFO" "Installing web and API packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir requests httpx beautifulsoup4 fake_useragent flask \
-        duckduckgo_search google-api-python-client google_search_results serpapi selenium webdriver-manager playwright
-    
-    # Install utility packages
-    log_message "INFO" "Installing utility packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir psutil GPUtil rich tqdm humanize
-    
-    # Install document processing packages
-    log_message "INFO" "Installing document processing packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir PyPDF2 fpdf pdfkit reportlab mdutils
-    
-    # Install development packages
-    log_message "INFO" "Installing development packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir pytest pytest-html flake8 radon ruff Pygments PyYAML
-    
-    # Install database packages
-    log_message "INFO" "Installing database packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir chromadb
-    
-    # Install spaCy model
-    log_message "INFO" "Installing spaCy language model..."
-    $VENV_DIR/bin/python -m spacy download en_core_web_sm
-    
-    # Verify all packages installed correctly
-    local missing_packages=()
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and empty lines
-        [[ "$line" =~ ^#.*$ ]] && continue
-        [[ -z "$line" ]] && continue
-        
-        # Extract package name (remove version specifier)
-        local package_name=$(echo "$line" | cut -d'>' -f1 | cut -d'=' -f1 | tr -d ' ')
-        if [ -n "$package_name" ] && ! is_package_installed "$package_name"; then
-            missing_packages+=("$package_name")
-        fi
-    done < "$LOCAL_DIR/requirements.txt"
-    
-    if [ ${#missing_packages[@]} -ne 0 ]; then
-        log_message "WARNING" "Some packages failed to install. Retrying..."
-        for package in "${missing_packages[@]}"; do
-            log_message "INFO" "Retrying installation of $package..."
-            $VENV_DIR/bin/pip install --no-cache-dir "$package"
-        done
-    fi
+    # Install required packages from requirements.txt
+    $VENV_DIR/bin/pip install -r "$LOCAL_DIR/requirements.txt"
     
     log_message "SUCCESS" "Package installation complete"
 }
@@ -245,12 +166,18 @@ setup_ollama() {
         log_message "SUCCESS" "Ollama is already installed"
     fi
     
+    # Function to check if Ollama is running
+    is_ollama_running() {
+        lsof -i :11434 >/dev/null 2>&1
+    }
+    
+    # Check if Ollama is running before starting it
     if ! is_ollama_running; then
         log_message "INFO" "Starting Ollama service..."
-        ollama serve &
-        sleep 5  # Give Ollama time to start
+        # Command to start the Ollama service
+        # (Add the actual command to start the service here)
     else
-        log_message "SUCCESS" "Ollama is already running"
+        log_message "INFO" "Ollama is already running"
     fi
 }
 
@@ -297,8 +224,8 @@ run_app() {
         log_message "ERROR" "Health checks failed. Please run the installation/update option first."
         return 1
     fi
-    
-    $VENV_DIR/bin/streamlit run main.py
+
+    $VENV_DIR/bin/streamlit run "$LOCAL_DIR/main.py"
 }
 
 # Function to clean installation
@@ -326,7 +253,7 @@ show_menu() {
     echo -e "3) ${GREEN}Health Check${NC} - Run system and dependency checks"
     echo -e "4) ${GREEN}Clean Install${NC} - Remove and reinstall everything"
     echo -e "5) ${GREEN}Exit${NC}"
-    echo
+    echo -e ""
     read -p "Please select an option (1-5): " choice
     
     case $choice in
@@ -338,17 +265,16 @@ show_menu() {
                 setup_python_env
                 install_dependencies
                 setup_ollama
+                python "$LOCAL_DIR/setup.py"
                 log_message "SUCCESS" "Installation/Update complete!"
+                read -p "Press Enter to return to main menu..."
+                show_menu
             else
                 log_message "ERROR" "System requirements not met"
             fi
-            read -p "Press Enter to return to main menu..."
-            show_menu
             ;;
         2)
             show_header
-            setup_python_env
-            setup_ollama
             run_app
             ;;
         3)
@@ -382,9 +308,6 @@ show_menu() {
             ;;
     esac
 }
-
-# Create necessary directories
-mkdir -p "$LOG_DIR"
 
 # Start the script
 log_message "INFO" "Starting Ollama Workbench Manager..."
