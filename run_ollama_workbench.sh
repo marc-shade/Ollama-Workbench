@@ -296,6 +296,12 @@ install_dependencies() {
         $VENV_DIR/bin/pip install reportlab
     fi
 
+    # Install pytest explicitly
+    if ! is_package_installed "pytest"; then
+        log_message "INFO" "Installing pytest..."
+        $VENV_DIR/bin/pip install pytest
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
 
