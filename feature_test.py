@@ -1,4 +1,5 @@
 # feature_test.py
+from model_tests import model_tool_test_ui
 import streamlit as st
 import asyncio
 from ollama_utils import get_available_models as get_ollama_models, check_json_handling, check_function_calling, run_tool_test
