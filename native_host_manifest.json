@@ -1,0 +1,6 @@
+{
+    "name": "ollama_workbench_host",
+    "description": "Native messaging host for Ollama Workbench",
+    "path": "/Users/marc/Server/Ollama-Workbench/main.py",
+    "type": "stdio"
+}

@@ -41,7 +41,7 @@ def define_agent_block(name):
     metacognitive_type = st.selectbox(f"{name} Metacognitive Type", ["None"] + list(get_metacognitive_prompt().keys()), key=f"{name}_metacognitive_type")
     corpus = st.selectbox(f"{name} Corpus", get_corpus_options(), key=f"{name}_corpus")
     temperature = st.slider(f"{name} Temperature", 0.0, 1.0, 0.7, key=f"{name}_temperature")
-    max_tokens = st.slider(f"{name} Max Tokens", 100, 32000, 4000, key=f"{name}_max_tokens")
+    max_tokens = st.slider(f"{name} Max Tokens", 1000, 128000, 4000, key=f"{name}_max_tokens")
     return model, agent_type, metacognitive_type, corpus, temperature, max_tokens
 
 def main():

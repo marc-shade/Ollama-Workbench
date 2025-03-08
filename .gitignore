@@ -1,0 +1,42 @@
+# Python virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs and databases
+*.log
+*.db
+*.sqlite
+*.sqlite3
+research_reports.db
+ollama_models.db
+
+# Environment variables and API keys
+.env
+.env.local
+api_keys.json
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development files
+*.bak

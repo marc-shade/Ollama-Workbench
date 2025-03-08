@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ollama Workbench</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:* http://127.0.0.1:*; script-src 'self' http://localhost:* http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; connect-src http://localhost:* http://127.0.0.1:*">
+    <style>
+        body { 
+            width: 400px; 
+            height: 600px; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        iframe { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+        }
+        #status {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 5px 10px;
+            font-size: 12px;
+            z-index: 1000;
+            border-radius: 0 0 0 5px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #error {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            display: none;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .debug-info {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status"></div>
+    <iframe id="ollamaChat" src="about:blank" frameborder="0"></iframe>
+    <div id="error">
+        <h3>Connection Failed</h3>
+        <p>Could not connect to Ollama Workbench.</p>
+        <p>Please make sure the application is running.</p>
+        <button id="retryButton">Retry Connection</button>
+        <p class="debug-info">
+            Check the console (Ctrl+Shift+J) for detailed connection logs.
+        </p>
+    </div>
+    <script src="popup.js" type="module"></script>
+</body>
+</html>
