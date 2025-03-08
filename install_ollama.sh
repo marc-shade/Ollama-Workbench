@@ -32,10 +32,13 @@ echo "Waiting for Ollama service to start..."
 sleep 10
 
 # Pull Mistral models
-echo "Pulling mistral:instruct model..."
+echo "Pulling mistral:instruct model for most of the basic features..."
 ollama pull mistral:instruct
 
-echo "Pulling mistral:7b-instruct-v0.2-q8_0 model..."
+echo "Pulling mistral:7b-instruct-v0.2-q8_0 model for some advanced features like chat managers..."
 ollama pull mistral:7b-instruct-v0.2-q8_0
+
+echo "Pulling llama2:latest model for corpus embeddings..."
+ollama pull llama2:latest
 
 echo "Installation and model pulling completed successfully!"

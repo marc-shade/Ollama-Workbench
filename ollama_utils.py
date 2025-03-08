@@ -1,20 +1,54 @@
 # ollama_utils.py
+
 import requests
 import json
 import io
-import time
+
 import streamlit as st
+import numpy as np
 import ollama
-from datetime import datetime
 import psutil
 import platform
-import socket
 import subprocess
 import os
 
+from openai_utils import (
+    call_openai_api,
+    OPENAI_MODELS
+)
+from groq_utils import get_local_embeddings, GROQ_MODELS
+from mistral_utils import MISTRAL_MODELS
+
+API_KEYS_FILE = "api_keys.json"
+MODEL_SETTINGS_FILE = "model_settings.json"
+
+def load_api_keys():
+    """Loads API keys from the JSON file."""
+    if os.path.exists(API_KEYS_FILE):
+        with open(API_KEYS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_api_keys(api_keys):
+    """Saves API keys to the JSON file."""
+    with open(API_KEYS_FILE, "w") as f:
+        json.dump(api_keys, f, indent=4)
+
+def load_model_settings():
+    """Loads model settings from the JSON file."""
+    if os.path.exists(MODEL_SETTINGS_FILE):
+        with open(MODEL_SETTINGS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_model_settings(settings):
+    """Saves model settings to the JSON file."""
+    with open(MODEL_SETTINGS_FILE, "w") as f:
+        json.dump(settings, f, indent=4)
+
 OLLAMA_URL = "http://localhost:11434/api"
 
-@st.cache_data(ttl=0)  # Disable caching for this function
+@st.cache_data(ttl=0)
 def get_ollama_resource_usage():
     """Gets Ollama server resource usage."""
     try:
@@ -25,7 +59,7 @@ def get_ollama_resource_usage():
                 memory_usage = process.info['memory_percent']
 
                 # Get GPU usage if available (placeholder for now)
-                gpu_usage = "N/A"  
+                gpu_usage = "N/A"
 
                 # Check server responsiveness
                 response = requests.get("http://localhost:11434/api/tags")
@@ -42,7 +76,7 @@ def get_ollama_resource_usage():
     except Exception as e:
         return {"status": f"Error: {str(e)}", "cpu_usage": "N/A", "memory_usage": "N/A", "gpu_usage": "N/A"}
 
-@st.cache_data  # Cache the list of available models
+@st.cache_data
 def get_available_models():
     response = requests.get(f"{OLLAMA_URL}/tags")
     response.raise_for_status()
@@ -53,7 +87,7 @@ def get_available_models():
     ]
     return models
 
-def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
+def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None, tools=None, episodic_memory=None):
     payload = {
         "model": model,
         "temperature": temperature,
@@ -61,6 +95,7 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
         "presence_penalty": presence_penalty,
         "frequency_penalty": frequency_penalty,
         "context": context if context is not None else [],
+        "tools": tools if tools is not None else []
     }
     if prompt:
         payload["prompt"] = prompt
@@ -80,7 +115,7 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
     try:
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        return f"An error occurred: {str(e)}", None, None, None  # Return None for eval_count and eval_duration
+        return f"An error occurred: {str(e)}", None, None, None
 
     response_parts = []
     eval_count = None
@@ -94,33 +129,6 @@ def call_ollama_endpoint(model, prompt=None, image=None, temperature=0.5, max_to
             break
     return "".join(response_parts), part.get("context", None), eval_count, eval_duration
 
-def get_ollama_resource_usage():
-    """Gets Ollama server resource usage."""
-    try:
-        # Check if Ollama process is running
-        for process in psutil.process_iter(['name', 'cpu_percent', 'memory_percent']):
-            if process.info['name'] == 'ollama':
-                cpu_usage = process.info['cpu_percent']
-                memory_usage = process.info['memory_percent']
-
-                # Get GPU usage if available (placeholder for now)
-                gpu_usage = "N/A"  
-
-                # Check server responsiveness
-                response = requests.get("http://localhost:11434/api/tags")
-                server_status = "Running" if response.status_code == 200 else "Not Responding"
-
-                return {
-                    "status": server_status,
-                    "cpu_usage": f"{cpu_usage:.2f}%",
-                    "memory_usage": f"{memory_usage:.2f}%",
-                    "gpu_usage": gpu_usage
-                }
-
-        return {"status": "Not Running", "cpu_usage": "N/A", "memory_usage": "N/A", "gpu_usage": "N/A"}
-    except Exception as e:
-        return {"status": f"Error: {str(e)}", "cpu_usage": "N/A", "memory_usage": "N/A", "gpu_usage": "N/A"}
-
 def check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Return the following data in JSON format: name: John, age: 30, city: New York"
     result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
@@ -130,10 +138,37 @@ def check_json_handling(model, temperature, max_tokens, presence_penalty, freque
     except json.JSONDecodeError:
         return False
 
+def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
+    """Gets embeddings for each token in the text and returns a 2D array."""
+    try:
+        if model in OPENAI_MODELS:
+            response = call_openai_api(
+                "text-embedding-ada-002",  # OpenAI's embedding model
+                prompt=[{"role": "user", "content": text}],
+                openai_api_key=api_keys.get("openai_api_key"),
+                use_chat=False
+            )
+            embeddings = np.array(response['data'][0]['embedding'])
+        elif model in GROQ_MODELS:
+            embeddings = get_local_embeddings(text)
+        else:
+            response = ollama.embeddings(model=model, prompt=text)
+            embeddings = np.array(response['embedding'])
+        
+        return embeddings.reshape(1, -1)  # Ensure it's a 2D array
+    except Exception as e:
+        st.error(f"An error occurred while getting token embeddings: {e}")
+        return np.zeros((1, 1536))  # Return a default 2D array with 1536 features (common embedding size)
+
 def check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Define a function named 'add' that takes two numbers and returns their sum. Then call the function with arguments 5 and 3."
     result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     return "8" in result
+
+def run_tool_test(model, description, tool_description, test_function, arguments):
+    prompt = f"Test the function: {tool_description}. Arguments: {arguments}"
+    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt)
+    return result
 
 def pull_model(model_name):
     payload = {"name": model_name, "stream": True}
@@ -145,22 +180,28 @@ def pull_model(model_name):
     total = None
     st.write(f"📥 Pulling model: `{model_name}`")
     for line in response.iter_lines():
-        line = line.decode("utf-8")  # Decode the line from bytes to str
-        data = json.loads(line)
-        
-        if "total" in data and "completed" in data:
-            total = data["total"]
-            completed = data["completed"]
-            progress = completed / total
-            progress_bar.progress(progress)
-            status_text.text(f"Progress: {progress * 100:.2f}%")
-        else:
-            progress = None
-            if not data["status"].startswith("pulling"):
-                status_text.text(data["status"])
-        
-        if data["status"] == "success":
-            break
+        line = line.decode("utf-8")
+        try:
+            data = json.loads(line)
+            
+            if "total" in data and "completed" in data:
+                total = data["total"]
+                completed = data["completed"]
+                progress = completed / total
+                progress_bar.progress(progress)
+                status_text.text(f"Progress: {progress * 100:.2f}%")
+            elif "status" in data:
+                if not data["status"].startswith("pulling"):
+                    status_text.text(data["status"])
+                if data["status"] == "success":
+                    break
+            else:
+                # Handle cases where neither "total" nor "status" is present
+                status_text.text("Processing...")
+            
+            results.append(data)
+        except json.JSONDecodeError:
+            st.warning(f"Failed to parse JSON: {line}")
         
     return results
 
@@ -288,7 +329,7 @@ def view_last_logs():
     logs = get_server_logs()
     logs = logs[-1000:]
     log_text = "".join(logs)
-    st.text_area("Last 1000 Lines of Server Logs", value=log_text, height=400, key="last_logs_view")  # Changed key
+    st.text_area("Last 1000 Lines of Server Logs", value=log_text, height=400, key="last_logs_view")
 
 def get_server_logs():
     """Fetches server logs from the local Ollama log file."""
@@ -317,3 +358,30 @@ def get_resource_usage():
     """Fetches resource usage data from the Ollama API (placeholder)."""
     st.info("Real-time resource usage monitoring is not yet supported by the Ollama API.")
     return {}
+
+def generate_embeddings(model, text):
+    """Generates embeddings for the given text using the specified model."""
+    try:
+        if model in GROQ_MODELS:
+            # Use Groq API for embedding
+            return get_local_embeddings(text)
+        elif model in OPENAI_MODELS:
+            # Use OpenAI API for embedding
+            return call_openai_api(model, prompt=[{"role": "user", "content": text}], use_chat=False)
+        else:
+            # Default to Ollama API for embedding
+            response = requests.post(f"{OLLAMA_URL}/embed", json={"model": model, "text": text})
+            response.raise_for_status()
+            embedding_data = response.json()
+            return embedding_data["embedding"], embedding_data["total_duration"], embedding_data["load_duration"], embedding_data["prompt_eval_count"]
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error generating embeddings: {e}")
+        return None, None, None, None
+
+def get_all_models():
+    """Gets all available models, including Ollama, Groq, OpenAI, and Mistral."""
+    ollama_models = ["🦙 Ollama Models"] + get_available_models()
+    groq_models = ["🚀 Groq Models"] + GROQ_MODELS
+    openai_models = ["🤖 OpenAI Models"] + OPENAI_MODELS
+    mistral_models = ["🌟 Mistral Models"] + MISTRAL_MODELS
+    return ollama_models + groq_models + openai_models + mistral_models

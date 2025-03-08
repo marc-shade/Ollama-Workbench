@@ -1,9 +1,11 @@
-# prompts.py
+# prompts.py (COMPLETE)
 import json
 import os
 import streamlit as st
+from global_vrm_loader import global_vrm_loader
+import base64
 
-# Get the directory of the current script
+# Directory where the script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def get_prompts_file_path(prompt_type):
@@ -26,21 +28,73 @@ def save_prompts(prompt_type, prompts):
         json.dump(prompts, f, indent=4)
 
 def get_agent_prompt():
-    return load_prompts("agent")
+    prompts = load_prompts("agent")
+    if not prompts:
+        # Default prompts if none exist
+        prompts = {
+            "General Assistant": {
+                "prompt": "You are a helpful AI assistant focused on general conversation and tasks. You aim to be clear, informative, and engaging while maintaining a natural conversational style.",
+                "model_voice": "en-US-Wavenet-A"
+            },
+            "Code Assistant": {
+                "prompt": "You are a skilled programming assistant. When discussing code, you provide clear explanations and practical examples. You help with debugging, optimization, and best practices.",
+                "model_voice": "en-US-Wavenet-B"
+            },
+            "Technical Writer": {
+                "prompt": "You are a technical writing assistant who helps create clear, well-structured documentation and articles. You excel at explaining complex topics in an accessible way.",
+                "model_voice": "en-US-Wavenet-C"
+            }
+        }
+        save_prompts("agent", prompts)
+    else:
+        # Create a new dictionary with updated prompts
+        updated_prompts = {}
+        for key, value in prompts.items():
+            if isinstance(value, dict):
+                if 'model_voice' not in value:
+                    value['model_voice'] = 'en-US-Wavenet-A'
+                updated_prompts[key] = value
+            else:
+                # Convert string prompts to dict format
+                updated_prompts[key] = {
+                    "prompt": value,
+                    "model_voice": "en-US-Wavenet-A"
+                }
+        prompts = updated_prompts
+        save_prompts("agent", prompts)
+    return prompts
 
 def get_metacognitive_prompt():
-    return load_prompts("metacognitive")
+    prompts = load_prompts("metacognitive")
+    if not prompts:
+        # Default prompts if none exist
+        prompts = {
+            "Analytical": "I approach problems systematically, breaking them down into smaller components and analyzing each part carefully.",
+            "Intuitive": "I combine logical analysis with intuitive understanding, considering both practical and creative solutions.",
+            "Collaborative": "I engage in a collaborative thinking process, actively involving you in the discussion and solution-finding."
+        }
+        save_prompts("metacognitive", prompts)
+    return prompts
 
 def get_voice_prompt():
-    return load_prompts("voice")
+    prompts = load_prompts("voice")
+    if not prompts:
+        # Default prompts if none exist
+        prompts = {
+            "Professional": "I maintain a clear, professional tone while being approachable and helpful.",
+            "Casual": "I use a friendly, conversational tone while remaining informative and helpful.",
+            "Technical": "I use precise technical language when appropriate, but can adjust my explanations to match your expertise level."
+        }
+        save_prompts("voice", prompts)
+    return prompts
 
 def get_identity_prompt():
     return load_prompts("identity")
 
 def manage_prompts():
-    st.header("✨ Prompts")
-    prompt_types = ["Agent", "Metacognitive", "Voice", "Identity"]  # Added "Identity" to the list
-    selected_prompt_type = st.selectbox("✨ Select Prompt Type:", prompt_types)
+    st.title("✨ Prompts")
+    prompt_types = ["Agent", "Metacognitive", "Voice", "Identity", "Model Voice"]
+    selected_prompt_type = st.selectbox("Select Prompt Type:", prompt_types)
 
     if selected_prompt_type == "Agent":
         prompts = get_agent_prompt()
@@ -51,45 +105,61 @@ def manage_prompts():
     elif selected_prompt_type == "Voice":
         prompts = get_voice_prompt()
         prompt_type = "voice"
-    else:  # Handle "Identity" prompt type
+    elif selected_prompt_type == "Identity":
         prompts = get_identity_prompt()
         prompt_type = "identity"
+    else:
+        prompts = load_prompts("model_voice")
+        prompt_type = "model_voice"
 
-    # Use st.markdown to inject CSS for 100% width
     st.markdown("""
         <style>
-        .dvn-stack, 
-        .dvn-stack > div, 
         .stDataFrame, div[data-testid="stDataEditor"] {
             width: 100% !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    edited_prompts = st.data_editor(prompts, num_rows="dynamic", key=f"{selected_prompt_type}_prompts")
+    if selected_prompt_type == "Agent":
+        for key in list(prompts.keys()):
+            with st.expander(key):
+                if isinstance(prompts[key], str):
+                    prompts[key] = {"prompt": prompts[key], "model_voice": "en-US-Wavenet-A"}
 
-    if edited_prompts != prompts:
-        save_prompts(prompt_type, edited_prompts)
+                prompts[key]['prompt'] = st.text_area("Prompt", value=prompts[key].get('prompt', ''), key=f"{key}_prompt")
+                voice_options = ["en-US-Wavenet-A", "en-US-Wavenet-B", "en-US-Wavenet-C", "en-US-Wavenet-D"]
+                prompts[key]['model_voice'] = st.selectbox("🗣️ Model Voice:", voice_options, index=voice_options.index(prompts[key].get('model_voice', "en-US-Wavenet-A")), key=f"{key}_model_voice")
+
+                # VRM Model Upload
+                vrm_model_file = st.file_uploader(f"Upload VRM Model for {key}", type=["vrm"], key=f"vrm_upload_{key}")
+                if vrm_model_file is not None:
+                    # Save the VRM model file
+                    agent_models_dir = os.path.join(SCRIPT_DIR, "agent_models")
+                    if not os.path.exists(agent_models_dir):
+                        os.makedirs(agent_models_dir)
+                    vrm_model_path = os.path.join(agent_models_dir, vrm_model_file.name)
+                    with open(vrm_model_path, "wb") as f:
+                        f.write(vrm_model_file.getvalue())
+
+                    prompts[key]['vrm_model_path'] = vrm_model_path  # Store the path
+                    global_vrm_loader.load_model(key, vrm_model_path)
+                    st.success("VRM model uploaded successfully!")
+
+        if st.button("Add New Agent Prompt"):
+            new_key = f"New Agent {len(prompts) + 1}"
+            prompts[new_key] = {"prompt": "", "model_voice": "en-US-Wavenet-A"}
+            st.success(f"Added new agent prompt: {new_key}")
+            st.rerun()
+    else:
+        edited_prompts = st.data_editor(prompts, num_rows="dynamic", key=f"{selected_prompt_type}_prompts")
+
+    if st.button("Save Prompts"):
+        if selected_prompt_type == "Agent":
+            save_prompts(prompt_type, prompts)
+        else:
+            save_prompts(prompt_type, edited_prompts)
         st.success(f"{selected_prompt_type} prompts saved successfully!")
         st.rerun()
 
-    # Download prompts
-    st.download_button(
-        label=f"📥 Download {selected_prompt_type} Prompts",
-        data=json.dumps(edited_prompts, indent=4),
-        file_name=f"{prompt_type}_prompts.json",
-        mime="application/json",
-    )
-
-    # Upload prompts
-    uploaded_file = st.file_uploader(f"Upload {selected_prompt_type} Prompts", type=["json"])
-    if uploaded_file is not None:
-        try:
-            uploaded_prompts = json.load(uploaded_file)
-            # Append uploaded prompts to existing prompts
-            edited_prompts.update(uploaded_prompts)
-            save_prompts(prompt_type, edited_prompts)
-            st.success(f"{selected_prompt_type} prompts uploaded and appended successfully!")
-            st.experimental_rerun()
-        except json.JSONDecodeError:
-            st.error("Invalid JSON file. Please upload a valid prompts JSON file.")
+if __name__ == "__main__":
+    manage_prompts()

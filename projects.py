@@ -6,10 +6,13 @@ import os
 import uuid
 from datetime import datetime
 import base64
-from ollama_utils import get_available_models, ollama, call_ollama_endpoint
+from ollama_utils import get_available_models, call_ollama_endpoint
+from openai_utils import call_openai_api, OPENAI_MODELS
+from ollama_utils import load_api_keys
+from groq_utils import call_groq_api, GROQ_MODELS
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 import re
-from functools import lru_cache  # Import lru_cache
+from functools import lru_cache
 
 class Task:
     def __init__(self, name, description, deadline=None, priority="Medium", completed=False, agent="None", result=None, task_id=None):
@@ -76,6 +79,44 @@ def load_tasks(project_name):
         st.error(f"Error loading tasks for {project_name}: {str(e)}. Starting with an empty task list.")
         return []
 
+# Callback function to update task status in session state
+def update_task_status(task_index, status, result=None):
+    if task_index < len(st.session_state.bm_tasks):
+        st.session_state.bm_tasks[task_index]["status"] = status
+        if result is not None:
+            st.session_state.bm_tasks[task_index]["result"] = result
+
+def handle_user_input(step, task_data):
+    """Handles user input for a specific task step."""
+    user_input_config = step.get("user_input")
+    if user_input_config:
+        input_type = user_input_config["type"]
+        prompt = user_input_config["prompt"]
+
+        if input_type == "file_path":
+            file_path = st.text_input(prompt, key=f"user_input_{step['agent']}")
+            if file_path:
+                task_data["file_path"] = file_path
+            else:
+                st.warning("Please provide a file path.")
+                return False  # Indicate that user input is not complete
+
+        elif input_type == "options":
+            options = user_input_config.get("options", [])
+            selected_option = st.selectbox(prompt, options, key=f"user_input_{step['agent']}")
+            if selected_option:
+                task_data["selected_option"] = selected_option
+            else:
+                st.warning("Please select an option.")
+                return False  # Indicate that user input is not complete
+
+        elif input_type == "confirmation":
+            if not st.button(prompt, key=f"user_input_{step['agent']}"):
+                st.warning("Task skipped due to unconfirmed user input.")
+                return False  # Indicate that user input is not complete
+
+    return True  # Indicate that user input is complete
+
 def save_tasks(project_name, tasks):
     tasks = [task for task in tasks if pd.notna(task.deadline)]
     with open(f'projects/{project_name}_tasks.json', 'w') as f:
@@ -105,31 +146,43 @@ def get_corpus_options():
 def get_corpus_context_from_db(corpus_folder, corpus, user_input):
     return "Sample context from the corpus database."
 
+
+def get_all_models():
+    return get_available_models() + OPENAI_MODELS + GROQ_MODELS
+
 def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corpus, temperature, max_tokens, previous_responses=[]):
     combined_prompt = ""
     if agent_type != "None":
-        combined_prompt += get_agent_prompt()[agent_type] + "\\n\\n"
+        combined_prompt += get_agent_prompt()[agent_type] + "\n\n"
     if metacognitive_type != "None":
-        combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\\n\\n"
+        combined_prompt += get_metacognitive_prompt()[metacognitive_type] + "\n\n"
     if voice_type != "None":
-        combined_prompt += get_voice_prompt()[voice_type] + "\\n\\n"
+        combined_prompt += get_voice_prompt()[voice_type] + "\n\n"
 
     if corpus != "None":
         corpus_context = get_corpus_context_from_db("corpus", corpus, user_input)
-        combined_prompt += f"Context: {corpus_context}\\n\\n"
+        combined_prompt += f"Context: {corpus_context}\n\n"
 
     for i, response in enumerate(previous_responses):
-        combined_prompt += f"Response {i+1}: {response}\\n\\n"
+        combined_prompt += f"Response {i+1}: {response}\n\n"
 
     final_prompt = f"{combined_prompt}User: {user_input}"
 
-    response, _, _, _ = call_ollama_endpoint(model, prompt=final_prompt, temperature=temperature, max_tokens=max_tokens)
+    api_keys = load_api_keys()  # Load API keys
+
+    if model in OPENAI_MODELS:
+        response = call_openai_api(model, [{"role": "user", "content": final_prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_keys.get("openai_api_key"))
+    elif model in GROQ_MODELS:
+        response = call_groq_api(model, final_prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_keys.get("groq_api_key"))
+    else:
+        response, _, _, _ = call_ollama_endpoint(model, prompt=final_prompt, temperature=temperature, max_tokens=max_tokens)
+    
     return response
 
 def define_agent_block(name, agent_data=None):
     if agent_data is None:
         agent_data = {}
-    model = st.selectbox(f"{name} Model", get_available_models(), key=f"{name}_model", index=get_available_models().index(agent_data.get('model')) if agent_data.get('model') in get_available_models() else 0)
+    model = st.selectbox(f"{name} Model", get_all_models(), key=f"{name}_model", index=get_all_models().index(agent_data.get('model')) if agent_data.get('model') in get_all_models() else 0)
     agent_type_options = ["None"] + list(get_agent_prompt().keys())
     agent_type = st.selectbox(
         f"{name} Agent Type",
@@ -153,21 +206,15 @@ def define_agent_block(name, agent_data=None):
     )
     corpus = st.selectbox(f"{name} Corpus", get_corpus_options(), key=f"{name}_corpus", index=get_corpus_options().index(agent_data.get('corpus')) if agent_data.get('corpus') in get_corpus_options() else 0)
     temperature = st.slider(f"{name} Temperature", 0.0, 1.0, agent_data.get('temperature', 0.7), key=f"{name}_temperature")
-    max_tokens = st.slider(f"{name} Max Tokens", 100, 32000, agent_data.get('max_tokens', 4000), key=f"{name}_max_tokens")
+    max_tokens = st.slider(f"{name} Max Tokens", 4000, 128000, agent_data.get('max_tokens', 4000), key=f"{name}_max_tokens" , step=1000)
     return {'model': model, 'agent_type': agent_type, 'metacognitive_type': metacognitive_type, 'voice_type': voice_type, 'corpus': corpus, 'temperature': temperature, 'max_tokens': max_tokens}
 
 class ProjectManagerAgent:
-    def __init__(self, model: str, agent_type: str, temperature: float, max_tokens: int, use_teachability: bool, db_path: str):
+    def __init__(self, model: str, agent_type: str, temperature: float, max_tokens: int):
         self.model = model
         self.agent_type = agent_type
         self.temperature = temperature
         self.max_tokens = max_tokens
-        # self.use_teachability = use_teachability # Remove if not using Teachability
-        # self.db_path = db_path # Remove if not using Teachability
-
-        # Teachability is removed
-        # self.teachability = None
-        # self.db = None
 
     @lru_cache(maxsize=None)
     def generate_workflow(self, user_request: str):
@@ -219,22 +266,21 @@ class ProjectManagerAgent:
         }}
         """
 
-        # Teachability context retrieval is removed
-        # if self.use_teachability:
-        #     context = self.teachability.retrieve_relevant_chunks(user_request, self.db)
-        #     generation_prompt += f"\\n\\nRelevant context from past interactions:\\n{context}"
+        api_keys = load_api_keys()  # Load API keys
 
-        response = ollama.generate(
-            model=self.model,
-            prompt=generation_prompt,
-            options={
-                "num_predict": self.max_tokens,
-                "top_k": 10,
-                "top_p": self.temperature,
-                "stop": ["\\n\\n"]
-            }
-        )
-        generated_workflow = response['response']
+        if self.model in OPENAI_MODELS:
+            response = call_openai_api(self.model, [{"role": "user", "content": generation_prompt}], temperature=self.temperature, max_tokens=self.max_tokens, openai_api_key=api_keys.get("openai_api_key"))
+        elif self.model in GROQ_MODELS:
+            response = call_groq_api(self.model, generation_prompt, temperature=self.temperature, max_tokens=self.max_tokens, groq_api_key=api_keys.get("groq_api_key"))
+        else:
+            response = call_ollama_endpoint(
+                self.model,
+                prompt=generation_prompt,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens
+            )[0]  # Assuming call_ollama_endpoint returns a tuple, we take the first element
+
+        generated_workflow = response
 
         generated_workflow = generated_workflow.strip()
         generated_workflow = generated_workflow.replace("'", '"')
@@ -295,13 +341,12 @@ def initialize_session_state():
     if 'generated_agents' not in st.session_state:
         st.session_state.generated_agents = {}
     if 'project_manager_settings' not in st.session_state:
+        all_models = get_all_models()
         st.session_state.project_manager_settings = {
-            'model': 'mistral:7b-instruct-v0.2-q8_0',
+            'model': all_models[0] if all_models else 'gpt-3.5-turbo',  # Use the first available model or a default
             'agent_type': 'Task Planner',
             'temperature': 0.7,
             'max_tokens': 4000,
-            # 'use_teachability': False, # Remove if not using Teachability
-            # 'db_path': './tmp/project_manager_db' # Remove if not using Teachability
         }
 
 def projects_main():
@@ -313,6 +358,21 @@ def projects_main():
     projects = load_projects()
 
     st.title("🚀 Projects")
+
+    # Sidebar configuration
+    with st.sidebar:
+        with st.expander("🤖 Project Manager Settings", expanded=False):
+            all_models = get_all_models()  # Get all available models including Ollama, OpenAI, and Groq
+            st.session_state.project_manager_settings['model'] = st.selectbox(
+                "Select Model for Project Manager",
+                all_models,
+                index=all_models.index(st.session_state.project_manager_settings['model']) if st.session_state.project_manager_settings['model'] in all_models else 0
+            )
+            st.session_state.project_manager_settings['agent_type'] = "Task Planner"
+            st.write(f"Agent Type: {st.session_state.project_manager_settings['agent_type']}")
+            
+            st.session_state.project_manager_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, st.session_state.project_manager_settings['temperature'], step=0.1)
+            st.session_state.project_manager_settings['max_tokens'] = st.slider("Max Tokens", 4000, 128000, st.session_state.project_manager_settings['max_tokens'], step=1000)
 
     # Display task statistics
     if projects:
@@ -390,41 +450,21 @@ def projects_main():
                 href = f'<a href="data:file/json;base64,{b64}" download="{selected_project}_tasks.json">Download JSON file</a>'
                 st.markdown(href, unsafe_allow_html=True)
 
-    # Project Manager Agent Configuration
-    st.subheader("🤖 Project Manager Agent Configuration")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.session_state.project_manager_settings['model'] = st.selectbox(
-            "Select Model for Project Manager",
-            get_available_models(),
-            index=get_available_models().index(st.session_state.project_manager_settings['model'])
-        )
-        st.session_state.project_manager_settings['agent_type'] = st.selectbox(
-            "Agent Type",
-            ["Task Planner"] + list(get_agent_prompt().keys()),
-            index=(["Task Planner"] + list(get_agent_prompt().keys())).index(st.session_state.project_manager_settings['agent_type'])
-        )
-    
-    with col2:
-        st.session_state.project_manager_settings['temperature'] = st.slider("Temperature", 0.0, 1.0, st.session_state.project_manager_settings['temperature'], step=0.1)
-        st.session_state.project_manager_settings['max_tokens'] = st.slider("Max Tokens", 100, 32000, st.session_state.project_manager_settings['max_tokens'], step=100)
-    
-    # Teachability option removed
-    # st.session_state.project_manager_settings['use_teachability'] = st.checkbox("Use Teachability", value=st.session_state.project_manager_settings['use_teachability'])
-    # if st.session_state.project_manager_settings['use_teachability']:
-    #     st.session_state.project_manager_settings['db_path'] = st.text_input("Teachability Database Path", value=st.session_state.project_manager_settings['db_path'])
-
     # Option to auto-generate tasks
     st.subheader("🤖 Auto-Generate Tasks")
     user_request = st.text_area("Enter your project request:")
 
-    if selected_project: # Moved the button inside the conditional block
-        if st.button("Generate Tasks"):
+    if selected_project:
+        if st.button("✅ Generate Tasks"):
             if user_request:
                 with st.spinner("Generating tasks and agents..."):
                     # Create a ProjectManagerAgent instance
-                    project_manager = ProjectManagerAgent(**st.session_state.project_manager_settings)
+                    project_manager = ProjectManagerAgent(
+                        model=st.session_state.project_manager_settings['model'],
+                        agent_type=st.session_state.project_manager_settings['agent_type'],
+                        temperature=st.session_state.project_manager_settings['temperature'],
+                        max_tokens=st.session_state.project_manager_settings['max_tokens']
+                    )
 
                     # Generate the workflow using the agent
                     generated_tasks, generated_agents = project_manager.generate_workflow(user_request)
@@ -534,7 +574,7 @@ def projects_main():
         if num_agents > len(agent_names):
             for i in range(len(agent_names), num_agents):
                 agent_name = f"Agent {i+1}"
-                st.session_state.agents[agent_name] = {'model': 'mistral:7b-instruct-v0.2-q8_0', 'agent_type': 'None', 'metacognitive_type': 'None', 'voice_type': 'None', 'corpus': 'None', 'temperature': 0.7, 'max_tokens': 4000}
+                st.session_state.agents[agent_name] = {'model': 'mistral:instruct', 'agent_type': 'None', 'metacognitive_type': 'None', 'voice_type': 'None', 'corpus': 'None', 'temperature': 0.7, 'max_tokens': 4000}
                 agent_names.append(agent_name)
 
         new_agent_names = []
@@ -566,6 +606,12 @@ def projects_main():
                         st.warning(f"Agent {task.agent} not defined. Please define the agent before running.")
             save_tasks(selected_project, st.session_state.tasks)
             st.success("🟢 AI agents completed their tasks!")
+
+def load_api_keys():
+    if os.path.exists("api_keys.json"):
+        with open("api_keys.json", "r") as f:
+            return json.load(f)
+    return {}
 
 if __name__ == "__main__":
     projects_main()
