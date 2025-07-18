@@ -59,7 +59,7 @@ PACKAGES=(
     "gtts==2.5.4"
     "pygame==2.6.1"
     "autogen==0.2.35"
-    "pyautogen==0.2.35"
+    "ag2==0.2.35"
     "fake-useragent==1.5.1"
 )
 

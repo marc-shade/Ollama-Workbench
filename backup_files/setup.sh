@@ -205,7 +205,7 @@ if [ $? -ne 0 ]; then
     $POETRY_CMD run pip install "langchain==0.2.15"
     # Install missing dependencies from requirements.txt
     echo "Debug: Installing missing dependencies"
-    $POETRY_CMD run pip install "ollama==0.2.0" "chromadb==0.5.5" "psutil==6.0.0" "pdfkit==1.0.0" "matplotlib==3.9.2" "beautifulsoup4==4.12.3" "bs4==0.0.2" "selenium==4.24.0" "webdriver-manager==4.0.2" "PyPDF2==3.0.1" "streamlit-extras==0.3.6" "autogen==0.2.35" "pyautogen==0.2.35" "fpdf==1.7.2" "radon==6.0.1" "flake8==7.1.1"
+    $POETRY_CMD run pip install "ollama==0.2.0" "chromadb==0.5.5" "psutil==6.0.0" "pdfkit==1.0.0" "matplotlib==3.9.2" "beautifulsoup4==4.12.3" "bs4==0.0.2" "selenium==4.24.0" "webdriver-manager==4.0.2" "PyPDF2==3.0.1" "streamlit-extras==0.3.6" "autogen==0.2.35" "ag2==0.2.35" "fpdf==1.7.2" "radon==6.0.1" "flake8==7.1.1"
     
     # Install additional dependencies from requirements.txt that might be missing
     echo "Debug: Installing additional dependencies from requirements.txt"
@@ -307,12 +307,12 @@ dependencies = [
     "streamlit", "langchain", "transformers", "ollama",
     "chromadb", "pandas", "psutil", "requests", "matplotlib",
     "beautifulsoup4", "bs4", "selenium", "webdriver_manager", "PyPDF2",
-    "streamlit_extras", "autogen", "pyautogen", "fpdf", "radon", "flake8"
+    "streamlit_extras", "autogen", "ag2", "fpdf", "radon", "flake8"
 ]
 
 # Add detailed error checking for critical dependencies
 print("\n=== Critical Dependencies Check ===")
-critical_deps = ["ollama", "chromadb", "psutil", "pdfkit", "matplotlib", "bs4", "selenium", "webdriver_manager", "PyPDF2", "streamlit_extras", "autogen", "pyautogen", "fpdf", "radon", "flake8"]
+critical_deps = ["ollama", "chromadb", "psutil", "pdfkit", "matplotlib", "bs4", "selenium", "webdriver_manager", "PyPDF2", "streamlit_extras", "autogen", "ag2", "fpdf", "radon", "flake8"]
 for dep in critical_deps:
     try:
         module = __import__(dep)

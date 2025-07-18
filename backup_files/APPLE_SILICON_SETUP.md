@@ -242,11 +242,11 @@ If you encounter errors related to code analysis tools like radon or flake8:
 
 ### Autogen/Pyautogen Issues
 
-If you encounter errors related to autogen or pyautogen:
+If you encounter errors related to autogen or ag2:
 
 1. Make sure both packages are installed:
    ```bash
-   poetry run pip install autogen==0.2.35 pyautogen==0.2.35
+   poetry run pip install autogen==0.2.35 ag2==0.2.35
    ```
 2. The codebase uses autogen, so make sure to use the correct import statements:
    ```python
@@ -259,7 +259,7 @@ If you encounter errors related to autogen or pyautogen:
    # Check if autogen is installed
    poetry run pip list | grep autogen
    ```
-4. Note that autogen and pyautogen are different packages with similar functionality. The project uses autogen.
+4. Note that autogen and ag2 are different packages with similar functionality. The project uses autogen.
 
 ### Streamlit Extensions Issues
 
@@ -339,7 +339,7 @@ If Ollama server checks fail:
 - flake8: 7.1.1
 - streamlit-extras: 0.3.6
 - autogen: 0.2.35
-- pyautogen: 0.2.35
+- ag2: 0.2.35
 
 ### Architecture Changes
 

@@ -51,12 +51,12 @@ def check_environment():
     print(f"Python version: {sys.version}")
     print(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
     
-    # Check if pyautogen is installed
+    # Check if ag2 is installed
     try:
-        import pyautogen
-        print(f"✓ pyautogen is installed (version: {pyautogen.__version__ if hasattr(pyautogen, '__version__') else 'unknown'})")
+        import ag2
+        print(f"✓ ag2 is installed (version: {ag2.__version__ if hasattr(ag2, '__version__') else 'unknown'})")
     except ImportError:
-        print("✗ pyautogen is not installed")
+        print("✗ ag2 is not installed")
     
     # Check if the compatibility layer directory is in the path
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     
     if not success:
         print("\nTo fix this issue:")
-        print("1. Make sure pyautogen is installed: pip install pyautogen>=0.2.0")
+        print("1. Make sure ag2 is installed: pip install ag2>=0.2.0")
         print("2. Run the script with the compatibility layer: ./use_autogen_compat.sh python test_autogen_compat.py")
     
     sys.exit(0 if success else 1)
