@@ -24,7 +24,7 @@ torch>=2.0.0
 transformers>=4.30.0
 
 # Language Models & AI
-pyautogen>=0.2.0  # Using pyautogen which provides the autogen namespace
+ag2>=0.2.0  # Using ag2 which provides the autogen namespace
 groq>=0.9.0
 langchain>=0.2.0
 langchain-community>=0.2.0
