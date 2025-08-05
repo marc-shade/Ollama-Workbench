@@ -5,14 +5,62 @@ import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import streamlit as st
-from fpdf import FPDF
+# Make FPDF optional to avoid dependency issues
+try:
+    from fpdf import FPDF
+    fpdf_available = True
+    print("CHECKPOINT: FPDF module successfully loaded")
+except ImportError as e:
+    print(f"CHECKPOINT: FPDF module not available: {str(e)}")
+    fpdf_available = False
+    # Create a dummy FPDF class to avoid errors
+    class FPDF:
+        def __init__(self, *args, **kwargs):
+            pass
 import tempfile
 import queue
 import re
 from datetime import datetime
-from radon.complexity import cc_visit, cc_rank
-from radon.metrics import mi_visit, h_visit
-from flake8.api import legacy as flake8
+# Make radon optional to avoid dependency issues
+try:
+    from radon.complexity import cc_visit, cc_rank
+    from radon.metrics import mi_visit, h_visit
+    radon_available = True
+    print("CHECKPOINT: Radon module successfully loaded")
+except ImportError as e:
+    print(f"CHECKPOINT: Radon module not available: {str(e)}")
+    radon_available = False
+    # Create dummy functions to avoid errors
+    def cc_visit(code):
+        return []
+    def cc_rank(complexity):
+        return 'A'
+    def mi_visit(code):
+        return {}
+    def h_visit(code):
+        return {}
+# Make flake8 optional to avoid dependency issues
+try:
+    from flake8.api import legacy as flake8
+    flake8_available = True
+    print("CHECKPOINT: Flake8 module successfully loaded")
+except ImportError as e:
+    print(f"CHECKPOINT: Flake8 module not available: {str(e)}")
+    flake8_available = False
+    # Create a dummy flake8 class to avoid errors
+    class DummyStyleGuide:
+        def __init__(self, *args, **kwargs):
+            pass
+        def check_files(self, files):
+            class DummyReport:
+                def get_statistics(self, *args):
+                    return []
+            return DummyReport()
+    
+    class flake8:
+        @staticmethod
+        def get_style_guide(*args, **kwargs):
+            return DummyStyleGuide()
 from ollama_utils import get_available_models as get_ollama_models
 from ollama_utils import load_api_keys
 from openai_utils import OPENAI_MODELS
@@ -22,22 +70,37 @@ from groq_utils import GROQ_MODELS
 MODEL_SETTINGS_FILE = "model_settings.json"
 
 class PDF(FPDF):
+    def __init__(self, *args, **kwargs):
+        if fpdf_available:
+            super().__init__(*args, **kwargs)
+            print("CHECKPOINT: PDF class initialized successfully")
+        else:
+            print("CHECKPOINT: PDF class initialized in dummy mode (FPDF not available)")
+
     def header(self):
+        if not fpdf_available:
+            return
         self.set_font('Arial', 'B', 12)
         self.cell(0, 10, 'Repository Analysis', 0, 1, 'C')
 
     def chapter_title(self, title):
+        if not fpdf_available:
+            return
         self.set_font('Arial', 'B', 12)
         self.cell(0, 10, title.encode('latin1', 'replace').decode('latin1'), 0, 1, 'L')
         self.ln(10)
 
     def chapter_body(self, body):
+        if not fpdf_available:
+            return
         self.set_font('Arial', '', 12)
         body = body.encode('latin1', 'replace').decode('latin1')
         self.multi_cell(0, 10, body)
         self.ln()
 
     def add_chapter(self, title, body):
+        if not fpdf_available:
+            return
         self.add_page()
         self.chapter_title(title)
         self.chapter_body(body)
@@ -381,21 +444,45 @@ def get_file_info(file_path):
 
         # Calculate code complexity metrics for Python files
         if language == "python":
-            complexity = cc_visit(file_info['Code'])
-            maintainability = mi_visit(file_info['Code'], multi=False)
-            halstead = h_visit(file_info['Code'])
+            # Check if radon is available for code complexity analysis
+            if radon_available:
+                print(f"CHECKPOINT: Analyzing code complexity for {file_path} with radon")
+                try:
+                    complexity = cc_visit(file_info['Code'])
+                    maintainability = mi_visit(file_info['Code'], multi=False)
+                    halstead = h_visit(file_info['Code'])
 
-            file_info['Complexity'] = {
-                'Cyclomatic Complexity': [f"{func.name}: {func.complexity} ({cc_rank(func.complexity)})" for func in complexity],
-                'Maintainability Index': maintainability,
-                'Halstead Metrics': halstead
-            }
+                    file_info['Complexity'] = {
+                        'Cyclomatic Complexity': [f"{func.name}: {func.complexity} ({cc_rank(func.complexity)})" for func in complexity],
+                        'Maintainability Index': maintainability,
+                        'Halstead Metrics': halstead
+                    }
+                except Exception as e:
+                    print(f"CHECKPOINT: Error analyzing code complexity: {str(e)}")
+                    file_info['Complexity'] = {
+                        'Error': f"Failed to analyze code complexity: {str(e)}"
+                    }
+            else:
+                print(f"CHECKPOINT: Radon not available, skipping code complexity analysis for {file_path}")
+                file_info['Complexity'] = {
+                    'Note': "Code complexity analysis not available (radon module not installed)"
+                }
 
-            # Analyze code style using flake8
-            style_guide = flake8.get_style_guide()
-            report = style_guide.check_files([file_path])
-
-            style_violations = []
+            # Analyze code style using flake8 if available
+            if flake8_available:
+                print(f"CHECKPOINT: Analyzing code style for {file_path} with flake8")
+                try:
+                    style_guide = flake8.get_style_guide()
+                    report = style_guide.check_files([file_path])
+                    style_violations = []
+                except Exception as e:
+                    print(f"CHECKPOINT: Error analyzing code style: {str(e)}")
+                    file_info['Style Violations'] = [f"Error analyzing code style: {str(e)}"]
+                    style_violations = []
+            else:
+                print(f"CHECKPOINT: Flake8 not available, skipping code style analysis for {file_path}")
+                file_info['Style Violations'] = ["Code style analysis not available (flake8 module not installed)"]
+                style_violations = []
             for error in report.get_statistics(''):
                 try:
                     if isinstance(error, str):
@@ -500,24 +587,56 @@ def analyze_repository_structure(repo_path, code_files):
     return repo_info
 
 def generate_pdf(results, output_path, task_type):
-    pdf = PDF()
-    pdf.set_left_margin(10)
-    pdf.set_right_margin(10)
-    pdf.add_page()
+    # Check if FPDF is available
+    if not fpdf_available:
+        print("CHECKPOINT: Cannot generate PDF - FPDF module not available")
+        # Create a text file instead
+        try:
+            with open(output_path.replace('.pdf', '.txt'), 'w') as f:
+                f.write(f"Repository Analysis Report (FPDF not available)\n\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                
+                for file_path, documentation, pylint_report, file_content in results:
+                    f.write(f"\n\n{'='*50}\nFile: {file_path}\n{'='*50}\n\n")
+                    if task_type == "debug":
+                        f.write(f"Pylint Report:\n{pylint_report}\n\nDebug Report:\n{documentation}\n\nCode:\n{file_content}\n")
+                    elif task_type == "documentation":
+                        f.write(f"Documentation:\n{documentation}\n\nCode:\n{file_content}\n")
+                    else:  # README
+                        f.write(f"{documentation}\n")
+            
+            print(f"CHECKPOINT: Generated text report instead at {output_path.replace('.pdf', '.txt')}")
+            return output_path.replace('.pdf', '.txt')
+        except Exception as e:
+            print(f"CHECKPOINT: Error generating text report: {str(e)}")
+            return None
+    
+    # FPDF is available, proceed with PDF generation
+    print("CHECKPOINT: Generating PDF report")
+    try:
+        pdf = PDF()
+        pdf.set_left_margin(10)
+        pdf.set_right_margin(10)
+        pdf.add_page()
 
-    for file_path, documentation, pylint_report, file_content in results:
-        chapter_title = f"File: {file_path}"
-        if task_type == "debug":
-            chapter_body = f"Pylint Report:\n{pylint_report}\n\nDebug Report:\n{documentation}\n\nCode:\n{file_content}"
-        elif task_type == "documentation":
-            chapter_body = f"Documentation:\n{documentation}\n\nCode:\n{file_content}"
-        else:  # README
-            chapter_body = documentation
-        pdf.add_chapter(chapter_title, chapter_body)
+        for file_path, documentation, pylint_report, file_content in results:
+            chapter_title = f"File: {file_path}"
+            if task_type == "debug":
+                chapter_body = f"Pylint Report:\n{pylint_report}\n\nDebug Report:\n{documentation}\n\nCode:\n{file_content}"
+            elif task_type == "documentation":
+                chapter_body = f"Documentation:\n{documentation}\n\nCode:\n{file_content}"
+            else:  # README
+                chapter_body = documentation
+            pdf.add_chapter(chapter_title, chapter_body)
 
-    # Create 'files' directory if it doesn't exist
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    pdf.output(output_path, 'F')
+        # Create 'files' directory if it doesn't exist
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        pdf.output(output_path, 'F')
+        print(f"CHECKPOINT: PDF report generated successfully at {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"CHECKPOINT: Error generating PDF report: {str(e)}")
+        return None
 
 def generate_requirements_file(repo_path, exclude_patterns):
     import importlib.util
@@ -886,9 +1005,23 @@ def main():
         # Generate and save PDF report in the 'files' folder
         pdf_filename = f"repository_{task_type}_report.pdf"
         pdf_path = os.path.join(files_dir, pdf_filename)
-        generate_pdf(results, pdf_path, task_type)
+        output_path = generate_pdf(results, pdf_path, task_type)
         
-        st.success(f"Analysis complete! PDF report saved as {pdf_filename} in the repository's 'files' folder.")
+        # Check if PDF generation was successful
+        if output_path is None:
+            st.error("Failed to generate report. Check the logs for more information.")
+        elif output_path.endswith('.txt'):
+            # PDF generation failed but text report was created
+            txt_filename = os.path.basename(output_path)
+            st.warning(f"FPDF module not available. Text report saved as {txt_filename} in the repository's 'files' folder.")
+            st.info("To enable PDF generation, install the required dependency: pip install fpdf")
+        else:
+            # PDF generation was successful
+            st.success(f"Analysis complete! PDF report saved as {pdf_filename} in the repository's 'files' folder.")
+            
+        # Log detailed checkpoint for troubleshooting
+        print(f"CHECKPOINT: Report generation completed with output path: {output_path}")
+        
 
         if task_type == "readme":
             # Analyze repository structure

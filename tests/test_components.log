@@ -1,0 +1,104 @@
+2025-05-21 13:35:46,950 - INFO - PyTorch version 2.6.0 available.
+2025-05-21 13:35:46,950 - INFO - Duckdb version 1.1.3 available.
+2025-05-21 13:35:47,800 - INFO - Pygame is available for audio playback
+2025-05-21 13:35:47,849 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:35:47,850 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:35:47,850 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:35:47,850 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,850 - INFO - Testing count_tokens
+2025-05-21 13:35:47,930 - INFO - Count tokens test passed
+2025-05-21 13:35:47,930 - INFO - CHECKPOINT: Count tokens test completed successfully
+2025-05-21 13:35:47,930 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,930 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:35:47,930 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:35:47,930 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:35:47,930 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:35:47,930 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,930 - INFO - Testing display_message
+2025-05-21 13:35:47,933 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:35:47,933 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,933 - INFO - Testing extract_code_blocks
+2025-05-21 13:35:47,933 - INFO - Extract code blocks test passed
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Extract code blocks test completed successfully
+2025-05-21 13:35:47,933 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:35:47,933 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:35:47,933 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,934 - INFO - Testing extract_content_blocks
+2025-05-21 13:35:47,934 - INFO - Extract content blocks test passed
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Extract content blocks test completed successfully
+2025-05-21 13:35:47,934 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:35:47,934 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,934 - INFO - Testing get_rag_context
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Getting RAG context for query with corpus: None
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: No corpus selected or empty query, returning empty string
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Getting RAG context for query with corpus: test_corpus
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Initializing embedder and loading corpus: test_corpus
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Querying corpus with: Test query
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Retrieved context length: 0
+2025-05-21 13:35:47,934 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,934 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:35:47,934 - INFO - Setting up test environment for message rendering tests
+2025-05-21 13:35:47,935 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,935 - INFO - Testing code block rendering
+2025-05-21 13:35:47,935 - INFO - Code block rendering test passed
+2025-05-21 13:35:47,935 - INFO - CHECKPOINT: Code block rendering test completed successfully
+2025-05-21 13:35:47,935 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,935 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:35:47,935 - INFO - Setting up test environment for message rendering tests
+2025-05-21 13:35:47,935 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:35:47,935 - INFO - Testing markdown rendering
+2025-05-21 13:35:47,935 - INFO - Markdown rendering test passed
+2025-05-21 13:35:47,935 - INFO - CHECKPOINT: Markdown rendering test completed successfully
+2025-05-21 13:35:47,935 - INFO - Cleaning up test environment
+2025-05-21 13:35:47,935 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:36:12,025 - INFO - PyTorch version 2.6.0 available.
+2025-05-21 13:36:12,026 - INFO - Duckdb version 1.1.3 available.
+2025-05-21 13:36:12,819 - INFO - Pygame is available for audio playback
+2025-05-21 13:36:12,867 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:36:12,867 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:36:12,867 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:36:12,867 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:36:12,867 - INFO - Testing get_rag_context
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Mock GraphRAGCorpus setup complete
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Mock query return value: [{'content': 'Test context 1', 'similarity': 0.9}, {'content': 'Test context 2', 'similarity': 0.8}]
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Getting RAG context for query with corpus: None
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: No corpus selected or empty query, returning empty string
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Getting RAG context for query with corpus: test_corpus
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Initializing embedder and loading corpus: test_corpus
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Querying corpus with: Test query
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Retrieved context length: 118
+2025-05-21 13:36:12,868 - INFO - Get RAG context test passed
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Get RAG context test completed successfully
+2025-05-21 13:36:12,868 - INFO - Cleaning up test environment
+2025-05-21 13:36:12,868 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-21 13:48:04,895 - INFO - PyTorch version 2.6.0 available.
+2025-05-21 13:48:04,896 - INFO - Duckdb version 1.1.3 available.
+2025-05-21 13:48:05,733 - INFO - Pygame is available for audio playback
+2025-05-21 13:48:05,782 - INFO - Setting up test environment for chat components tests
+2025-05-21 13:48:05,782 - INFO - CHECKPOINT: Beginning test setup
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-21 13:48:05,783 - INFO - Testing get_rag_context
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Mock GraphRAGCorpus setup complete
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Mock query return value: [{'content': 'Test context 1', 'similarity': 0.9}, {'content': 'Test context 2', 'similarity': 0.8}]
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Getting RAG context for query with corpus: None
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: No corpus selected or empty query, returning empty string
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Getting RAG context for query with corpus: test_corpus
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Initializing embedder and loading corpus: test_corpus
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Querying corpus with: Test query
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Retrieved context length: 118
+2025-05-21 13:48:05,783 - INFO - Get RAG context test passed
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Get RAG context test completed successfully
+2025-05-21 13:48:05,783 - INFO - Cleaning up test environment
+2025-05-21 13:48:05,783 - INFO - CHECKPOINT: Test environment cleanup completed successfully

@@ -1,0 +1,60 @@
+2025-05-22 05:57:02,793 - INFO - CHECKPOINT: Starting model selection tests
+2025-05-22 05:57:02,920 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 05:57:03,265 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 05:57:03,265 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 05:57:03,566 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 05:57:03,864 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 05:57:04,019 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 05:57:07,954 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 05:57:07,955 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 05:57:08,258 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 05:57:08,346 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 05:57:08,349 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 05:57:08,349 - INFO - CHECKPOINT: Successfully imported modules for testing
+2025-05-22 05:57:08,349 - INFO - CHECKPOINT: Running test suite
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Testing fallback models
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Getting all available models
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Found 0 Ollama models
+2025-05-22 05:57:08,350 - WARNING - CHECKPOINT: No models found from any provider, adding default suggestions
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Found 4 total models across all providers
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Fallback models test passed
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 05:57:08,350 - INFO - CHECKPOINT: Testing get_all_models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Getting all available models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Found 5 Ollama models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Adding 2 Groq models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Adding 2 OpenAI models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Adding 2 Mistral models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Found 11 total models across all providers
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: get_all_models test passed
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Testing get_available_models via API
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Getting available Ollama models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Trying to fetch models from http://localhost:11434/api/api/tags
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Found 5 models using direct API call to http://localhost:11434/api/api/tags
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: get_available_models API test passed
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Testing get_available_models via client
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Getting available Ollama models
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: Found 5 models using module API
+2025-05-22 05:57:08,351 - INFO - CHECKPOINT: get_available_models client test passed
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Testing model categorization
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Categorizing 12 models
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Category 'ollama' has 5 models
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Category 'openai' has 2 models
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Category 'groq' has 2 models
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Category 'mistral' has 3 models
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Category 'anthropic' has 1 models
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Model categorization test passed
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Testing model descriptions
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Model descriptions test passed
+2025-05-22 05:57:08,352 - INFO - CHECKPOINT: Test suite completed

@@ -1,0 +1,19 @@
+{
+  "OLLAMA_HOST": "http://localhost:11434",
+  "WORKBENCH_HOST": "localhost",
+  "WORKBENCH_PORT": 8501,
+  "WORKBENCH_DEBUG": false,
+  "ENABLE_ENHANCED_SECURITY": true,
+  "ENABLE_AUTH": false,
+  "ENABLE_RBAC": true,
+  "ENABLE_AUDIT_LOGGING": true,
+  "ENABLE_ENCRYPTION": true,
+  "ENABLE_OBSERVABILITY": true,
+  "DATA_DIR": "data",
+  "UPLOAD_DIR": "uploads",
+  "MODELS_DIR": "models",
+  "PROJECTS_DIR": "projects",
+  "CACHE_DIR": "cache",
+  "SECURITY_DIR": "security",
+  "LOGS_DIR": "logs"
+}

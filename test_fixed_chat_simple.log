@@ -1,0 +1,42 @@
+2025-05-21 13:22:02,914 - INFO - ================================================================================
+2025-05-21 13:22:02,915 - INFO - Starting fixed chat interface tests
+2025-05-21 13:22:02,915 - INFO - ================================================================================
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Setting up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment set up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Testing advanced_thinking_step
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: advanced_thinking_step test passed
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Cleaning up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment cleaned up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Setting up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment set up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Testing count_tokens
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: count_tokens test passed
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Cleaning up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment cleaned up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Setting up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment set up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Testing extract_code_blocks
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: extract_code_blocks test passed
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Cleaning up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment cleaned up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Setting up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment set up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Testing extract_content_blocks
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: extract_content_blocks test passed
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Cleaning up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment cleaned up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Setting up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment set up
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Testing get_graphrag_context
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: get_graphrag_context test passed
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Cleaning up test environment
+2025-05-21 13:22:02,921 - INFO - CHECKPOINT: Test environment cleaned up
+2025-05-21 13:22:02,922 - INFO - CHECKPOINT: Setting up test environment
+2025-05-21 13:22:02,922 - INFO - CHECKPOINT: Test environment set up
+2025-05-21 13:22:02,922 - INFO - CHECKPOINT: Testing instance_adaptive_cot
+2025-05-21 13:22:02,922 - INFO - CHECKPOINT: instance_adaptive_cot test passed
+2025-05-21 13:22:02,922 - INFO - CHECKPOINT: Cleaning up test environment
+2025-05-21 13:22:02,922 - INFO - CHECKPOINT: Test environment cleaned up
+2025-05-21 13:22:02,922 - INFO - ================================================================================
+2025-05-21 13:22:02,922 - INFO - Finished fixed chat interface tests
+2025-05-21 13:22:02,922 - INFO - ================================================================================

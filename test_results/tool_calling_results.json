@@ -1,0 +1,50 @@
+{
+  "llama3": {
+    "model": "llama3",
+    "status": "error",
+    "error": "HTTP error 404",
+    "details": "{\"error\":\"model \\\"llama3\\\" not found, try pulling it first\"}"
+  },
+  "qwen2": {
+    "model": "qwen2",
+    "status": "error",
+    "error": "HTTP error 404",
+    "details": "{\"error\":\"model \\\"qwen2\\\" not found, try pulling it first\"}"
+  },
+  "phi3": {
+    "model": "phi3",
+    "status": "error",
+    "error": "HTTP error 404",
+    "details": "{\"error\":\"model \\\"phi3\\\" not found, try pulling it first\"}"
+  },
+  "llama3:70b": {
+    "model": "llama3:70b",
+    "status": "error",
+    "error": "HTTP error 404",
+    "details": "{\"error\":\"model \\\"llama3:70b\\\" not found, try pulling it first\"}"
+  },
+  "llama3.1": {
+    "model": "llama3.1",
+    "status": "error",
+    "error": "HTTP error 404",
+    "details": "{\"error\":\"model \\\"llama3.1\\\" not found, try pulling it first\"}"
+  },
+  "mistral": {
+    "model": "mistral",
+    "status": "exception",
+    "error": "'id'",
+    "supports_tools": false
+  },
+  "mistral:instruct": {
+    "model": "mistral:instruct",
+    "status": "exception",
+    "error": "'id'",
+    "supports_tools": false
+  },
+  "mistral-small3.1:latest": {
+    "model": "mistral-small3.1:latest",
+    "status": "exception",
+    "error": "'id'",
+    "supports_tools": false
+  }
+}

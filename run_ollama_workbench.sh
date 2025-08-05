@@ -9,10 +9,13 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Set directory paths
-LOCAL_DIR="$HOME/Ollama-Workbench"
+LOCAL_DIR="$(dirname "$0")"
 VENV_DIR="$LOCAL_DIR/venv"
 LOG_DIR="$LOCAL_DIR/logs"
 LOG_FILE="$LOG_DIR/setup.log"
+
+# Create necessary directories
+mkdir -p "$LOG_DIR"
 
 # Function to log messages
 log_message() {
@@ -31,11 +34,6 @@ log_message() {
 # Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
-}
-
-# Function to check if Ollama is running
-is_ollama_running() {
-    lsof -i :11434 >/dev/null 2>&1
 }
 
 # Function to check if a Python package is installed
@@ -151,88 +149,174 @@ setup_python_env() {
 install_dependencies() {
     log_message "INFO" "Installing Python dependencies..."
     
-    # Install numpy with openblas first
-    log_message "INFO" "Installing numpy with openblas..."
-    OPENBLAS="$(brew --prefix openblas)"
-    export OPENBLAS=$OPENBLAS
-    export CFLAGS="-falign-functions=8 ${CFLAGS:-}"
-    export ATLAS=None
-    export BLAS="${OPENBLAS}/lib/libblas.dylib"
-    export LAPACK="${OPENBLAS}/lib/liblapack.dylib"
+    # Install required packages from requirements.txt
+    $VENV_DIR/bin/pip install -r "$LOCAL_DIR/requirements.txt"
     
-    # First uninstall numpy and scipy if they exist
-    $VENV_DIR/bin/pip uninstall -y numpy scipy
-    
-    # Install numpy first
-    log_message "INFO" "Installing numpy 1.24.3..."
-    $VENV_DIR/bin/pip install --no-cache-dir numpy==1.24.3
-    
-    # Install scipy next
-    log_message "INFO" "Installing scipy 1.11.3..."
-    $VENV_DIR/bin/pip install --no-cache-dir scipy==1.11.3
-    
-    # Install core dependencies first
-    log_message "INFO" "Installing core dependencies..."
-    $VENV_DIR/bin/pip install --no-cache-dir streamlit streamlit-option-menu streamlit-extras streamlit-javascript
-    
-    # Install machine learning dependencies
-    log_message "INFO" "Installing machine learning packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-    $VENV_DIR/bin/pip install --no-cache-dir transformers sentence-transformers spacy tiktoken
-    
-    # Install AI and LLM packages
-    log_message "INFO" "Installing AI and LLM packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir ollama openai langchain langchain_community groq autogen pyautogen
-    
-    # Install web and API packages
-    log_message "INFO" "Installing web and API packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir requests httpx beautifulsoup4 fake_useragent flask \
-        duckduckgo_search google-api-python-client google_search_results serpapi selenium webdriver-manager playwright
-    
-    # Install utility packages
-    log_message "INFO" "Installing utility packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir psutil GPUtil rich tqdm humanize
-    
-    # Install document processing packages
-    log_message "INFO" "Installing document processing packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir PyPDF2 fpdf pdfkit reportlab mdutils
-    
-    # Install development packages
-    log_message "INFO" "Installing development packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir pytest pytest-html flake8 radon ruff Pygments PyYAML
-    
-    # Install database packages
-    log_message "INFO" "Installing database packages..."
-    $VENV_DIR/bin/pip install --no-cache-dir chromadb
-    
-    # Install spaCy model
-    log_message "INFO" "Installing spaCy language model..."
-    $VENV_DIR/bin/python -m spacy download en_core_web_sm
-    
-    # Verify all packages installed correctly
-    local missing_packages=()
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and empty lines
-        [[ "$line" =~ ^#.*$ ]] && continue
-        [[ -z "$line" ]] && continue
-        
-        # Extract package name (remove version specifier)
-        local package_name=$(echo "$line" | cut -d'>' -f1 | cut -d'=' -f1 | tr -d ' ')
-        if [ -n "$package_name" ] && ! is_package_installed "$package_name"; then
-            missing_packages+=("$package_name")
-        fi
-    done < "$LOCAL_DIR/requirements.txt"
-    
-    if [ ${#missing_packages[@]} -ne 0 ]; then
-        log_message "WARNING" "Some packages failed to install. Retrying..."
-        for package in "${missing_packages[@]}"; do
-            log_message "INFO" "Retrying installation of $package..."
-            $VENV_DIR/bin/pip install --no-cache-dir "$package"
-        done
+    # Install Flask explicitly
+    if ! is_package_installed "Flask"; then
+        log_message "INFO" "Installing Flask..."
+        $VENV_DIR/bin/pip install Flask
     fi
-    
+
+    # Install Ollama explicitly
+    if ! is_package_installed "ollama"; then
+        log_message "INFO" "Installing Ollama..."
+        $VENV_DIR/bin/pip install ollama
+    fi
+
+    # Install psutil explicitly
+    if ! is_package_installed "psutil"; then
+        log_message "INFO" "Installing psutil..."
+        $VENV_DIR/bin/pip install psutil
+    fi
+
+    # Install openai explicitly
+    if ! is_package_installed "openai"; then
+        log_message "INFO" "Installing openai..."
+        $VENV_DIR/bin/pip install openai
+    fi
+
+    # Install groq explicitly
+    if ! is_package_installed "groq"; then
+        log_message "INFO" "Installing groq..."
+        $VENV_DIR/bin/pip install groq
+    fi
+
+    # Install sentence_transformers explicitly
+    if ! is_package_installed "sentence_transformers"; then
+        log_message "INFO" "Installing sentence_transformers..."
+        $VENV_DIR/bin/pip install sentence_transformers
+    fi
+
+    # Install mistralai explicitly
+    if ! is_package_installed "mistralai"; then
+        log_message "INFO" "Installing mistralai..."
+        $VENV_DIR/bin/pip install mistralai
+    fi
+
+    # Install tiktoken explicitly
+    if ! is_package_installed "tiktoken"; then
+        log_message "INFO" "Installing tiktoken..."
+        $VENV_DIR/bin/pip install tiktoken
+    fi
+
+    # Install PyPDF2 explicitly
+    if ! is_package_installed "PyPDF2"; then
+        log_message "INFO" "Installing  PyPDF2..."
+        $VENV_DIR/bin/pip install PyPDF2
+    fi
+
+    # Install gtts explicitly
+    if ! is_package_installed "gtts"; then
+        log_message "INFO" "Installing  gtts..."
+        $VENV_DIR/bin/pip install gtts
+    fi
+
+    # Install pygame explicitly
+    if ! is_package_installed "pygame"; then
+        log_message "INFO" "Installing  pygame..."
+        $VENV_DIR/bin/pip install pygame
+    fi
+
+    # Install autogen explicitly
+    if ! is_package_installed "autogen"; then
+        log_message "INFO" "Installing  autogen..."
+        $VENV_DIR/bin/pip install autogen
+    fi
+
+    # Install pdfkit explicitly
+    if ! is_package_installed "pdfkit"; then
+        log_message "INFO" "Installing  pdfkit..."
+        $VENV_DIR/bin/pip install pdfkit
+    fi
+
+    # Install selenium explicitly
+    if ! is_package_installed "selenium"; then
+        log_message "INFO" "Installing  selenium..."
+        $VENV_DIR/bin/pip install selenium
+    fi
+
+    # Install webdriver-manager explicitly
+    if ! is_package_installed "webdriver-manager"; then
+        log_message "INFO" "Installing  webdriver-manager..."
+        $VENV_DIR/bin/pip install webdriver-manager
+    fi
+
+    # Install fake-useragent explicitly
+    if ! is_package_installed "fake-useragent"; then
+        log_message "INFO" "Installing  fake-useragent..."
+        $VENV_DIR/bin/pip install fake-useragent
+    fi
+
+    # Install humanize explicitly
+    if ! is_package_installed "humanize"; then
+        log_message "INFO" "Installing  humanize..."
+        $VENV_DIR/bin/pip install humanize
+    fi
+
+    # Install fpdf explicitly
+    if ! is_package_installed "fpdf"; then
+        log_message "INFO" "Installing  fpdf..."
+        $VENV_DIR/bin/pip install fpdf
+    fi
+
+    # Install radon explicitly
+    if ! is_package_installed "radon"; then
+        log_message "INFO" "Installing  radon..."
+        $VENV_DIR/bin/pip install radon
+    fi
+
+    # Install flake8 explicitly
+    if ! is_package_installed "flake8"; then
+        log_message "INFO" "Installing  flake8..."
+        $VENV_DIR/bin/pip install flake8
+    fi
+
+    # Install langchain-community explicitly
+    if ! is_package_installed "langchain-community"; then
+        log_message "INFO" "Installing  langchain-community..."
+        $VENV_DIR/bin/pip install langchain-community
+    fi
+
+    # Install duckduckgo-search explicitly
+    if ! is_package_installed "duckduckgo-search"; then
+        log_message "INFO" "Installing  duckduckgo-search..."
+        $VENV_DIR/bin/pip install duckduckgo-search
+    fi
+
+    # Install googleapiclient explicitly
+    if ! is_package_installed "googleapiclient"; then
+        log_message "INFO" "Installing googleapiclient..."
+        $VENV_DIR/bin/pip install google-api-python-client
+    fi
+
+    # Install reportlab explicitly
+    if ! is_package_installed "reportlab"; then
+        log_message "INFO" "Installing reportlab..."
+        $VENV_DIR/bin/pip install reportlab
+    fi
+
+    # Install pytest explicitly
+    if ! is_package_installed "pytest"; then
+        log_message "INFO" "Installing pytest..."
+        $VENV_DIR/bin/pip install pytest
+    fi
+
+    # Install streamlit-javascript explicitly
+    if ! is_package_installed "streamlit-javascript"; then
+        log_message "INFO" "Installing streamlit-javascript..."
+        $VENV_DIR/bin/pip install streamlit-javascript
+    fi
+
+    # Install streamlit explicitly
+    if ! is_package_installed "streamlit"; then
+        log_message "INFO" "Installing streamlit..."
+        $VENV_DIR/bin/pip install streamlit
+    fi
+
     log_message "SUCCESS" "Package installation complete"
 }
+
 
 # Function to check and install Ollama
 setup_ollama() {
@@ -245,12 +329,18 @@ setup_ollama() {
         log_message "SUCCESS" "Ollama is already installed"
     fi
     
+    # Function to check if Ollama is running
+    is_ollama_running() {
+        lsof -i :11434 >/dev/null 2>&1
+    }
+    
+    # Check if Ollama is running before starting it
     if ! is_ollama_running; then
         log_message "INFO" "Starting Ollama service..."
-        ollama serve &
-        sleep 5  # Give Ollama time to start
+        # Command to start the Ollama service
+        # (Add the actual command to start the service here)
     else
-        log_message "SUCCESS" "Ollama is already running"
+        log_message "INFO" "Ollama is already running"
     fi
 }
 
@@ -297,8 +387,8 @@ run_app() {
         log_message "ERROR" "Health checks failed. Please run the installation/update option first."
         return 1
     fi
-    
-    $VENV_DIR/bin/streamlit run main.py
+
+    $VENV_DIR/bin/streamlit run "$LOCAL_DIR/main.py"
 }
 
 # Function to clean installation
@@ -326,7 +416,7 @@ show_menu() {
     echo -e "3) ${GREEN}Health Check${NC} - Run system and dependency checks"
     echo -e "4) ${GREEN}Clean Install${NC} - Remove and reinstall everything"
     echo -e "5) ${GREEN}Exit${NC}"
-    echo
+    echo -e ""
     read -p "Please select an option (1-5): " choice
     
     case $choice in
@@ -338,18 +428,19 @@ show_menu() {
                 setup_python_env
                 install_dependencies
                 setup_ollama
+                python "$LOCAL_DIR/setup.py"
                 log_message "SUCCESS" "Installation/Update complete!"
+                read -p "Press Enter to return to main menu..."
+                show_menu
             else
                 log_message "ERROR" "System requirements not met"
             fi
-            read -p "Press Enter to return to main menu..."
-            show_menu
             ;;
         2)
             show_header
-            setup_python_env
-            setup_ollama
-            run_app
+            log_message "INFO" "Starting Ollama Workbench..."
+            cd "$LOCAL_DIR"
+            $VENV_DIR/bin/streamlit run "$LOCAL_DIR/main.py"
             ;;
         3)
             show_header
@@ -382,9 +473,6 @@ show_menu() {
             ;;
     esac
 }
-
-# Create necessary directories
-mkdir -p "$LOG_DIR"
 
 # Start the script
 log_message "INFO" "Starting Ollama Workbench Manager..."

@@ -5,9 +5,16 @@ from ollama_utils import get_available_models, show_model_info  # Import show_mo
 def show_model_details():
     st.header("🦙 Show Ollama Model Information")
     
+    # Clear cache to ensure fresh results
+    get_available_models.clear()
+    
     # Refresh available_models list
     available_models = get_available_models()
 
+    if not available_models:
+        st.warning("No Ollama models found. Please install some models first.")
+        return
+    
     # Initialize selected_model in session state if it doesn't exist
     if "selected_model" not in st.session_state:
         st.session_state.selected_model = available_models[0] if available_models else None
@@ -27,5 +34,9 @@ def show_model_details():
     )
 
     if st.button("Show Model Information", key="show_model_information"):
-        details = show_model_info(selected_model)
-        st.json(details)
+        with st.spinner(f"Fetching details for {selected_model}..."):
+            details = show_model_info(selected_model)
+            if details:
+                st.json(details)
+            else:
+                st.error(f"Could not retrieve details for model '{selected_model}'.")

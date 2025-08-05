@@ -34,10 +34,36 @@ if ! command -v ollama &> /dev/null; then
     curl https://ollama.ai/install.sh | sh
 fi
 
-# Create and activate Conda environment
-echo -e "${BLUE}Creating Conda environment...${NC}"
-conda env create -f environment.yml
-conda activate ollamaworkbench
+ # Install Zonos TTS
+ echo -e "${BLUE}Installing Zonos TTS...${NC}"
+  if [ -d "/Volumes/FILES/code/Zonos" ]; then
+         rm -rf /Volumes/FILES/code/Zonos
+     fi
+     if [ ! -d "/Volumes/FILES/code/Zonos" ]; then
+      git clone https://github.com/Zyphra/Zonos.git /Volumes/FILES/code/Zonos
+      if [ -f "/Volumes/FILES/code/Zonos/requirements.txt" ]; then
+          if command -v uv &> /dev/null; then
+                 echo -e "${BLUE}Installing Zonos Python dependencies with uv...${NC}"
+                 uv pip install -r /Volumes/FILES/code/Zonos/requirements.txt
+             else
+                 echo -e "${BLUE}Installing Zonos Python dependencies with pip...${NC}"
+                 pip install -r /Volumes/FILES/code/Zonos/requirements.txt
+             fi
+          echo -e "${GREEN}Zonos TTS dependencies installed successfully.${NC}"
+      else
+          echo -e "${RED}Zonos TTS requirements.txt not found. Zonos TTS might not be installed correctly.${NC}"
+      fi
+     fi
+
+     # Add instructions to run Zonos server if applicable
+     echo -e "${BLUE}To run Zonos TTS (if it has a server component), follow the instructions in the Zonos repository.${NC}"
+     echo -e "${BLUE}To run Zonos TTS in Docker, navigate to the /Volumes/FILES/code/Zonos directory and run 'docker compose up' or follow the instructions in the Zonos repository.${NC}"
+
+
+# Create and activate Conda environment (Skipped)
+# echo -e "${BLUE}Creating Conda environment...${NC}"
+# conda env create -f environment.yml
+# conda activate ollamaworkbench
 
 # Install additional system dependencies
 echo -e "${BLUE}Installing system dependencies...${NC}"
@@ -45,7 +71,13 @@ brew install portaudio
 
 # Install Python packages
 echo -e "${BLUE}Installing Python packages...${NC}"
-pip install -r requirements.txt
+if command -v uv &> /dev/null; then
+        echo -e "${BLUE}Installing Python packages with uv...${NC}"
+        uv pip install -r requirements.txt
+    else
+        echo -e "${BLUE}Installing Python packages with pip...${NC}"
+        pip install -r requirements.txt
+    fi
 
 # Install and start the TTS server
 echo -e "${BLUE}Setting up TTS server...${NC}"

@@ -1,0 +1,1094 @@
+2025-05-22 10:56:50,261 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 10:56:50,262 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 10:56:51,082 - INFO - Pygame is available for audio playback
+2025-05-22 10:56:51,131 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 10:56:51,132 - INFO - CHECKPOINT: Using robust Ollama utilities module with full functionality
+2025-05-22 10:56:51,132 - ERROR - Failed to import required modules: cannot import name 'display_message' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:56:51,136 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:56:51,138 - INFO - Successfully imported fixed_chat_settings
+2025-05-22 10:56:51,138 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:56:51,345 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:56:51,346 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:56:51,346 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,346 - INFO - Testing calculate_modularity
+2025-05-22 10:56:51,346 - INFO - CHECKPOINT: Calculating modularity for communities: [0, 0, 1]
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Similarity matrix shape: (3, 3)
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Community dictionary: {0: [0, 1], 1: [2]}
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Calculated modularity: 0.8214285714285713
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Calculate modularity test passed
+2025-05-22 10:56:51,347 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,347 - INFO - Testing episodic memory initialization
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Episodic memory initialization test passed
+2025-05-22 10:56:51,347 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,347 - INFO - Testing memory retrieval
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Memory retrieval test passed
+2025-05-22 10:56:51,347 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,347 - INFO - Testing model memory handler
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:56:51,347 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:56:51,348 - INFO - CHECKPOINT: Model memory handler test passed
+2025-05-22 10:56:51,348 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:56:51,348 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,348 - INFO - Testing refine_boundaries
+2025-05-22 10:56:51,348 - INFO - Embeddings shape: (10, 384)
+2025-05-22 10:56:51,348 - INFO - Surprise indices: [3, 7]
+2025-05-22 10:56:51,348 - INFO - Similarity matrix shape: (10, 10)
+2025-05-22 10:56:51,349 - INFO - Number of communities: 3
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2], [3, 4, 5, 6], [7, 8, 9]]
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:56:51,349 - INFO - Initial modularity: -0.3159223061961713
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4], [5, 6], [7, 8, 9]]
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4, 5], [6], [7, 8, 9]]
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:56:51,349 - INFO - CHECKPOINT: Refine boundaries test passed
+2025-05-22 10:56:51,349 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,350 - INFO - Testing GraphRAGCorpus query
+2025-05-22 10:56:51,350 - ERROR - Error querying GraphRAG corpus: 'similarity'
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: GraphRAGCorpus query test passed
+2025-05-22 10:56:51,350 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,350 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Testing RAG context retrieval
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: RAG context retrieval test passed
+2025-05-22 10:56:51,350 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,350 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:56:51,350 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,351 - INFO - Testing advanced thinking step
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Starting thinking step: Let's think step by step.
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Constructed thinking prompt for step: Let's think step by step.
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Received response for thinking step: Let's think step by step.
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Advanced thinking step test passed
+2025-05-22 10:56:51,351 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,351 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,351 - INFO - Testing candidate prompts
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Candidate prompts test passed
+2025-05-22 10:56:51,351 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,351 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:56:51,351 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,352 - INFO - Testing instance-adaptive CoT
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Running instance-adaptive CoT with model gpt-4
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Selected CoT prompt: I'll solve this by reasoning step-by-step.
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Instance-adaptive CoT test passed
+2025-05-22 10:56:51,352 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,352 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:56:51,352 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,352 - INFO - Testing agent combinations
+2025-05-22 10:56:51,352 - INFO - Testing combination: Researcher, Analytical, Professional
+2025-05-22 10:56:51,353 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,353 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,353 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,354 - INFO - Testing agent types
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Agent types test passed
+2025-05-22 10:56:51,354 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,354 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,354 - INFO - Testing metacognitive types
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Metacognitive types test passed
+2025-05-22 10:56:51,354 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,354 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,354 - INFO - Testing voice types
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Voice types test passed
+2025-05-22 10:56:51,354 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,354 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:56:51,354 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,355 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:56:51,355 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:56:51,355 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:56:51,355 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,355 - INFO - Testing all available models
+2025-05-22 10:56:51,355 - INFO - Testing model: llama2
+2025-05-22 10:56:51,355 - INFO - Testing model: mistral
+2025-05-22 10:56:51,355 - INFO - Testing model: llama3
+2025-05-22 10:56:51,355 - INFO - Testing model: phi3
+2025-05-22 10:56:51,355 - INFO - CHECKPOINT: All available models test passed
+2025-05-22 10:56:51,355 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,356 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,356 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:56:51,356 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,356 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:56:51,357 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:56:51,357 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:56:51,357 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,357 - INFO - Testing changing agent settings
+2025-05-22 10:56:51,357 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:56:51,357 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:56:51,357 - INFO - Current model before save: llama2
+2025-05-22 10:56:51,357 - INFO - Current_model value: Not Set
+2025-05-22 10:56:51,357 - INFO - Syncing current_model (None) to selected_model (llama2)
+2025-05-22 10:56:51,357 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:56:51,401 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:56:51,401 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,401 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,401 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:56:51,401 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,402 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:56:51,402 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:56:51,403 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:56:51,403 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,403 - INFO - Testing changing model settings
+2025-05-22 10:56:51,403 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:56:51,403 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:56:51,403 - INFO - Current model before save: mistral
+2025-05-22 10:56:51,403 - INFO - Current_model value: Not Set
+2025-05-22 10:56:51,403 - INFO - Syncing current_model (None) to selected_model (mistral)
+2025-05-22 10:56:51,403 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:56:51,403 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:56:51,403 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,403 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,404 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:56:51,404 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,404 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:56:51,404 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:56:51,404 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:56:51,404 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,405 - INFO - Testing agent prompt construction
+2025-05-22 10:56:51,405 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,406 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,406 - INFO - Testing max_tokens range
+2025-05-22 10:56:51,406 - INFO - Testing max_tokens: 100
+2025-05-22 10:56:51,406 - INFO - Testing max_tokens: 1000
+2025-05-22 10:56:51,406 - INFO - Testing max_tokens: 2000
+2025-05-22 10:56:51,406 - INFO - Testing max_tokens: 4000
+2025-05-22 10:56:51,406 - INFO - Testing max_tokens: 8000
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Max tokens range test passed
+2025-05-22 10:56:51,406 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,406 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:56:51,407 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:56:51,407 - INFO - Testing temperature range
+2025-05-22 10:56:51,407 - INFO - Testing temperature: 0.0
+2025-05-22 10:56:51,407 - INFO - Testing temperature: 0.1
+2025-05-22 10:56:51,407 - INFO - Testing temperature: 0.5
+2025-05-22 10:56:51,407 - INFO - Testing temperature: 0.7
+2025-05-22 10:56:51,407 - INFO - Testing temperature: 1.0
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Temperature range test passed
+2025-05-22 10:56:51,407 - INFO - Cleaning up test environment
+2025-05-22 10:56:51,407 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,121 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 10:57:08,121 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 10:57:08,772 - INFO - Pygame is available for audio playback
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 10:57:08,811 - INFO - CHECKPOINT: Using robust Ollama utilities module with full functionality
+2025-05-22 10:57:08,811 - ERROR - Failed to import required modules: cannot import name 'display_message' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:08,812 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:08,814 - INFO - Successfully imported fixed_chat_settings
+2025-05-22 10:57:08,814 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:08,952 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:08,953 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:08,953 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,953 - INFO - Testing calculate_modularity
+2025-05-22 10:57:08,953 - INFO - CHECKPOINT: Calculating modularity for communities: [0, 0, 1]
+2025-05-22 10:57:08,953 - INFO - CHECKPOINT: Similarity matrix shape: (3, 3)
+2025-05-22 10:57:08,953 - INFO - CHECKPOINT: Community dictionary: {0: [0, 1], 1: [2]}
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Calculated modularity: 0.8214285714285713
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Calculate modularity test passed
+2025-05-22 10:57:08,954 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,954 - INFO - Testing episodic memory initialization
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Episodic memory initialization test passed
+2025-05-22 10:57:08,954 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,954 - INFO - Testing memory retrieval
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Memory retrieval test passed
+2025-05-22 10:57:08,954 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,954 - INFO - Testing model memory handler
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:57:08,954 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Model memory handler test passed
+2025-05-22 10:57:08,955 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,955 - INFO - Testing refine_boundaries
+2025-05-22 10:57:08,955 - INFO - Embeddings shape: (10, 384)
+2025-05-22 10:57:08,955 - INFO - Surprise indices: [3, 7]
+2025-05-22 10:57:08,955 - INFO - Similarity matrix shape: (10, 10)
+2025-05-22 10:57:08,955 - INFO - Number of communities: 3
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2], [3, 4, 5, 6], [7, 8, 9]]
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:08,955 - INFO - Initial modularity: -0.3198146403358086
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:08,955 - INFO - Updated best modularity to -0.318988872011622 with boundaries [4, 7]
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4], [5, 6], [7, 8, 9]]
+2025-05-22 10:57:08,955 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4, 5], [6], [7, 8, 9]]
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: Refine boundaries test passed
+2025-05-22 10:57:08,956 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,956 - INFO - Testing GraphRAGCorpus query
+2025-05-22 10:57:08,956 - ERROR - Error querying GraphRAG corpus: 'similarity'
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: GraphRAGCorpus query test passed
+2025-05-22 10:57:08,956 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,956 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,956 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Testing RAG context retrieval
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: RAG context retrieval test passed
+2025-05-22 10:57:08,957 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,957 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,957 - INFO - Testing advanced thinking step
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Starting thinking step: Let's think step by step.
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Constructed thinking prompt for step: Let's think step by step.
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Received response for thinking step: Let's think step by step.
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Advanced thinking step test passed
+2025-05-22 10:57:08,957 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,957 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,957 - INFO - Testing candidate prompts
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Candidate prompts test passed
+2025-05-22 10:57:08,957 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,957 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:08,957 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,958 - INFO - Testing instance-adaptive CoT
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Running instance-adaptive CoT with model gpt-4
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Selected CoT prompt: I'll solve this by reasoning step-by-step.
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Instance-adaptive CoT test passed
+2025-05-22 10:57:08,958 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,958 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:08,958 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,958 - INFO - Testing agent combinations
+2025-05-22 10:57:08,958 - INFO - Testing combination: Researcher, Analytical, Professional
+2025-05-22 10:57:08,959 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,959 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,959 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,960 - INFO - Testing agent types
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Agent types test passed
+2025-05-22 10:57:08,960 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,960 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,960 - INFO - Testing metacognitive types
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Metacognitive types test passed
+2025-05-22 10:57:08,960 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,960 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,960 - INFO - Testing voice types
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Voice types test passed
+2025-05-22 10:57:08,960 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,960 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:08,960 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:08,961 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:08,961 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:08,962 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:08,962 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,962 - INFO - Testing all available models
+2025-05-22 10:57:08,962 - INFO - Testing model: llama2
+2025-05-22 10:57:08,962 - INFO - Testing model: mistral
+2025-05-22 10:57:08,962 - INFO - Testing model: llama3
+2025-05-22 10:57:08,962 - INFO - Testing model: phi3
+2025-05-22 10:57:08,962 - INFO - CHECKPOINT: All available models test passed
+2025-05-22 10:57:08,962 - INFO - Cleaning up test environment
+2025-05-22 10:57:08,962 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:08,962 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:08,962 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:08,963 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:08,963 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:08,963 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:08,963 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:08,963 - INFO - Testing changing agent settings
+2025-05-22 10:57:08,963 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:08,964 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:57:08,964 - INFO - Current model before save: llama2
+2025-05-22 10:57:08,964 - INFO - Current_model value: Not Set
+2025-05-22 10:57:08,964 - INFO - Syncing current_model (None) to selected_model (llama2)
+2025-05-22 10:57:08,964 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:09,003 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:09,004 - INFO - Cleaning up test environment
+2025-05-22 10:57:09,004 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:09,004 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:09,004 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:09,005 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:09,005 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:09,005 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:09,005 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:09,005 - INFO - Testing changing model settings
+2025-05-22 10:57:09,005 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:09,005 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:57:09,005 - INFO - Current model before save: mistral
+2025-05-22 10:57:09,005 - INFO - Current_model value: Not Set
+2025-05-22 10:57:09,005 - INFO - Syncing current_model (None) to selected_model (mistral)
+2025-05-22 10:57:09,005 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:09,005 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:09,005 - INFO - Cleaning up test environment
+2025-05-22 10:57:09,005 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:09,005 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:09,005 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:09,006 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:09,006 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:09,007 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:09,007 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:09,007 - INFO - Testing agent prompt construction
+2025-05-22 10:57:09,008 - INFO - Cleaning up test environment
+2025-05-22 10:57:09,008 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:09,008 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:09,009 - INFO - Testing max_tokens range
+2025-05-22 10:57:09,009 - INFO - Testing max_tokens: 100
+2025-05-22 10:57:09,009 - INFO - Testing max_tokens: 1000
+2025-05-22 10:57:09,009 - INFO - Testing max_tokens: 2000
+2025-05-22 10:57:09,009 - INFO - Testing max_tokens: 4000
+2025-05-22 10:57:09,009 - INFO - Testing max_tokens: 8000
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Max tokens range test passed
+2025-05-22 10:57:09,009 - INFO - Cleaning up test environment
+2025-05-22 10:57:09,009 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:09,010 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:09,010 - INFO - Testing temperature range
+2025-05-22 10:57:09,010 - INFO - Testing temperature: 0.0
+2025-05-22 10:57:09,010 - INFO - Testing temperature: 0.1
+2025-05-22 10:57:09,010 - INFO - Testing temperature: 0.5
+2025-05-22 10:57:09,010 - INFO - Testing temperature: 0.7
+2025-05-22 10:57:09,010 - INFO - Testing temperature: 1.0
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Temperature range test passed
+2025-05-22 10:57:09,010 - INFO - Cleaning up test environment
+2025-05-22 10:57:09,010 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:25,883 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 10:57:25,884 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 10:57:26,529 - INFO - Pygame is available for audio playback
+2025-05-22 10:57:26,567 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 10:57:26,568 - INFO - CHECKPOINT: Using robust Ollama utilities module with full functionality
+2025-05-22 10:57:26,568 - ERROR - Failed to import required modules: cannot import name 'display_message' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:26,569 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:26,570 - INFO - Successfully imported fixed_chat_settings
+2025-05-22 10:57:26,570 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:26,709 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:26,710 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,710 - INFO - Testing calculate_modularity
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Calculating modularity for communities: [0, 0, 1]
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Similarity matrix shape: (3, 3)
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Community dictionary: {0: [0, 1], 1: [2]}
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Calculated modularity: 0.8214285714285713
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Calculate modularity test passed
+2025-05-22 10:57:26,710 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,710 - INFO - Testing episodic memory initialization
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Episodic memory initialization test passed
+2025-05-22 10:57:26,710 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:26,710 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,711 - INFO - Testing memory retrieval
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Memory retrieval test passed
+2025-05-22 10:57:26,711 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,711 - INFO - Testing model memory handler
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Model memory handler test passed
+2025-05-22 10:57:26,711 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,711 - INFO - Testing refine_boundaries
+2025-05-22 10:57:26,711 - INFO - Embeddings shape: (10, 384)
+2025-05-22 10:57:26,711 - INFO - Surprise indices: [3, 7]
+2025-05-22 10:57:26,711 - INFO - Similarity matrix shape: (10, 10)
+2025-05-22 10:57:26,711 - INFO - Number of communities: 3
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2], [3, 4, 5, 6], [7, 8, 9]]
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:26,711 - INFO - Initial modularity: -0.31781792444618484
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+2025-05-22 10:57:26,711 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4], [5, 6], [7, 8, 9]]
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4, 5], [6], [7, 8, 9]]
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Refine boundaries test passed
+2025-05-22 10:57:26,712 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,712 - INFO - Testing GraphRAGCorpus query
+2025-05-22 10:57:26,712 - ERROR - Error querying GraphRAG corpus: 'similarity'
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: GraphRAGCorpus query test passed
+2025-05-22 10:57:26,712 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,712 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,712 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Testing RAG context retrieval
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: RAG context retrieval test passed
+2025-05-22 10:57:26,713 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,713 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,713 - INFO - Testing advanced thinking step
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Starting thinking step: Let's think step by step.
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Constructed thinking prompt for step: Let's think step by step.
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Received response for thinking step: Let's think step by step.
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Advanced thinking step test passed
+2025-05-22 10:57:26,713 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,713 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,713 - INFO - Testing candidate prompts
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Candidate prompts test passed
+2025-05-22 10:57:26,713 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,713 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:26,713 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,714 - INFO - Testing instance-adaptive CoT
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Running instance-adaptive CoT with model gpt-4
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Selected CoT prompt: Let's think step by step.
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Instance-adaptive CoT test passed
+2025-05-22 10:57:26,714 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,714 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:26,714 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,714 - INFO - Testing agent combinations
+2025-05-22 10:57:26,714 - INFO - Testing combination: Researcher, Analytical, Professional
+2025-05-22 10:57:26,716 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,716 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,716 - INFO - Testing agent types
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Agent types test passed
+2025-05-22 10:57:26,716 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,716 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,716 - INFO - Testing metacognitive types
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Metacognitive types test passed
+2025-05-22 10:57:26,716 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,716 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,716 - INFO - Testing voice types
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Voice types test passed
+2025-05-22 10:57:26,716 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,716 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,717 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:26,717 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,717 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:26,717 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:26,718 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:26,718 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,718 - INFO - Testing all available models
+2025-05-22 10:57:26,718 - INFO - Testing model: llama2
+2025-05-22 10:57:26,718 - INFO - Testing model: mistral
+2025-05-22 10:57:26,718 - INFO - Testing model: llama3
+2025-05-22 10:57:26,718 - INFO - Testing model: phi3
+2025-05-22 10:57:26,718 - INFO - CHECKPOINT: All available models test passed
+2025-05-22 10:57:26,718 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,718 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,718 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:26,718 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,719 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:26,719 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:26,720 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:26,720 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,720 - INFO - Testing changing agent settings
+2025-05-22 10:57:26,720 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:26,720 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:57:26,720 - INFO - Current model before save: llama2
+2025-05-22 10:57:26,720 - INFO - Current_model value: Not Set
+2025-05-22 10:57:26,720 - INFO - Syncing current_model (None) to selected_model (llama2)
+2025-05-22 10:57:26,720 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:26,760 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:26,761 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,761 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,761 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:26,761 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,761 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:26,761 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:26,762 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:26,762 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,762 - INFO - Testing changing model settings
+2025-05-22 10:57:26,762 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:26,762 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:57:26,762 - INFO - Current model before save: mistral
+2025-05-22 10:57:26,762 - INFO - Current_model value: Not Set
+2025-05-22 10:57:26,762 - INFO - Syncing current_model (None) to selected_model (mistral)
+2025-05-22 10:57:26,762 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:26,762 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:26,762 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,762 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,762 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:26,762 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,762 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:26,763 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:26,763 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:26,763 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,763 - INFO - Testing agent prompt construction
+2025-05-22 10:57:26,764 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,764 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,764 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:26,764 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,765 - INFO - Testing max_tokens range
+2025-05-22 10:57:26,765 - INFO - Testing max_tokens: 100
+2025-05-22 10:57:26,765 - INFO - Testing max_tokens: 1000
+2025-05-22 10:57:26,765 - INFO - Testing max_tokens: 2000
+2025-05-22 10:57:26,765 - INFO - Testing max_tokens: 4000
+2025-05-22 10:57:26,765 - INFO - Testing max_tokens: 8000
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Max tokens range test passed
+2025-05-22 10:57:26,765 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,765 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:26,765 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:26,766 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:26,766 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:26,766 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:26,766 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:26,766 - INFO - Testing temperature range
+2025-05-22 10:57:26,766 - INFO - Testing temperature: 0.0
+2025-05-22 10:57:26,766 - INFO - Testing temperature: 0.1
+2025-05-22 10:57:26,766 - INFO - Testing temperature: 0.5
+2025-05-22 10:57:26,766 - INFO - Testing temperature: 0.7
+2025-05-22 10:57:26,766 - INFO - Testing temperature: 1.0
+2025-05-22 10:57:26,766 - INFO - CHECKPOINT: Temperature range test passed
+2025-05-22 10:57:26,766 - INFO - Cleaning up test environment
+2025-05-22 10:57:26,766 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:26,767 - INFO - Selected provider: llama2
+2025-05-22 10:57:42,588 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 10:57:42,589 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 10:57:43,243 - INFO - Pygame is available for audio playback
+2025-05-22 10:57:43,282 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 10:57:43,283 - INFO - CHECKPOINT: Using robust Ollama utilities module with full functionality
+2025-05-22 10:57:43,283 - ERROR - Failed to import required modules: cannot import name 'display_message' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:43,284 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:43,285 - INFO - Successfully imported fixed_chat_settings
+2025-05-22 10:57:43,285 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:43,427 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:57:43,428 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:43,428 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,428 - INFO - Testing calculate_modularity
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Calculating modularity for communities: [0, 0, 1]
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Similarity matrix shape: (3, 3)
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Community dictionary: {0: [0, 1], 1: [2]}
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Calculated modularity: 0.8214285714285713
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Calculate modularity test passed
+2025-05-22 10:57:43,429 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,429 - INFO - Testing episodic memory initialization
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Episodic memory initialization test passed
+2025-05-22 10:57:43,429 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,429 - INFO - Testing memory retrieval
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:57:43,429 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Memory retrieval test passed
+2025-05-22 10:57:43,430 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,430 - INFO - Testing model memory handler
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Model memory handler test passed
+2025-05-22 10:57:43,430 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,430 - INFO - Testing refine_boundaries
+2025-05-22 10:57:43,430 - INFO - Embeddings shape: (10, 384)
+2025-05-22 10:57:43,430 - INFO - Surprise indices: [3, 7]
+2025-05-22 10:57:43,430 - INFO - Similarity matrix shape: (10, 10)
+2025-05-22 10:57:43,430 - INFO - Number of communities: 3
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2], [3, 4, 5, 6], [7, 8, 9]]
+2025-05-22 10:57:43,430 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:43,431 - INFO - Initial modularity: -0.3177763629480432
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:43,431 - INFO - Updated best modularity to -0.31774693512962965 with boundaries [4, 7]
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4], [5, 6], [7, 8, 9]]
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4, 5], [6], [7, 8, 9]]
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Refine boundaries test passed
+2025-05-22 10:57:43,431 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:57:43,431 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,431 - INFO - Testing GraphRAGCorpus query
+2025-05-22 10:57:43,432 - ERROR - Error querying GraphRAG corpus: 'similarity'
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: GraphRAGCorpus query test passed
+2025-05-22 10:57:43,432 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,432 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Testing RAG context retrieval
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: RAG context retrieval test passed
+2025-05-22 10:57:43,432 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,432 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,432 - INFO - Testing advanced thinking step
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Starting thinking step: Let's think step by step.
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Constructed thinking prompt for step: Let's think step by step.
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Received response for thinking step: Let's think step by step.
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Advanced thinking step test passed
+2025-05-22 10:57:43,432 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,432 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:43,432 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,433 - INFO - Testing candidate prompts
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Candidate prompts test passed
+2025-05-22 10:57:43,433 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,433 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,433 - INFO - Testing instance-adaptive CoT
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Running instance-adaptive CoT with model gpt-4
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Selected CoT prompt: Let's solve this problem by splitting it into steps.
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Instance-adaptive CoT test passed
+2025-05-22 10:57:43,433 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,433 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:43,433 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,433 - INFO - Testing agent combinations
+2025-05-22 10:57:43,433 - INFO - Testing combination: Researcher, Analytical, Professional
+2025-05-22 10:57:43,435 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,435 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,435 - INFO - Testing agent types
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Agent types test passed
+2025-05-22 10:57:43,435 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,435 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:43,435 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,435 - INFO - Testing metacognitive types
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Metacognitive types test passed
+2025-05-22 10:57:43,436 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,436 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,436 - INFO - Testing voice types
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Voice types test passed
+2025-05-22 10:57:43,436 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,436 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,436 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:43,437 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:43,437 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:43,437 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,437 - INFO - Testing all available models
+2025-05-22 10:57:43,437 - INFO - Testing model: llama2
+2025-05-22 10:57:43,437 - INFO - Testing model: mistral
+2025-05-22 10:57:43,437 - INFO - Testing model: llama3
+2025-05-22 10:57:43,437 - INFO - Testing model: phi3
+2025-05-22 10:57:43,437 - INFO - CHECKPOINT: All available models test passed
+2025-05-22 10:57:43,437 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,437 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,437 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:43,437 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,438 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:43,438 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:43,439 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:43,439 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,439 - INFO - Testing changing agent settings
+2025-05-22 10:57:43,439 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:43,439 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:57:43,439 - INFO - Current model before save: llama2
+2025-05-22 10:57:43,439 - INFO - Current_model value: Not Set
+2025-05-22 10:57:43,439 - INFO - Syncing current_model (None) to selected_model (llama2)
+2025-05-22 10:57:43,439 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:43,479 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:43,479 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,479 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,479 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:43,479 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,480 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:43,480 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:43,480 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:43,480 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,480 - INFO - Testing changing model settings
+2025-05-22 10:57:43,480 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:43,480 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:57:43,480 - INFO - Current model before save: mistral
+2025-05-22 10:57:43,480 - INFO - Current_model value: Not Set
+2025-05-22 10:57:43,480 - INFO - Syncing current_model (None) to selected_model (mistral)
+2025-05-22 10:57:43,480 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:43,481 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:57:43,481 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,481 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,481 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:43,481 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,481 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:43,481 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:43,481 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:43,482 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,482 - INFO - Testing agent prompt construction
+2025-05-22 10:57:43,482 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,482 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,482 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:43,482 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,483 - INFO - Testing max_tokens range
+2025-05-22 10:57:43,483 - INFO - Testing max_tokens: 100
+2025-05-22 10:57:43,483 - INFO - Testing max_tokens: 1000
+2025-05-22 10:57:43,483 - INFO - Testing max_tokens: 2000
+2025-05-22 10:57:43,483 - INFO - Testing max_tokens: 4000
+2025-05-22 10:57:43,483 - INFO - Testing max_tokens: 8000
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Max tokens range test passed
+2025-05-22 10:57:43,483 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:57:43,483 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:57:43,483 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:57:43,484 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:57:43,484 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:57:43,484 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:57:43,484 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:57:43,484 - INFO - Testing temperature range
+2025-05-22 10:57:43,484 - INFO - Testing temperature: 0.0
+2025-05-22 10:57:43,484 - INFO - Testing temperature: 0.1
+2025-05-22 10:57:43,484 - INFO - Testing temperature: 0.5
+2025-05-22 10:57:43,484 - INFO - Testing temperature: 0.7
+2025-05-22 10:57:43,484 - INFO - Testing temperature: 1.0
+2025-05-22 10:57:43,484 - INFO - CHECKPOINT: Temperature range test passed
+2025-05-22 10:57:43,484 - INFO - Cleaning up test environment
+2025-05-22 10:57:43,484 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:03,378 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 10:58:03,378 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 10:58:04,022 - INFO - Pygame is available for audio playback
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 10:58:04,060 - INFO - CHECKPOINT: Using robust Ollama utilities module with full functionality
+2025-05-22 10:58:04,060 - ERROR - Failed to import required modules: cannot import name 'display_message' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:58:04,061 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:58:04,062 - INFO - Successfully imported fixed_chat_settings
+2025-05-22 10:58:04,062 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:58:04,202 - ERROR - Failed to import required modules: cannot import name 'initialize_session_state' from 'modern_chat_interface' (/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py)
+2025-05-22 10:58:04,203 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,203 - INFO - Testing calculate_modularity
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Calculating modularity for communities: [0, 0, 1]
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Similarity matrix shape: (3, 3)
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Community dictionary: {0: [0, 1], 1: [2]}
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Calculated modularity: 0.8214285714285713
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Calculate modularity test passed
+2025-05-22 10:58:04,203 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,203 - INFO - Testing episodic memory initialization
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Episodic memory initialization test passed
+2025-05-22 10:58:04,203 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:58:04,203 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,204 - INFO - Testing memory retrieval
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Memory retrieval test passed
+2025-05-22 10:58:04,204 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,204 - INFO - Testing model memory handler
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Segmenting text with model llama2
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Using test case for segmentation
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Model memory handler test passed
+2025-05-22 10:58:04,204 - INFO - Setting up test environment for episodic memory tests
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,204 - INFO - Testing refine_boundaries
+2025-05-22 10:58:04,204 - INFO - Embeddings shape: (10, 384)
+2025-05-22 10:58:04,204 - INFO - Surprise indices: [3, 7]
+2025-05-22 10:58:04,204 - INFO - Similarity matrix shape: (10, 10)
+2025-05-22 10:58:04,204 - INFO - Number of communities: 3
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2], [3, 4, 5, 6], [7, 8, 9]]
+2025-05-22 10:58:04,204 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:58:04,205 - INFO - Initial modularity: -0.31717868341492905
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4], [5, 6], [7, 8, 9]]
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Calculating modularity for communities: [[0, 1, 2, 3, 4, 5], [6], [7, 8, 9]]
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Similarity matrix shape: (10, 10)
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Refine boundaries test passed
+2025-05-22 10:58:04,205 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:58:04,205 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,205 - INFO - Testing GraphRAGCorpus query
+2025-05-22 10:58:04,206 - ERROR - Error querying GraphRAG corpus: 'similarity'
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: GraphRAGCorpus query test passed
+2025-05-22 10:58:04,206 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,206 - INFO - Setting up test environment for RAG features tests
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: GraphRAGCorpus mocked successfully
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Testing RAG context retrieval
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: RAG context retrieval test passed
+2025-05-22 10:58:04,206 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,206 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,206 - INFO - Testing advanced thinking step
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Starting thinking step: Let's think step by step.
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Constructed thinking prompt for step: Let's think step by step.
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Received response for thinking step: Let's think step by step.
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Advanced thinking step test passed
+2025-05-22 10:58:04,206 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,206 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:58:04,206 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,207 - INFO - Testing candidate prompts
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Candidate prompts test passed
+2025-05-22 10:58:04,207 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,207 - INFO - Setting up test environment for thinking types tests
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: API calls mocked successfully
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,207 - INFO - Testing instance-adaptive CoT
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Running instance-adaptive CoT with model gpt-4
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Selected CoT prompt: Let's think about this step by step.
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Calling OpenAI API with model gpt-4
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Instance-adaptive CoT test passed
+2025-05-22 10:58:04,207 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,207 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:58:04,207 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:58:04,208 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,208 - INFO - Testing agent combinations
+2025-05-22 10:58:04,208 - INFO - Testing combination: Researcher, Analytical, Professional
+2025-05-22 10:58:04,208 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,208 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,209 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,209 - INFO - Testing agent types
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Agent types test passed
+2025-05-22 10:58:04,209 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,209 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,209 - INFO - Testing metacognitive types
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Metacognitive types test passed
+2025-05-22 10:58:04,209 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,209 - INFO - Setting up test environment for agent features tests
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Prompts mocked successfully
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,209 - INFO - Testing voice types
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Voice types test passed
+2025-05-22 10:58:04,209 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,209 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:58:04,209 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,210 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:58:04,210 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:58:04,210 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:58:04,210 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,210 - INFO - Testing all available models
+2025-05-22 10:58:04,210 - INFO - Testing model: llama2
+2025-05-22 10:58:04,210 - INFO - Testing model: mistral
+2025-05-22 10:58:04,210 - INFO - Testing model: llama3
+2025-05-22 10:58:04,210 - INFO - Testing model: phi3
+2025-05-22 10:58:04,210 - INFO - CHECKPOINT: All available models test passed
+2025-05-22 10:58:04,210 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,211 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,211 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:58:04,211 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,211 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:58:04,212 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:58:04,212 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:58:04,212 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,212 - INFO - Testing changing agent settings
+2025-05-22 10:58:04,212 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:58:04,212 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:58:04,212 - INFO - Current model before save: llama2
+2025-05-22 10:58:04,212 - INFO - Current_model value: Not Set
+2025-05-22 10:58:04,212 - INFO - Syncing current_model (None) to selected_model (llama2)
+2025-05-22 10:58:04,212 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:58:04,252 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:58:04,252 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,253 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,253 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:58:04,253 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,253 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:58:04,253 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:58:04,254 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:58:04,254 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,254 - INFO - Testing changing model settings
+2025-05-22 10:58:04,254 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:58:04,254 - INFO - Session state keys: ['selected_model', 'agent_type', 'metacognitive_type', 'voice_type', 'selected_corpus', 'temperature', 'max_tokens', 'presence_penalty', 'frequency_penalty']
+2025-05-22 10:58:04,254 - INFO - Current model before save: mistral
+2025-05-22 10:58:04,254 - INFO - Current_model value: Not Set
+2025-05-22 10:58:04,254 - INFO - Syncing current_model (None) to selected_model (mistral)
+2025-05-22 10:58:04,254 - ERROR - Error saving settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:58:04,254 - ERROR - Error loading settings: 'dict' object has no attribute 'selected_model'
+2025-05-22 10:58:04,254 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,254 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,254 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:58:04,254 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,255 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:58:04,255 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:58:04,255 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:58:04,255 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,256 - INFO - Testing agent prompt construction
+2025-05-22 10:58:04,257 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,257 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,257 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:58:04,257 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,257 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:58:04,257 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:58:04,258 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:58:04,258 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,258 - INFO - Testing max_tokens range
+2025-05-22 10:58:04,258 - INFO - Testing max_tokens: 100
+2025-05-22 10:58:04,258 - INFO - Testing max_tokens: 1000
+2025-05-22 10:58:04,258 - INFO - Testing max_tokens: 2000
+2025-05-22 10:58:04,258 - INFO - Testing max_tokens: 4000
+2025-05-22 10:58:04,258 - INFO - Testing max_tokens: 8000
+2025-05-22 10:58:04,258 - INFO - CHECKPOINT: Max tokens range test passed
+2025-05-22 10:58:04,258 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,258 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,258 - INFO - Setting up test environment for model settings tests
+2025-05-22 10:58:04,258 - INFO - CHECKPOINT: Beginning test setup
+2025-05-22 10:58:04,258 - INFO - CHECKPOINT: Streamlit functions mocked successfully
+2025-05-22 10:58:04,259 - INFO - CHECKPOINT: Ollama client mocked successfully
+2025-05-22 10:58:04,259 - INFO - CHECKPOINT: Test settings file created successfully
+2025-05-22 10:58:04,259 - INFO - CHECKPOINT: Test environment setup completed successfully
+2025-05-22 10:58:04,259 - INFO - Testing temperature range
+2025-05-22 10:58:04,259 - INFO - Testing temperature: 0.0
+2025-05-22 10:58:04,259 - INFO - Testing temperature: 0.1
+2025-05-22 10:58:04,259 - INFO - Testing temperature: 0.5
+2025-05-22 10:58:04,259 - INFO - Testing temperature: 0.7
+2025-05-22 10:58:04,259 - INFO - Testing temperature: 1.0
+2025-05-22 10:58:04,259 - INFO - CHECKPOINT: Temperature range test passed
+2025-05-22 10:58:04,259 - INFO - Cleaning up test environment
+2025-05-22 10:58:04,259 - INFO - CHECKPOINT: Test environment cleanup completed successfully
+2025-05-22 10:58:04,260 - INFO - Selected provider: llama2

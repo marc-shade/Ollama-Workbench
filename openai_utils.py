@@ -5,19 +5,35 @@ import streamlit as st
 from openai import OpenAI
 
 OPENAI_MODELS = [
-    "gpt-4-1106-preview",
-    "gpt-4-0125-preview",
-    "gpt-4-turbo",
-    "gpt-4o-mini",
-    "gpt-4o-2024-08-06",
+    # Latest GPT-4o models (2024/2025)
+    "gpt-4o-2024-11-20",
+    "gpt-4o-2024-08-06", 
     "gpt-4o",
+    "gpt-4o-mini-2024-07-18",
+    "gpt-4o-mini",
+    
+    # GPT-4 Turbo models
+    "gpt-4-turbo-2024-04-09",
+    "gpt-4-turbo",
+    "gpt-4-0125-preview",
+    "gpt-4-1106-preview",
+    
+    # Legacy GPT-4 models
     "gpt-4",
     "gpt-4-0613",
     "gpt-4-0314",
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo-1106",
+    
+    # GPT-3.5 models
     "gpt-3.5-turbo-0125",
-    "gpt-3.5-turbo-instruct"
+    "gpt-3.5-turbo-1106", 
+    "gpt-3.5-turbo",
+    "gpt-3.5-turbo-instruct",
+    
+    # Reasoning models
+    "o1-preview-2024-09-12",
+    "o1-preview",
+    "o1-mini-2024-09-12",
+    "o1-mini"
 ]
 
 

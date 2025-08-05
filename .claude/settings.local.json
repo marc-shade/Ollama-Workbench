@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)",
+      "Bash(chmod:*)",
+      "Bash(./fix_dependencies.sh:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(ls:*)",
+      "Bash(source:*)",
+      "Bash(streamlit run:*)",
+      "Bash(gh pr list:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(bash:*)",
+      "Bash(ollama list:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": []
+  }
+}

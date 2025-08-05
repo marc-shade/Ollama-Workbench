@@ -1,0 +1,23 @@
+{
+    "default": {
+        "provider": "gtts",
+        "voice_id": "en-US-Wavenet-D",
+        "language": "en",
+        "speed": 1.0,
+        "pitch": 1.0
+    },
+    "male": {
+        "provider": "gtts",
+        "voice_id": "en-US-Wavenet-D",
+        "language": "en",
+        "speed": 1.0,
+        "pitch": 1.0
+    },
+    "female": {
+        "provider": "gtts",
+        "voice_id": "en-US-Wavenet-A",
+        "language": "en",
+        "speed": 1.0,
+        "pitch": 1.0
+    }
+}

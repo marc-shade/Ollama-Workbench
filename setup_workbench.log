@@ -1,0 +1,290 @@
+==== Ollama Workbench Setup Started ====
+Wed May 21 17:01:30 EDT 2025 - Starting setup
+Wed May 21 17:01:30 EDT 2025 - CHECKPOINT: Activating existing virtual environment.
+Wed May 21 17:01:30 EDT 2025 - CHECKPOINT: Uninstalling all NumPy, torch, torchvision, torchaudio.
+Wed May 21 17:01:33 EDT 2025 - CHECKPOINT: Cleaning up .pyc and __pycache__ files.
+Wed May 21 17:01:35 EDT 2025 - CHECKPOINT: Upgrading pip.
+Wed May 21 17:01:36 EDT 2025 - CHECKPOINT: Installing compatible versions of NumPy, PyTorch, Streamlit.
+Wed May 21 17:02:04 EDT 2025 - CHECKPOINT: Installing all other dependencies.
+Wed May 21 17:02:25 EDT 2025 - CHECKPOINT: Verifying installed versions.
+Wed May 21 17:02:40 EDT 2025 - CHECKPOINT: Ensuring Ollama server is running.
+==== Checking Ollama Server Status ====
+CHECKPOINT: Verifying Ollama server is running
+CHECKPOINT: Ollama server is already running
+CHECKPOINT: Testing Ollama API connection...
+CHECKPOINT: Ollama API is responding
+CHECKPOINT: Ollama server check complete
+Wed May 21 17:02:40 EDT 2025 - CHECKPOINT: Launching Ollama Workbench.
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.1.16:8501
+
+/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/flaml/__init__.py:20: UserWarning: flaml.automl is not available. Please install flaml[automl] to enable AutoML functionalities.
+  warnings.warn("flaml.automl is not available. Please install flaml[automl] to enable AutoML functionalities.")
+pygame 2.6.1 (SDL 2.28.4, Python 3.11.9)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+ * Serving Flask app 'openai_compatibility'
+ * Debug mode: off
+Address already in use
+Port 8000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'openai_compatibility'
+ * Debug mode: off
+Address already in use
+Port 8000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'openai_compatibility'
+ * Debug mode: off
+Address already in use
+Port 8000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+2025-05-22 05:56:37.532 Please replace `st.experimental_rerun` with `st.rerun`.
+
+`st.experimental_rerun` will be removed after 2024-04-01.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+2025-05-22 05:56:41.954 Please replace `st.experimental_rerun` with `st.rerun`.
+
+`st.experimental_rerun` will be removed after 2024-04-01.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'openai_compatibility'
+ * Debug mode: off
+Address already in use
+Port 8000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'openai_compatibility'
+ * Debug mode: off
+Address already in use
+Port 8000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+  Stopping...
+  Stopping...
+Exception ignored in: <module 'threading' from '/opt/homebrew/Caskroom/miniconda/base/envs/ollamaworkbench/lib/python3.11/threading.py'>
+Traceback (most recent call last):
+  File "/opt/homebrew/Caskroom/miniconda/base/envs/ollamaworkbench/lib/python3.11/threading.py", line 1590, in _shutdown
+    lock.acquire()
+  File "/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/streamlit/web/bootstrap.py", line 69, in signal_handler
+    server.stop()
+  File "/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/streamlit/web/server/server.py", line 397, in stop
+    self._runtime.stop()
+  File "/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/streamlit/runtime/runtime.py", line 308, in stop
+    async_objs.eventloop.call_soon_threadsafe(stop_on_eventloop)
+  File "/opt/homebrew/Caskroom/miniconda/base/envs/ollamaworkbench/lib/python3.11/asyncio/base_events.py", line 807, in call_soon_threadsafe
+    self._check_closed()
+  File "/opt/homebrew/Caskroom/miniconda/base/envs/ollamaworkbench/lib/python3.11/asyncio/base_events.py", line 520, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Thu May 22 06:08:58 EDT 2025 - CHECKPOINT: Installing additional dependencies for robust Ollama utilities.
+Thu May 22 06:08:59 EDT 2025 - CHECKPOINT: Verifying installed versions.
+Thu May 22 06:09:02 EDT 2025 - CHECKPOINT: Ensuring Ollama server is running.
+==== Checking Ollama Server Status ====
+CHECKPOINT: Verifying Ollama server is running
+CHECKPOINT: Ollama server is already running
+CHECKPOINT: Testing Ollama API connection...
+CHECKPOINT: Ollama API is responding
+CHECKPOINT: Ollama server check complete
+Thu May 22 06:09:02 EDT 2025 - CHECKPOINT: Launching Ollama Workbench.
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.1.16:8501
+
+/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/flaml/__init__.py:20: UserWarning: flaml.automl is not available. Please install flaml[automl] to enable AutoML functionalities.
+  warnings.warn("flaml.automl is not available. Please install flaml[automl] to enable AutoML functionalities.")
+pygame 2.6.1 (SDL 2.28.4, Python 3.11.9)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+ * Serving Flask app 'openai_compatibility'
+ * Debug mode: off
+Address already in use
+Port 8000 is in use by another program. Either identify and stop that program, or start the server with a different port.
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+2025-05-22 06:09:12.459 Uncaught app exception
+Traceback (most recent call last):
+  File "/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 541, in _run_script
+    exec(code, module.__dict__)
+  File "/Volumes/FILES/code/Ollama-Workbench/integrated_main.py", line 934, in <module>
+    main()
+  File "/Volumes/FILES/code/Ollama-Workbench/integrated_main.py", line 880, in main
+    params = dict(st.query_params)
+                  ^^^^^^^^^^^^^^^
+AttributeError: module 'streamlit' has no attribute 'query_params'
+2025-05-22 06:09:34.531 Uncaught app exception
+Traceback (most recent call last):
+  File "/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 541, in _run_script
+    exec(code, module.__dict__)
+  File "/Volumes/FILES/code/Ollama-Workbench/integrated_main.py", line 934, in <module>
+    main()
+  File "/Volumes/FILES/code/Ollama-Workbench/integrated_main.py", line 880, in main
+    params = dict(st.query_params)
+                  ^^^^^^^^^^^^^^^
+AttributeError: module 'streamlit' has no attribute 'query_params'
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+2025-05-22 06:10:17.566 Uncaught app exception
+Traceback (most recent call last):
+  File "/Volumes/FILES/code/Ollama-Workbench/venv/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 541, in _run_script
+    exec(code, module.__dict__)
+  File "/Volumes/FILES/code/Ollama-Workbench/integrated_main.py", line 934, in <module>
+    main()
+  File "/Volumes/FILES/code/Ollama-Workbench/integrated_main.py", line 880, in main
+    params = dict(st.query_params)
+                  ^^^^^^^^^^^^^^^
+AttributeError: module 'streamlit' has no attribute 'query_params'
+ * Serving Flask app 'integrated_main'
+ * Debug mode: off
+2025-05-23 08:27:25,786 - INFO - 🚀 Starting Ollama Workbench setup...
+2025-05-23 08:27:25,787 - INFO - 
+==================================================
+2025-05-23 08:27:25,787 - INFO - 📋 STEP: Prerequisites
+2025-05-23 08:27:25,787 - INFO - ==================================================
+2025-05-23 08:27:25,787 - INFO - 🔍 Checking system prerequisites...
+2025-05-23 08:27:25,787 - INFO - ✅ Python 3.11.9
+2025-05-23 08:27:25,815 - INFO - ✅ All required commands available
+2025-05-23 08:27:25,815 - INFO - ✅ Prerequisites completed successfully
+2025-05-23 08:27:25,815 - INFO - 
+==================================================
+2025-05-23 08:27:25,815 - INFO - 📋 STEP: Virtual Environment
+2025-05-23 08:27:25,815 - INFO - ==================================================
+2025-05-23 08:27:25,815 - INFO - 🐍 Setting up virtual environment...
+2025-05-23 08:27:25,815 - INFO - ♻️  Virtual environment already exists
+2025-05-23 08:27:25,815 - INFO - ✅ Virtual environment ready
+2025-05-23 08:27:25,815 - INFO - ✅ Virtual Environment completed successfully
+2025-05-23 08:27:25,815 - INFO - 
+==================================================
+2025-05-23 08:27:25,815 - INFO - 📋 STEP: Dependencies
+2025-05-23 08:27:25,815 - INFO - ==================================================
+2025-05-23 08:27:25,815 - INFO - 📦 Installing dependencies...
+2025-05-23 08:27:26,639 - INFO - ✅ Pip upgraded
+2025-05-23 08:27:26,639 - INFO - 📥 Installing packages from requirements.txt...
+2025-05-23 08:28:05,726 - INFO - ✅ All dependencies installed successfully
+2025-05-23 08:28:05,726 - INFO - ✅ Dependencies completed successfully
+2025-05-23 08:28:05,726 - INFO - 
+==================================================
+2025-05-23 08:28:05,726 - INFO - 📋 STEP: Ollama Installation
+2025-05-23 08:28:05,726 - INFO - ==================================================
+2025-05-23 08:28:05,726 - INFO - 🦙 Checking Ollama installation...
+2025-05-23 08:28:05,780 - INFO - ✅ Ollama already installed
+2025-05-23 08:28:05,780 - INFO - ✅ Ollama Installation completed successfully
+2025-05-23 08:28:05,780 - INFO - 
+==================================================
+2025-05-23 08:28:05,780 - INFO - 📋 STEP: Directory Setup
+2025-05-23 08:28:05,780 - INFO - ==================================================
+2025-05-23 08:28:05,780 - INFO - 📁 Setting up directories...
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: data
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: uploads
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: models
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: projects
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: cache
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: security
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: security/audit
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: logs
+2025-05-23 08:28:05,781 - INFO - ✅ Directory: sessions
+2025-05-23 08:28:05,781 - INFO - ✅ Directory Setup completed successfully
+2025-05-23 08:28:05,781 - INFO - 
+==================================================
+2025-05-23 08:28:05,781 - INFO - 📋 STEP: Security Framework
+2025-05-23 08:28:05,781 - INFO - ==================================================
+2025-05-23 08:28:05,781 - INFO - 🔐 Initializing security framework...
+2025-05-23 08:28:06,806 - INFO - ✅ Security framework initialized
+2025-05-23 08:28:06,806 - INFO - ✅ Security Framework completed successfully
+2025-05-23 08:28:06,806 - INFO - 
+==================================================
+2025-05-23 08:28:06,806 - INFO - 📋 STEP: Configuration
+2025-05-23 08:28:06,806 - INFO - ==================================================
+2025-05-23 08:28:06,806 - INFO - ⚙️  Creating configuration...
+2025-05-23 08:28:06,807 - INFO - ✅ Configuration created
+2025-05-23 08:28:06,807 - INFO - ✅ Configuration completed successfully
+2025-05-23 08:28:06,807 - INFO - 
+==================================================
+2025-05-23 08:28:06,807 - INFO - 📋 STEP: Ollama Server
+2025-05-23 08:28:06,807 - INFO - ==================================================
+2025-05-23 08:28:06,807 - INFO - 🚀 Starting Ollama server...
+2025-05-23 08:28:06,966 - INFO - ✅ Ollama server already running
+2025-05-23 08:28:06,966 - INFO - ✅ Ollama Server completed successfully
+2025-05-23 08:28:06,966 - INFO - 
+==================================================
+2025-05-23 08:28:06,966 - INFO - 📋 STEP: Default Model
+2025-05-23 08:28:06,966 - INFO - ==================================================
+2025-05-23 08:28:06,966 - INFO - 📥 Pulling default model...
+2025-05-23 08:30:10,919 - INFO - ✅ Default model (llama3.2:1b) downloaded
+2025-05-23 08:30:10,921 - INFO - ✅ Default Model completed successfully
+2025-05-23 08:30:10,922 - INFO - 
+==================================================
+2025-05-23 08:30:10,922 - INFO - 📋 STEP: Startup Script
+2025-05-23 08:30:10,923 - INFO - ==================================================
+2025-05-23 08:30:10,923 - INFO - 📜 Creating startup script...
+2025-05-23 08:30:10,925 - INFO - ✅ Startup script created: start_workbench.sh
+2025-05-23 08:30:10,925 - INFO - ✅ Startup Script completed successfully
+2025-05-23 08:30:10,925 - INFO - 
+==================================================
+2025-05-23 08:30:10,925 - INFO - 📋 STEP: Basic Tests
+2025-05-23 08:30:10,926 - INFO - ==================================================
+2025-05-23 08:30:10,926 - INFO - 🧪 Running basic tests...
+2025-05-23 08:30:11,708 - INFO - ✅ Basic tests passed
+2025-05-23 08:30:11,709 - INFO - ✅ Basic Tests completed successfully
+2025-05-23 08:30:11,709 - INFO - 
+🎉 Setup completed successfully!

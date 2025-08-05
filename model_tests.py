@@ -130,11 +130,12 @@ async def run_tool_test(model: str, prompt: str, tool_description: str, function
     final_response = await client.chat(model=model, messages=messages)
     return final_response['message']['content']
 
-prompt_input = st.text_input("Enter a prompt for the tool test", key="tool_prompt_input")
-if st.button("Run Tool Test"):
-    model = "your_model_name"  # You can also make this dynamic
-    prompt = prompt_input  # Use the existing dynamic prompt
-    tool_description = "Your tool description here"  # Adjust as necessary
-    arguments = {}  # Add any necessary arguments here
-    generated_text = asyncio.run(run_tool_test(model, prompt, tool_description, lambda: "This is a test response", arguments))
-    st.write(f"Generated Text from Tool: {generated_text}")
+def model_tool_test_ui(): # Encapsulate the tool test UI in a function
+    prompt_input = st.text_input("Enter a prompt for the model tool test", key="tool_prompt_input") # Changed prompt text to be specific
+    if st.button("Run Model Tool Test"): # Changed button label to be specific
+        model = "your_model_name"  # You can also make this dynamic
+        prompt = prompt_input  # Use the existing dynamic prompt
+        tool_description = "Your tool description here"  # Adjust as necessary
+        arguments = {}  # Add any necessary arguments here
+        generated_text = asyncio.run(run_tool_test(model, prompt, tool_description, lambda: "This is a test response", arguments))
+        st.markdown(f"### Model Tool Test Result: {generated_text}") # Changed st.write to st.markdown for better formatting and clarity and specific text

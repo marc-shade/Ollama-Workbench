@@ -19,6 +19,27 @@ def display_welcome_message():
             - 🛠️ **Advanced Settings:** Fine-tune the model's output by adjusting parameters like temperature, max tokens, presence penalty, and frequency penalty.
             - 📜 **Workspace:** Save and manage code snippets and other text generated during your chat sessions.
             - 💾 **Save/Load Sessions:** Save your chat history and workspace for later use, or load previously saved sessions.
+            
+            #### 🖼️ Multimodal Chat
+            **[New!]** Engage with models that can see and understand images:
+            - 🖼️ **Image Upload:** Upload images in various formats including JPG, PNG, and WebP.
+            - 🔍 **Image Analysis:** Have the model describe, analyze, or answer questions about images.
+            - 💬 **Multimodal Conversation:** Seamlessly mix text and images in the same conversation.
+            - 📊 **Chart Understanding:** Use visual models to interpret and explain charts, graphs, and diagrams.
+            
+            #### 🧰 Tool Playground
+            **[New!]** Experiment with function calling and tool integration:
+            - 🔧 **Predefined Tools:** Test models with built-in tools like calculator, weather API, search, and more.
+            - 🛠️ **Custom Tools:** Create and test your own custom tools with JSON schema definitions.
+            - 🔌 **MCP Tools Integration:** Leverage Model Control Protocol tools from your local system.
+            - 📊 **Tool Execution:** See how models use tools to solve problems and return structured information.
+
+            #### 🔍 Structured Output
+            **[New!]** Generate structured data from text:
+            - 📋 **JSON Schema:** Define the structure of the output using JSON schema.
+            - 🧩 **Schema Templates:** Choose from predefined schemas for common data structures.
+            - 🔄 **Custom Schemas:** Create and save your own custom schemas.
+            - 📊 **Visualization:** View the generated structured data in different formats.
 
             #### 🔄 Workflow
             Ollama Workbench offers a range of tools to design and execute complex AI workflows:
@@ -48,16 +69,80 @@ def display_welcome_message():
             - ⤵️ **Update Models**: Update all local models to ensure you're using the latest versions.
             - ⚙️ **Server Configuration:** Configure the Ollama server settings.
             - 🖥️ **Server Monitoring:** Monitor the Ollama server's resource usage.
-            - ☁️ **External Providers:** **[New!]** Configure and manage API keys for external services like OpenAI, Groq, and various search providers, giving you access to a wider array of AI models and search features. 
+            - ☁️ **External Providers:** Configure and manage API keys for external services like OpenAI, Groq, and various search providers, giving you access to a wider array of AI models and search features.
+            - 🔄 **OpenAI Compatibility:** **[New!]** Run an OpenAI-compatible API server that translates OpenAI API calls to Ollama, allowing you to use OpenAI client libraries with Ollama models.
 
             #### 📊 Test
             Evaluate and compare your AI models:
 
+            - 🛠️ **Model Onboarding:** **[New!]** A comprehensive test suite for evaluating and onboarding new models.
             - 🧪 **Model Feature Test**: Test a model's capability to handle JSON and function calls.
             - 🎯 **Model Comparison by Response Quality**: Compare the response quality and performance of multiple models for a given prompt.
             - 💬 **Contextual Response Test by Model**: Test how well a model maintains context across multiple prompts.
             - 👁️ **Vision Model Comparison**: Compare the performance of vision models using the same test image.
+            - 🧰 **Tool Calling:** **[New!]** Test a model's ability to use tools and function calling.
+            - 🔍 **Structured Output:** **[New!]** Test a model's ability to generate structured data based on JSON schema.
+            - 🔎 **Model Capabilities:** **[New!]** Discover and compare the capabilities of different models with a comprehensive testing framework.
+            - 📊 **Test Visualization:** **[New!]** Visualize and analyze test results with interactive charts and tables.
+        """)
+        
+        st.markdown("---")
+        
+        st.subheader("🆕 What's New")
+        
+        st.markdown("""
+        #### Latest Features (May 2024)
+        
+        1. **Updated to Ollama 0.7.0+** - Compatibility with the latest Ollama API
+        2. **Multimodal Support** - Chat with models that can see and understand images
+        3. **Tool Calling Integration** - Use models with function calling and tool integration
+        4. **MCP Tools Support** - Leverage Model Control Protocol tools from your local system
+        5. **Structured Output Generation** - Generate structured JSON data from text
+        6. **OpenAI Compatibility Layer** - Use OpenAI client libraries with Ollama models
+        7. **Model Capabilities Discovery** - Discover and compare model capabilities
+        8. **Enhanced Test Visualization** - Better visualizations for test results
+        9. **Centralized Configuration** - Environment variables and configuration management
+        10. **Improved Error Handling** - Better error handling and user feedback
+        """)
+        
+        st.markdown("---")
+        
+        st.subheader("💡 Tips")
+        
+        st.markdown("""
+        - **Experiment with Different Models**: Ollama supports a wide range of models. Try different ones to find the best fit for your specific tasks.
+        - **Combine Workflows**: Use the Research feature to gather information, then use that information in a Brainstorming session to generate new ideas.
+        - **Use Tool Calling**: For complex tasks, try using models with tool calling capabilities for more accurate and detailed results.
+        - **Leverage MCP Tools**: If you have specialized tools on your local system, use the MCP tools integration to make them available to your models.
+        - **Structure Your Outputs**: When you need structured data, use the Structured Output feature to generate consistent, well-formatted results.
+        - **Test Before Deploying**: Use the testing tools to evaluate model performance before using them in production.
+        - **Save Your Sessions**: Don't forget to save your chat sessions and workspaces for future reference.
+        - **Explore the Documentation**: Check out the Help section for more detailed information on each feature.
         """)
 
     with col2:
-        st.html("<img src='https://2acrestudios.com/wp-content/uploads/2024/07/00010-3993212168.png' style='max-width: 200px;' />") 
+        st.image("https://2acrestudios.com/wp-content/uploads/2024/07/00010-3993212168.png", width=200)
+        
+        st.markdown("---")
+        
+        st.subheader("🔗 Quick Links")
+        
+        st.markdown("""
+        - [Chat](#/Chat)
+        - [Multimodal Chat](#/Multimodal%20Chat)
+        - [Tool Playground](#/Tool%20Playground)
+        - [Structured Output](#/Structured%20Output)
+        - [Model Capabilities](#/Model%20Capabilities)
+        - [Server Configuration](#/Server%20Configuration)
+        """)
+        
+        st.markdown("---")
+        
+        st.subheader("📚 Resources")
+        
+        st.markdown("""
+        - [Ollama Documentation](https://ollama.ai/documentation)
+        - [Ollama Models Library](https://ollama.ai/library)
+        - [Ollama GitHub Repository](https://github.com/ollama/ollama)
+        - [Ollama Workbench GitHub](https://github.com/your-username/ollama-workbench)
+        """)

@@ -1,0 +1,161 @@
+{
+  "status": "success",
+  "success_rate": 100.0,
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "warnings": 0,
+    "total": 10
+  },
+  "duration": 4.97694993019104,
+  "timestamp": 1754429858.130677,
+  "detailed_results": [
+    {
+      "test": "Python Version",
+      "status": "passed",
+      "message": "Python 3.10.15 is compatible",
+      "details": null,
+      "timestamp": 1754429853.153725
+    },
+    {
+      "test": "Dependency: streamlit",
+      "status": "passed",
+      "message": "Version 1.47.1 >= 1.47.0",
+      "details": null,
+      "timestamp": 1754429853.296005
+    },
+    {
+      "test": "Dependency: ollama",
+      "status": "passed",
+      "message": "Version unknown >= 0.5.0",
+      "details": null,
+      "timestamp": 1754429853.453834
+    },
+    {
+      "test": "Dependency: openai",
+      "status": "passed",
+      "message": "Version 1.99.1 >= 1.99.0",
+      "details": null,
+      "timestamp": 1754429853.575468
+    },
+    {
+      "test": "Dependency: groq",
+      "status": "passed",
+      "message": "Version 0.30.0 >= 0.30.0",
+      "details": null,
+      "timestamp": 1754429853.588305
+    },
+    {
+      "test": "Dependency: mistralai",
+      "status": "passed",
+      "message": "Version 1.9.3 >= 1.9.0",
+      "details": null,
+      "timestamp": 1754429853.758108
+    },
+    {
+      "test": "Dependency: torch",
+      "status": "passed",
+      "message": "Version 2.7.1 >= 2.7.0",
+      "details": null,
+      "timestamp": 1754429857.14625
+    },
+    {
+      "test": "Dependency: transformers",
+      "status": "passed",
+      "message": "Version 4.55.0 >= 4.55.0",
+      "details": null,
+      "timestamp": 1754429857.881296
+    },
+    {
+      "test": "Modern Module: enhanced_ollama_client",
+      "status": "passed",
+      "message": "Import successful",
+      "details": null,
+      "timestamp": 1754429857.919241
+    },
+    {
+      "test": "Modern Module: modern_error_handling",
+      "status": "passed",
+      "message": "Import successful",
+      "details": null,
+      "timestamp": 1754429857.919803
+    },
+    {
+      "test": "Modern Module: performance_optimization",
+      "status": "passed",
+      "message": "Import successful",
+      "details": null,
+      "timestamp": 1754429857.926296
+    },
+    {
+      "test": "Modern Module: modern_security",
+      "status": "passed",
+      "message": "Import successful",
+      "details": null,
+      "timestamp": 1754429858.00057
+    },
+    {
+      "test": "Enhanced Ollama Client",
+      "status": "passed",
+      "message": "Initialization and basic functionality working",
+      "details": null,
+      "timestamp": 1754429858.007203
+    },
+    {
+      "test": "Modern Error Handling",
+      "status": "passed",
+      "message": "Error handling system initialized successfully",
+      "details": null,
+      "timestamp": 1754429858.008689
+    },
+    {
+      "test": "Performance Optimization",
+      "status": "passed",
+      "message": "Caching and performance features working",
+      "details": null,
+      "timestamp": 1754429858.009398
+    },
+    {
+      "test": "Security Features",
+      "status": "passed",
+      "message": "Input validation and security features working",
+      "details": null,
+      "timestamp": 1754429858.112575
+    },
+    {
+      "test": "Streamlit Compatibility",
+      "status": "passed",
+      "message": "Streamlit 1.47.1 is compatible",
+      "details": null,
+      "timestamp": 1754429858.1125948
+    },
+    {
+      "test": "Ollama Integration",
+      "status": "passed",
+      "message": "Ollama client can be initialized",
+      "details": null,
+      "timestamp": 1754429858.11797
+    },
+    {
+      "test": "OpenAI Provider",
+      "status": "passed",
+      "message": "OpenAI 1.99.1 integration working",
+      "details": null,
+      "timestamp": 1754429858.124059
+    },
+    {
+      "test": "Groq Provider",
+      "status": "passed",
+      "message": "Groq integration working",
+      "details": null,
+      "timestamp": 1754429858.130044
+    },
+    {
+      "test": "Mistral Provider",
+      "status": "passed",
+      "message": "Mistral integration working",
+      "details": null,
+      "timestamp": 1754429858.130049
+    }
+  ]
+}

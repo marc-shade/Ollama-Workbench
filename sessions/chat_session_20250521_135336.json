@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-05-21 13:53:36",
+  "chat_history": [
+    {
+      "role": "user",
+      "content": "Hello"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi there!"
+    }
+  ],
+  "model": "test_model",
+  "agent_type": "None",
+  "metacognitive_type": "None",
+  "voice_type": "None",
+  "temperature": 0.8,
+  "max_tokens": 4000
+}

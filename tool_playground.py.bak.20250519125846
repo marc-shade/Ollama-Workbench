@@ -1,0 +1,1245 @@
+import streamlit as st
+import json
+import ollama
+import time
+import pandas as pd
+import base64
+import io
+import logging
+import random
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional, Callable, Union
+from ollama_utils import get_available_models
+from mcp_tools import get_available_mcp_tools, execute_mcp_tool
+from model_capability_registry import filter_models_by_capability, is_tools_capable
+
+# Setup logging
+logging.basicConfig(
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger()
+
+# Predefined tool templates with example implementations
+TOOL_TEMPLATES = {
+    "calculator": {
+        "type": "function",
+        "function": {
+            "name": "calculator",
+            "description": "Perform arithmetic calculations on a given expression or basic operations",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "type": "string",
+                        "description": "Mathematical expression to evaluate (preferred), e.g. '2+2*3'"
+                    },
+                    "operation": {
+                        "type": "string",
+                        "enum": ["add", "subtract", "multiply", "divide"],
+                        "description": "The operation to perform (alternative to expression)"
+                    },
+                    "a": {
+                        "type": "number",
+                        "description": "The first number (use with operation)"
+                    },
+                    "b": {
+                        "type": "number",
+                        "description": "The second number (use with operation)"
+                    }
+                },
+                "required": []
+            }
+        }
+    },
+    "weather": {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city and state/country"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "enum": ["celsius", "fahrenheit"],
+                        "description": "The unit of temperature"
+                    }
+                },
+                "required": ["location"]
+            }
+        }
+    },
+    "search": {
+        "type": "function",
+        "function": {
+            "name": "search",
+            "description": "Search for information on the internet",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query"
+                    },
+                    "num_results": {
+                        "type": "integer",
+                        "description": "The number of search results to return"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    "plot": {
+        "type": "function",
+        "function": {
+            "name": "create_plot",
+            "description": "Create a simple plot from data",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "plot_type": {
+                        "type": "string",
+                        "enum": ["bar", "line", "scatter", "pie"],
+                        "description": "The type of plot to create"
+                    },
+                    "x_data": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        },
+                        "description": "The x-axis data points"
+                    },
+                    "y_data": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        },
+                        "description": "The y-axis data points"
+                    },
+                    "labels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Labels for the data points (required for pie charts)"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "The title of the plot"
+                    }
+                },
+                "required": ["plot_type"]
+            }
+        }
+    },
+    "database": {
+        "type": "function",
+        "function": {
+            "name": "query_database",
+            "description": "Query a fictional database",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {
+                        "type": "string",
+                        "enum": ["users", "products", "orders"],
+                        "description": "The table to query"
+                    },
+                    "filter": {
+                        "type": "object",
+                        "description": "Filter criteria for the query"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results to return"
+                    }
+                },
+                "required": ["table"]
+            }
+        }
+    }
+}
+
+# Tool implementation functions
+def calculator_impl(operation: str = None, a: float = None, b: float = None, expression: str = None) -> str:
+    """Implementation of the calculator tool
+    
+    Supports two modes:
+    1. Basic operations with a and b: add, subtract, multiply, divide
+    2. Expression evaluation: e.g. "2+2*3"
+    """
+    # Log inputs for debugging
+    logger.info(f"Calculator called with: operation={operation}, a={a}, b={b}, expression={expression}")
+    
+    # Mode 1: Expression evaluation (preferred)
+    if expression is not None:
+        try:
+            # WARNING: using eval can be dangerous in production; use a safe math parser instead
+            result = eval(expression)
+            return f"Result: {result}"
+        except Exception as e:
+            return f"Error evaluating expression: {e}"
+    
+    # Mode 2: Basic operations
+    elif operation is not None and a is not None and b is not None:
+        if operation == "add":
+            return f"Result: {a + b}"
+        elif operation == "subtract":
+            return f"Result: {a - b}"
+        elif operation == "multiply":
+            return f"Result: {a * b}"
+        elif operation == "divide":
+            if b == 0:
+                return "Error: Division by zero"
+            return f"Result: {a / b}"
+        else:
+            return f"Error: Unknown operation '{operation}'"
+    else:
+        return "Error: Missing required parameters. Either provide 'expression' or all of 'operation', 'a', and 'b'."
+
+def weather_impl(location: str, unit: str = "celsius") -> str:
+    """Implementation of the weather tool with mock data"""
+    # Mock weather data
+    temp = random.uniform(-10, 40)
+    if unit == "fahrenheit":
+        temp = temp * 9/5 + 32
+    
+    conditions = random.choice([
+        "Sunny", "Partly Cloudy", "Cloudy", "Rainy", "Thunderstorms", 
+        "Snowing", "Foggy", "Windy", "Clear"
+    ])
+    
+    humidity = random.randint(30, 95)
+    wind_speed = random.uniform(0, 30)
+    
+    return f"""Weather for {location}:
+Temperature: {temp:.1f}° {'F' if unit == 'fahrenheit' else 'C'}
+Conditions: {conditions}
+Humidity: {humidity}%
+Wind Speed: {wind_speed:.1f} km/h
+
+Forecast: Similar conditions expected for the next 24 hours.
+This is simulated weather data for demonstration purposes."""
+
+def search_impl(query: str, num_results: int = 3) -> str:
+    """Implementation of the search tool with mock results"""
+    # List of mock search results
+    mock_results = [
+        {"title": f"Result for '{query}' - Article 1", "snippet": f"This is a sample search result about {query} with some relevant information that might be useful.", "url": f"https://example.com/article-1-about-{query.replace(' ', '-')}"},
+        {"title": f"Understanding {query} - Complete Guide", "snippet": f"A comprehensive guide to understanding {query} with examples, case studies, and expert opinions.", "url": f"https://example.com/guide-to-{query.replace(' ', '-')}"},
+        {"title": f"{query} Explained - For Beginners", "snippet": f"An explanation of {query} targeted at beginners, with simple language and helpful diagrams.", "url": f"https://example.com/beginners-{query.replace(' ', '-')}"},
+        {"title": f"Advanced Topics in {query}", "snippet": f"Exploring advanced topics related to {query} for experts and professionals in the field.", "url": f"https://example.com/advanced-{query.replace(' ', '-')}"},
+        {"title": f"The History of {query}", "snippet": f"A historical overview of how {query} developed over time and its major milestones.", "url": f"https://example.com/history-of-{query.replace(' ', '-')}"},
+        {"title": f"{query} vs. Alternatives - Comparison", "snippet": f"A detailed comparison between {query} and alternative approaches or solutions.", "url": f"https://example.com/comparing-{query.replace(' ', '-')}"},
+        {"title": f"Latest Research on {query}", "snippet": f"Recent studies and research findings related to {query} from leading institutions.", "url": f"https://example.com/research-{query.replace(' ', '-')}"},
+        {"title": f"How to Implement {query} - Tutorial", "snippet": f"Step-by-step tutorial on implementing or using {query} in practical scenarios.", "url": f"https://example.com/tutorial-{query.replace(' ', '-')}"},
+        {"title": f"Common Mistakes When Working with {query}", "snippet": f"A list of common errors and misconceptions about {query} and how to avoid them.", "url": f"https://example.com/mistakes-{query.replace(' ', '-')}"},
+        {"title": f"The Future of {query}", "snippet": f"Predictions and trends about how {query} will evolve in the coming years.", "url": f"https://example.com/future-of-{query.replace(' ', '-')}"},
+    ]
+    
+    # Shuffle and limit results
+    random.shuffle(mock_results)
+    results = mock_results[:min(num_results, len(mock_results))]
+    
+    # Format the results
+    formatted_results = f"Search results for: {query}\n\n"
+    for i, result in enumerate(results, 1):
+        formatted_results += f"{i}. {result['title']}\n"
+        formatted_results += f"   {result['snippet']}\n"
+        formatted_results += f"   URL: {result['url']}\n\n"
+    
+    return formatted_results.strip()
+
+def create_plot_impl(plot_type: str, x_data: Optional[List[float]] = None, 
+                    y_data: Optional[List[float]] = None, labels: Optional[List[str]] = None,
+                    title: str = "Generated Plot") -> str:
+    """Implementation of the plot creation tool"""
+    # Generate mock data if not provided
+    if plot_type in ["line", "bar", "scatter"] and (x_data is None or y_data is None):
+        x_data = list(range(1, 6))
+        y_data = [random.uniform(1, 10) for _ in range(5)]
+    
+    if plot_type == "pie" and (labels is None):
+        labels = ["Category A", "Category B", "Category C", "Category D", "Category E"]
+        y_data = [random.uniform(5, 20) for _ in range(len(labels))]
+    
+    # Create a plot based on the type
+    plt.figure(figsize=(10, 6))
+    
+    if plot_type == "bar":
+        plt.bar(x_data, y_data)
+        plt.xlabel("X Values")
+        plt.ylabel("Y Values")
+    elif plot_type == "line":
+        plt.plot(x_data, y_data)
+        plt.xlabel("X Values")
+        plt.ylabel("Y Values")
+    elif plot_type == "scatter":
+        plt.scatter(x_data, y_data)
+        plt.xlabel("X Values")
+        plt.ylabel("Y Values")
+    elif plot_type == "pie":
+        plt.pie(y_data, labels=labels, autopct='%1.1f%%')
+    
+    plt.title(title)
+    
+    # Save the plot to a BytesIO object
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    
+    # Encode the plot as base64
+    img_str = base64.b64encode(buf.read()).decode('utf-8')
+    
+    # Close the plot to free memory
+    plt.close()
+    
+    return f"""Plot created successfully:
+
+![{title}](data:image/png;base64,{img_str})
+
+Plot type: {plot_type}
+Title: {title}
+"""
+
+def query_database_impl(table: str, filter: Optional[Dict[str, Any]] = None, limit: int = 5) -> str:
+    """Implementation of the database query tool with mock data"""
+    # Mock database tables
+    mock_db = {
+        "users": [
+            {"id": 1, "name": "Alice Smith", "email": "alice@example.com", "age": 28, "city": "New York"},
+            {"id": 2, "name": "Bob Johnson", "email": "bob@example.com", "age": 35, "city": "Los Angeles"},
+            {"id": 3, "name": "Charlie Brown", "email": "charlie@example.com", "age": 42, "city": "Chicago"},
+            {"id": 4, "name": "Diana Miller", "email": "diana@example.com", "age": 31, "city": "Miami"},
+            {"id": 5, "name": "Edward Davis", "email": "edward@example.com", "age": 24, "city": "Boston"},
+            {"id": 6, "name": "Fiona Wilson", "email": "fiona@example.com", "age": 29, "city": "Seattle"},
+            {"id": 7, "name": "George Martin", "email": "george@example.com", "age": 38, "city": "Denver"},
+            {"id": 8, "name": "Hannah Clark", "email": "hannah@example.com", "age": 27, "city": "Portland"},
+            {"id": 9, "name": "Ian Taylor", "email": "ian@example.com", "age": 33, "city": "Austin"},
+            {"id": 10, "name": "Julia Adams", "email": "julia@example.com", "age": 26, "city": "San Francisco"}
+        ],
+        "products": [
+            {"id": 1, "name": "Laptop Pro", "category": "Electronics", "price": 1299.99, "stock": 45},
+            {"id": 2, "name": "Smartphone X", "category": "Electronics", "price": 799.99, "stock": 120},
+            {"id": 3, "name": "Coffee Maker Deluxe", "category": "Kitchen", "price": 89.95, "stock": 30},
+            {"id": 4, "name": "Designer Desk Chair", "category": "Furniture", "price": 249.50, "stock": 15},
+            {"id": 5, "name": "Wireless Earbuds", "category": "Electronics", "price": 129.99, "stock": 200},
+            {"id": 6, "name": "Blender Pro", "category": "Kitchen", "price": 79.99, "stock": 25},
+            {"id": 7, "name": "LED TV 55\"", "category": "Electronics", "price": 549.99, "stock": 18},
+            {"id": 8, "name": "Ergonomic Keyboard", "category": "Electronics", "price": 119.99, "stock": 75},
+            {"id": 9, "name": "Stainless Steel Cookware Set", "category": "Kitchen", "price": 199.99, "stock": 12},
+            {"id": 10, "name": "Bookshelf", "category": "Furniture", "price": 179.99, "stock": 8}
+        ],
+        "orders": [
+            {"id": 1, "user_id": 3, "product_id": 7, "quantity": 1, "total": 549.99, "date": "2023-11-05"},
+            {"id": 2, "user_id": 1, "product_id": 2, "quantity": 1, "total": 799.99, "date": "2023-11-04"},
+            {"id": 3, "user_id": 5, "product_id": 3, "quantity": 2, "total": 179.90, "date": "2023-11-03"},
+            {"id": 4, "user_id": 2, "product_id": 5, "quantity": 1, "total": 129.99, "date": "2023-11-02"},
+            {"id": 5, "user_id": 8, "product_id": 1, "quantity": 1, "total": 1299.99, "date": "2023-11-01"},
+            {"id": 6, "user_id": 4, "product_id": 9, "quantity": 1, "total": 199.99, "date": "2023-10-31"},
+            {"id": 7, "user_id": 7, "product_id": 8, "quantity": 2, "total": 239.98, "date": "2023-10-30"},
+            {"id": 8, "user_id": 9, "product_id": 4, "quantity": 1, "total": 249.50, "date": "2023-10-29"},
+            {"id": 9, "user_id": 6, "product_id": 10, "quantity": 1, "total": 179.99, "date": "2023-10-28"},
+            {"id": 10, "user_id": 10, "product_id": 6, "quantity": 1, "total": 79.99, "date": "2023-10-27"}
+        ]
+    }
+    
+    if table not in mock_db:
+        return f"Error: Table '{table}' does not exist. Available tables: {', '.join(mock_db.keys())}"
+    
+    # Filter the results
+    results = mock_db[table]
+    if filter:
+        filtered_results = []
+        for row in results:
+            match = True
+            for key, value in filter.items():
+                if key not in row or row[key] != value:
+                    match = False
+                    break
+            if match:
+                filtered_results.append(row)
+        results = filtered_results
+    
+    # Limit the results
+    results = results[:limit]
+    
+    # Format the results as a table
+    if len(results) == 0:
+        return f"No results found in table '{table}' with the specified filter."
+    
+    # Get all column names from the first result
+    columns = list(results[0].keys())
+    
+    # Create a DataFrame for nicer formatting
+    df = pd.DataFrame(results)
+    
+    return f"""Query results from table '{table}':
+
+{df.to_markdown(index=False)}
+
+{len(results)} row(s) returned from a total of {len(mock_db[table])} rows in table.
+This is simulated database data for demonstration purposes."""
+
+# Mapping from tool names to their implementation functions
+TOOL_IMPLEMENTATIONS = {
+    "calculator": calculator_impl,
+    "get_weather": weather_impl,
+    "search": search_impl,
+    "create_plot": create_plot_impl,
+    "query_database": query_database_impl,
+    # Add alias names that models sometimes use
+    "get_current_weather": weather_impl,
+    "calculate": calculator_impl,
+    "math": calculator_impl,
+    "math_tool": calculator_impl,
+    "weather": weather_impl
+}
+
+def tool_playground():
+    """Main function for the Tool Playground UI
+    
+    FIXED VERSION: This version uses buttons for model selection
+    and avoids nested expanders.
+    """
+    st.title("🧰 Tool Playground")
+    st.write("Test AI models with function calling and tool integration")
+    
+    # Initialize session state with defensive programming
+    if "tool_chat_history" not in st.session_state:
+        st.session_state.tool_chat_history = []
+    if "active_tools" not in st.session_state:
+        default_tool = "calculator" if "calculator" in TOOL_TEMPLATES else list(TOOL_TEMPLATES.keys())[0] if TOOL_TEMPLATES else ""
+        st.session_state.active_tools = [default_tool] if default_tool else []
+    if "custom_tools" not in st.session_state:
+        st.session_state.custom_tools = {}
+    if "active_mcp_tools" not in st.session_state:
+        st.session_state.active_mcp_tools = []
+    
+    # Get available models
+    available_models = get_available_models()
+    if not available_models:
+        # Try a direct API call
+        try:
+            import requests
+            api_url = "http://localhost:11434/api/tags"
+            response = requests.get(api_url, timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                if "models" in data and data["models"]:
+                    available_models = [model["name"] for model in data["models"] 
+                                    if "name" in model and "embed" not in model["name"]]
+        except:
+            # Fall back to common models
+            available_models = ["llama3", "mistral", "mixtral", "phi3", "gemma3", "qwen2"]
+    
+    # Initialize default model if needed
+    if "selected_tool_model" not in st.session_state:
+        # Default to a model likely to support tools
+        default_models = ["llama3", "mistral", "qwen2", "phi3"]
+        for model in default_models:
+            if model in available_models:
+                st.session_state.selected_tool_model = model
+                break
+        else:
+            # If none of the preferred models are available, select the first one
+            st.session_state.selected_tool_model = available_models[0] if available_models else "llama3"
+    
+    # Filter and sort models to prioritize those with tool capabilities
+    tool_capable_models = filter_models_by_capability(available_models, "tools")
+    
+    # Forced tool-capable model names for better UX
+    forced_tool_models = ["llama3", "llama3:7b", "llama3-7b", "llama3.1", "llama3.2", 
+                        "mistral", "mistral:7b", "mistral-7b", "mixtral", "phi3",
+                        "gemma", "qwen", "qwen2", "openhermes", "yi", "vicuna",
+                        "neural-chat", "stablelm", "wizard-math", "mistral-small"]
+    
+    # Add any model that contains common tool-capable families
+    for model in available_models:
+        normalized = model.lower()
+        if any(family in normalized for family in ["llama", "mistral", "mixtral", "phi", "qwen", "gemma"]):
+            if model not in forced_tool_models:
+                forced_tool_models.append(model)
+    
+    # Create prioritized model list
+    all_tool_models = []
+    
+    # First add confirmed tool-capable models
+    for model in tool_capable_models:
+        if model in available_models and model not in all_tool_models:
+            all_tool_models.append(model)
+    
+    # Then add forced tool models
+    for model in forced_tool_models:
+        if model in available_models and model not in all_tool_models:
+            all_tool_models.append(model)
+    
+    # Then add remaining models
+    for model in available_models:
+        if model not in all_tool_models:
+            all_tool_models.append(model)
+    
+    # Main layout: sidebar and content
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        # Tool selection and configuration
+        with st.expander("🤖 Model Selection", expanded=True):
+            if all_tool_models:
+                st.info("Select a model with tool/function calling capabilities")
+                
+                # Group models by type for better organization
+                grouped_models = {}
+                for model in all_tool_models:
+                    # Determine group based on name patterns
+                    if "llama" in model.lower():
+                        group = "Llama Models"
+                    elif "mistral" in model.lower() or "mixtral" in model.lower():
+                        group = "Mistral Models"
+                    elif "phi" in model.lower():
+                        group = "Phi Models"
+                    elif "qwen" in model.lower():
+                        group = "Qwen Models"
+                    elif "gemma" in model.lower():
+                        group = "Gemma Models"
+                    else:
+                        group = "Other Models"
+                    
+                    if group not in grouped_models:
+                        grouped_models[group] = []
+                    grouped_models[group].append(model)
+                
+                # Create tabs for model families instead of nested expanders
+                model_tabs = st.tabs(list(grouped_models.keys()))
+                
+                # Display models in each tab
+                for i, (group, models) in enumerate(grouped_models.items()):
+                    with model_tabs[i]:
+                        # Create a grid layout for models
+                        cols = st.columns(2)  # 2 buttons per row
+                        for j, model in enumerate(models):
+                            col_idx = j % 2  # alternate between columns
+                            
+                            # Highlight if model is tool-capable
+                            highlight = model in tool_capable_models
+                            button_label = f"{model} 🛠️" if highlight else model
+                            
+                            # Use a unique key for each button
+                            with cols[col_idx]:
+                                if st.button(button_label, key=f"model_{model}"):
+                                    # Set the selected model
+                                    st.session_state.selected_tool_model = model
+                                    # Log the selection for debugging
+                                    logger.info(f"Model selected: {model}")
+                                    st.rerun()  # Refresh after changing models
+            else:
+                st.warning("No models found. Please install some models first.")
+            
+            # Show current model selection
+            if st.session_state.selected_tool_model:
+                st.success(f"Current model: **{st.session_state.selected_tool_model}**")
+                # Check if model is known to support tool calling
+                if is_tools_capable(st.session_state.selected_tool_model):
+                    st.info("✅ This model supports tool/function calling")
+                else:
+                    st.warning("⚠️ This model may not support tool/function calling")
+            
+            # Model parameters
+            temperature = st.slider(
+                "Temperature:",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.7,
+                step=0.1,
+                key="tool_temperature"
+            )
+            
+            max_tokens = st.slider(
+                "Max Tokens:",
+                min_value=1000,
+                max_value=32000,
+                value=4000,
+                step=1000,
+                key="tool_max_tokens"
+            )
+            
+            # Option to pull a model
+            st.subheader("Pull a Model")
+            tool_models = ["llama3", "mistral", "qwen2", "phi3"]
+            model_to_pull = st.selectbox(
+                "Select a model to pull:",
+                tool_models,
+                key="tool_model_to_pull"
+            )
+            if st.button("Pull Model"):
+                try:
+                    with st.spinner(f"Pulling {model_to_pull}..."):
+                        # Import pull_model from ollama_utils
+                        from ollama_utils import pull_model
+                        pull_results = pull_model(model_to_pull)
+                        if pull_results:
+                            st.success(f"Successfully pulled {model_to_pull}.")
+                            
+                            # Explicitly set this model as the selected model
+                            st.session_state.selected_tool_model = model_to_pull
+                            logger.info(f"Setting active model to newly pulled model: {model_to_pull}")
+                            
+                            # Force model reload without using previous cache
+                            if 'all_tool_models' in st.session_state:
+                                del st.session_state['all_tool_models']
+                                
+                            # Trigger a rerun to refresh the model list
+                            st.rerun()
+                except Exception as e:
+                    st.error(f"Error pulling model: {str(e)}")
+                    logger.error(f"Error pulling model {model_to_pull}: {str(e)}")
+        
+        # Tool management section continues unchanged
+        with st.expander("🧰 Tool Management", expanded=True):
+            # Available predefined tools - now in a tab layout for cleaner UI
+            tool_tabs = st.tabs(["Predefined Tools", "Custom Tool", "MCP Tools"])
+            
+            with tool_tabs[0]:
+                # Multiselect for selecting predefined tools
+                # Ensure default values are in the options list
+                available_tool_options = list(TOOL_TEMPLATES.keys())
+                valid_defaults = [tool for tool in st.session_state.active_tools if tool in available_tool_options]
+                
+                selected_predefined_tools = st.multiselect(
+                    "Select tools to use:",
+                    available_tool_options,
+                    default=valid_defaults,
+                    key="tool_selector"
+                )
+            
+            with tool_tabs[1]:
+                # Input for custom tool schema
+                custom_tool_schema = st.text_area(
+                    "Define a custom tool (JSON schema):",
+                    value="""{"type": "function", "function": {"name": "example_tool", "description": "An example tool", "parameters": {"type": "object", "properties": {"input": {"type": "string", "description": "An input parameter"}}, "required": ["input"]}}}""",
+                    height=150,
+                    key="custom_tool_schema"
+                )
+            
+                # Add button for the custom tool
+                if st.button("Add Custom Tool"):
+                    try:
+                        # Parse the JSON schema
+                        custom_tool = json.loads(custom_tool_schema)
+                        
+                        # Validate the schema
+                        if not isinstance(custom_tool, dict) or "type" not in custom_tool or "function" not in custom_tool:
+                            st.error("Invalid tool schema. Must include 'type' and 'function' fields.")
+                        elif "name" not in custom_tool["function"] or "parameters" not in custom_tool["function"]:
+                            st.error("Invalid function schema. Must include 'name' and 'parameters' fields.")
+                        else:
+                            # Add the custom tool to the session state
+                            tool_name = custom_tool["function"]["name"]
+                            st.session_state.custom_tools[tool_name] = custom_tool
+                            st.success(f"Custom tool '{tool_name}' added successfully!")
+                            
+                            # Add the tool to the active tools list if not already present
+                            if tool_name not in st.session_state.active_tools:
+                                st.session_state.active_tools.append(tool_name)
+                                st.rerun()
+                    except json.JSONDecodeError:
+                        st.error("Invalid JSON. Please check your schema.")
+                        
+                # Display and manage custom tools
+                if st.session_state.custom_tools:
+                    st.markdown("### Manage Custom Tools")
+                    st.markdown("---")
+                    
+                    # Create columns for better organization
+                    for tool_name, tool_schema in st.session_state.custom_tools.items():
+                        col1, col2 = st.columns([3, 1])
+                        
+                        with col1:
+                            st.markdown(f"**Tool: {tool_name}**")
+                            st.json(tool_schema)
+                        
+                        with col2:
+                            st.markdown("&nbsp;")  # Add space for alignment
+                            if st.button(f"Remove {tool_name}", key=f"remove_{tool_name}"):
+                                # Remove the tool from the session state
+                                del st.session_state.custom_tools[tool_name]
+                                
+                                # Remove the tool from the active tools list if present
+                                if tool_name in st.session_state.active_tools:
+                                    st.session_state.active_tools.remove(tool_name)
+                                
+                                st.success(f"Custom tool '{tool_name}' removed successfully!")
+                                st.rerun()
+                        
+                        st.markdown("---")  # Separator between tools
+            
+            # MCP Tools Integration
+            with tool_tabs[2]:
+                if st.button("Refresh MCP Tools"):
+                    # Rediscover MCP tools
+                    try:
+                        mcp_tools, mcp_schemas = get_available_mcp_tools()
+                        st.session_state.mcp_tools = mcp_tools
+                        st.session_state.mcp_schemas = mcp_schemas
+                        st.success("MCP tools refreshed!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error refreshing MCP tools: {str(e)}")
+                        st.session_state.mcp_tools = {}
+                        st.session_state.mcp_schemas = []
+                
+                if "mcp_tools" in st.session_state and st.session_state.mcp_tools:
+                    st.write("These are MCP tools found on your local system")
+                    
+                    # Display available MCP tools with checkboxes
+                    mcp_tool_options = list(st.session_state.mcp_tools.keys())
+                    # Ensure default values exist in options
+                    valid_mcp_defaults = [tool for tool in st.session_state.active_mcp_tools if tool in mcp_tool_options]
+                    
+                    selected_mcp_tools = st.multiselect(
+                        "Select MCP tools to use:",
+                        mcp_tool_options,
+                        default=valid_mcp_defaults,
+                        key="mcp_tool_selector"
+                    )
+                
+                    # Show details about selected MCP tools
+                    if selected_mcp_tools:
+                        st.markdown("### Selected MCP Tools")
+                        
+                        # Display each selected tool in a cleaner format without nested expanders
+                        for tool_name in selected_mcp_tools:
+                            st.markdown(f"#### Tool: {tool_name}")
+                            tool_info = st.session_state.mcp_tools[tool_name]
+                            
+                            # Create columns for better organization
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                st.markdown(f"**Type:** {tool_info['type']}")
+                            
+                            with col2:
+                                st.markdown(f"**Path:** {tool_info['path']}")
+                            
+                            # Display additional information based on tool type
+                            if tool_info["type"] == "json" and "manifest" in tool_info:
+                                if "description" in tool_info["manifest"]:
+                                    st.markdown(f"**Description:** {tool_info['manifest']['description']}")
+                                if "schema" in tool_info["manifest"]:
+                                    with st.container():
+                                        st.markdown("**Schema:**")
+                                        st.json(tool_info["manifest"]["schema"])
+                            
+                            elif tool_info["type"] in ["python", "executable"] and "info" in tool_info:
+                                if "description" in tool_info["info"]:
+                                    st.markdown(f"**Description:** {tool_info['info']['description']}")
+                                if "schema" in tool_info["info"]:
+                                    with st.container():
+                                        st.markdown("**Schema:**")
+                                        st.json(tool_info["info"]["schema"])
+                            
+                            st.markdown("---")
+                    
+                    # Update active MCP tools list
+                    st.session_state.active_mcp_tools = selected_mcp_tools
+                else:
+                    st.info("No MCP tools found on this system. Add tools to an MCP folder in your Documents directory.")
+                    
+                    # Create example MCP tool (this part remains unchanged)
+                    if st.button("Create Example MCP Tool"):
+                        import os
+                        
+                        # Create directories if they don't exist
+                        mcp_dir = os.path.expanduser("~/Documents/Cline/MCP")
+                        os.makedirs(mcp_dir, exist_ok=True)
+                        
+                        example_tool_dir = os.path.join(mcp_dir, "example_tool")
+                        os.makedirs(example_tool_dir, exist_ok=True)
+                        
+                        # Create manifest.json
+                        manifest_content = {
+                            "name": "example_tool",
+                            "description": "An example MCP tool for demonstration",
+                            "version": "1.0",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string",
+                                        "description": "The text to process"
+                                    },
+                                    "operation": {
+                                        "type": "string",
+                                        "enum": ["uppercase", "lowercase", "reverse"],
+                                        "description": "The operation to perform on the text"
+                                    }
+                                },
+                                "required": ["text", "operation"]
+                            },
+                            "executable": "example_tool.py"
+                        }
+                        
+                        with open(os.path.join(example_tool_dir, "manifest.json"), "w") as f:
+                            json.dump(manifest_content, f, indent=2)
+                        
+                        # Create example_tool.py
+                        tool_script = '''#!/usr/bin/env python3
+import json
+import sys
+
+def process_text(text, operation):
+    """Process text based on the specified operation."""
+    if operation == "uppercase":
+        return text.upper()
+    elif operation == "lowercase":
+        return text.lower()
+    elif operation == "reverse":
+        return text[::-1]
+    else:
+        return f"Unknown operation: {operation}"
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        # Check if this is an info request
+        if sys.argv[1] == "--info":
+            # Return tool info as JSON
+            info = {
+                "name": "example_tool",
+                "description": "An example MCP tool that processes text",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "text": {
+                            "type": "string",
+                            "description": "The text to process"
+                        },
+                        "operation": {
+                            "type": "string",
+                            "enum": ["uppercase", "lowercase", "reverse"],
+                            "description": "The operation to perform on the text"
+                        }
+                    },
+                    "required": ["text", "operation"]
+                }
+            }
+            print(json.dumps(info))
+            sys.exit(0)
+        
+        # Check if this is an execution request
+        if sys.argv[1] == "--execute" and len(sys.argv) > 2:
+            try:
+                # Parse the arguments
+                args = json.loads(sys.argv[2])
+                
+                # Extract parameters
+                text = args.get("text", "")
+                operation = args.get("operation", "")
+                
+                # Process the text
+                result = process_text(text, operation)
+                
+                # Return the result as JSON
+                print(json.dumps({
+                    "result": result,
+                    "original_text": text,
+                    "operation": operation
+                }))
+                sys.exit(0)
+            except json.JSONDecodeError:
+                print(json.dumps({"error": "Invalid JSON arguments"}))
+                sys.exit(1)
+            except Exception as e:
+                print(json.dumps({"error": str(e)}))
+                sys.exit(1)
+    
+    # Return error for invalid usage
+    print(json.dumps({"error": "Invalid arguments. Use --info or --execute"}))
+    sys.exit(1)
+'''
+                        
+                        with open(os.path.join(example_tool_dir, "example_tool.py"), "w") as f:
+                            f.write(tool_script)
+                        
+                        # Make the script executable
+                        os.chmod(os.path.join(example_tool_dir, "example_tool.py"), 0o755)
+                        
+                        st.success("Example MCP tool created! Click 'Refresh MCP Tools' to see it.")
+                        
+                        # Try to rediscover MCP tools
+                        try:
+                            mcp_tools, mcp_schemas = get_available_mcp_tools()
+                            st.session_state.mcp_tools = mcp_tools
+                            st.session_state.mcp_schemas = mcp_schemas
+                        except:
+                            pass
+            
+            # Update active tools list based on selection
+            st.session_state.active_tools = selected_predefined_tools + list(st.session_state.custom_tools.keys())
+        
+        # Test prompt templates
+        with st.expander("📝 Test Prompts", expanded=False):
+            st.subheader("Sample Prompts")
+            
+            prompts = {
+                "calculator": "What is 342 multiplied by 15?",
+                "weather": "What's the weather like in Tokyo?",
+                "search": "Search for information about artificial intelligence.",
+                "plot": "Create a bar chart showing sales data for the last 5 months.",
+                "database": "Query the users table and show me the first 3 records.",
+                "mcp_example": "Use the example tool to convert 'Hello World' to uppercase."
+            }
+            
+            for tool, prompt in prompts.items():
+                # Special case for MCP tools
+                if tool == "mcp_example" and "example_tool" in st.session_state.active_mcp_tools:
+                    if st.button(f"Use: {prompt}", key=f"prompt_{tool}"):
+                        st.session_state.selected_tool_prompt = prompt
+                        st.rerun()
+                # Standard tools
+                elif tool in st.session_state.active_tools or tool in st.session_state.custom_tools:
+                    if st.button(f"Use: {prompt}", key=f"prompt_{tool}"):
+                        st.session_state.selected_tool_prompt = prompt
+                        st.rerun()
+    
+    with col2:
+        # Chat interface
+        st.subheader("Chat with Tools")
+        
+        # Display currently enabled tools
+        if st.session_state.active_tools:
+            st.info(f"Enabled tools: {', '.join(st.session_state.active_tools)}")
+        else:
+            st.warning("No tools are currently enabled. Please select at least one tool.")
+        
+        # Display current selected model
+        st.info(f"Using model: {st.session_state.selected_tool_model}")
+        
+        # Chat history display
+        for message in st.session_state.tool_chat_history:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+                
+                # If this is a tool call, show the tool call details
+                if "tool_calls" in message:
+                    for tool_call in message["tool_calls"]:
+                        with st.expander(f"Tool Call: {tool_call['function']['name']}"):
+                            st.json(tool_call["function"]["arguments"])
+                
+                # If this is a tool response, show it in a different style
+                if message.get("type") == "tool_response":
+                    st.info(message["content"])
+        
+        # Input for new message
+        user_input = st.chat_input("Ask a question using tools...", key="tool_prompt")
+        
+        # Use the test prompt if one was selected
+        if hasattr(st.session_state, "selected_tool_prompt") and st.session_state.selected_tool_prompt:
+            user_input = st.session_state.selected_tool_prompt
+            st.session_state.selected_tool_prompt = None
+        
+        if user_input:
+            # Add user message to chat history
+            st.session_state.tool_chat_history.append({"role": "user", "content": user_input})
+            
+            # Prepare tools for the model
+            tools = []
+            for tool_name in st.session_state.active_tools:
+                if tool_name in TOOL_TEMPLATES:
+                    tools.append(TOOL_TEMPLATES[tool_name])
+                elif tool_name in st.session_state.custom_tools:
+                    tools.append(st.session_state.custom_tools[tool_name])
+            
+            # Add MCP tools
+            if "mcp_schemas" in st.session_state:
+                for tool_name in st.session_state.active_mcp_tools:
+                    # Find matching schema
+                    for schema in st.session_state.mcp_schemas:
+                        if schema["function"]["name"] == f"mcp__{tool_name}":
+                            tools.append(schema)
+                            break
+            
+            # Display typing indicator
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                message_placeholder.markdown("Thinking...")
+                
+                try:
+                    # Prepare messages for the model
+                    messages = []
+                    for msg in st.session_state.tool_chat_history:
+                        if msg["role"] == "user":
+                            messages.append({"role": "user", "content": msg["content"]})
+                        elif msg["role"] == "assistant" and "tool_calls" not in msg:
+                            messages.append({"role": "assistant", "content": msg["content"]})
+                        elif msg["role"] == "assistant" and "tool_calls" in msg:
+                            tool_message = {"role": "assistant", "content": msg["content"], "tool_calls": msg["tool_calls"]}
+                            messages.append(tool_message)
+                        elif msg.get("type") == "tool_response":
+                            messages.append({"role": "tool", "content": msg["content"], "tool_call_id": msg["tool_call_id"]})
+                    
+                    # Check if model is known to support tools before sending request
+                    try:
+                        if not is_tools_capable(st.session_state.selected_tool_model):
+                            # Model is not in our tools-capable list, show a warning with more information
+                            logger.warning(f"Model '{st.session_state.selected_tool_model}' is not known to support tools. Attempting anyway but may fail.")
+                            
+                            warning_msg = f"""
+                            ⚠️ **Important:** Model '{st.session_state.selected_tool_model}' is not officially known to support tools.
+                            
+                            This may result in an error. For best results, use a model designed for function calling:
+                            - llama3 (best support)
+                            - mistral
+                            - qwen
+                            - phi3
+                            
+                            Documentation: [Ollama Function Calling Models](https://ollama.com/search?c=tools)
+                            """
+                            st.warning(warning_msg)
+                    except Exception as check_error:
+                        # If the capability check fails, log it but continue
+                        logger.error(f"Error checking tool capability: {check_error}")
+                        # Don't show a warning to avoid confusing the user
+                    
+                    # Use the model name directly from session state
+                    model_to_use = st.session_state.selected_tool_model
+                    
+                    # DEBUG: Log which model we're actually using
+                    logger.info(f"Using model for tool call: {model_to_use}")
+                    
+                    # Send request to model
+                    client = ollama.Client()
+                    
+                    # Add debug logging to show what we're sending
+                    logger.info(f"Sending request to model: {model_to_use}")
+                    logger.info(f"Tools: {json.dumps(tools[:2], indent=2)}..." if tools else "No tools")
+                    
+                    # Make the API call
+                    response = client.chat(
+                        model=model_to_use,
+                        messages=messages,
+                        tools=tools,
+                        options={
+                            "temperature": temperature,
+                            "num_predict": max_tokens
+                        }
+                    )
+                    
+                    # Log the response for debugging
+                    logger.info(f"Received response from model: {json.dumps(response.get('message', {}), indent=2)}")
+                    
+                    # Handle the response
+                    if "message" in response:
+                        assistant_message = response["message"]
+                        
+                        # Update the message placeholder with the response content
+                        message_placeholder.markdown(assistant_message.get("content", ""))
+                        
+                        # Add the assistant message to the chat history
+                        assistant_history_msg = {
+                            "role": "assistant",
+                            "content": assistant_message.get("content", "")
+                        }
+                        
+                        # Handle tool calls if present
+                        if "tool_calls" in assistant_message and assistant_message["tool_calls"]:
+                            assistant_history_msg["tool_calls"] = assistant_message["tool_calls"]
+                            
+                            # Process each tool call
+                            for tool_call in assistant_message["tool_calls"]:
+                                function_name = tool_call["function"]["name"]
+                                
+                                # Parse the arguments
+                                try:
+                                    # Check if arguments is already a dict or needs to be parsed from JSON string
+                                    arguments = tool_call["function"]["arguments"]
+                                    if isinstance(arguments, str):
+                                        arguments = json.loads(arguments)
+                                    
+                                    # Log successful parsing
+                                    logger.info(f"Successfully parsed arguments for {function_name}: {arguments}")
+                                except Exception as arg_error:
+                                    logger.error(f"Failed to parse arguments: {arg_error}")
+                                    arguments = {"error": "Failed to parse arguments"}
+                                
+                                # Execute the tool call
+                                if function_name in TOOL_IMPLEMENTATIONS:
+                                    try:
+                                        # Call the implementation function with the parsed arguments
+                                        result = TOOL_IMPLEMENTATIONS[function_name](**arguments)
+                                        
+                                        # Add the tool response to the chat history
+                                        st.session_state.tool_chat_history.append({
+                                            "role": "assistant",
+                                            "type": "tool_response",
+                                            "content": result,
+                                            "tool_call_id": tool_call["id"]
+                                        })
+                                    except Exception as e:
+                                        # Handle errors in tool execution
+                                        error_message = f"Error executing tool {function_name}: {str(e)}"
+                                        st.session_state.tool_chat_history.append({
+                                            "role": "assistant",
+                                            "type": "tool_response",
+                                            "content": error_message,
+                                            "tool_call_id": tool_call["id"]
+                                        })
+                                # Check if this is an MCP tool call
+                                elif function_name.startswith("mcp__"):
+                                    try:
+                                        # Extract the real tool name (without the mcp__ prefix)
+                                        mcp_tool_name = function_name[5:]
+                                        logger.info(f"Executing MCP tool: {mcp_tool_name}")
+                                        
+                                        # Execute the MCP tool
+                                        result = execute_mcp_tool(mcp_tool_name, st.session_state.mcp_tools, arguments)
+                                        
+                                        # Add the tool response to the chat history
+                                        st.session_state.tool_chat_history.append({
+                                            "role": "assistant",
+                                            "type": "tool_response",
+                                            "content": result,
+                                            "tool_call_id": tool_call["id"]
+                                        })
+                                    except Exception as e:
+                                        # Handle errors in MCP tool execution
+                                        error_message = f"Error executing MCP tool {function_name}: {str(e)}"
+                                        st.session_state.tool_chat_history.append({
+                                            "role": "assistant",
+                                            "type": "tool_response",
+                                            "content": error_message,
+                                            "tool_call_id": tool_call["id"]
+                                        })
+                                else:
+                                    # Unknown tool
+                                    error_message = f"Tool {function_name} is not implemented"
+                                    st.session_state.tool_chat_history.append({
+                                        "role": "assistant",
+                                        "type": "tool_response",
+                                        "content": error_message,
+                                        "tool_call_id": tool_call["id"]
+                                    })
+                            
+                            # Send a follow-up request with the tool responses
+                            follow_up_messages = messages.copy()
+                            
+                            # Add the assistant message with tool calls
+                            follow_up_messages.append({
+                                "role": "assistant",
+                                "content": assistant_message.get("content", ""),
+                                "tool_calls": assistant_message["tool_calls"]
+                            })
+                            
+                            # Add the tool responses
+                            for msg in st.session_state.tool_chat_history:
+                                if msg.get("type") == "tool_response" and any(msg["tool_call_id"] == tc["id"] for tc in assistant_message["tool_calls"]):
+                                    follow_up_messages.append({
+                                        "role": "tool",
+                                        "content": msg["content"],
+                                        "tool_call_id": msg["tool_call_id"]
+                                    })
+                            
+                            # Send the follow-up request
+                            # Log what we're sending for the follow-up request
+                            logger.info(f"Sending follow-up request with tool results to model: {model_to_use}")
+                            logger.info(f"Follow-up messages: {json.dumps(follow_up_messages[-2:], indent=2)}...")
+                            
+                            follow_up_response = client.chat(
+                                model=model_to_use,  # Use the same model we used for the initial request
+                                messages=follow_up_messages,
+                                tools=tools,  # Include tools in follow-up request
+                                options={
+                                    "temperature": temperature,
+                                    "num_predict": max_tokens
+                                }
+                            )
+                            
+                            # Log the follow-up response
+                            logger.info(f"Received follow-up response: {json.dumps(follow_up_response.get('message', {}), indent=2)}")
+                            
+                            # Add the follow-up response to the chat history
+                            if "message" in follow_up_response and "content" in follow_up_response["message"]:
+                                follow_up_content = follow_up_response["message"]["content"]
+                                st.session_state.tool_chat_history.append({
+                                    "role": "assistant",
+                                    "content": follow_up_content
+                                })
+                        
+                        # Add the assistant message to the chat history if not already added
+                        st.session_state.tool_chat_history.append(assistant_history_msg)
+                        
+                        # Rerun to update the UI
+                        st.rerun()
+                    else:
+                        message_placeholder.error("Received an unexpected response format from the model.")
+                
+                except Exception as e:
+                    error_message = str(e)
+                    
+                    # Check for common tool-related error messages
+                    if "does not support tools" in error_message.lower() or "function calling" in error_message.lower() or "status code: 400" in error_message.lower():
+                        # This is a tool support error
+                        # Extract the actual model name from the error message if possible
+                        actual_model = error_message.split("'")[1] if "'" in error_message else st.session_state.selected_tool_model
+                        friendly_error = f"Error: Model '{actual_model}' does not support tool/function calling."
+                        
+                        # Provide more helpful instructions
+                        recommendations = """
+                        To use tools/function calling with Ollama, you need a model that supports this capability.
+                        
+                        Recommended models:
+                        - llama3 (best support for tools)
+                        - mistral
+                        - qwen
+                        - phi3
+                        
+                        You can pull one of these models using: `ollama pull llama3`
+                        
+                        Learn more: https://ollama.com/search?c=tools
+                        """
+                        
+                        message_placeholder.error(friendly_error)
+                        message_placeholder.info(recommendations)
+                        
+                        # Log the error for diagnostics
+                        logger.error(f"Tool support error with model '{st.session_state.selected_tool_model}': {error_message}")
+                        
+                        # Add error message to chat history
+                        st.session_state.tool_chat_history.append({
+                            "role": "assistant",
+                            "content": f"{friendly_error}\n\n{recommendations}"
+                        })
+                    elif "schema" in error_message.lower() and "validation" in error_message.lower():
+                        # This is likely a tool schema validation error
+                        friendly_error = f"Error: Tool schema validation failed. There may be an issue with your tool definition. Details: {error_message}"
+                        message_placeholder.error(friendly_error)
+                        
+                        # Add error message to chat history
+                        st.session_state.tool_chat_history.append({
+                            "role": "assistant",
+                            "content": friendly_error
+                        })
+                    else:
+                        # Generic error handling
+                        formatted_error = f"Error: {error_message}"
+                        message_placeholder.error(formatted_error)
+                        
+                        # Add error message to chat history
+                        st.session_state.tool_chat_history.append({
+                            "role": "assistant",
+                            "content": formatted_error
+                        })
+                    
+                    # Rerun to update the UI
+                    st.rerun()
+
+if __name__ == "__main__":
+    tool_playground()

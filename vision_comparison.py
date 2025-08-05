@@ -43,7 +43,8 @@ def vision_comparison_test():
 
                     start_time = time.time()
                     try:
-                        response = ollama.chat(
+                        client = ollama.Client()
+                        response = client.chat(
                             model=model,
                             messages=[
                                 {
@@ -51,7 +52,13 @@ def vision_comparison_test():
                                     'content': 'Describe this image:',
                                     'images': [uploaded_file]
                                 }
-                            ]
+                            ],
+                            options={
+                                "temperature": temperature,
+                                "num_predict": max_tokens,
+                                "presence_penalty": presence_penalty,
+                                "frequency_penalty": frequency_penalty
+                            }
                         )
                         result = response['message']['content']
                         print(f"Model: {model}, Result: {result}")
