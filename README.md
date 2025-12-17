@@ -1,5 +1,19 @@
 # Ollama Workbench
 
+> ## :rocket: **[Ollama Workbench 2.0 is here!](https://github.com/marc-shade/Ollama-Workbench-2)**
+>
+> A complete rewrite with **SvelteKit + Tauri** featuring:
+> - Modern responsive UI with dark/light themes
+> - Native desktop app (macOS, Windows, Linux)
+> - MCP Studio for building and testing MCP servers
+> - Visual multi-agent workflow builder
+> - Tools debugger with model comparison
+> - Prompt Lab with A/B testing and version control
+>
+> **[Try Ollama Workbench 2.0 →](https://github.com/marc-shade/Ollama-Workbench-2)**
+
+---
+
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
 
 Ollama Workbench is a powerful and versatile platform designed to streamline the management, testing, and utilization of various AI models from the Ollama library. It transcends simple model testing, offering advanced features for crafting highly tunable AI agents, orchestrating complex workflows, and facilitating dynamic collaborative brainstorming sessions. With its intuitive interface, Ollama Workbench empowers both novice programmers and experienced developers to harness the full potential of their machine learning models in innovative and productive ways.
@@ -140,9 +154,21 @@ For Apple Silicon Mac users, please refer to [APPLE_SILICON_SETUP.md](APPLE_SILI
 * **Explore the Prompts:** The prompts provided for agent types, metacognitive types, and voice types are highly customizable. Experiment with modifying them to create even more specialized AI behaviors.
 * **Stay Updated:** Use the `run_ollama_workbench.sh` script to ensure you always have the latest features and improvements.
 
+## Related Projects
+
+**From the same developer:**
+
+| Project | Description |
+|---------|-------------|
+| [Ollama-Workbench-2](https://github.com/marc-shade/Ollama-Workbench-2) | **v2.0** - Complete rewrite with SvelteKit + Tauri |
+| [agentic-system-oss](https://github.com/marc-shade/agentic-system-oss) | 24/7 Autonomous AI Framework with persistent memory |
+| [TeamForgeAI](https://github.com/marc-shade/TeamForgeAI) | Multi-agent team collaboration |
+| [enhanced-memory-mcp](https://github.com/marc-shade/enhanced-memory-mcp) | Persistent memory for AI agents |
+| [agent-runtime-mcp](https://github.com/marc-shade/agent-runtime-mcp) | Task queues and goal decomposition |
+
 ## Contributing
 
-Contributions are welcome!  
+Contributions are welcome!
 
 1. Fork the repository.
 2. Create a new branch (`git checkout -b my-new-feature`).
