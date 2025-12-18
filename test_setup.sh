@@ -405,7 +405,7 @@ print_info "Installing development and testing packages..."
 
 # Install autogen packages
 print_info "Installing autogen packages..."
-"$VENV_PIP" install autogen==0.2.35 pyautogen==0.2.35
+"$VENV_PIP" install autogen==0.2.35 ag2==0.2.35
 
 # Install audio packages
 print_info "Installing audio packages..."
