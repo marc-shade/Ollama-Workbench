@@ -1,3 +1,11 @@
+[![Version](https://img.shields.io/github/v/release/marc-shade/Ollama-Workbench?style=flat-square)](https://github.com/marc-shade/Ollama-Workbench/releases)
+[![Stars](https://img.shields.io/github/stars/marc-shade/Ollama-Workbench?style=flat-square)](https://github.com/marc-shade/Ollama-Workbench/stargazers)
+[![Forks](https://img.shields.io/github/forks/marc-shade/Ollama-Workbench?style=flat-square)](https://github.com/marc-shade/Ollama-Workbench/network/members)
+[![License](https://img.shields.io/github/license/marc-shade/Ollama-Workbench?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Ollama](https://img.shields.io/badge/Ollama-000000?style=flat-square&logo=ollama&logoColor=white)](https://ollama.ai)
+
 # Ollama Workbench
 
 > ## :rocket: **[Ollama Workbench 2.0 is here!](https://github.com/marc-shade/Ollama-Workbench-2)**
