@@ -1,5 +1,6 @@
 # Python virtual environment
 venv/
+.venv/
 
 # Python cache files
 __pycache__/
@@ -26,7 +27,8 @@ ollama_models.db
 
 # Environment variables and API keys
 .env
-.env.local
+.env.*
+!.env.example
 api_keys.json
 
 # IDE specific files
@@ -37,6 +39,12 @@ api_keys.json
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.mypy_cache/
 
 # Local development files
 *.bak
