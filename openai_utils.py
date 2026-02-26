@@ -2,48 +2,41 @@
 import os
 import json
 import streamlit as st
-try:
-    from openai import OpenAI
-except ImportError:
-    print("Warning: openai package not found, using fallback implementation")
-    # Fallback implementation for openai
-    class OpenAI:
-        def __init__(self, api_key=None):
-            self.api_key = api_key
-            
-        class Completion:
-            @staticmethod
-            def create(*args, **kwargs):
-                return {"choices": [{"text": "OpenAI API not available - please install the openai package"}]}
-        
-        class ChatCompletion:
-            @staticmethod
-            def create(*args, **kwargs):
-                return {"choices": [{"message": {"content": "OpenAI API not available - please install the openai package"}}]}
-                
-        class Embedding:
-            @staticmethod
-            def create(*args, **kwargs):
-                return {"data": [{"embedding": [0.0] * 1536}]}
-                
-        completion = Completion()
-        chat = ChatCompletion()
-        embeddings = Embedding()
+from openai import OpenAI
 
 OPENAI_MODELS = [
-    "gpt-4-1106-preview",
-    "gpt-4-0125-preview",
-    "gpt-4-turbo",
-    "gpt-4o-mini",
+    # GPT-4.1 models (2025)
+    "gpt-4.1",
+    "gpt-4.1-mini",
+    "gpt-4.1-nano",
+
+    # GPT-4o models (2024/2025)
+    "gpt-4o-2024-11-20",
     "gpt-4o-2024-08-06",
     "gpt-4o",
+    "gpt-4o-mini-2024-07-18",
+    "gpt-4o-mini",
+
+    # GPT-4 Turbo models
+    "gpt-4-turbo-2024-04-09",
+    "gpt-4-turbo",
+    "gpt-4-0125-preview",
+    "gpt-4-1106-preview",
+
+    # Legacy GPT-4 models
     "gpt-4",
     "gpt-4-0613",
     "gpt-4-0314",
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo-1106",
+
+    # GPT-3.5 models
     "gpt-3.5-turbo-0125",
-    "gpt-3.5-turbo-instruct"
+    "gpt-3.5-turbo-1106",
+    "gpt-3.5-turbo",
+    "gpt-3.5-turbo-instruct",
+
+    # Reasoning models
+    "o3-mini",
+    "o4-mini",
 ]
 
 
@@ -60,6 +53,7 @@ def save_api_keys(api_keys):
     """Saves API keys to the JSON file."""
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
+    os.chmod(API_KEYS_FILE, 0o600)
 
 def set_openai_api_key(api_key):
     """Sets the OpenAI API key."""

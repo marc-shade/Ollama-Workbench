@@ -3,58 +3,27 @@ Text-to-Speech utilities for converting text to speech and playing audio.
 """
 import os
 import tempfile
-try:
-    from gtts import gTTS
-except ImportError:
-    print("Warning: gtts package not found, using fallback implementation")
-    # Fallback implementation for gtts
-    class gTTS:
-        def __init__(self, text="", lang="en", **kwargs):
-            self.text = text
-            self.lang = lang
-            print(f"Warning: Using fallback gTTS with text: {text[:50]}...")
-            
-        def save(self, filename):
-            print(f"Warning: Saving fallback speech to {filename}")
-            # Create an empty file
-            with open(filename, 'w') as f:
-                f.write("# This is a placeholder file created by the fallback gTTS implementation")
-            return filename
+from gtts import gTTS
+import subprocess
+import logging
+
+# Set up logging
+logging.basicConfig(
+    filename='voice_utils.log',
+    filemode='a',
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Try to import pygame, but make it optional
 try:
     import pygame
+    pygame_available = True
+    logger.info("Pygame is available for audio playback")
 except ImportError:
-    print("Warning: pygame package not found, using fallback implementation")
-    # Fallback implementation for pygame
-    class pygame:
-        class mixer:
-            @staticmethod
-            def init():
-                print("Warning: Using fallback pygame.mixer.init()")
-                
-            @staticmethod
-            def quit():
-                print("Warning: Using fallback pygame.mixer.quit()")
-                
-            class music:
-                @staticmethod
-                def load(filename):
-                    print(f"Warning: Using fallback pygame.mixer.music.load({filename})")
-                    
-                @staticmethod
-                def play():
-                    print("Warning: Using fallback pygame.mixer.music.play()")
-                    
-                @staticmethod
-                def get_busy():
-                    # Return False to exit the playback loop immediately
-                    return False
-                    
-        class time:
-            class Clock:
-                def tick(self, framerate):
-                    pass
-
-import subprocess
+    pygame_available = False
+    logger.warning("Pygame is not available. Audio playback will be disabled.")
 
 def zonos_text_to_speech(text, lang='en', **kwargs):
     """Convert text to speech using Zonos TTS.
@@ -143,8 +112,16 @@ def play_speech(audio_file):
     Returns:
         bool: True if playback was successful, False otherwise
     """
+    # Check if pygame is available
+    if not pygame_available:
+        logger.warning("Cannot play speech: pygame is not available")
+        print("Audio playback is disabled because pygame is not installed.")
+        print(f"Audio file saved at: {audio_file}")
+        return False
+        
     try:
         if not audio_file or not os.path.exists(audio_file):
+            logger.error(f"Audio file not found: {audio_file}")
             return False
             
         # Initialize pygame mixer
@@ -156,13 +133,16 @@ def play_speech(audio_file):
         while pygame.mixer.music.get_busy():
             pygame.time.Clock().tick(10)
             
+        logger.info(f"Successfully played audio: {audio_file}")
         return True
     except Exception as e:
+        logger.error(f"Error playing speech: {e}")
         print(f"Error playing speech: {e}")
         return False
     finally:
         try:
-            pygame.mixer.quit()
+            if pygame_available:
+                pygame.mixer.quit()
         except Exception as e:
-            print(f"Error quitting pygame mixer: {e}")
+            logger.error(f"Error quitting pygame mixer: {e}")
             pass

@@ -1,0 +1,83 @@
+2025-05-22 06:27:23,495 - INFO - CHECKPOINT: Starting workspace integration tests
+2025-05-22 06:27:23,733 - INFO - CHECKPOINT: Loading robust_ollama_utils module
+2025-05-22 06:27:23,739 - INFO - CHECKPOINT: Loading model_categorization module
+2025-05-22 06:27:23,739 - INFO - CHECKPOINT: Successfully imported model categorization module
+2025-05-22 06:27:23,811 - INFO - CHECKPOINT: Successfully imported numpy
+2025-05-22 06:27:24,017 - INFO - CHECKPOINT: Successfully imported ollama package
+2025-05-22 06:27:24,151 - INFO - CHECKPOINT: Successfully imported OpenAI utilities
+2025-05-22 06:27:26,902 - INFO - PyTorch version 2.6.0 available.
+2025-05-22 06:27:26,902 - INFO - Duckdb version 1.1.3 available.
+2025-05-22 06:27:27,148 - INFO - CHECKPOINT: Successfully imported Groq utilities
+2025-05-22 06:27:27,229 - INFO - CHECKPOINT: Successfully imported Mistral utilities
+2025-05-22 06:27:27,231 - INFO - CHECKPOINT: Successfully imported configuration module
+2025-05-22 06:27:27,231 - INFO - CHECKPOINT: Successfully imported modules for testing
+2025-05-22 06:27:27,231 - INFO - CHECKPOINT: Running test suite
+2025-05-22 06:27:27,232 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 06:27:27,232 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 06:27:27,232 - INFO - CHECKPOINT: Testing end-to-end code extraction
+2025-05-22 06:27:27,232 - INFO - CHECKPOINT: Starting save_ai_content_to_workspace
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Got document state with ID test_doc_id
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Processed AI response, added 2 blocks
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Successfully saved AI content to workspace test_doc_id
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Verified process_ai_response was called correctly
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: End-to-end code extraction test passed
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Testing extract_content_blocks
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: extract_content_blocks test passed
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 06:27:27,233 - INFO - CHECKPOINT: Testing modern_chat_interface integration
+2025-05-22 06:27:27,249 - INFO - CHECKPOINT: Using robust Ollama utilities module with full functionality
+2025-05-22 06:27:27,452 - INFO - Pygame is available for audio playback
+2025-05-22 06:27:27,453 - INFO - CHECKPOINT: Processing user message: Generate a Fibonacci function...
+2025-05-22 06:27:27,563 - INFO - CHECKPOINT: Created full prompt for model
+2025-05-22 06:27:27,563 - INFO - CHECKPOINT: Using Ollama model: llama2
+2025-05-22 06:27:27,578 - INFO - CHECKPOINT: Successfully created Ollama client
+2025-05-22 06:27:27,584 - INFO - HTTP Request: POST http://localhost:11434/api/generate "HTTP/1.1 404 Not Found"
+2025-05-22 06:27:27,584 - ERROR - CHECKPOINT: Error with Ollama client: model 'llama2' not found (status code: 404)
+Traceback (most recent call last):
+  File "/Volumes/FILES/code/Ollama-Workbench/modern_chat_interface.py", line 399, in process_message
+    for response_chunk in client.generate(
+                          ^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/ollama/_client.py", line 168, in inner
+    raise ResponseError(e.response.text, e.response.status_code) from None
+ollama._types.ResponseError: model 'llama2' not found (status code: 404)
+2025-05-22 06:27:27,586 - INFO - CHECKPOINT: Falling back to endpoint call
+2025-05-22 06:27:27,586 - INFO - CHECKPOINT: Calling Ollama endpoint with model llama2
+2025-05-22 06:27:27,608 - INFO - HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-05-22 06:27:27,608 - INFO - CHECKPOINT: Successfully created ollama client with new API
+2025-05-22 06:27:27,612 - INFO - HTTP Request: POST http://localhost:11434/api/generate "HTTP/1.1 404 Not Found"
+2025-05-22 06:27:27,612 - WARNING - CHECKPOINT: Error generating with client: model 'llama2' not found (status code: 404)
+2025-05-22 06:27:27,617 - ERROR - CHECKPOINT: API error: 404 - {"error":"model 'llama2' not found"}
+2025-05-22 06:27:27,617 - INFO - CHECKPOINT: Successfully generated response with fallback method
+2025-05-22 06:27:27,617 - INFO - CHECKPOINT: Response generated, length: 49
+2025-05-22 06:27:27,617 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 06:27:27,618 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 06:27:27,618 - INFO - CHECKPOINT: Testing process_ai_response
+2025-05-22 06:27:27,618 - INFO - CHECKPOINT: Starting process_ai_response
+2025-05-22 06:27:27,618 - INFO - CHECKPOINT: Extracted 2 code blocks and 0 article blocks
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Added code block 1 to workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Added code block 2 to workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Total blocks added to workspace: 2
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: process_ai_response test passed
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Testing robust_ollama_utils bridge function
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Attempting to save content to workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Successfully saved content to workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: robust_ollama_utils bridge function test passed
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Setting up test environment
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Test environment setup complete
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Testing save_ai_content_to_workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Starting save_ai_content_to_workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Got document state with ID test_doc_id
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Starting process_ai_response
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Extracted 2 code blocks and 0 article blocks
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Added code block 1 to workspace
+2025-05-22 06:27:27,620 - INFO - CHECKPOINT: Added code block 2 to workspace
+2025-05-22 06:27:27,621 - INFO - CHECKPOINT: Total blocks added to workspace: 2
+2025-05-22 06:27:27,621 - INFO - CHECKPOINT: Processed AI response, added 2 blocks
+2025-05-22 06:27:27,621 - INFO - CHECKPOINT: Successfully saved AI content to workspace test_doc_id
+2025-05-22 06:27:27,621 - INFO - CHECKPOINT: save_ai_content_to_workspace test passed
+2025-05-22 06:27:27,621 - INFO - CHECKPOINT: Test suite completed

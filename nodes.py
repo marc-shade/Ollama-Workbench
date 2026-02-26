@@ -26,10 +26,10 @@ AVAILABLE_NODE_TYPES = {
     "Processing": True,
     "LLM": True,
     "Output": True,
-    "DataRetrieval": False,  # Set to False until fully implemented
-    "Control": False,  # Set to False until fully implemented
-    "Integration": False,  # Set to False until fully implemented
-    "Utility": False  # Set to False until fully implemented
+    "DataRetrieval": True,  # Now implemented
+    "Control": True,  # Now implemented
+    "Integration": True,  # Now implemented
+    "Utility": True  # Now implemented
 }
 
 # Define color scheme and emojis
@@ -305,6 +305,14 @@ def execute_workflow(nodes: List[Node], edges: List[Edge]) -> Dict[str, str]:
                 results[node_id] = handle_llm_node(node, incoming_edges, process_node, api_keys)
             elif node.type == 'Output':
                 results[node_id] = handle_output_node(node, incoming_edges, process_node)
+            elif node.type == 'DataRetrieval':
+                results[node_id] = handle_data_retrieval_node(node, incoming_edges, process_node)
+            elif node.type == 'Control':
+                results[node_id] = handle_control_node(node, incoming_edges, process_node)
+            elif node.type == 'Integration':
+                results[node_id] = handle_integration_node(node, incoming_edges, process_node)
+            elif node.type == 'Utility':
+                results[node_id] = handle_utility_node(node, incoming_edges, process_node)
             else:
                 logger.error(f"Unsupported node type: {node.type}")
                 results[node_id] = f"Error: Unsupported node type {node.type}"
@@ -314,8 +322,15 @@ def execute_workflow(nodes: List[Node], edges: List[Edge]) -> Dict[str, str]:
 
         return results[node_id]
 
+    # Find all output nodes and process them (which will trigger processing of all their inputs)
+    output_nodes = [node.id for node in nodes if node.type == 'Output']
+    for node_id in output_nodes:
+        process_node(node_id)
+    
+    # Process any nodes that haven't been processed yet
     for node in nodes:
-        process_node(node.id)
+        if node.id not in results:
+            process_node(node.id)
 
     return results
 
@@ -546,6 +561,282 @@ def apply_metacognitive_prompt(node: Node, input_data: str) -> str:
     # For now, we'll mock the LLM response.
     return f"{metacognitive_type} result based on input: {input_data}"
 
+def handle_data_retrieval_node(node: Node, incoming_edges: List[Edge], process_node) -> str:
+    """Handles the execution of a DataRetrieval node."""
+    # Processing input if available
+    input_text = ""
+    if incoming_edges:
+        input_text = process_node(incoming_edges[0].source)
+    
+    if node.data['retrieval_type'] == 'Database':
+        # Simulate database retrieval
+        database_type = node.data.get('database_type', 'SQL')
+        query = node.data.get('query', '')
+        if input_text:
+            query = query.replace("{input}", input_text)
+        
+        if database_type == 'SQL':
+            return f"SQL query result for: {query}"
+        elif database_type == 'NoSQL':
+            return f"NoSQL query result for: {query}"
+        elif database_type == 'Vector':
+            return f"Vector database search result for: {query}"
+        else:
+            return f"Unknown database type: {database_type}"
+    
+    elif node.data['retrieval_type'] == 'API':
+        # Make an actual API call if configured
+        endpoint = node.data.get('api_endpoint', '')
+        method = node.data.get('api_method', 'GET')
+        params = node.data.get('api_params', {})
+        
+        # Replace any input placeholders in the params
+        for key, value in params.items():
+            if isinstance(value, str) and '{input}' in value:
+                params[key] = value.replace('{input}', input_text)
+        
+        try:
+            if method == 'GET':
+                response = requests.get(endpoint, params=params, timeout=10)
+            elif method == 'POST':
+                response = requests.post(endpoint, json=params, timeout=10)
+            else:
+                return f"Unsupported API method: {method}"
+            
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            return f"API request error: {str(e)}"
+    
+    elif node.data['retrieval_type'] == 'File':
+        # Read from a file
+        file_path = node.data.get('file_path', '')
+        if not file_path:
+            return "Error: No file path specified"
+        
+        try:
+            with open(file_path, 'r') as f:
+                content = f.read()
+            return content
+        except Exception as e:
+            return f"File read error: {str(e)}"
+    
+    elif node.data['retrieval_type'] == 'Web':
+        # Extract data from a web page
+        url = node.data.get('web_url', '')
+        if input_text and not url:
+            url = input_text
+        
+        if not url:
+            return "Error: No URL specified"
+        
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            return f"Web request error: {str(e)}"
+    
+    else:
+        return f"Unknown retrieval type: {node.data['retrieval_type']}"
+
+def handle_control_node(node: Node, incoming_edges: List[Edge], process_node) -> str:
+    """Handles the execution of a Control node."""
+    if not incoming_edges:
+        return "Error: Control node requires input"
+    
+    input_data = process_node(incoming_edges[0].source)
+    
+    if node.data['control_type'] == 'Conditional':
+        # Implement conditional logic
+        condition = node.data.get('condition', '')
+        true_branch = node.data.get('true_branch', '')
+        false_branch = node.data.get('false_branch', '')
+        
+        # Evaluate the condition based on input
+        try:
+            # This is a simplified evaluation; in a real implementation,
+            # you'd want to implement a safer condition evaluation
+            condition_result = eval(condition.replace('{input}', repr(input_data)))
+            
+            if condition_result:
+                return f"TRUE: {true_branch}"
+            else:
+                return f"FALSE: {false_branch}"
+        except Exception as e:
+            return f"Condition evaluation error: {str(e)}"
+    
+    elif node.data['control_type'] == 'Loop':
+        # Simulate a loop operation
+        iterations = node.data.get('iterations', 1)
+        loop_body = node.data.get('loop_body', '')
+        
+        results = []
+        for i in range(iterations):
+            # Replace placeholders in the loop body
+            current_iteration = loop_body.replace('{i}', str(i)).replace('{input}', input_data)
+            results.append(f"Iteration {i+1}: {current_iteration}")
+        
+        return "\n".join(results)
+    
+    elif node.data['control_type'] == 'Switch':
+        # Implement a switch statement
+        cases = node.data.get('cases', {})
+        default_case = node.data.get('default_case', '')
+        
+        if input_data in cases:
+            return f"CASE '{input_data}': {cases[input_data]}"
+        else:
+            return f"DEFAULT: {default_case}"
+    
+    else:
+        return f"Unknown control type: {node.data['control_type']}"
+
+def handle_integration_node(node: Node, incoming_edges: List[Edge], process_node) -> str:
+    """Handles the execution of an Integration node."""
+    if not incoming_edges:
+        return "Error: Integration node requires input"
+    
+    input_data = process_node(incoming_edges[0].source)
+    
+    if node.data['integration_type'] == 'Email':
+        # Simulate sending an email
+        recipient = node.data.get('email_recipient', '')
+        subject = node.data.get('email_subject', '')
+        body = node.data.get('email_body', '').replace('{input}', input_data)
+        
+        # In a real implementation, you'd send an actual email
+        # Here we just return a confirmation message
+        message = MIMEMultipart()
+        message['To'] = recipient
+        message['Subject'] = subject
+        message.attach(MIMEText(body, 'plain'))
+        
+        return f"Email would be sent to {recipient} with subject '{subject}' and body containing input data"
+    
+    elif node.data['integration_type'] == 'Webhook':
+        # Make a webhook call
+        webhook_url = node.data.get('webhook_url', '')
+        webhook_method = node.data.get('webhook_method', 'POST')
+        webhook_data = node.data.get('webhook_data', {})
+        
+        # Replace any input placeholders
+        for key, value in webhook_data.items():
+            if isinstance(value, str) and '{input}' in value:
+                webhook_data[key] = value.replace('{input}', input_data)
+        
+        try:
+            if webhook_method == 'POST':
+                response = requests.post(webhook_url, json=webhook_data, timeout=10)
+            elif webhook_method == 'GET':
+                response = requests.get(webhook_url, params=webhook_data, timeout=10)
+            else:
+                return f"Unsupported webhook method: {webhook_method}"
+            
+            response.raise_for_status()
+            return f"Webhook call successful: {response.text[:100]}"
+        except requests.RequestException as e:
+            return f"Webhook call error: {str(e)}"
+    
+    elif node.data['integration_type'] == 'Database':
+        # Simulate database integration
+        database_action = node.data.get('database_action', 'query')
+        database_data = node.data.get('database_data', '').replace('{input}', input_data)
+        
+        return f"Database {database_action} with data: {database_data}"
+    
+    else:
+        return f"Unknown integration type: {node.data['integration_type']}"
+
+def handle_utility_node(node: Node, incoming_edges: List[Edge], process_node) -> str:
+    """Handles the execution of a Utility node."""
+    if not incoming_edges:
+        return "Error: Utility node requires input"
+    
+    input_data = process_node(incoming_edges[0].source)
+    
+    if node.data['utility_type'] == 'Format':
+        # Format the input data
+        format_type = node.data.get('format_type', 'JSON')
+        
+        if format_type == 'JSON':
+            try:
+                # If input is a JSON string, parse it and re-format
+                # If input is not JSON, try to convert simple data to JSON
+                try:
+                    data = json.loads(input_data)
+                    return json.dumps(data, indent=2)
+                except json.JSONDecodeError:
+                    # Try to convert simple text to JSON
+                    return json.dumps({"text": input_data}, indent=2)
+            except Exception as e:
+                return f"JSON formatting error: {str(e)}"
+        
+        elif format_type == 'HTML':
+            # Simple HTML wrapping
+            return f"<html><body><p>{input_data}</p></body></html>"
+        
+        elif format_type == 'Markdown':
+            # Simple markdown formatting - wrap in code block
+            return f"```\n{input_data}\n```"
+        
+        else:
+            return f"Unknown format type: {format_type}"
+    
+    elif node.data['utility_type'] == 'Transform':
+        # Apply transformations to input data
+        transform_type = node.data.get('transform_type', 'Uppercase')
+        
+        if transform_type == 'Uppercase':
+            return input_data.upper()
+        elif transform_type == 'Lowercase':
+            return input_data.lower()
+        elif transform_type == 'Capitalize':
+            return input_data.capitalize()
+        elif transform_type == 'Count':
+            return f"Character count: {len(input_data)}"
+        else:
+            return f"Unknown transform type: {transform_type}"
+    
+    elif node.data['utility_type'] == 'Calculate':
+        # Perform calculations
+        calculation_type = node.data.get('calculation_type', 'Basic Math')
+        formula = node.data.get('formula', '')
+        
+        if calculation_type == 'Basic Math':
+            try:
+                # This is a simplified and potentially unsafe evaluation
+                # In a real application, you'd want to implement a safer math evaluation
+                result = eval(formula.replace('{input}', input_data))
+                return f"Calculation result: {result}"
+            except Exception as e:
+                return f"Calculation error: {str(e)}"
+        
+        elif calculation_type == 'Statistics':
+            try:
+                # Parse the input data as a list of numbers
+                try:
+                    numbers = [float(n) for n in input_data.split()]
+                except ValueError:
+                    return "Invalid input for statistics: expecting space-separated numbers"
+                
+                import numpy as np
+                return {
+                    "mean": np.mean(numbers),
+                    "median": np.median(numbers),
+                    "std_dev": np.std(numbers),
+                    "min": np.min(numbers),
+                    "max": np.max(numbers)
+                }
+            except Exception as e:
+                return f"Statistics calculation error: {str(e)}"
+        
+        else:
+            return f"Unknown calculation type: {calculation_type}"
+    
+    else:
+        return f"Unknown utility type: {node.data['utility_type']}"
+
 def render_node_settings(node: Node) -> None:
     """Renders the settings panel for the selected node in the Streamlit sidebar."""
     st.sidebar.subheader(f"Configure {NODE_EMOJIS[node.type]} {node.type} Node {node.id}")
@@ -598,6 +889,90 @@ def render_node_settings(node: Node) -> None:
             node.data['file_format'] = st.sidebar.selectbox("File Format", ["txt", "csv", "json"], key=f"file_format_{node.id}")
         elif node.data['output_type'] == 'Visualization':
             node.data['visualization_type'] = st.sidebar.selectbox("Visualization Type", ["Bar Chart", "Line Chart", "Scatter Plot"], key=f"visualization_type_{node.id}")
+
+    elif node.type == 'DataRetrieval':
+        node.data['retrieval_type'] = st.sidebar.selectbox("Retrieval Type", ["Database", "API", "File", "Web"], key=f"retrieval_type_{node.id}")
+        
+        if node.data['retrieval_type'] == 'Database':
+            node.data['database_type'] = st.sidebar.selectbox("Database Type", ["SQL", "NoSQL", "Vector"], key=f"database_type_{node.id}")
+            node.data['query'] = st.sidebar.text_area("Query", value=node.data.get('query', ''), key=f"query_{node.id}")
+            st.sidebar.info("Use {input} placeholder to insert input data into the query")
+        
+        elif node.data['retrieval_type'] == 'API':
+            node.data['api_endpoint'] = st.sidebar.text_input("API Endpoint", value=node.data.get('api_endpoint', ''), key=f"api_endpoint_{node.id}")
+            node.data['api_method'] = st.sidebar.selectbox("API Method", ["GET", "POST"], key=f"api_method_{node.id}")
+            api_params_json = st.sidebar.text_area("API Parameters (JSON)", value=json.dumps(node.data.get('api_params', {}), indent=2), key=f"api_params_{node.id}")
+            try:
+                node.data['api_params'] = json.loads(api_params_json)
+            except json.JSONDecodeError:
+                st.sidebar.error("Invalid JSON for API parameters")
+        
+        elif node.data['retrieval_type'] == 'File':
+            node.data['file_path'] = st.sidebar.text_input("File Path", value=node.data.get('file_path', ''), key=f"file_path_{node.id}")
+        
+        elif node.data['retrieval_type'] == 'Web':
+            node.data['web_url'] = st.sidebar.text_input("URL", value=node.data.get('web_url', ''), key=f"web_url_{node.id}")
+            st.sidebar.info("If URL is empty, input text will be used as URL")
+
+    elif node.type == 'Control':
+        node.data['control_type'] = st.sidebar.selectbox("Control Type", ["Conditional", "Loop", "Switch"], key=f"control_type_{node.id}")
+        
+        if node.data['control_type'] == 'Conditional':
+            node.data['condition'] = st.sidebar.text_input("Condition", value=node.data.get('condition', "len('{input}') > 10"), key=f"condition_{node.id}")
+            node.data['true_branch'] = st.sidebar.text_input("True Branch", value=node.data.get('true_branch', "Condition is true"), key=f"true_branch_{node.id}")
+            node.data['false_branch'] = st.sidebar.text_input("False Branch", value=node.data.get('false_branch', "Condition is false"), key=f"false_branch_{node.id}")
+            st.sidebar.info("Use {input} placeholder for input data in condition")
+        
+        elif node.data['control_type'] == 'Loop':
+            node.data['iterations'] = st.sidebar.number_input("Iterations", min_value=1, max_value=100, value=node.data.get('iterations', 3), key=f"iterations_{node.id}")
+            node.data['loop_body'] = st.sidebar.text_input("Loop Body", value=node.data.get('loop_body', "Processing {input} in iteration {i}"), key=f"loop_body_{node.id}")
+            st.sidebar.info("Use {i} for iteration index and {input} for input data")
+        
+        elif node.data['control_type'] == 'Switch':
+            cases_json = st.sidebar.text_area("Cases (JSON)", value=json.dumps(node.data.get('cases', {"case1": "Result 1", "case2": "Result 2"}), indent=2), key=f"cases_{node.id}")
+            try:
+                node.data['cases'] = json.loads(cases_json)
+            except json.JSONDecodeError:
+                st.sidebar.error("Invalid JSON for cases")
+            node.data['default_case'] = st.sidebar.text_input("Default Case", value=node.data.get('default_case', "Default result"), key=f"default_case_{node.id}")
+
+    elif node.type == 'Integration':
+        node.data['integration_type'] = st.sidebar.selectbox("Integration Type", ["Email", "Webhook", "Database"], key=f"integration_type_{node.id}")
+        
+        if node.data['integration_type'] == 'Email':
+            node.data['email_recipient'] = st.sidebar.text_input("Recipient", value=node.data.get('email_recipient', ''), key=f"email_recipient_{node.id}")
+            node.data['email_subject'] = st.sidebar.text_input("Subject", value=node.data.get('email_subject', 'Workflow Notification'), key=f"email_subject_{node.id}")
+            node.data['email_body'] = st.sidebar.text_area("Body", value=node.data.get('email_body', 'Workflow result: {input}'), key=f"email_body_{node.id}")
+            st.sidebar.info("Use {input} placeholder to insert input data into the email body")
+        
+        elif node.data['integration_type'] == 'Webhook':
+            node.data['webhook_url'] = st.sidebar.text_input("Webhook URL", value=node.data.get('webhook_url', ''), key=f"webhook_url_{node.id}")
+            node.data['webhook_method'] = st.sidebar.selectbox("Method", ["POST", "GET"], key=f"webhook_method_{node.id}")
+            webhook_data_json = st.sidebar.text_area("Webhook Data (JSON)", value=json.dumps(node.data.get('webhook_data', {"data": "{input}"}), indent=2), key=f"webhook_data_{node.id}")
+            try:
+                node.data['webhook_data'] = json.loads(webhook_data_json)
+            except json.JSONDecodeError:
+                st.sidebar.error("Invalid JSON for webhook data")
+        
+        elif node.data['integration_type'] == 'Database':
+            node.data['database_action'] = st.sidebar.selectbox("Database Action", ["query", "insert", "update", "delete"], key=f"database_action_{node.id}")
+            node.data['database_data'] = st.sidebar.text_area("Data/Query", value=node.data.get('database_data', 'SELECT * FROM table WHERE column = {input}'), key=f"database_data_{node.id}")
+            st.sidebar.info("Use {input} placeholder to insert input data")
+
+    elif node.type == 'Utility':
+        node.data['utility_type'] = st.sidebar.selectbox("Utility Type", ["Format", "Transform", "Calculate"], key=f"utility_type_{node.id}")
+        
+        if node.data['utility_type'] == 'Format':
+            node.data['format_type'] = st.sidebar.selectbox("Format Type", ["JSON", "HTML", "Markdown"], key=f"format_type_{node.id}")
+        
+        elif node.data['utility_type'] == 'Transform':
+            node.data['transform_type'] = st.sidebar.selectbox("Transform Type", ["Uppercase", "Lowercase", "Capitalize", "Count"], key=f"transform_type_{node.id}")
+        
+        elif node.data['utility_type'] == 'Calculate':
+            node.data['calculation_type'] = st.sidebar.selectbox("Calculation Type", ["Basic Math", "Statistics"], key=f"calculation_type_{node.id}")
+            if node.data['calculation_type'] == 'Basic Math':
+                node.data['formula'] = st.sidebar.text_input("Formula", value=node.data.get('formula', '{input} * 2'), key=f"formula_{node.id}")
+                st.sidebar.info("Use {input} placeholder in your formula")
 
     if st.sidebar.button("Update Node", key=f"update_node_{node.id}"):
         st.success(f"Node {node.id} updated successfully!")
@@ -752,8 +1127,8 @@ def nodes_interface() -> None:
                 st.error(f"Workflow validation failed: {validation_result['error']}")
     with col2:
         if st.button("💾 Save Workflow", type="secondary"):
-            save_workflow(st.session_state['nodes'], st.session_state['edges'])
-            st.success("Workflow saved successfully!")
+            filename = save_workflow(st.session_state['nodes'], st.session_state['edges'])
+            st.success(f"Workflow saved successfully as {filename}! You can access it from the CEF Dashboard.")
     with col3:
         if st.button("📂 Load Workflow", type="secondary"):
             loaded_nodes, loaded_edges = load_workflow()
@@ -873,16 +1248,71 @@ def create_node(node_id: str, node_type: str) -> Node:
             'file_format': 'txt',
             'visualization_type': 'None',
         })
+    elif node_type == 'DataRetrieval':
+        base_data.update({
+            'retrieval_type': 'API',
+            'api_endpoint': 'https://api.example.com/data',
+            'api_method': 'GET',
+            'api_params': {},
+            'database_type': 'SQL',
+            'query': 'SELECT * FROM table WHERE column = "{input}"',
+            'file_path': '',
+            'web_url': '',
+        })
+    elif node_type == 'Control':
+        base_data.update({
+            'control_type': 'Conditional',
+            'condition': 'len("{input}") > 10',
+            'true_branch': 'Condition is true',
+            'false_branch': 'Condition is false',
+            'iterations': 3,
+            'loop_body': 'Processing {input} in iteration {i}',
+            'cases': {
+                'case1': 'Result 1',
+                'case2': 'Result 2'
+            },
+            'default_case': 'Default result',
+        })
+    elif node_type == 'Integration':
+        base_data.update({
+            'integration_type': 'Webhook',
+            'webhook_url': 'https://webhook.example.com',
+            'webhook_method': 'POST',
+            'webhook_data': {'data': '{input}'},
+            'email_recipient': 'recipient@example.com',
+            'email_subject': 'Workflow Notification',
+            'email_body': 'Workflow result: {input}',
+            'database_action': 'query',
+            'database_data': 'SELECT * FROM table WHERE column = {input}',
+        })
+    elif node_type == 'Utility':
+        base_data.update({
+            'utility_type': 'Format',
+            'format_type': 'JSON',
+            'transform_type': 'Uppercase',
+            'calculation_type': 'Basic Math',
+            'formula': '{input} * 2',
+        })
     return Node(node_id, node_type, base_data)
 
 def save_workflow(nodes: List[Node], edges: List[Edge]) -> None:
-    """Saves the current workflow to a JSON file."""
+    """Saves the current workflow to JSON files."""
     workflow_data = {
         "nodes": [node.to_dict() for node in nodes],
         "edges": [edge.to_dict() for edge in edges]
     }
+    
+    # Save to standard workflow.json for loading next time
     with open("workflow.json", "w") as f:
         json.dump(workflow_data, f, indent=2)
+    
+    # Also save with timestamp for dashboard management
+    timestamp = int(time.time())
+    filename = f"workflow_{timestamp}.json"
+    with open(filename, "w") as f:
+        json.dump(workflow_data, f, indent=2)
+    
+    return filename
 
 def load_workflow() -> Tuple[List[Node], List[Edge]]:
     """Loads a workflow from a JSON file."""

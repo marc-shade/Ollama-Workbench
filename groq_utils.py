@@ -4,32 +4,14 @@ import json
 import streamlit as st
 from groq import Groq
 from typing import List, Dict
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    print("Warning: sentence_transformers package not found, using fallback implementation")
-    # Fallback implementation for sentence_transformers
-    class SentenceTransformer:
-        def __init__(self, model_name):
-            self.model_name = model_name
-            print(f"Warning: Using fallback SentenceTransformer with model: {model_name}")
-            
-        def encode(self, text, **kwargs):
-            import numpy as np
-            print(f"Warning: Using fallback encoding for text: {text[:50]}...")
-            # Return a random embedding vector of size 384 (same as all-MiniLM-L6-v2)
-            return np.random.rand(384)
+from sentence_transformers import SentenceTransformer
 
 GROQ_MODELS = [
-    "llama-3.1-70b-versatile",
+    "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
-    "llama3-groq-70b-8192-tool-use-preview",
-    "llama3-groq-8b-8192-tool-use-preview",
-    "llama-guard-3-8b",
     "llama3-70b-8192",
     "llama3-8b-8192",
     "mixtral-8x7b-32768",
-    "gemma-7b-it",
     "gemma2-9b-it",
 ]
 
@@ -51,6 +33,7 @@ def save_api_keys(api_keys):
     """Saves API keys to the JSON file."""
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
+    os.chmod(API_KEYS_FILE, 0o600)
 
 def get_groq_client(api_key: str):
     """Returns a Groq client instance if API key is available, otherwise returns None."""
@@ -62,10 +45,47 @@ def get_groq_client(api_key: str):
         st.warning("Groq API key not configured. Some features will be limited to local models.")
         return None
 
-def call_groq_api(client: Groq, model: str, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 1000) -> str:
-    """Calls the Groq API for chat completions."""
-    if not client:
+def call_groq_api(model, messages=None, temperature=0.7, max_tokens=1000, groq_api_key=None, **kwargs) -> str:
+    """Calls the Groq API for chat completions.
+
+    Args:
+        model: Model name string (e.g. "llama3-70b-8192"). For backward
+               compatibility, if a Groq client object is passed the next
+               positional arg is treated as the model name.
+        messages: A list of message dicts, or a plain string (auto-wrapped).
+        temperature: Sampling temperature.
+        max_tokens: Maximum tokens in the response.
+        groq_api_key: Groq API key. Loaded from api_keys.json when None.
+        **kwargs: Accepts (and ignores) extra keyword args such as ``client``
+                  for backward compatibility.
+    """
+    # --- backward compat: old callers passed (client, model, messages, ...) ---
+    if isinstance(model, Groq):
+        # Shift positional args: model is actually the client, messages is the model, etc.
+        _client_ignored = model
+        model = messages  # second positional was the real model name
+        messages = temperature if not isinstance(temperature, (int, float)) else None
+        # Pull remaining kwargs the old caller may have passed by name
+        messages = kwargs.get("messages", messages)
+        temperature = kwargs.get("temperature", 0.7)
+        max_tokens = kwargs.get("max_tokens", 1000)
+        groq_api_key = kwargs.get("groq_api_key", groq_api_key)
+
+    # --- normalise messages ------------------------------------------------
+    if isinstance(messages, str):
+        messages = [{"role": "user", "content": messages}]
+    if not messages:
         return None
+
+    # --- resolve API key and build client ----------------------------------
+    if not groq_api_key:
+        groq_api_key = load_api_keys().get("groq_api_key")
+    if not groq_api_key:
+        st.warning("Groq API key not configured.")
+        return None
+
+    client = Groq(api_key=groq_api_key)
+
     try:
         chat_completion = client.chat.completions.create(
             model=model,

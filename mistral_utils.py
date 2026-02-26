@@ -27,6 +27,7 @@ def save_api_keys(api_keys):
     """Saves API keys to the JSON file."""
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
+    os.chmod(API_KEYS_FILE, 0o600)
 
 def get_mistral_client(api_key: str = None) -> Union[Mistral, None]:
     """Returns a Mistral client instance if API key is available."""

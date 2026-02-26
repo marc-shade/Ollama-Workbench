@@ -4,49 +4,8 @@ import openai
 import json
 import streamlit as st
 import subprocess
-try:
-    from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
-except ImportError:
-    print("Warning: autogen package not found, using fallback implementation")
-    # Fallback implementation for autogen
-    class ConversableAgent:
-        def __init__(self, name, llm_config=None, human_input_mode=None, **kwargs):
-            self.name = name
-            self.llm_config = llm_config
-            print(f"Warning: Using fallback ConversableAgent with name: {name}")
-            
-        def generate_reply(self, messages, sender, config=None):
-            print(f"Warning: Using fallback generate_reply for {self.name}")
-            return f"This is a fallback response from {self.name}. The autogen package is not installed."
-    
-    class UserProxyAgent(ConversableAgent):
-        def __init__(self, name, human_input_mode=None, code_execution_config=None, **kwargs):
-            super().__init__(name=name, **kwargs)
-            self.human_input_mode = human_input_mode
-            self.code_execution_config = code_execution_config
-    
-    class GroupChat:
-        def __init__(self, agents, messages=None, speaker_selection_method=None):
-            self.agents = agents
-            self.messages = messages or []
-            self.speaker_selection_method = speaker_selection_method
-    
-    class GroupChatManager:
-        def __init__(self, groupchat):
-            self.groupchat = groupchat
-try:
-    from autogen.agentchat.contrib.capabilities.teachability import Teachability
-except ImportError:
-    print("Warning: autogen.agentchat.contrib.capabilities.teachability package not found, using fallback implementation")
-    # Fallback implementation for Teachability
-    class Teachability:
-        def __init__(self, path_to_db_dir=None):
-            self.path_to_db_dir = path_to_db_dir
-            print(f"Warning: Using fallback Teachability with path: {path_to_db_dir}")
-            
-        def add_to_agent(self, agent):
-            print(f"Warning: Using fallback add_to_agent for {agent.name}")
-            pass
+from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
+from autogen.agentchat.contrib.capabilities.teachability import Teachability
 from ollama_utils import get_available_models, get_all_models
 import markdown
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt

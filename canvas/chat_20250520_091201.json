@@ -1,0 +1,32 @@
+{
+  "doc_id": "chat_20250520_091201",
+  "name": "Chat Workspace chat_20250520_091201",
+  "blocks": [
+    {
+      "id": "4ef2e865-d0a0-46e4-9d41-36d1ff5e35b7",
+      "type": "text",
+      "content": "hi",
+      "metadata": {},
+      "created_at": "2025-05-20T09:12:13.273386",
+      "updated_at": "2025-05-20T09:12:13.273390",
+      "version_history": []
+    }
+  ],
+  "version": 1,
+  "edit_history": [
+    {
+      "action": "add_block",
+      "block_id": "4ef2e865-d0a0-46e4-9d41-36d1ff5e35b7",
+      "timestamp": "2025-05-20T09:12:13.273394",
+      "version": 1,
+      "metadata": {
+        "block_type": "text",
+        "initial_content": "hi"
+      }
+    }
+  ],
+  "pending_ai_edits": [],
+  "last_modified": "2025-05-20T09:12:13.273393",
+  "created_at": "2025-05-20T09:12:13.270934",
+  "metadata": {}
+}

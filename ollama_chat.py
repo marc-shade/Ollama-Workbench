@@ -35,7 +35,7 @@ def ollama_chat():
         response, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=0.7, max_tokens=1000) # Hard-coded settings for now
         
         st.session_state.chat_history.append({"role": "assistant", "content": response})
-        st.experimental_rerun()
+        st.rerun()
 
 # Declare the Streamlit component
 components.declare_component(

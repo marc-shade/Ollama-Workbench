@@ -15,14 +15,14 @@ import pytest
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build
 from ollama import Client
-from openai import ChatCompletion, OpenAI
+from openai import OpenAI
 from rich.console import Console
-from streamlit import session_state as st_ss
+import streamlit as st
 
-from openai_utils import *
-from groq_utils import *
-from ollama_utils import *
-from external_providers import *
+from ollama_utils import call_ollama_endpoint, get_all_models, load_api_keys, save_api_keys
+from openai_utils import call_openai_api
+from groq_utils import call_groq_api, GROQ_MODELS
+from external_providers import get_available_groq_models
 
 API_KEYS_FILE = "api_keys.json"
 SETTINGS_FILE = "build_settings.json"
@@ -45,14 +45,6 @@ def save_json_file(filepath: str, data: dict) -> None:
     with open(filepath, "w") as f:
         json.dump(data, f, indent=4)
 
-def load_api_keys() -> dict:
-    """Loads API keys from the JSON file."""
-    return load_json_file(API_KEYS_FILE)
-
-def save_api_keys(api_keys: dict) -> None:
-    """Saves API keys to the JSON file."""
-    save_json_file(API_KEYS_FILE, api_keys)
-
 def load_settings() -> dict:
     """Loads settings from the JSON file."""
     return load_json_file(SETTINGS_FILE)
@@ -60,62 +52,6 @@ def load_settings() -> dict:
 def save_settings(settings: dict) -> None:
     """Saves settings to the JSON file."""
     save_json_file(SETTINGS_FILE, settings)
-
-def set_openai_api_key(api_key: str) -> None:
-    """Sets the OpenAI API key."""
-    api_keys = load_api_keys()
-    api_keys['openai_api_key'] = api_key
-    save_api_keys(api_keys)
-    console.print("[bold green]OpenAI API key has been set.[/bold green]")
-
-def call_openai_api(
-    model: str,
-    messages: List[Dict[str, Any]],
-    temperature: float = 0.7,
-    max_tokens: int = 1000,
-    frequency_penalty: float = 0.0,
-    presence_penalty: float = 0.0,
-    stream: bool = False,
-    openai_api_key: str = None
-) -> Any:
-    """Wrapper function to call the OpenAI Chat API with a unified interface."""
-    try:
-        temperature = float(temperature)
-        max_tokens = int(max_tokens)
-        frequency_penalty = float(frequency_penalty)
-        presence_penalty = float(presence_penalty)
-    except ValueError as ve:
-        raise ValueError(f"Invalid value for one of the numerical parameters: {ve}")
-
-    if not openai_api_key or not isinstance(openai_api_key, str):
-        api_keys = load_api_keys()
-        openai_api_key = api_keys.get('openai_api_key')
-        if not openai_api_key or not isinstance(openai_api_key, str):
-            raise ValueError("Invalid or missing OpenAI API key.")
-
-    openai.api_key = openai_api_key
-
-    try:
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            frequency_penalty=frequency_penalty,
-            presence_penalty=presence_penalty,
-            stream=stream
-        )
-
-        if stream:
-            return response  # Return the stream object
-        else:
-            return response.choices[0].message['content'].strip()
-
-    except json.JSONDecodeError as json_err:
-        raise ValueError(f"Failed to parse response as JSON: {json_err}")
-    except Exception as e:
-        console.print(f"[bold red]Error calling OpenAI API:[/bold red] {e}")
-        return "Error occurred while calling OpenAI API"
 
 def is_groq_model(model_name: str) -> bool:
     """Determines if a given model name is a Groq model."""
@@ -226,7 +162,13 @@ def manager_agent_task(
             )
             response_content = response.choices[0].message.content
         elif model in GROQ_MODELS:
-            response_content = call_groq_api(model, prompt, temperature, max_tokens, groq_api_key=openai_api_key)
+            api_keys = load_api_keys()
+            response_content = call_groq_api(
+                model,
+                [{"role": "user", "content": prompt}],
+                temperature, max_tokens,
+                groq_api_key=openai_api_key or api_keys.get("groq_api_key", "")
+            )
         else:
             # Assume it's an Ollama model
             response_content, _, _, _ = call_ollama_endpoint(
@@ -236,6 +178,8 @@ def manager_agent_task(
                 max_tokens=max_tokens
             )
 
+        if not response_content:
+            return {"error": "Empty response from model"}, "Empty response"
         parsed_response = json.loads(response_content)
         return parsed_response, None
 
@@ -338,7 +282,13 @@ def coding_agent_task(
             )
             response_content = response.choices[0].message.content
         elif model in GROQ_MODELS:
-            response_content = call_groq_api(model, full_prompt, temperature, max_tokens, groq_api_key=groq_api_key)
+            api_keys = load_api_keys()
+            response_content = call_groq_api(
+                model,
+                [{"role": "user", "content": full_prompt}],
+                temperature, max_tokens,
+                groq_api_key=groq_api_key or api_keys.get("groq_api_key", "")
+            )
         else:
             # Assume it's an Ollama model
             response_content, _, _, _ = call_ollama_endpoint(
@@ -348,6 +298,8 @@ def coding_agent_task(
                 max_tokens=max_tokens
             )
 
+        if not response_content:
+            return {"error": "Empty response from model"}
         parsed_response = json.loads(response_content)
         return parsed_response
 
@@ -390,7 +342,13 @@ def refine_task(
         if isinstance(model, str) and model.startswith("gpt-"):
             response_text = call_openai_api(model, messages, temperature, max_tokens, openai_api_key=openai_api_key)
         elif isinstance(model, str) and is_groq_model(model):
-            response_text = call_groq_api(model, messages[0]["content"], temperature, max_tokens, groq_api_key=groq_api_key)
+            api_keys = load_api_keys()
+            response_text = call_groq_api(
+                model,
+                [{"role": "user", "content": messages[0]["content"]}],
+                temperature, max_tokens,
+                groq_api_key=groq_api_key or api_keys.get("groq_api_key", "")
+            )
         else:
             response_text = call_ollama_endpoint(
                 model=model,
@@ -591,11 +549,10 @@ def generate_readme(
             )
         elif is_groq_model(refiner_model):
             readme_content = call_groq_api(
-                model=refiner_model,
-                prompt=messages[0]["content"],
-                temperature=0.7,
-                max_tokens=2000,
-                groq_api_key=api_keys.get("groq_api_key")
+                refiner_model,
+                [{"role": "user", "content": messages[0]["content"]}],
+                0.7, 2000,
+                groq_api_key=api_keys.get("groq_api_key", "")
             )
         else:
             readme_content = call_ollama_endpoint(

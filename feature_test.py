@@ -2,7 +2,7 @@
 from model_tests import model_tool_test_ui
 import streamlit as st
 import asyncio
-from ollama_utils import get_available_models as get_ollama_models, check_json_handling, check_function_calling, run_tool_test
+from ollama_utils import get_available_models as get_ollama_models, check_json_handling, check_function_calling, run_tool_test, get_ollama_client, call_ollama_endpoint
 from openai_utils import OPENAI_MODELS, call_openai_api
 from groq_utils import GROQ_MODELS, call_groq_api
 from ollama_utils import load_api_keys
@@ -65,14 +65,21 @@ def feature_test():
         if selected_provider == "Ollama Models":
             # Proper tool testing for Ollama models
             try:
-                client = ollama.Client()
+                client = get_ollama_client()
                 prompt = f"Here is a simple test function in Python that takes two arguments: {arguments['arg1']['description']} and {arguments['arg2']['description']}."
-                response = client.generate(model=selected_model, prompt=prompt)
-                if 'response' in response:
-                    tool_result = response['response']  # Extracting the result from the response
-                    st.markdown(f"### 🧰 Ollama Tool Test Result: {tool_result}")
+                
+                if client:
+                    # Newer version with Client class
+                    response = client.generate(model=selected_model, prompt=prompt)
+                    if 'response' in response:
+                        tool_result = response['response']  # Extracting the result from the response
+                        st.markdown(f"### 🧰 Ollama Tool Test Result: {tool_result}")
+                    else:
+                        st.error(f"Unexpected response structure: {response}")
                 else:
-                    st.error(f"Unexpected response structure: {response}")
+                    # Use call_ollama_endpoint for older versions
+                    tool_result, _, _, _ = call_ollama_endpoint(model=selected_model, prompt=prompt)
+                    st.markdown(f"### 🧰 Ollama Tool Test Result: {tool_result}")
             except Exception as e:
                 st.error(f"An error occurred during the Ollama tool test: {e}")
 

@@ -1,0 +1,1 @@
+{"selected_models": ["gemma3:4b-it-q8_0", "qwq:latest"], "comparison_mode": "side-by-side", "model_settings": {"gemma3:4b-it-q8_0": {"temperature": 0.7, "max_tokens": 4000, "presence_penalty": 0.0, "frequency_penalty": 0.0}, "qwq:latest": {"temperature": 0.7, "max_tokens": 4000, "presence_penalty": 0.0, "frequency_penalty": 0.0}}, "shared_context": true}

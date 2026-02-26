@@ -89,14 +89,14 @@ def main():
             if selected_file:
                 file_path = os.path.join("files", selected_file)
                 st.session_state.editor_content = load_file(file_path)
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.warning("Please select a file to load.")
 
     with col3:
         if st.button("Clear"):
             st.session_state.editor_content = ""
-            st.experimental_rerun()
+            st.rerun()
 
     # Preview
     if editor_content:

@@ -69,11 +69,31 @@ class OllamaEmbedder:
 
     def get_embedding(self, text):
         try:
-            response = ollama.embeddings(model=self.model, prompt=text)
-            return response['embedding']
+            # Try multiple methods to get embeddings for better compatibility
+            try:
+                # First try: use client class if available
+                client = ollama.Client()
+                response = client.embeddings(model=self.model, prompt=text)
+                return response['embedding']
+            except (AttributeError, TypeError) as client_error:
+                # If client class not available or has wrong signature, try module-level function
+                logger.info(f"Using module-level function for embeddings: {str(client_error)}")
+                response = ollama.embeddings(model=self.model, prompt=text)
+                return response['embedding']
         except Exception as e:
             logger.error(f"Error getting embedding: {str(e)}")
-            raise
+            # Fall back to direct API call
+            try:
+                import requests
+                response = requests.post(
+                    "http://localhost:11434/api/embeddings",
+                    json={"model": self.model, "prompt": text}
+                )
+                response.raise_for_status()
+                return response.json()['embedding']
+            except Exception as api_error:
+                logger.error(f"API fallback also failed: {str(api_error)}")
+                raise
 
 class GraphRAGCorpus:
     def __init__(self, corpus_name, embedder):
@@ -144,6 +164,7 @@ class GraphRAGCorpus:
         results = []
         for idx in top_indices:
             results.append({
+                "id": self.documents[idx]["id"],  # Ensure document ID is included
                 "content": self.documents[idx]["content"],
                 "metadata": self.documents[idx]["metadata"],
                 "similarity": similarities[idx]
@@ -237,6 +258,7 @@ def enhance_corpus_ui():
                     results = loaded_corpus.query(query)
                     st.write("Query Results:")
                     for result in results:
+                        st.write(f"Document ID: {result['id']}")
                         st.write(f"Similarity: {result['similarity']:.4f}")
                         st.write(result['content'])
                         st.write("---")

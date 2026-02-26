@@ -5,26 +5,31 @@ import threading
 from flask import Flask, jsonify, request
 import os
 import subprocess
-import json 
+import json
+import time
+import logging
 
-# Set page config for wide layout
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Set page config for wide layout with maximum width
 st.set_page_config(layout="wide", page_title="Ollama Workbench", page_icon="🦙")
 
+# Add CSS to ensure 100% width on all pages
+st.markdown("""
+    <style>
+    .block-container {
+        max-width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-import sys
-print(f"Python executable: {sys.executable}")
-try:
-    from streamlit_option_menu import option_menu
-except ImportError:
-    # Fallback implementation for streamlit_option_menu
-    def option_menu(menu_title, options, icons=None, menu_icon=None, default_index=0, styles=None):
-        import streamlit as st
-        selected = st.selectbox(
-            menu_title if menu_title else "Menu",
-            options,
-            index=default_index,
-        )
-        return selected
+from streamlit_option_menu import option_menu
+from collaborative_workspace import collaborative_workspace_ui
 from ollama_utils import *
 from model_tests import *
 from ui_elements import (
@@ -33,6 +38,39 @@ from ui_elements import (
     vision_comparison_test, chat_interface, update_models, files_tab,
     server_configuration, server_monitoring
 )
+# Import the enhanced chat interface that preserves all original functionality
+from enhanced_chat_interface import enhanced_chat_interface
+from styles import apply_styles
+from simplified_rag import enhanced_rag_interface
+from model_onboarding import onboarding_test_process
+# Multimodal chat functionality is now integrated into the main Chat interface
+from multimodel_chat import multimodel_chat_app
+# Import voice interface with error handling to prevent UI failures
+try:
+    from voice_interface import voice_chat_interface, voice_settings_ui
+    voice_interface_available = True
+    print("CHECKPOINT: Voice interface successfully loaded")
+except ImportError as e:
+    print(f"CHECKPOINT: Voice interface not available: {str(e)}")
+    voice_interface_available = False
+    # Define fallback functions
+    def voice_chat_interface():
+        st.warning("Voice chat is not available. Please install the required dependencies: pip install SpeechRecognition pyaudio gtts pygame")
+    def voice_settings_ui():
+        st.warning("Voice settings are not available. Please install the required dependencies: pip install SpeechRecognition pyaudio gtts pygame")
+# Import tool_playground with error handling to prevent UI failures
+try:
+    from tool_playground import tool_playground
+except Exception as e:
+    st.error(f"Error loading Tool Playground module: {str(e)}")
+    # Define a fallback function
+    def tool_playground():
+        st.error("Tool Playground is currently unavailable.")
+        st.info("Try restarting the application or check the logs for errors.")
+from structured_output import structured_output_ui
+from openai_compatibility import openai_compatibility_ui
+from model_capabilities import model_capabilities_ui
+from test_visualization import test_visualization_ui
 from repo_docs import main as repo_docs_main
 from web_to_corpus import main as web_to_corpus_main
 from welcome import display_welcome_message
@@ -52,147 +90,49 @@ from streamlit_javascript import st_javascript
 from db_init import init_db
 from persona_chat import persona_group_chat
 from persona_lab.persona_lab import persona_lab_interface
+from model_management import model_management_dashboard
+from performance_metrics import performance_metrics_interface, record_metrics
 
-# Initialize the database
+# Import enhanced observability
+try:
+    from observability import enhanced_observability_dashboard, configure_opik, observability_config
+    ENHANCED_OBSERVABILITY_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Enhanced observability not available: {e}")
+    ENHANCED_OBSERVABILITY_AVAILABLE = False
+    
+    def enhanced_observability_dashboard():
+        st.error("Enhanced observability not available. Install opik: pip install opik")
+    
+    def configure_opik(*args, **kwargs):
+        pass
+
+# Initialize the databases
 init_db()
+
+# Initialize model management database
+try:
+    from model_management import init_db as init_model_db
+    init_model_db()
+except ImportError:
+    pass  # Model management module not available
 
 # Global variable to store the port number
 ollama_port = None 
 
-# Create a native messaging host manifest 
-NATIVE_HOST_MANIFEST = "native_host_manifest.json" 
-with open(NATIVE_HOST_MANIFEST, "w") as f:
-    json.dump({
-        "name": "ollama_workbench_host",
-        "description": "Native messaging host for Ollama Workbench",
-        "path": os.path.abspath(__file__), 
-        "type": "stdio"
-    }, f, indent=4)
+# Create a native messaging host manifest (only if it doesn't already exist)
+NATIVE_HOST_MANIFEST = "native_host_manifest.json"
+if not os.path.exists(NATIVE_HOST_MANIFEST):
+    with open(NATIVE_HOST_MANIFEST, "w") as f:
+        json.dump({
+            "name": "ollama_workbench_host",
+            "description": "Native messaging host for Ollama Workbench",
+            "path": os.path.abspath(__file__),
+            "type": "stdio"
+        }, f, indent=4)
 
-# Custom CSS
-st.markdown("""
-        <style>
-        body, h1, h2, h3, h4, h5, h6, p {
-            font-family: Open Sans, Helvetica, Arial, sans-serif!important;
-            font-weight: 400;
-        }
-        .app-title {
-            font-size: 40px!important;
-            font-family: Open Sans, Helvetica, Arial, sans-serif!important;
-        }
-        .app-title span {
-            color: orange;
-        }
-        .nav-link {
-            display: block;
-            color: inherit;
-            border: 0!important;
-            padding: 10px; 
-            text-align: left!important;
-            cursor: pointer;
-            font-size: 16px;
-            box-sizing: border-box;
-            white-space: nowrap;
-            text-decoration: none; 
-        }
-        .nav-link.active {
-            background-color: orange!important; 
-            color: white;
-        }
-        .nav-button {
-            display: block;
-            color: inherit;
-            border: 0!important;
-            padding: 0px;
-            text-align: left!important;
-            cursor: pointer;
-            font-size: 16px;
-            box-sizing: border-box;
-            white-space: nowrap;
-        }
-        
-        button {
-            border: 0!important;
-            text-align: left!important;
-            justify-content: left!important;
-            white-space: nowrap;
-        }
-
-        .st-emotion-cache-0, 
-        .st-emotion-cache-0 details, 
-        .st-emotion-cache-0 summary {
-            border: 0!important;
-        }
-        div[data-testid="stVerticalBlockBorderWrapper"] > div > div[width="439"] > div[data-testid="stVerticalBlockBorderWrapper"] {
-            background-color: rgb(255,255,255,.2);
-        }
-        </style>
-""", unsafe_allow_html=True)
-
-# Function to inject custom CSS
-def inject_custom_css(css):
-    st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
-
-# JavaScript to detect theme
-theme = st_javascript("""
-    (function() {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        return prefersDark ? 'dark' : 'light';
-    })();
-""")
-
-# Define CSS for light and dark modes
-light_mode_css = """
-/* Custom styles for light mode */
-.sidebar .css-1d391kg {
-    background-color: #fafafa;
-}
-.sidebar .css-1d391kg .nav-link {
-    color: #000000;
-}
-.sidebar .css-1d391kg .nav-link-selected {
-    background-color: #e0e0e0;
-    color: #000000;
-}
-button.ef3psqc13, 
-button.ef3psqc14 {
-    background-color: #2c4755;
-    color: #FFFFFF;
-    border: solid 1px #FFF;
-}
-button.ef3psqc13:hover, 
-button.ef3psqc14:hover {
-    background-color: #e16d6d;
-    color: #FFFFFF;
-}
-"""
-
-dark_mode_css = """
-/* Custom styles for dark mode */
-.sidebar .css-1d391kg {
-    background-color: #333333;
-}
-.sidebar .css-1d391kg .nav-link {
-    color: #ffffff;
-}
-.sidebar .css-1d391kg .nav-link-selected {
-    background-color: #555555;
-    color: #ffffff;
-}
-button.ef3psqc13 {
-    background-color: rgb(255,255,255,.1);
-    border: 0px!important;
-}
-button.ef3psqc13:hover {
-    background-color: rgb(255,255,255,.05);
-}
-"""
-
-# Apply the appropriate CSS based on the detected theme
-if theme == 'dark':
-    inject_custom_css(dark_mode_css)
-else:
-    inject_custom_css(light_mode_css)
+# Apply modern styling from the styles module
+colors, theme = apply_styles()
 
 # Define constants for the sidebar sections
 SIDEBAR_SECTIONS = {
@@ -212,19 +152,28 @@ SIDEBAR_SECTIONS = {
     ],
     "Maintain": [
         ("List Local Models", "List Local Models"),
+        ("Model Management", "Model Management"),
         ("Model Information", "Show Model Information"),
         ("Pull a Model", "Pull a Model"),
         ("Remove a Model", "Remove a Model"),
         ("Update Models", "Update Models"),
         ("Server Configuration", "Server Configuration"),
         ("Server Monitoring", "Server Monitoring"),
-        ("External Providers", "External Providers")
+        ("Performance Metrics", "Performance Metrics"),
+        ("Observability Dashboard", "Observability Dashboard"),
+        ("External Providers", "External Providers"),
+        ("OpenAI Compatibility", "OpenAI Compatibility")
     ],
     "Test": [
+        ("Model Onboarding", "Model Onboarding"),
         ("Model Feature Test", "Feature Test"),
         ("Response Quality", "Model Comparison"),
         ("Contextual Response", "Contextual Response"),
         ("Vision Models", "Vision"),
+        ("Tool Calling", "Tool Playground"),
+        ("Structured Output", "Structured Output"),
+        ("Model Capabilities", "Model Capabilities"),
+        ("Test Visualization", "Test Visualization"),
     ],
     "Help": [
         ("Help", "Help")
@@ -261,30 +210,48 @@ def create_sidebar():
         if st.session_state.get("show_resource_usage", False):
             display_resource_usage_sidebar()
 
-        # Define the main navigation menu
+        # Define the main navigation menu with modern styling
         main_menu = option_menu(
             menu_title="",
-            options=["Chat"] + list(SIDEBAR_SECTIONS.keys()),
-            icons=["chat", "gear", "folder", "tools", "clipboard-check", "question-circle"],
+            options=["Chat", "Multi-Model Chat", "Voice Chat", "Tool Playground", "Structured Output", "Enhanced RAG", "Collaborative Workspace"] + list(SIDEBAR_SECTIONS.keys()),
+            icons=["chat", "chat-square-text", "mic", "tools", "braces", "book", "pencil-square", "gear", "folder", "tools", "clipboard-check", "question-circle"],
             menu_icon="cast",
             default_index=0,
             styles={
                 "container": {"padding": "0!important"},
-                "icon": {"font-size": "12px"},
+                "icon": {"font-size": "14px", "margin-right": "10px"},
                 "nav-link": {
-                    "font-size": "14px",
+                    "font-size": "15px",
                     "text-align": "left",
-                    "margin": "0px",
-                    "--primary-color": "#1976D2",
-                    "--hover-color": "#e16d6d",
+                    "margin": "0.25rem 0",
+                    "padding": "0.5rem 0.75rem",
+                    "border-radius": "0.375rem",
+                    "--primary-color": colors["primary"],
+                    "--hover-color": colors["hover"],
                 },
-                "nav-link-selected": {"font-weight": "bold"},
+                "nav-link-selected": {
+                    "font-weight": "500",
+                    "background-color": colors["selected"],
+                    "color": colors["selected_text"]
+                },
             },
         )
 
         # Define the sub navigation menu based on the selected main menu
         if main_menu == "Chat":
             st.session_state.selected_test = "Chat"
+        elif main_menu == "Multi-Model Chat":
+            st.session_state.selected_test = "Multi-Model Chat"
+        elif main_menu == "Voice Chat":
+            st.session_state.selected_test = "Voice Chat"
+        elif main_menu == "Tool Playground":
+            st.session_state.selected_test = "Tool Playground"
+        elif main_menu == "Structured Output":
+            st.session_state.selected_test = "Structured Output"
+        elif main_menu == "Enhanced RAG":
+            st.session_state.selected_test = "Enhanced RAG"
+        elif main_menu == "Collaborative Workspace":
+            st.session_state.selected_test = "Collaborative Workspace"
         else:
             sub_menu = option_menu(
                 menu_title=None,
@@ -309,7 +276,28 @@ def main_content():
     if 'bm_tasks' not in st.session_state:
         st.session_state.bm_tasks = []
     if st.session_state.selected_test == "Chat":
-        chat_interface()
+        # Use the enhanced chat interface that preserves all original functionality
+        enhanced_chat_interface()
+    # Multimodal chat functionality is now integrated into the main Chat interface
+    elif st.session_state.selected_test == "Multi-Model Chat":
+        multimodel_chat_app()
+    elif st.session_state.selected_test == "Voice Chat":
+        if voice_interface_available:
+            tab1, tab2 = st.tabs(["Voice Chat", "Voice Settings"])
+            with tab1:
+                voice_chat_interface()
+            with tab2:
+                voice_settings_ui()
+        else:
+            st.warning("Voice chat features are not available. Please install the required dependencies:")
+            st.code("pip install SpeechRecognition pyaudio gtts pygame", language="bash")
+            st.info("Once installed, restart the application to use voice features.")
+            st.info("The application is missing the 'speech_recognition' module which is required for voice functionality.")
+            st.info("This does not affect other features of the Ollama Workbench.")
+    elif st.session_state.selected_test == "Tool Playground":
+        tool_playground()
+    elif st.session_state.selected_test == "Structured Output":
+        structured_output_ui()
     elif st.session_state.selected_test == "Build":
         build_interface()
     elif st.session_state.selected_test == "Research":
@@ -332,6 +320,8 @@ def main_content():
         repo_docs_main()
     elif st.session_state.selected_test == "List Local Models":
         list_local_models()
+    elif st.session_state.selected_test == "Model Management":
+        model_management_dashboard()
     elif st.session_state.selected_test == "Show Model Information":
         show_model_details()
     elif st.session_state.selected_test == "Pull a Model":
@@ -344,8 +334,16 @@ def main_content():
         server_configuration()
     elif st.session_state.selected_test == "Server Monitoring":
         server_monitoring()
+    elif st.session_state.selected_test == "Performance Metrics":
+        performance_metrics_interface()
+    elif st.session_state.selected_test == "Observability Dashboard":
+        enhanced_observability_dashboard()
     elif st.session_state.selected_test == "External Providers":
         external_providers_ui()
+    elif st.session_state.selected_test == "OpenAI Compatibility":
+        openai_compatibility_ui()
+    elif st.session_state.selected_test == "Model Onboarding":
+        onboarding_test_process()
     elif st.session_state.selected_test == "Feature Test":
         feature_test()
     elif st.session_state.selected_test == "Model Comparison":
@@ -354,6 +352,37 @@ def main_content():
         contextual_response_test()
     elif st.session_state.selected_test == "Vision":
         vision_comparison_test()
+    elif st.session_state.selected_test == "Model Capabilities":
+        model_capabilities_ui()
+    elif st.session_state.selected_test == "Test Visualization":
+        test_visualization_ui()
+    elif st.session_state.selected_test == "Enhanced RAG":
+        enhanced_rag_interface()
+    elif st.session_state.selected_test == "Collaborative Workspace":
+        def model_callback(prompt):
+            # Get the currently selected model with dynamic fallback
+            try:
+                from ollama_utils import get_dynamic_model_default
+                dynamic_default = get_dynamic_model_default()
+                model = st.session_state.get("selected_model", dynamic_default)
+            except Exception:
+                model = st.session_state.get("selected_model", None)
+            
+            # Get provider (default to Ollama)
+            provider = st.session_state.get("selected_provider", "ollama")
+            # Use the model to generate a response
+            from ollama_utils import get_ollama_client, call_ollama_endpoint
+            try:
+                response, _, _, _ = call_ollama_endpoint(
+                    model=model,
+                    prompt=prompt,
+                    temperature=0.7,
+                    max_tokens=4000
+                )
+                return response
+            except Exception as e:
+                return f"Error generating response: {str(e)}"
+        collaborative_workspace_ui(model_callback=model_callback)
     elif st.session_state.selected_test == "Help":
         display_welcome_message()
     else:
@@ -372,12 +401,6 @@ def get_prompts():
         "identity": get_identity_prompt()
     })
 
-@app.route('/openai-key')
-def get_openai_key():
-    """Returns the OpenAI API key."""
-    api_keys = load_api_keys()
-    return jsonify({"openai_api_key": api_keys.get("openai_api_key")})
-
 @app.route('/identifier')
 def get_identifier():
     """Returns a unique identifier for Ollama Workbench."""
@@ -390,18 +413,42 @@ def get_port():
     return str(ollama_port)
 
 def main():
+    # Initialize session state
     initialize_session_state()
+    
+    # Initialize observability system
+    if ENHANCED_OBSERVABILITY_AVAILABLE:
+        try:
+            # Configure Opik with default project name
+            configure_opik(project_name="ollama-workbench")
+            logger.info("Observability system initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize observability: {e}")
+    
+    # Make sure selected_model is initialized (for compatibility with modern_chat_interface)
+    if "selected_model" in st.session_state and st.session_state.selected_model:
+        # If selected_model exists, make sure current_model is synchronized
+        if "current_model" not in st.session_state:
+            st.session_state.current_model = st.session_state.selected_model
+    elif "current_model" in st.session_state and st.session_state.current_model:
+        # If current_model exists but selected_model doesn't, synchronize in the other direction
+        st.session_state.selected_model = st.session_state.current_model
+    
+    # Create the sidebar
     create_sidebar()
     
-    web_page_content = st.query_params.get('web_page_content', [None])[0] 
+    # Handle query parameters
+    params = st.query_params
+    web_page_content = params.get('web_page_content', None)
     if web_page_content:
         st.session_state.web_page_content = web_page_content
 
+    # Display main content
     main_content()
 
     # Get parameters from URL
-    web_page_url = st.query_params.get('url', None)
-    is_extension = st.query_params.get('extension', 'false').lower() == 'true'
+    web_page_url = params.get('url', None)
+    is_extension = params.get('extension', 'false').lower() == 'true'
 
     if is_extension and web_page_url:
         st.session_state.web_page_url = web_page_url

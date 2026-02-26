@@ -15,25 +15,7 @@ import shutil
 from PyPDF2 import PdfMerger
 import json
 import random
-try:
-    from fake_useragent import UserAgent
-except ImportError:
-    print("Warning: fake_useragent package not found, using fallback implementation")
-    # Fallback implementation for fake_useragent
-    class UserAgent:
-        def __init__(self):
-            self.user_agents = [
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
-            ]
-            print("Warning: Using fallback UserAgent")
-            
-        @property
-        def random(self):
-            import random
-            return random.choice(self.user_agents)
+from fake_useragent import UserAgent
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -62,15 +44,24 @@ class WebsiteCrawler:
         self.domain_name = urlparse(root_url).netloc
         self.temp_dir = tempfile.mkdtemp(dir=SCRIPT_DIR)
         self.crawled_data = []
+        self.driver = None
 
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--window-size=1920x1080")
-        chrome_options.add_argument(f"user-agent={get_random_user_agent()}")
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        try:
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--window-size=1920x1080")
+            chrome_options.add_argument(f"user-agent={get_random_user_agent()}")
+            
+            # Try to create the Chrome driver with error handling
+            try:
+                self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+            except Exception as e:
+                st.warning(f"Chrome driver initialization failed: {str(e)}. Falling back to requests only.")
+        except Exception as e:
+            st.warning(f"Chrome setup failed: {str(e)}. Falling back to requests only.")
 
         if self.output_format == "PDF":
             self.pdf_options = {
@@ -79,8 +70,15 @@ class WebsiteCrawler:
             }
 
     def __del__(self):
-        self.driver.quit()
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
+        try:
+            if self.driver:
+                self.driver.quit()
+        except Exception as e:
+            print(f"Error quitting driver: {e}")
+        try:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+        except Exception as e:
+            print(f"Error removing temp directory: {e}")
 
     def fetch_page(self, url):
         headers = {
@@ -102,6 +100,10 @@ class WebsiteCrawler:
 
     def fetch_page_selenium(self, url):
         try:
+            if not self.driver:
+                st.warning("Selenium driver not available, skipping Selenium fetch")
+                return None
+                
             self.driver.get(url)
             time.sleep(random.uniform(3, 5))  # Randomize wait time
             return self.driver.page_source
@@ -113,10 +115,19 @@ class WebsiteCrawler:
         filename = self.get_filename(url, "pdf")
         st.info(f"Saving {url} as PDF")
         try:
-            pdfkit.from_string(f"<h1>{url}</h1><pre>{content}</pre>", filename, options=self.pdf_options)
-            return filename
-        except IOError as e:
-            st.error(f"Failed to convert {url} to PDF: {e}")
+            # Check if pdfkit is properly installed
+            try:
+                pdfkit.from_string(f"<h1>{url}</h1><pre>{content}</pre>", filename, options=self.pdf_options)
+                return filename
+            except (ImportError, IOError) as pdfkit_error:
+                st.warning(f"pdfkit error: {pdfkit_error}. Saving as text instead.")
+                # Fallback to text file if PDF generation fails
+                txt_filename = self.get_filename(url, "txt")
+                with open(txt_filename, "w", encoding="utf-8") as f:
+                    f.write(f"URL: {url}\n\n{content}")
+                return txt_filename
+        except Exception as e:
+            st.error(f"Failed to save {url}: {e}")
             return None
 
     def get_filename(self, url, extension):

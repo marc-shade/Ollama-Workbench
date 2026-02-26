@@ -48,3 +48,14 @@ htmlcov/
 
 # Local development files
 *.bak
+*.bak.*
+
+# Sessions
+sessions/
+
+# Generated / transient artifacts
+native_host_manifest.json
+test_report.json
+test_run.log
+modernization_validation_report.json
+MODERNIZATION_STATUS.md

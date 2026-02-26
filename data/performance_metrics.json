@@ -1,0 +1,40 @@
+[
+  {
+    "timestamp": "2025-05-22T15:39:14.720228",
+    "model": "llama3",
+    "response_time": 2.5
+  },
+  {
+    "timestamp": "2025-05-22T15:39:14.726120",
+    "model": "test_model",
+    "response_time": 1.0,
+    "prompt_length": 200,
+    "input_tokens": 100,
+    "output_tokens": 150
+  },
+  {
+    "timestamp": "2025-05-22T15:39:14.732887",
+    "model": "test_model",
+    "response_time": 1.0
+  },
+  {
+    "timestamp": "2025-05-22T15:39:14.817521",
+    "model": "model1",
+    "response_time": 1.0
+  },
+  {
+    "timestamp": "2025-05-22T15:39:14.817862",
+    "model": "model2",
+    "response_time": 2.0
+  },
+  {
+    "timestamp": "2025-05-22T15:39:14.818278",
+    "model": "model3",
+    "response_time": 3.0
+  },
+  {
+    "timestamp": "2025-05-22T15:39:15.009345",
+    "model": "test_model",
+    "response_time": 1.0
+  }
+]

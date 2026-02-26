@@ -1,0 +1,76 @@
+{
+  "doc_id": "chat_20250522_061101",
+  "name": "Chat Workspace chat_20250522_061101",
+  "blocks": [
+    {
+      "id": "9c6035d9-b168-4a19-8806-fa31faab7bd6",
+      "type": "code",
+      "content": "bash\n     pip install pygame",
+      "metadata": {
+        "language": "python"
+      },
+      "created_at": "2025-05-22T06:13:11.781704",
+      "updated_at": "2025-05-22T06:13:11.781714",
+      "version_history": []
+    },
+    {
+      "id": "5898e69e-5fac-4db9-ada6-76b622c5a4cb",
+      "type": "code",
+      "content": "python\nimport pygame\nimport time\nimport random\n\n# Initialize Pygame\npygame.init()\n\n# Define colors\nwhite = (255, 255, 255)\nyellow = (255, 255, 102)\nblack = (0, 0, 0)\nred = (213, 50, 80)\ngreen = (0, 255, 0)\nblue = (50, 153, 213)\n\n# Display dimensions\ndis_width = 600\ndis_height = 400\n\n# Initialize display\ndis = pygame.display.set_mode((dis_width, dis_height))\npygame.display.set_caption('Snake Game')\n\n# Clock object to control the frame rate\nclock = pygame.time.Clock()\n\nsnake_block = 10\nsnake_speed = 15\n\nfont_style = pygame.font.SysFont(\"bahnschrift\", 25)\nscore_font = pygame.font.SysFont(\"comicsansms\", 35)\n\ndef our_snake(snake_block, snake_list):\n    for x in snake_list:\n        pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])\n\ndef message(msg, color):\n    mesg = font_style.render(msg, True, color)\n    dis.blit(mesg, [dis_width / 6, dis_height / 3])\n\ndef gameLoop():\n    game_over = False\n    game_close = False\n\n    x1 = dis_width / 2\n    y1 = dis_height / 2\n\n    x1_change = 0\n    y1_change = 0\n\n    snake_List = []\n    Length_of_snake = 1\n\n    foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0\n    foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0\n\n    while not game_over:\n\n        while game_close == True:\n            dis.fill(blue)\n            message(\"You Lost! Press Q-Quit or C-Play Again\", red)\n            pygame.display.update()\n\n            for event in pygame.event.get():\n                if event.type == pygame.KEYDOWN:\n                    if event.key == pygame.K_q:\n                        game_over = True\n                        game_close = False\n                    if event.key == pygame.K_c:\n                        gameLoop()\n\n        for event in pygame.event.get():\n            if event.type == pygame.QUIT:\n                game_over = True\n            if event.type == pygame.KEYDOWN:\n                if event.key == pygame.K_LEFT:\n                    x1_change = -snake_block\n                    y1_change = 0\n                elif event.key == pygame.K_RIGHT:\n                    x1_change = snake_block\n                    y1_change = 0\n                elif event.key == pygame.K_UP:\n                    y1_change = -snake_block\n                    x1_change = 0\n                elif event.key == pygame.K_DOWN:\n                    y1_change = snake_block\n                    x1_change = 0\n\n        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:\n            game_close = True\n        x1 += x1_change\n        y1 += y1_change\n        dis.fill(blue)\n        pygame.draw.rect(dis, green, [foodx, foody, snake_block, snake_block])\n        snake_Head = []\n        snake_Head.append(x1)\n        snake_Head.append(y1)\n        snake_List.append(snake_Head)\n        if len(snake_List) > Length_of_snake:\n            del snake_List[0]\n\n        for x in snake_List[:-1]:\n            if x == snake_Head:\n                game_close = True\n\n        our_snake(snake_block, snake_List)\n\n        pygame.display.update()\n\n        if x1 == foodx and y1 == foody:\n            foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0\n            foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0\n            Length_of_snake += 1\n\n        clock.tick(snake_speed)\n\n    pygame.quit()\n    quit()\n\ngameLoop()",
+      "metadata": {
+        "language": "python"
+      },
+      "created_at": "2025-05-22T06:13:11.797123",
+      "updated_at": "2025-05-22T06:13:11.797132",
+      "version_history": []
+    },
+    {
+      "id": "3325be63-3ff5-4750-be63-060f5294a82b",
+      "type": "code",
+      "content": "bash\n     python snake_game.py",
+      "metadata": {
+        "language": "python"
+      },
+      "created_at": "2025-05-22T06:13:11.799752",
+      "updated_at": "2025-05-22T06:13:11.799760",
+      "version_history": []
+    }
+  ],
+  "version": 3,
+  "edit_history": [
+    {
+      "action": "add_block",
+      "block_id": "9c6035d9-b168-4a19-8806-fa31faab7bd6",
+      "timestamp": "2025-05-22T06:13:11.783645",
+      "version": 1,
+      "metadata": {
+        "block_type": "code",
+        "initial_content": "bash\n     pip install pygame"
+      }
+    },
+    {
+      "action": "add_block",
+      "block_id": "5898e69e-5fac-4db9-ada6-76b622c5a4cb",
+      "timestamp": "2025-05-22T06:13:11.797137",
+      "version": 2,
+      "metadata": {
+        "block_type": "code",
+        "initial_content": "python\nimport pygame\nimport time\nimport random\n\n# Initialize Pygame\npygame.init()\n\n# Define colors\nwhite = (255, 255, 255)\nyellow = (255, 255, 102)\nblack = (0, 0, 0)\nred = (213, 50, 80)\ngreen = (0, 255, 0)\nblue = (50, 153, 213)\n\n# Display dimensions\ndis_width = 600\ndis_height = 400\n\n# Initialize display\ndis = pygame.display.set_mode((dis_width, dis_height))\npygame.display.set_caption('Snake Game')\n\n# Clock object to control the frame rate\nclock = pygame.time.Clock()\n\nsnake_block = 10\nsnake_speed = 15\n\nfont_style = pygame.font.SysFont(\"bahnschrift\", 25)\nscore_font = pygame.font.SysFont(\"comicsansms\", 35)\n\ndef our_snake(snake_block, snake_list):\n    for x in snake_list:\n        pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])\n\ndef message(msg, color):\n    mesg = font_style.render(msg, True, color)\n    dis.blit(mesg, [dis_width / 6, dis_height / 3])\n\ndef gameLoop():\n    game_over = False\n    game_close = False\n\n    x1 = dis_width / 2\n    y1 = dis_height / 2\n\n    x1_change = 0\n    y1_change = 0\n\n    snake_List = []\n    Length_of_snake = 1\n\n    foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0\n    foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0\n\n    while not game_over:\n\n        while game_close == True:\n            dis.fill(blue)\n            message(\"You Lost! Press Q-Quit or C-Play Again\", red)\n            pygame.display.update()\n\n            for event in pygame.event.get():\n                if event.type == pygame.KEYDOWN:\n                    if event.key == pygame.K_q:\n                        game_over = True\n                        game_close = False\n                    if event.key == pygame.K_c:\n                        gameLoop()\n\n        for event in pygame.event.get():\n            if event.type == pygame.QUIT:\n                game_over = True\n            if event.type == pygame.KEYDOWN:\n                if event.key == pygame.K_LEFT:\n                    x1_change = -snake_block\n                    y1_change = 0\n                elif event.key == pygame.K_RIGHT:\n                    x1_change = snake_block\n                    y1_change = 0\n                elif event.key == pygame.K_UP:\n                    y1_change = -snake_block\n                    x1_change = 0\n                elif event.key == pygame.K_DOWN:\n                    y1_change = snake_block\n                    x1_change = 0\n\n        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:\n            game_close = True\n        x1 += x1_change\n        y1 += y1_change\n        dis.fill(blue)\n        pygame.draw.rect(dis, green, [foodx, foody, snake_block, snake_block])\n        snake_Head = []\n        snake_Head.append(x1)\n        snake_Head.append(y1)\n        snake_List.append(snake_Head)\n        if len(snake_List) > Length_of_snake:\n            del snake_List[0]\n\n        for x in snake_List[:-1]:\n            if x == snake_Head:\n                game_close = True\n\n        our_snake(snake_block, snake_List)\n\n        pygame.display.update()\n\n        if x1 == foodx and y1 == foody:\n            foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0\n            foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0\n            Length_of_snake += 1\n\n        clock.tick(snake_speed)\n\n    pygame.quit()\n    quit()\n\ngameLoop()"
+      }
+    },
+    {
+      "action": "add_block",
+      "block_id": "3325be63-3ff5-4750-be63-060f5294a82b",
+      "timestamp": "2025-05-22T06:13:11.799763",
+      "version": 3,
+      "metadata": {
+        "block_type": "code",
+        "initial_content": "bash\n     python snake_game.py"
+      }
+    }
+  ],
+  "pending_ai_edits": [],
+  "last_modified": "2025-05-22T06:13:11.799761",
+  "created_at": "2025-05-22T06:13:11.734689",
+  "metadata": {}
+}

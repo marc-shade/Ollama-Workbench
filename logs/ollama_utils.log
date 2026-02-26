@@ -1,0 +1,75 @@
+2025-05-23 08:55:31,772 - observability.opik_integration - INFO - [<module>:69] - Opik successfully imported
+2025-05-23 08:55:31,773 - observability.opik_integration - INFO - [_initialize:156] - Opik available but no API key provided - will configure on first use
+2025-05-23 08:55:31,773 - observability.opik_integration - INFO - [_start_background_monitoring:307] - Background monitoring started
+2025-05-23 08:55:32,091 - ollama_utils - INFO - [<module>:48] - Observability integration loaded successfully
+2025-05-23 08:55:34,153 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:55:34,193 - security.security_config - INFO - [load_config:142] - Security configuration loaded successfully
+2025-05-23 08:55:34,193 - security.security_config - INFO - [load_secrets:171] - Security secrets loaded successfully
+2025-05-23 08:55:34,193 - security.audit_logging - INFO - [_init_database:148] - Audit database initialized
+2025-05-23 08:55:34,193 - security.audit_logging - INFO - [_start_background_processor:167] - Audit background processor started
+2025-05-23 08:55:34,193 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:55:34,193 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:55:34,194 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:55:34,195 - ollama_utils - INFO - [_call_ollama_with_observability:464] - Starting Ollama operation
+2025-05-23 08:55:34,195 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:55:34,195 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:55:34,232 - httpx - INFO - [_send_single_request:1026] - HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-05-23 08:55:34,456 - ollama_utils - INFO - [_call_ollama_with_observability:464] - Starting Ollama operation
+2025-05-23 08:55:34,456 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:55:34,456 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:55:34,480 - httpx - INFO - [_send_single_request:1026] - HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-05-23 08:55:34,484 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST http://localhost:11434/api/generate "HTTP/1.1 404 Not Found"
+2025-05-23 08:55:34,485 - ollama_utils - ERROR - [_call_ollama_endpoint_impl:1122] - Error in call_ollama_endpoint: model 'llama3.2:latest' not found (status code: 404)
+2025-05-23 08:55:34,500 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST http://localhost:11434/api/generate "HTTP/1.1 404 Not Found"
+2025-05-23 08:55:34,611 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST https://www.comet.com/opik/api/v1/private/spans/batch "HTTP/1.1 401 Unauthorized"
+2025-05-23 08:55:34,619 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST https://www.comet.com/opik/api/v1/private/traces/batch "HTTP/1.1 401 Unauthorized"
+2025-05-23 08:56:06,910 - observability.opik_integration - INFO - [<module>:69] - Opik successfully imported
+2025-05-23 08:56:06,910 - observability.opik_integration - INFO - [_initialize:156] - Opik available but no API key provided - will configure on first use
+2025-05-23 08:56:06,910 - observability.opik_integration - INFO - [_start_background_monitoring:307] - Background monitoring started
+2025-05-23 08:56:07,164 - ollama_utils - INFO - [<module>:48] - Observability integration loaded successfully
+2025-05-23 08:56:08,926 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:56:08,957 - security.security_config - INFO - [load_config:142] - Security configuration loaded successfully
+2025-05-23 08:56:08,957 - security.security_config - INFO - [load_secrets:171] - Security secrets loaded successfully
+2025-05-23 08:56:08,958 - security.audit_logging - INFO - [_init_database:148] - Audit database initialized
+2025-05-23 08:56:08,958 - security.audit_logging - INFO - [_start_background_processor:167] - Audit background processor started
+2025-05-23 08:56:08,958 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:56:08,958 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:56:08,958 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:56:08,960 - ollama_utils - INFO - [_call_ollama_with_observability:464] - Starting Ollama operation
+2025-05-23 08:56:08,960 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:56:08,960 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:56:09,098 - httpx - INFO - [_send_single_request:1026] - HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-05-23 08:56:11,075 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST http://localhost:11434/api/generate "HTTP/1.1 200 OK"
+2025-05-23 08:56:11,087 - ollama_utils - INFO - [_call_ollama_with_observability:464] - Starting Ollama operation
+2025-05-23 08:56:11,087 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 08:56:11,087 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 08:56:11,112 - httpx - INFO - [_send_single_request:1026] - HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-05-23 08:56:11,134 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST http://localhost:11434/api/generate "HTTP/1.1 200 OK"
+2025-05-23 08:56:11,218 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST https://www.comet.com/opik/api/v1/private/spans/batch "HTTP/1.1 401 Unauthorized"
+2025-05-23 08:56:11,232 - httpx - INFO - [_send_single_request:1026] - HTTP Request: POST https://www.comet.com/opik/api/v1/private/traces/batch "HTTP/1.1 401 Unauthorized"
+2025-05-23 09:01:38,936 - observability.opik_integration - INFO - [<module>:69] - Opik successfully imported
+2025-05-23 09:01:38,936 - observability.opik_integration - INFO - [_initialize:156] - Opik available but no API key provided - will configure on first use
+2025-05-23 09:01:38,936 - observability.opik_integration - INFO - [_start_background_monitoring:307] - Background monitoring started
+2025-05-23 09:01:39,410 - ollama_utils - INFO - [<module>:48] - Observability integration loaded successfully
+2025-05-23 09:01:40,988 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 09:01:41,028 - security.security_config - INFO - [load_config:142] - Security configuration loaded successfully
+2025-05-23 09:01:41,028 - security.security_config - INFO - [load_secrets:171] - Security secrets loaded successfully
+2025-05-23 09:01:41,029 - security.audit_logging - INFO - [_init_database:148] - Audit database initialized
+2025-05-23 09:01:41,029 - security.audit_logging - INFO - [_start_background_processor:167] - Audit background processor started
+2025-05-23 09:01:41,029 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 09:01:41,029 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 09:01:41,029 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 09:01:41,274 - tts_utils - INFO - [<module>:23] - Pygame is available for audio playback
+2025-05-23 09:02:22,924 - observability.opik_integration - INFO - [<module>:69] - Opik successfully imported
+2025-05-23 09:02:22,925 - observability.opik_integration - INFO - [_initialize:156] - Opik available but no API key provided - will configure on first use
+2025-05-23 09:02:22,925 - observability.opik_integration - INFO - [_start_background_monitoring:307] - Background monitoring started
+2025-05-23 09:02:23,336 - ollama_utils - INFO - [<module>:48] - Observability integration loaded successfully
+2025-05-23 09:02:24,802 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 09:02:24,837 - security.security_config - INFO - [load_config:142] - Security configuration loaded successfully
+2025-05-23 09:02:24,837 - security.security_config - INFO - [load_secrets:171] - Security secrets loaded successfully
+2025-05-23 09:02:24,838 - security.audit_logging - INFO - [_init_database:148] - Audit database initialized
+2025-05-23 09:02:24,838 - security.audit_logging - INFO - [_start_background_processor:167] - Audit background processor started
+2025-05-23 09:02:24,838 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 09:02:24,838 - root - INFO - [load_config_file:116] - Loaded configuration from /Volumes/FILES/code/Ollama-Workbench/workbench_config.json
+2025-05-23 09:02:24,838 - root - INFO - [get_config:171] - Enhanced security framework initialized
+2025-05-23 09:02:25,059 - tts_utils - INFO - [<module>:23] - Pygame is available for audio playback

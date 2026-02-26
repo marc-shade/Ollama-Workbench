@@ -1,0 +1,72 @@
+{
+  "doc_id": "fe0a53f9-e6f2-4a33-a2e8-99313c77b913",
+  "name": "Demo Document",
+  "blocks": [
+    {
+      "id": "ffe9011b-18ea-4719-9132-fc7c0ea61ab3",
+      "type": "markdown",
+      "content": "# Welcome to Canvas\n\nThis is a collaborative document editor where you can work with AI to create and edit content.",
+      "metadata": {},
+      "created_at": "2025-05-23T08:39:22.837406",
+      "updated_at": "2025-05-23T08:39:22.837419",
+      "version_history": []
+    },
+    {
+      "id": "1e2125c7-7729-4234-b3e6-7f093fc6d21e",
+      "type": "code",
+      "content": "def hello_world():\n    print('Hello, Canvas!')\n\nhello_world()",
+      "metadata": {
+        "language": "python"
+      },
+      "created_at": "2025-05-23T08:39:22.839739",
+      "updated_at": "2025-05-23T08:39:22.839745",
+      "version_history": []
+    },
+    {
+      "id": "438554c2-771f-40de-a839-787914d80c72",
+      "type": "text",
+      "content": "You can add different types of content blocks, including text, code, and markdown.",
+      "metadata": {},
+      "created_at": "2025-05-23T08:39:22.841040",
+      "updated_at": "2025-05-23T08:39:22.841046",
+      "version_history": []
+    }
+  ],
+  "version": 3,
+  "edit_history": [
+    {
+      "action": "add_block",
+      "block_id": "ffe9011b-18ea-4719-9132-fc7c0ea61ab3",
+      "timestamp": "2025-05-23T08:39:22.837501",
+      "version": 1,
+      "metadata": {
+        "block_type": "markdown",
+        "initial_content": "# Welcome to Canvas\n\nThis is a collaborative document editor where you can work with AI to create and edit content."
+      }
+    },
+    {
+      "action": "add_block",
+      "block_id": "1e2125c7-7729-4234-b3e6-7f093fc6d21e",
+      "timestamp": "2025-05-23T08:39:22.839751",
+      "version": 2,
+      "metadata": {
+        "block_type": "code",
+        "initial_content": "def hello_world():\n    print('Hello, Canvas!')\n\nhello_world()"
+      }
+    },
+    {
+      "action": "add_block",
+      "block_id": "438554c2-771f-40de-a839-787914d80c72",
+      "timestamp": "2025-05-23T08:39:22.841141",
+      "version": 3,
+      "metadata": {
+        "block_type": "text",
+        "initial_content": "You can add different types of content blocks, including text, code, and markdown."
+      }
+    }
+  ],
+  "pending_ai_edits": [],
+  "last_modified": "2025-05-23T08:39:22.841119",
+  "created_at": "2025-05-23T08:39:22.837111",
+  "metadata": {}
+}
