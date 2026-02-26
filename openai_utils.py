@@ -1,8 +1,7 @@
 # openai_utils.py
-import os
-import json
 import streamlit as st
 from openai import OpenAI
+from ollama_utils import load_api_keys, save_api_keys
 
 OPENAI_MODELS = [
     # GPT-4.1 models (2025)
@@ -39,21 +38,6 @@ OPENAI_MODELS = [
     "o4-mini",
 ]
 
-
-API_KEYS_FILE = "api_keys.json"
-
-def load_api_keys():
-    """Loads API keys from the JSON file."""
-    if os.path.exists(API_KEYS_FILE):
-        with open(API_KEYS_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-def save_api_keys(api_keys):
-    """Saves API keys to the JSON file."""
-    with open(API_KEYS_FILE, "w") as f:
-        json.dump(api_keys, f, indent=4)
-    os.chmod(API_KEYS_FILE, 0o600)
 
 def set_openai_api_key(api_key):
     """Sets the OpenAI API key."""

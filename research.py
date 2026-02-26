@@ -12,7 +12,7 @@ import re
 from agents import SearchManager, SearchAgent
 from search_libraries import duckduckgo_search, google_search, serpapi_search, serper_search, bing_search
 from ollama_utils import get_available_models
-from ollama_utils import load_api_keys
+from ollama_utils import load_api_keys, save_api_keys
 from openai_utils import call_openai_api, OPENAI_MODELS
 from groq_utils import call_groq_api, GROQ_MODELS
 import sqlite3
@@ -27,18 +27,6 @@ import pdfkit
 # Create 'files' directory if it doesn't exist
 files_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files')
 os.makedirs(files_dir, exist_ok=True)
-
-# Load API keys from settings file
-def load_api_keys():
-    if os.path.exists("api_keys.json"):
-        with open("api_keys.json", "r") as f:
-            return json.load(f)
-    return {}
-
-# Save API keys to settings file
-def save_api_keys(api_keys):
-    with open("api_keys.json", "w") as f:
-        json.dump(api_keys, f, indent=4)
 
 # Database functions
 def init_db():

@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 
 from ollama_utils import get_available_models, get_ollama_client, call_ollama_endpoint
+from session_utils import initialize_session_state
 
 # Try to import from enhanced_corpus, fall back to fallback modules if needed
 try:
@@ -26,13 +27,6 @@ try:
 except ImportError:
     from fallback_modules import apply_fallback_styles as apply_styles
 
-# Set up logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -42,34 +36,6 @@ UPLOADS_DIR = "uploads"
 # Ensure directories exist
 os.makedirs(RAGTEST_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
-
-def initialize_session_state():
-    """Initialize session state variables for RAG interface."""
-    if "rag_corpus_name" not in st.session_state:
-        st.session_state.rag_corpus_name = "default"
-    if "rag_chat_history" not in st.session_state:
-        st.session_state.rag_chat_history = []
-    if "rag_last_query" not in st.session_state:
-        st.session_state.rag_last_query = ""
-    
-    # Get available Ollama models first
-    models = get_available_models()
-    
-    if "rag_embedding_model" not in st.session_state:
-        # Set a default embedding model, use first available or fallback to llama2
-        st.session_state.rag_embedding_model = models[0] if models else "llama2"
-    elif st.session_state.rag_embedding_model not in models and models:
-        # If current model isn't available, reset to first available
-        st.session_state.rag_embedding_model = models[0]
-        
-    if "rag_llm_model" not in st.session_state:
-        # Default to first available model
-        st.session_state.rag_llm_model = models[0] if models else "llama2"
-    elif st.session_state.rag_llm_model not in models and models:
-        # If current model isn't available, reset to first available
-        st.session_state.rag_llm_model = models[0]
-    if "rag_temperature" not in st.session_state:
-        st.session_state.rag_temperature = 0.7
 
 def get_corpus_path(corpus_name: str) -> str:
     """Get the path to a corpus directory."""

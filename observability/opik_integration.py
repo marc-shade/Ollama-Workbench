@@ -18,11 +18,6 @@ from datetime import datetime
 from contextlib import contextmanager
 from dataclasses import dataclass, asdict
 
-# Set up structured logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 # Performance and alerting thresholds

@@ -13,13 +13,6 @@ import logging
 from datetime import datetime
 import time
 
-# Set up logging with detailed checkpoints for troubleshooting
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -34,137 +27,112 @@ if not os.path.exists(SESSIONS_FOLDER):
 def initialize_session_state():
     """
     Initialize session state variables consistently across all interfaces.
-    
+
     This function ensures that all necessary session state variables are
-    initialized with appropriate default values, and that variables used
-    by different interfaces are properly synchronized.
+    initialized with appropriate default values. This is the single
+    canonical source for session state initialization.
     """
     logger.info("CHECKPOINT: Initializing session state")
 
     # Initialize chat history
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-        logger.debug("Initialized chat_history")
 
     # Initialize model selection with dynamic detection
-    # Only make network calls when we actually need a model default
-    needs_model_lookup = (
-        "selected_model" not in st.session_state
-        or "current_model" not in st.session_state
-    )
-
-    if needs_model_lookup:
+    if "selected_model" not in st.session_state:
         try:
-            from ollama_utils import get_dynamic_model_default, get_available_models
+            from ollama_utils import get_dynamic_model_default
             default_model = get_dynamic_model_default()
-
             if not default_model:
                 default_model = None
                 logger.warning("No models available - setting default_model to None")
-            else:
-                logger.debug(f"Dynamic default model selected: {default_model}")
-
-            available_models = get_available_models()
-            logger.debug(f"Available models: {available_models}")
         except Exception as e:
             logger.error(f"Error getting available models: {e}")
             default_model = None
-            available_models = []
-    else:
-        default_model = None
-        available_models = []
-
-    # Synchronize model selection variables with validation
-    if "selected_model" in st.session_state and "current_model" not in st.session_state:
-        # If selected_model exists, validate it and use for current_model
-        if st.session_state.selected_model and (not available_models or st.session_state.selected_model in available_models):
-            st.session_state.current_model = st.session_state.selected_model
-            logger.debug(f"Synchronized current_model from selected_model: {st.session_state.selected_model}")
-        else:
-            # Invalid selected_model, use dynamic default
-            st.session_state.selected_model = default_model
-            st.session_state.current_model = default_model
-            logger.debug(f"Invalid selected_model, reset both to: {default_model}")
-    elif "current_model" in st.session_state and "selected_model" not in st.session_state:
-        # If current_model exists, validate it and use for selected_model
-        if st.session_state.current_model and (not available_models or st.session_state.current_model in available_models):
-            st.session_state.selected_model = st.session_state.current_model
-            logger.debug(f"Synchronized selected_model from current_model: {st.session_state.current_model}")
-        else:
-            # Invalid current_model, use dynamic default
-            st.session_state.selected_model = default_model
-            st.session_state.current_model = default_model
-            logger.debug(f"Invalid current_model, reset both to: {default_model}")
-    elif "selected_model" not in st.session_state and "current_model" not in st.session_state:
-        # If neither exists, initialize both with dynamic default
         st.session_state.selected_model = default_model
-        st.session_state.current_model = default_model
-        logger.debug(f"Initialized both model variables to: {default_model}")
-    else:
-        # Both exist - skip validation if we didn't fetch models
-        if available_models:
-            selected_valid = st.session_state.selected_model and st.session_state.selected_model in available_models
-            current_valid = st.session_state.current_model and st.session_state.current_model in available_models
 
-            if not selected_valid or not current_valid:
-                st.session_state.selected_model = default_model
-                st.session_state.current_model = default_model
-                logger.debug(f"Invalid model(s) detected, reset both to: {default_model}")
-            elif st.session_state.selected_model != st.session_state.current_model:
-                st.session_state.current_model = st.session_state.selected_model
-                logger.debug(f"Synchronized current_model to match selected_model: {st.session_state.selected_model}")
-        elif st.session_state.selected_model != st.session_state.current_model:
-            st.session_state.current_model = st.session_state.selected_model
-            logger.debug(f"Synchronized current_model to match selected_model: {st.session_state.selected_model}")
-    
     # Initialize agent settings
     if "agent_type" not in st.session_state:
         st.session_state.agent_type = "None"
-        logger.debug("Initialized agent_type to None")
-
     if "metacognitive_type" not in st.session_state:
         st.session_state.metacognitive_type = "None"
-        logger.debug("Initialized metacognitive_type to None")
-
     if "voice_type" not in st.session_state:
         st.session_state.voice_type = "None"
-        logger.debug("Initialized voice_type to None")
 
     # Initialize generation settings
     if "temperature" not in st.session_state:
         st.session_state.temperature = 0.7
-        logger.debug("Initialized temperature to 0.7")
-
     if "max_tokens" not in st.session_state:
         st.session_state.max_tokens = 4000
-        logger.debug("Initialized max_tokens to 4000")
-
     if "presence_penalty" not in st.session_state:
         st.session_state.presence_penalty = 0.0
-        logger.debug("Initialized presence_penalty to 0.0")
-
     if "frequency_penalty" not in st.session_state:
         st.session_state.frequency_penalty = 0.0
-        logger.debug("Initialized frequency_penalty to 0.0")
 
     # Initialize corpus settings
     if "selected_corpus" not in st.session_state:
         st.session_state.selected_corpus = "None"
-        logger.debug("Initialized selected_corpus to None")
 
     # Initialize UI state
     if "settings_expanded" not in st.session_state:
         st.session_state.settings_expanded = False
-        logger.debug("Initialized settings_expanded to False")
-
     if "total_tokens" not in st.session_state:
         st.session_state.total_tokens = 0
-        logger.debug("Initialized total_tokens to 0")
-
-    # Initialize enhanced mode flag for compatibility
     if "enhanced_mode" not in st.session_state:
         st.session_state.enhanced_mode = True
-        logger.debug("Initialized enhanced_mode to True")
+
+    # -- Keys from main.py --
+    if "selected_test" not in st.session_state:
+        st.session_state.selected_test = "Chat"
+    if "selected_models" not in st.session_state:
+        st.session_state.selected_models = []
+    if "bm_tasks" not in st.session_state:
+        st.session_state.bm_tasks = []
+    if "show_resource_usage" not in st.session_state:
+        st.session_state.show_resource_usage = False
+    if "web_page_content" not in st.session_state:
+        st.session_state.web_page_content = None
+    if "show_prompt" not in st.session_state:
+        st.session_state.show_prompt = True
+
+    # -- Keys from projects.py --
+    if "projects" not in st.session_state:
+        st.session_state.projects = []
+    if "selected_project" not in st.session_state:
+        st.session_state.selected_project = None
+    if "tasks" not in st.session_state:
+        st.session_state.tasks = []
+    if "agents" not in st.session_state:
+        st.session_state.agents = {}
+    if "generated_tasks" not in st.session_state:
+        st.session_state.generated_tasks = []
+    if "generated_agents" not in st.session_state:
+        st.session_state.generated_agents = {}
+    if "project_manager_settings" not in st.session_state:
+        st.session_state.project_manager_settings = {
+            "model": "gpt-3.5-turbo",
+            "agent_type": "Task Planner",
+            "temperature": 0.7,
+            "max_tokens": 4000,
+        }
+
+    # -- Keys from RAG interfaces --
+    if "rag_corpus_name" not in st.session_state:
+        st.session_state.rag_corpus_name = "default"
+    if "rag_chat_history" not in st.session_state:
+        st.session_state.rag_chat_history = []
+    if "rag_sources" not in st.session_state:
+        st.session_state.rag_sources = {}
+    if "rag_last_query" not in st.session_state:
+        st.session_state.rag_last_query = ""
+    if "rag_embedding_model" not in st.session_state:
+        st.session_state.rag_embedding_model = "llama2"
+    if "rag_llm_model" not in st.session_state:
+        st.session_state.rag_llm_model = "llama2"
+    if "rag_temperature" not in st.session_state:
+        st.session_state.rag_temperature = 0.7
+    if "rag_corpus_status" not in st.session_state:
+        st.session_state.rag_corpus_status = {}
 
     logger.info("CHECKPOINT: Session state initialization complete")
 
@@ -185,17 +153,11 @@ def save_chat_session():
         logger.warning("Cannot save session: chat_history not in session state")
         return None
     
-    # Ensure model variables are synchronized
-    if "selected_model" in st.session_state and "current_model" in st.session_state:
-        if st.session_state.selected_model != st.session_state.current_model:
-            logger.info(f"Synchronizing model variables: {st.session_state.selected_model} -> {st.session_state.current_model}")
-            st.session_state.current_model = st.session_state.selected_model
-    
     # Create session data
     session_data = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "chat_history": st.session_state.chat_history,
-        "model": st.session_state.selected_model if "selected_model" in st.session_state else st.session_state.current_model,
+        "model": st.session_state.get("selected_model"),
         "agent_type": st.session_state.agent_type if "agent_type" in st.session_state else "None",
         "metacognitive_type": st.session_state.metacognitive_type if "metacognitive_type" in st.session_state else "None",
         "voice_type": st.session_state.voice_type if "voice_type" in st.session_state else "None",
@@ -239,10 +201,9 @@ def load_chat_session(file_path):
         st.session_state.chat_history = session_data["chat_history"]
         logger.info(f"Loaded {len(session_data['chat_history'])} messages")
         
-        # Update model selection (ensuring compatibility between interfaces)
+        # Update model selection
         if "model" in session_data:
             st.session_state.selected_model = session_data["model"]
-            st.session_state.current_model = session_data["model"]
             logger.debug(f"Loaded model: {session_data['model']}")
 
         # Update agent settings
@@ -295,11 +256,6 @@ def load_settings():
                 st.session_state[key] = value
                 logger.debug(f"Loaded setting {key}: {value}")
             
-            # Ensure model variables are synchronized
-            if "selected_model" in st.session_state:
-                st.session_state.current_model = st.session_state.selected_model
-                logger.debug(f"Synchronized current_model to {st.session_state.selected_model}")
-
             logger.info(f"Settings loaded from {SETTINGS_FILE}")
             return True
         else:
@@ -328,9 +284,6 @@ def save_settings():
     if "selected_model" in st.session_state:
         settings["selected_model"] = st.session_state.selected_model
         logger.debug(f"Saving selected_model: {st.session_state.selected_model}")
-    elif "current_model" in st.session_state:
-        settings["selected_model"] = st.session_state.current_model
-        logger.debug(f"Saving selected_model from current_model: {st.session_state.current_model}")
 
     # Agent settings
     if "agent_type" in st.session_state:
@@ -375,25 +328,6 @@ def save_settings():
     except Exception as e:
         logger.error(f"Error saving settings: {e}")
         return False
-
-def synchronize_model_variables():
-    """
-    Synchronize model variables between different interfaces.
-    
-    This function ensures that selected_model and current_model are synchronized.
-    """
-    logger.info("CHECKPOINT: Synchronizing model variables")
-    
-    if "selected_model" in st.session_state and "current_model" in st.session_state:
-        if st.session_state.selected_model != st.session_state.current_model:
-            logger.debug(f"Synchronizing model variables: {st.session_state.selected_model} -> {st.session_state.current_model}")
-            st.session_state.current_model = st.session_state.selected_model
-    elif "selected_model" in st.session_state and "current_model" not in st.session_state:
-        st.session_state.current_model = st.session_state.selected_model
-        logger.debug(f"Set current_model to {st.session_state.selected_model}")
-    elif "current_model" in st.session_state and "selected_model" not in st.session_state:
-        st.session_state.selected_model = st.session_state.current_model
-        logger.debug(f"Set selected_model to {st.session_state.current_model}")
 
 def get_agent_prompt():
     """

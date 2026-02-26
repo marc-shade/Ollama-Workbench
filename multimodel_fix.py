@@ -12,12 +12,6 @@ import logging
 import time
 from typing import List, Dict, Any, Optional
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger("multimodel_fix")
 
 # Settings file

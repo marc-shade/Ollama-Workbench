@@ -1,10 +1,9 @@
 # groq_utils.py
-import os
-import json
 import streamlit as st
 from groq import Groq
 from typing import List, Dict
 from sentence_transformers import SentenceTransformer
+from ollama_utils import load_api_keys, save_api_keys
 
 GROQ_MODELS = [
     "llama-3.3-70b-versatile",
@@ -15,25 +14,10 @@ GROQ_MODELS = [
     "gemma2-9b-it",
 ]
 
-API_KEYS_FILE = "api_keys.json"
-
 # Load the embedding model
 @st.cache_resource
 def load_embedding_model():
     return SentenceTransformer('all-MiniLM-L6-v2')
-
-def load_api_keys():
-    """Loads API keys from the JSON file."""
-    if os.path.exists(API_KEYS_FILE):
-        with open(API_KEYS_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-def save_api_keys(api_keys):
-    """Saves API keys to the JSON file."""
-    with open(API_KEYS_FILE, "w") as f:
-        json.dump(api_keys, f, indent=4)
-    os.chmod(API_KEYS_FILE, 0o600)
 
 def get_groq_client(api_key: str):
     """Returns a Groq client instance if API key is available, otherwise returns None."""

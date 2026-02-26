@@ -7,14 +7,6 @@ import sqlite3
 import logging
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('persona_lab.log'),
-        logging.StreamHandler()
-    ]
-)
 logger = logging.getLogger('persona_lab')
 
 @dataclass

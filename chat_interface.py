@@ -24,7 +24,7 @@ from ollama_utils import (
 # Import session utilities for consistent session handling
 from session_utils import (
     initialize_session_state, load_settings, save_settings,
-    save_chat_session, load_chat_session, synchronize_model_variables,
+    save_chat_session, load_chat_session,
     get_agent_prompt, get_rag_context, safe_rerun, log_message
 )
 
@@ -42,14 +42,7 @@ from performance_metrics import record_metrics
 # This prevents nested expander issues by only loading the UI when requested
 from chat_workspace import save_ai_content_to_workspace
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # Constants
 SETTINGS_FILE = "chat-settings.json"
@@ -599,20 +592,12 @@ def load_settings():
                 st.session_state.selected_model = dynamic_default
                 logger.info(f"Set selected_model to dynamic default: {dynamic_default}")
             
-            # Handle current_model and selected_model sync
+            # If settings had a current_model key but no selected_model, use it
             if "current_model" in settings and settings["current_model"] is not None:
-                # If we have both, give preference to current_model for compatibility
-                if settings.get("current_model") != settings.get("selected_model"):
-                    logger.info(f"Models differ in settings: current_model={settings.get('current_model')}, selected_model={settings.get('selected_model')}")
+                if not st.session_state.get("selected_model"):
                     st.session_state.selected_model = settings["current_model"]
-                
-                # Always ensure current_model is set
-                st.session_state.current_model = settings["current_model"]
-            else:
-                # If no current_model, set it from selected_model
-                st.session_state.current_model = st.session_state.selected_model
-                
-            logger.info(f"Settings loaded: current_model={st.session_state.get('current_model')}, selected_model={st.session_state.get('selected_model')}")
+
+            logger.info(f"Settings loaded: selected_model={st.session_state.get('selected_model')}")
             return True
         except Exception as e:
             logger.error(f"Error loading settings: {str(e)}")
@@ -627,37 +612,26 @@ def save_settings():
         # CRITICAL FIX: Log all relevant keys for debugging
         logger.info(f"Session state keys: {list(st.session_state.keys())}")
         logger.info(f"Current model before save: {st.session_state.get('selected_model', 'Not Set')}")
-        logger.info(f"Current_model value: {st.session_state.get('current_model', 'Not Set')}")
+        logger.info(f"Selected_model value: {st.session_state.get('selected_model', 'Not Set')}")
         
         # Check for model_selector in session state
         if "model_selector" in st.session_state:
             old_model = st.session_state.get("selected_model", "")
             new_model = st.session_state["model_selector"]
             st.session_state.selected_model = new_model
-            # Also update current_model for compatibility
-            st.session_state.current_model = new_model
             logger.info(f"Updated model from model_selector: {old_model} -> {new_model}")
-        
+
         # Make sure we have a valid model
         if not st.session_state.get("selected_model"):
             logger.warning("No selected_model in session state!")
-            # Try to get model from model_selector or current_model or dynamic default
             dynamic_default = get_dynamic_model_default()
-            selected_model = st.session_state.get("model_selector", 
-                                             st.session_state.get("current_model", dynamic_default))
+            selected_model = st.session_state.get("model_selector", dynamic_default)
             logger.info(f"Using fallback model: {selected_model}")
             st.session_state.selected_model = selected_model
-            st.session_state.current_model = selected_model
-        
-        # Ensure current_model is synchronized
-        if st.session_state.get("selected_model") != st.session_state.get("current_model"):
-            logger.info(f"Syncing current_model ({st.session_state.get('current_model')}) to selected_model ({st.session_state.get('selected_model')})")
-            st.session_state.current_model = st.session_state.selected_model
-        
+
         # Collect all settings
         settings = {
             "selected_model": st.session_state.get("selected_model"),
-            "current_model": st.session_state.get("current_model"),  # Save both for compatibility
             "agent_type": st.session_state.get("agent_type", "None"),
             "metacognitive_type": st.session_state.get("metacognitive_type", "None"),
             "voice_type": st.session_state.get("voice_type", "None"),
@@ -767,12 +741,6 @@ def chat_interface():
         st.session_state.selected_model = dynamic_default
         logger.info(f"Initialized selected_model to dynamic default: {dynamic_default}")
     
-    # Sync with current_model for compatibility with other interfaces
-    if "current_model" not in st.session_state:
-        st.session_state.current_model = st.session_state.selected_model
-    elif "selected_model" not in st.session_state or not st.session_state.selected_model:
-        st.session_state.selected_model = st.session_state.current_model
-        
     # No longer need selectbox patching - using temp variables instead
     
     try:
@@ -816,13 +784,13 @@ def chat_interface():
             dynamic_default = get_dynamic_model_default()
             if dynamic_default and dynamic_default in available_models:
                 st.session_state.selected_model = dynamic_default
-                st.session_state.current_model = dynamic_default
+                st.session_state.selected_model = dynamic_default
                 model_index = available_models.index(dynamic_default)
                 logger.info(f"Replaced invalid model with dynamic default: {dynamic_default}")
             elif available_models:
                 # Use first available model as last resort
                 st.session_state.selected_model = available_models[0]
-                st.session_state.current_model = available_models[0]
+                st.session_state.selected_model = available_models[0]
                 model_index = 0
                 logger.info(f"Used first available model as fallback: {available_models[0]}")
             
@@ -933,7 +901,7 @@ def chat_interface():
                     # Apply temp model selection if it exists
                     if "temp_model_selection" in st.session_state:
                         st.session_state.selected_model = st.session_state.temp_model_selection
-                        st.session_state.current_model = st.session_state.temp_model_selection
+                        st.session_state.selected_model = st.session_state.temp_model_selection
                     save_settings()
                     st.success("Settings saved!")
             
@@ -1265,7 +1233,7 @@ def chat_interface():
                 # Combine everything into the full prompt
                 # Get the model name to include in prompt
                 dynamic_default = get_dynamic_model_default()
-                model_name = st.session_state.get("selected_model", st.session_state.get("current_model", dynamic_default))
+                model_name = st.session_state.get("selected_model", dynamic_default)
                 
                 prompt = f"""
                 {system_prompt}
@@ -1337,9 +1305,9 @@ def chat_interface():
                             
                         else:
                             # Ollama model - streaming version
-                        # Use the model name from selected_model, falling back to current_model or dynamic default
+                        # Use the model name from selected_model, falling back to dynamic default
                             dynamic_default = get_dynamic_model_default()
-                            model_to_use = st.session_state.get("selected_model", st.session_state.get("current_model", dynamic_default))
+                            model_to_use = st.session_state.get("selected_model", dynamic_default)
                             logger.info(f"Using model: {model_to_use}")
                             
                             # Check if we have an image for vision models

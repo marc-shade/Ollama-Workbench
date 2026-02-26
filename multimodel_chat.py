@@ -27,14 +27,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 SETTINGS_FILE = "multimodel-chat-settings.json"
 RAGTEST_DIR = "ragtest"

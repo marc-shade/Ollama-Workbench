@@ -15,10 +15,6 @@ from functools import reduce
 import streamlit as st
 from datetime import datetime, timedelta
 
-# Set up logging
-logging.basicConfig(filename='build_manager.log', level=logging.ERROR,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
 class BuildManager(Agent):
     def __init__(self, message_queue: queue.Queue, update_task_callback, agents_dir: str = "agents", workflows_dir: str = "workflows"):
         super().__init__(name="Build Manager", capabilities=["workflow_management"], prompts={}, model="mistral:7b-instruct-v0.2-q8_0")

@@ -12,10 +12,6 @@ from langchain_community.vectorstores import Chroma
 from openai_utils import call_openai_api, OPENAI_MODELS
 from groq_utils import call_groq_api, GROQ_MODELS
 
-# Set up logging
-logging.basicConfig(filename='agents.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
 # Load the spaCy language model
 nlp = spacy.load("en_core_web_sm")
 

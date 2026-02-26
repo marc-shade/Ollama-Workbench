@@ -41,13 +41,6 @@ from prompts import (
 from tts_utils import text_to_speech, play_speech
 # Load chat_workspace_ui dynamically when needed to avoid circular imports
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='app.log',
-    filemode='a'
-)
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -150,8 +143,7 @@ def load_settings():
                 settings = json.load(f)
                 
                 # Initialize session state variables from settings
-                st.session_state.selected_model = settings.get("selected_model", "llama2")
-                st.session_state.current_model = settings.get("current_model", st.session_state.selected_model)
+                st.session_state.selected_model = settings.get("selected_model", settings.get("current_model", "llama2"))
                 st.session_state.agent_type = settings.get("agent_type", "None")
                 st.session_state.metacognitive_type = settings.get("metacognitive_type", "None")
                 st.session_state.voice_type = settings.get("voice_type", "None")
@@ -173,7 +165,6 @@ def load_settings():
         else:
             # Default settings
             st.session_state.selected_model = "llama2"
-            st.session_state.current_model = "llama2"
             st.session_state.agent_type = "None"
             st.session_state.metacognitive_type = "None"
             st.session_state.voice_type = "None"
@@ -193,11 +184,7 @@ def load_settings():
                 "5. Formulating a comprehensive answer"
             ]
             
-        # Ensure current_model is set
-        if "current_model" not in st.session_state:
-            st.session_state.current_model = st.session_state.selected_model
-            
-        logger.info(f"Settings loaded: current_model={st.session_state.get('current_model')}, selected_model={st.session_state.get('selected_model')}")
+        logger.info(f"Settings loaded: selected_model={st.session_state.get('selected_model')}")
         return True
     except Exception as e:
         logger.error(f"Error loading settings: {str(e)}")
@@ -215,7 +202,6 @@ def save_settings():
         # Prepare settings dictionary
         settings = {
             "selected_model": st.session_state.get("selected_model"),
-            "current_model": st.session_state.get("current_model"),  # Save both for compatibility
             "agent_type": st.session_state.get("agent_type", "None"),
             "metacognitive_type": st.session_state.get("metacognitive_type", "None"),
             "voice_type": st.session_state.get("voice_type", "None"),
@@ -412,7 +398,7 @@ def process_message(user_input, uploaded_image=None):
         ])
         
         # Get the model name to include in prompt
-        model_name = st.session_state.get("selected_model", st.session_state.get("current_model", "llama2"))
+        model_name = st.session_state.get("selected_model", "llama2")
         
         # Combine everything into the full prompt
         # Add special instructions for image handling if an image is present
@@ -1125,7 +1111,7 @@ def modern_chat_interface():
                 if changed:
                     previous_model = st.session_state.selected_model
                     st.session_state.selected_model = model_selection
-                    st.session_state.current_model = model_selection
+                    st.session_state.selected_model = model_selection
                     
                     # Save to settings file
                     try:
@@ -1169,7 +1155,7 @@ def modern_chat_interface():
                 # Update model on apply
                 if apply_button and model_selection != st.session_state.selected_model:
                     st.session_state.selected_model = model_selection
-                    st.session_state.current_model = model_selection
+                    st.session_state.selected_model = model_selection
                     st.success(f"Model changed to {model_selection}")
                     st.rerun()
                 st.rerun()
@@ -1418,7 +1404,7 @@ def modern_chat_interface():
             if st.button("⚠️ Reset All Settings"):
                 # Reset all settings to defaults
                 st.session_state.selected_model = "llama2"
-                st.session_state.current_model = "llama2"  # Also reset current_model
+                st.session_state.selected_model = "llama2"
                 st.session_state.agent_type = "None"
                 st.session_state.metacognitive_type = "None"
                 st.session_state.voice_type = "None"

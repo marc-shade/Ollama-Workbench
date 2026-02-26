@@ -8,12 +8,6 @@ particularly around form elements and session state.
 import streamlit as st
 import logging
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log', 
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger("streamlit_helpers")
 
 def fix_selection_sync(key, value):

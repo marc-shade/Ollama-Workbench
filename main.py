@@ -9,7 +9,13 @@ import json
 import time
 import logging
 
-# Set up logging
+# Configure logging for the application (entry point - single basicConfig call)
+logging.basicConfig(
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 # Set page config for wide layout with maximum width
@@ -32,12 +38,20 @@ from streamlit_option_menu import option_menu
 from collaborative_workspace import collaborative_workspace_ui
 from ollama_utils import *
 from model_tests import *
-from ui_elements import (
-    model_comparison_test, contextual_response_test, feature_test,
-    list_local_models, pull_models, show_model_details, remove_model_ui,
-    vision_comparison_test, chat_interface, update_models, files_tab,
-    server_configuration, server_monitoring
-)
+from session_utils import initialize_session_state
+from model_comparison import model_comparison_test
+from contextual_response import contextual_response_test
+from feature_test import feature_test
+from local_models import list_local_models
+from pull_model import pull_models
+from show_model import show_model_details
+from remove_model import remove_model_ui
+from vision_comparison import vision_comparison_test
+from chat_interface import chat_interface
+from update_models import update_models
+from file_management import files_tab
+from server_configuration import server_configuration
+from server_monitoring import server_monitoring
 # Import the enhanced chat interface that preserves all original functionality
 from enhanced_chat_interface import enhanced_chat_interface
 from styles import apply_styles
@@ -180,23 +194,6 @@ SIDEBAR_SECTIONS = {
     ]
 }
 
-def initialize_session_state():
-    """Initialize session state variables if they don't exist."""
-    if 'selected_test' not in st.session_state:
-        st.session_state.selected_test = "Chat"
-    if "selected_models" not in st.session_state:
-        st.session_state.selected_models = []
-    if "selected_model" not in st.session_state:
-        st.session_state.selected_model = None
-    if 'bm_tasks' not in st.session_state:
-        st.session_state.bm_tasks = []
-    if 'show_resource_usage' not in st.session_state:
-        st.session_state.show_resource_usage = False
-    if 'web_page_content' not in st.session_state: 
-        st.session_state.web_page_content = None
-    if 'show_prompt' not in st.session_state:
-        st.session_state.show_prompt = True
-
 def create_sidebar():
     """Create and populate the sidebar."""
     with st.sidebar:
@@ -206,9 +203,6 @@ def create_sidebar():
             "</div>",
             unsafe_allow_html=True,
         )
-
-        if st.session_state.get("show_resource_usage", False):
-            display_resource_usage_sidebar()
 
         # Define the main navigation menu with modern styling
         main_menu = option_menu(
@@ -424,15 +418,6 @@ def main():
             logger.info("Observability system initialized successfully")
         except Exception as e:
             logger.warning(f"Failed to initialize observability: {e}")
-    
-    # Make sure selected_model is initialized (for compatibility with modern_chat_interface)
-    if "selected_model" in st.session_state and st.session_state.selected_model:
-        # If selected_model exists, make sure current_model is synchronized
-        if "current_model" not in st.session_state:
-            st.session_state.current_model = st.session_state.selected_model
-    elif "current_model" in st.session_state and st.session_state.current_model:
-        # If current_model exists but selected_model doesn't, synchronize in the other direction
-        st.session_state.selected_model = st.session_state.current_model
     
     # Create the sidebar
     create_sidebar()

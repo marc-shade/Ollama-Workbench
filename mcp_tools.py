@@ -9,14 +9,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 def find_mcp_directories() -> List[str]:
     """

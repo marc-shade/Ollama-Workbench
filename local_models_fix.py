@@ -16,12 +16,6 @@ import functools
 import os
 from typing import List, Dict, Any, Optional
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger("local_models_fix")
 
 def fixed_get_ollama_models():

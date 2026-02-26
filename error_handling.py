@@ -8,14 +8,7 @@ from typing import Dict, Any, Optional, Union, Callable, List, Tuple
 from enum import Enum
 from functools import wraps
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 class ErrorLevel(Enum):
     """Error severity levels"""

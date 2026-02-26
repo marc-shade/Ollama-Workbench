@@ -24,6 +24,7 @@ from enum import Enum
 from ollama_utils import get_available_models, get_ollama_client, call_ollama_endpoint
 from enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
 from styles import apply_styles
+from session_utils import initialize_session_state
 
 # Define document types locally to avoid dependency issues
 class DocumentTypes(str, Enum):
@@ -36,13 +37,6 @@ class DocumentTypes(str, Enum):
     JSON = "json"
     CODE = "code"
 
-# Set up logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -53,27 +47,6 @@ SUPPORTED_FILE_TYPES = [".txt", ".md", ".pdf", ".docx", ".csv", ".html", ".json"
 # Ensure directories exist
 os.makedirs(RAGTEST_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
-
-def initialize_session_state():
-    """Initialize session state variables for RAG interface."""
-    if "rag_corpus_name" not in st.session_state:
-        st.session_state.rag_corpus_name = "default"
-    if "rag_chat_history" not in st.session_state:
-        st.session_state.rag_chat_history = []
-    if "rag_sources" not in st.session_state:
-        st.session_state.rag_sources = {}
-    if "rag_last_query" not in st.session_state:
-        st.session_state.rag_last_query = ""
-    if "rag_embedding_model" not in st.session_state:
-        st.session_state.rag_embedding_model = "llama2"
-    if "rag_llm_model" not in st.session_state:
-        # Default to first available model
-        models = get_available_models()
-        st.session_state.rag_llm_model = models[0] if models else "llama2"
-    if "rag_temperature" not in st.session_state:
-        st.session_state.rag_temperature = 0.7
-    if "rag_corpus_status" not in st.session_state:
-        st.session_state.rag_corpus_status = {}
 
 def get_corpus_path(corpus_name: str) -> str:
     """Get the path to a corpus directory."""

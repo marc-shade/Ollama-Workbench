@@ -15,14 +15,7 @@ from ollama_utils import get_available_models
 from mcp_tools import get_available_mcp_tools, execute_mcp_tool
 from model_capability_registry import filter_models_by_capability, is_tools_capable
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 # Helper function to ensure objects are JSON serializable

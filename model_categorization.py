@@ -12,13 +12,6 @@ import json
 import logging
 from typing import Dict, List, Tuple, Optional, Any
 
-# Set up logging with detailed checkpoints
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 logger.info("CHECKPOINT: Loading model_categorization module")
 
@@ -282,7 +275,6 @@ def save_model_to_settings(model_name: str) -> bool:
         
         # Update model settings
         settings["selected_model"] = model_name
-        settings["current_model"] = model_name
         
         # Save settings
         with open(settings_file, "w") as f:

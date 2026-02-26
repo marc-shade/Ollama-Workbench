@@ -17,13 +17,6 @@ import numpy as np
 from collections import deque
 from streamlit_extras.bottom_container import bottom
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger("enhanced_chat_interface")
 
 # Import original chat_interface.py functionality

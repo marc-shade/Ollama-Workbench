@@ -13,7 +13,6 @@ from bs4 import BeautifulSoup
 import PyPDF2
 import io
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants

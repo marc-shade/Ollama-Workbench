@@ -6,11 +6,11 @@ import os
 import uuid
 from datetime import datetime
 import base64
-from ollama_utils import get_available_models, call_ollama_endpoint
+from ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
 from openai_utils import call_openai_api, OPENAI_MODELS
-from ollama_utils import load_api_keys
 from groq_utils import call_groq_api, GROQ_MODELS
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
+from session_utils import initialize_session_state
 import re
 from functools import lru_cache
 
@@ -327,35 +327,16 @@ class ProjectManagerAgent:
             st.error(f"Generated workflow: {generated_workflow}")
             return None, None
 
-def initialize_session_state():
-    if 'projects' not in st.session_state:
-        st.session_state.projects = load_projects()
-    if 'selected_project' not in st.session_state:
-        st.session_state.selected_project = None
-    if 'tasks' not in st.session_state:
-        st.session_state.tasks = []
-    if 'agents' not in st.session_state:
-        st.session_state.agents = {}
-    if 'generated_tasks' not in st.session_state:
-        st.session_state.generated_tasks = []
-    if 'generated_agents' not in st.session_state:
-        st.session_state.generated_agents = {}
-    if 'project_manager_settings' not in st.session_state:
-        all_models = get_all_models()
-        st.session_state.project_manager_settings = {
-            'model': all_models[0] if all_models else 'gpt-3.5-turbo',  # Use the first available model or a default
-            'agent_type': 'Task Planner',
-            'temperature': 0.7,
-            'max_tokens': 4000,
-        }
-
 def projects_main():
     initialize_session_state()
 
+    # Load projects from disk into session state
+    st.session_state.projects = load_projects()
+
     if 'agents' not in st.session_state:
         st.session_state.agents = {}
 
-    projects = load_projects()
+    projects = st.session_state.projects
 
     st.title("🚀 Projects")
 
@@ -606,12 +587,6 @@ def projects_main():
                         st.warning(f"Agent {task.agent} not defined. Please define the agent before running.")
             save_tasks(selected_project, st.session_state.tasks)
             st.success("🟢 AI agents completed their tasks!")
-
-def load_api_keys():
-    if os.path.exists("api_keys.json"):
-        with open("api_keys.json", "r") as f:
-            return json.load(f)
-    return {}
 
 if __name__ == "__main__":
     projects_main()

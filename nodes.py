@@ -16,8 +16,6 @@ from openai_utils import OPENAI_MODELS, call_openai_api
 from groq_utils import GROQ_MODELS, call_groq_api
 from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Define available node types

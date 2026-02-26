@@ -43,11 +43,6 @@ import ollama
 from ollama_utils import get_ollama_client, call_ollama_endpoint
 import openai
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger('advanced_rag')
 
 # Constants

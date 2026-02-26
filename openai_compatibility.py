@@ -10,14 +10,7 @@ import ollama
 from error_handling import WorkbenchError, handle_ollama_api_error
 from config import get_config, CONFIG
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 class OpenAICompatibilityLayer:
     """

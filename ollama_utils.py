@@ -15,15 +15,6 @@ import platform
 import subprocess
 import os
 
-# Set up structured logging with enhanced formatting
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - [%(funcName)s:%(lineno)d] - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('logs/ollama_utils.log', mode='a')
-    ] if os.path.exists('logs') else [logging.StreamHandler()]
-)
 logger = logging.getLogger(__name__)
 
 # Performance monitoring constants

@@ -16,14 +16,7 @@ from ollama_utils import get_available_models, call_ollama_endpoint, get_ollama_
 from model_capability_registry import filter_models_by_capability, is_vision_capable
 import logging
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 def format_chat_message(message: Dict[str, Any]) -> Dict[str, Any]:
     """Format a chat message for display, handling multimodal content"""

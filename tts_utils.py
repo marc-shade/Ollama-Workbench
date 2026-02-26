@@ -7,13 +7,6 @@ from gtts import gTTS
 import subprocess
 import logging
 
-# Set up logging
-logging.basicConfig(
-    filename='voice_utils.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 # Try to import pygame, but make it optional

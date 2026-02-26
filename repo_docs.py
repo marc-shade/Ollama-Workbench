@@ -63,6 +63,7 @@ except ImportError as e:
             return DummyStyleGuide()
 from ollama_utils import get_available_models as get_ollama_models
 from ollama_utils import load_api_keys
+from ollama_utils import call_ollama_endpoint
 from openai_utils import OPENAI_MODELS
 from groq_utils import GROQ_MODELS
 
@@ -104,49 +105,6 @@ class PDF(FPDF):
         self.add_page()
         self.chapter_title(title)
         self.chapter_body(body)
-
-def call_ollama_endpoint(model, prompt, temperature=0.5, max_tokens=150, presence_penalty=0.0, frequency_penalty=0.0, context=None):
-    url = "http://localhost:11434/api/generate"
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "presence_penalty": presence_penalty,
-        "frequency_penalty": frequency_penalty,
-        "context": context,
-        "stream": True,
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    try:
-        response = requests.post(url, json=payload, headers=headers, stream=True)
-        response.raise_for_status()
-
-        full_response = ""
-        eval_count = 0
-        eval_duration = 0
-        for line in response.iter_lines():
-            if line:
-                decoded_line = line.decode('utf-8')
-                try:
-                    json_response = json.loads(decoded_line)
-                    if 'response' in json_response:
-                        full_response += json_response['response']
-                    if 'eval_count' in json_response:
-                        eval_count = json_response['eval_count']
-                    if 'eval_duration' in json_response:
-                        eval_duration = json_response['eval_duration']
-                except json.JSONDecodeError:
-                    print(f"Skipping invalid JSON line: {decoded_line}")
-
-        return full_response.strip(), None, eval_count, eval_duration
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error making request to {url}: {e}")
-        return f"Error calling Ollama endpoint: {str(e)}", None, 0, 0
 
 @st.cache_data
 def get_available_models():

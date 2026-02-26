@@ -10,13 +10,6 @@ import os
 import json
 import logging
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger("settings")
 
 # Constants
@@ -120,7 +113,6 @@ def fixed_save_settings():
         # Define all settings with their default values
         default_settings = {
             "selected_model": "llama2",
-            "current_model": "llama2",  # For compatibility with modern_chat_interface
             "agent_type": "Researcher",
             "metacognitive_type": "Analytical",
             "voice_type": "Professional",
@@ -165,17 +157,6 @@ def fixed_save_settings():
                 settings[key] = getattr(st.session_state, key, default_value)
                 logger.info(f"CHECKPOINT: Got setting {key}={settings[key]}")
         
-        # Special handling for compatibility between different interfaces
-        # If we have current_model but not selected_model, use current_model
-        if "current_model" in st.session_state and "selected_model" not in st.session_state:
-            settings["selected_model"] = settings.get("current_model", "llama2")
-            logger.info(f"CHECKPOINT: Using current_model for selected_model: {settings['selected_model']}")
-        
-        # If we have selected_model but not current_model, use selected_model
-        if "selected_model" in st.session_state and "current_model" not in st.session_state:
-            settings["current_model"] = settings.get("selected_model", "llama2")
-            logger.info(f"CHECKPOINT: Using selected_model for current_model: {settings['current_model']}")
-            
         # Ensure max_tokens is within reasonable limits
         if "max_tokens_slider_chat" in settings:
             settings["max_tokens_slider_chat"] = min(settings["max_tokens_slider_chat"], 8000)

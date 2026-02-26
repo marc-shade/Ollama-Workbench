@@ -11,13 +11,6 @@ from typing import Callable, Dict, Any
 import logging
 from canvas import DocumentState, canvas_ui
 
-# Set up logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 def collaborative_workspace_ui(model_callback: Callable = None):

@@ -15,13 +15,6 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from canvas import DocumentState, BlockType
 
-# Set up logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 def extract_content_blocks(text: str) -> tuple:

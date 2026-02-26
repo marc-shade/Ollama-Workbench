@@ -11,13 +11,6 @@ import time
 import logging
 from datetime import datetime
 
-# Set up logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 def simple_modern_interface():

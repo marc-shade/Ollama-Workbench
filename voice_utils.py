@@ -18,15 +18,6 @@ import requests
 import logging
 import subprocess
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('voice_utils.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
 logger = logging.getLogger('voice_utils')
 
 # Voice configuration

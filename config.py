@@ -6,14 +6,7 @@ import logging
 from typing import Dict, Any, Optional
 # from pathlib import Path  # Not currently used
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file if it exists
 dotenv.load_dotenv()

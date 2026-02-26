@@ -13,12 +13,6 @@ import json
 import time
 from typing import List, Dict, Any, Callable, Optional, Union, Tuple
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger("ui_fix")
 
 # Original widget references

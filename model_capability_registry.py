@@ -10,13 +10,6 @@ import re
 import logging
 from typing import Dict, List, Set, Optional
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 logger = logging.getLogger(__name__)
 
 # Official Ollama model capabilities based on their website categories

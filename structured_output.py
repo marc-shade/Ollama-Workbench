@@ -17,14 +17,7 @@ except ImportError:
     st.warning("json-schema-for-humans package is not installed. Schema visualization will be limited.")
     jsf = None
 
-# Setup logging
-logging.basicConfig(
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 # Default JSON schemas for common structured outputs
 DEFAULT_SCHEMAS = {
