@@ -7,13 +7,12 @@ from datetime import datetime
 import re
 import ollama
 from ollama_workbench.providers.ollama_utils import (
-    get_available_models, get_all_models, load_api_keys, get_token_embeddings, 
-    get_ollama_client, call_ollama_endpoint, get_dynamic_model_default, 
-    validate_model_exists, get_available_models_with_fallback
+    get_available_models, get_all_models, load_api_keys, get_token_embeddings,
+    get_dynamic_model_default, validate_model_exists, get_available_models_with_fallback
 )
-from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import get_groq_client, call_groq_api, GROQ_MODELS
-from ollama_workbench.providers.mistral_utils import call_mistral_api, MISTRAL_MODELS
+from ollama_workbench.providers.openai_utils import OPENAI_MODELS
+from ollama_workbench.providers.groq_utils import GROQ_MODELS
+from ollama_workbench.providers.mistral_utils import MISTRAL_MODELS
 from ollama_workbench.ui.prompts import (
     get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 )
@@ -388,78 +387,58 @@ Assistant: Let me think about this thoughtfully.
         
         return final_prompt
 
+    def _resolve_provider_name(self, model: str) -> str:
+        """Determine which provider owns the given model name."""
+        if model in OPENAI_MODELS:
+            return "openai"
+        elif model in GROQ_MODELS:
+            return "groq"
+        elif model in MISTRAL_MODELS:
+            return "mistral"
+        else:
+            return "ollama"
+
     def generate_model_response(self, model, prompt):
-        """Generate a response from the specified model."""
+        """Generate a response from the specified model via the unified provider layer."""
+        from ollama_workbench.providers.base import get_provider
+
         api_keys = st.session_state.api_keys
         model_settings = st.session_state.model_settings.get(model, {})
-        
+
         temperature = model_settings.get("temperature", 0.7)
         max_tokens = model_settings.get("max_tokens", 4000)
         presence_penalty = model_settings.get("presence_penalty", 0.0)
         frequency_penalty = model_settings.get("frequency_penalty", 0.0)
-        
+
+        provider_name = self._resolve_provider_name(model)
+
+        # Apply provider-specific max-token caps
+        token_caps = {"openai": 16000, "groq": 8000, "mistral": 8000, "ollama": 16000}
+        capped_max_tokens = min(max_tokens, token_caps.get(provider_name, 16000))
+
+        messages = [{"role": "user", "content": prompt}]
+
         try:
-            if model in OPENAI_MODELS:
-                # OpenAI API call
-                response = call_openai_api(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                    max_tokens=min(max_tokens, 16000),
-                    openai_api_key=api_keys.get("openai_api_key"),
-                    stream=False
-                )
-                return response
-                
-            elif model in GROQ_MODELS:
-                # Groq API call
-                response = call_groq_api(
-                    model=model,
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=min(max_tokens, 8000),
-                    groq_api_key=api_keys.get("groq_api_key")
-                )
-                return response.strip()
-                
-            elif model in MISTRAL_MODELS:
-                # Mistral API call
-                response = call_mistral_api(
-                    model=model,
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=min(max_tokens, 8000),
-                    mistral_api_key=api_keys.get("mistral_api_key")
-                )
-                return response.strip()
-                
+            provider = get_provider(provider_name)
+            result = provider.call(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=capped_max_tokens,
+                stream=False,
+                presence_penalty=presence_penalty,
+                frequency_penalty=frequency_penalty,
+                openai_api_key=api_keys.get("openai_api_key"),
+                groq_api_key=api_keys.get("groq_api_key"),
+                mistral_api_key=api_keys.get("mistral_api_key"),
+            )
+
+            if result.ok:
+                return result.text.strip()
             else:
-                # Ollama API call
-                client = get_ollama_client()
-                if client:
-                    response = client.generate(
-                        model=model,
-                        prompt=prompt,
-                        options={
-                            "temperature": temperature,
-                            "num_predict": min(max_tokens, 16000),
-                            "presence_penalty": presence_penalty,
-                            "frequency_penalty": frequency_penalty
-                        }
-                    )
-                    return response['response'].strip()
-                else:
-                    # Fallback for older versions
-                    response, _, _, _ = call_ollama_endpoint(
-                        model=model,
-                        prompt=prompt,
-                        temperature=temperature,
-                        max_tokens=min(max_tokens, 16000),
-                        presence_penalty=presence_penalty,
-                        frequency_penalty=frequency_penalty
-                    )
-                    return response.strip()
-                    
+                error_message = f"Error generating response from {model}: {result.error}"
+                logger.error(error_message)
+                return f"Error: {error_message}"
         except Exception as e:
             error_message = f"Error generating response from {model}: {str(e)}"
             logger.error(error_message)

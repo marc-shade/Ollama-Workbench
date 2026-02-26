@@ -53,6 +53,9 @@ htmlcov/
 # Sessions
 sessions/
 
+# Claude Code artifacts
+$HOME/
+
 # Generated / transient artifacts
 native_host_manifest.json
 test_report.json

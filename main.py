@@ -1,12 +1,6 @@
 # main.py
 
 import streamlit as st
-import threading
-from flask import Flask, jsonify, request
-import os
-import subprocess
-import json
-import time
 import logging
 
 # Configure logging for the application (entry point - single basicConfig call)
@@ -88,28 +82,21 @@ from ollama_workbench.models.test_visualization import test_visualization_ui
 from ollama_workbench.knowledge.repo_docs import main as repo_docs_main
 from ollama_workbench.knowledge.web_to_corpus import main as web_to_corpus_main
 from ollama_workbench.ui.welcome import display_welcome_message
-from ollama_workbench.workflows.projects import projects_main, Task
-from ollama_workbench.ui.prompts import manage_prompts, get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
+from ollama_workbench.workflows.projects import projects_main
+from ollama_workbench.ui.prompts import manage_prompts
 from ollama_workbench.workflows.brainstorm import brainstorm_interface
-from ollama_workbench.providers.ollama_utils import get_ollama_resource_usage
 from ollama_workbench.workflows.research import research_interface
 from ollama_workbench.knowledge.enhanced_corpus import enhance_corpus_ui
 from ollama_workbench.workflows.build import build_interface
-from ollama_workbench.providers.openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
-from ollama_workbench.providers.groq_utils import display_groq_settings, call_groq_api
 from ollama_workbench.workflows.nodes import nodes_interface  
 from ollama_workbench.providers.external_providers import external_providers_ui 
-from streamlit_extras.stylable_container import stylable_container
-from streamlit_javascript import st_javascript
 from ollama_workbench.core.db_init import init_db
-from ollama_workbench.chat.persona_chat import persona_group_chat
-from persona_lab.persona_lab import persona_lab_interface
 from ollama_workbench.models.model_management import model_management_dashboard
-from ollama_workbench.server.performance_metrics import performance_metrics_interface, record_metrics
+from ollama_workbench.server.performance_metrics import performance_metrics_interface
 
 # Import enhanced observability
 try:
-    from observability import enhanced_observability_dashboard, configure_opik, observability_config
+    from observability import enhanced_observability_dashboard, configure_opik
     ENHANCED_OBSERVABILITY_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Enhanced observability not available: {e}")
@@ -130,20 +117,6 @@ try:
     init_model_db()
 except ImportError:
     pass  # Model management module not available
-
-# Global variable to store the port number
-ollama_port = None 
-
-# Create a native messaging host manifest (only if it doesn't already exist)
-NATIVE_HOST_MANIFEST = "native_host_manifest.json"
-if not os.path.exists(NATIVE_HOST_MANIFEST):
-    with open(NATIVE_HOST_MANIFEST, "w") as f:
-        json.dump({
-            "name": "ollama_workbench_host",
-            "description": "Native messaging host for Ollama Workbench",
-            "path": os.path.abspath(__file__),
-            "type": "stdio"
-        }, f, indent=4)
 
 # Apply modern styling from the styles module
 colors, theme = apply_styles()
@@ -362,10 +335,8 @@ def main_content():
             except Exception:
                 model = st.session_state.get("selected_model", None)
             
-            # Get provider (default to Ollama)
-            provider = st.session_state.get("selected_provider", "ollama")
             # Use the model to generate a response
-            from ollama_workbench.providers.ollama_utils import get_ollama_client, call_ollama_endpoint
+            from ollama_workbench.providers.ollama_utils import call_ollama_endpoint
             try:
                 response, _, _, _ = call_ollama_endpoint(
                     model=model,
@@ -381,30 +352,6 @@ def main_content():
         display_welcome_message()
     else:
         chat_interface()
-
-# Create a Flask app for the API
-app = Flask(__name__)
-
-@app.route('/prompts')
-def get_prompts():
-    """Returns a JSON with all prompt types."""
-    return jsonify({
-        "agent": get_agent_prompt(),
-        "metacognitive": get_metacognitive_prompt(),
-        "voice": get_voice_prompt(),
-        "identity": get_identity_prompt()
-    })
-
-@app.route('/identifier')
-def get_identifier():
-    """Returns a unique identifier for Ollama Workbench."""
-    return "Ollama Workbench" 
-
-@app.route('/port')
-def get_port():
-    """Returns the dynamically allocated port number."""
-    global ollama_port
-    return str(ollama_port)
 
 def main():
     # Initialize session state
@@ -439,41 +386,5 @@ def main():
         st.session_state.web_page_url = web_page_url
         st.session_state.is_extension = is_extension
 
-# Function to send a message to the Chrome extension
-def send_port_to_extension(port):
-    """Sends the port number to the background script of the extension."""
-    try:
-        # Use the 'chrome-extension' protocol to send a message to the extension
-        cmd = f'chrome-extension://{os.environ.get("EXTENSION_ID", "gddghhhklfnhijhhagfgnfiehidcdnba")}/background.js'
-        message = {"message": "ollamaPort", "port": port}
-
-        # Use subprocess to send the message. Requires 'npx' which comes with Node.js.
-        process = subprocess.Popen(['npx', 'chrome-remote-interface', 'sendMessage', cmd, '--json', json.dumps(message)], 
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if stderr:
-            print(f"Error sending message to extension: {stderr.decode('utf-8')}") 
-        else:
-            print(f"Successfully sent port number to extension: {stdout.decode('utf-8')}")
-
-    except Exception as e:
-        print(f"Error sending message to extension: {e}")
-
-def run_flask():
-    global ollama_port
-    import socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('', 0))
-    ollama_port = sock.getsockname()[1] 
-    sock.close()
-    app.run(port=ollama_port)
-    print(f"Flask running on port: {ollama_port}") 
-
-    # Send the port to the extension once Flask is running
-    send_port_to_extension(ollama_port)
-
 if __name__ == "__main__":
-    # Start Flask before Streamlit
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.start() 
-    main() 
+    main()

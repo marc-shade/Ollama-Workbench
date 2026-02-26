@@ -24,6 +24,15 @@ if not os.path.exists(SESSIONS_FOLDER):
     os.makedirs(SESSIONS_FOLDER)
     logger.info(f"Created sessions folder: {SESSIONS_FOLDER}")
 
+
+@st.cache_data(ttl=60)
+def _cached_model_default():
+    """Return the default model name, cached for 60 seconds to avoid
+    hitting the Ollama HTTP API on every Streamlit rerun."""
+    from ollama_workbench.providers.ollama_utils import get_dynamic_model_default
+    return get_dynamic_model_default()
+
+
 def initialize_session_state():
     """
     Initialize session state variables consistently across all interfaces.
@@ -38,11 +47,10 @@ def initialize_session_state():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    # Initialize model selection with dynamic detection
+    # Initialize model selection with cached dynamic detection
     if "selected_model" not in st.session_state:
         try:
-            from ollama_workbench.providers.ollama_utils import get_dynamic_model_default
-            default_model = get_dynamic_model_default()
+            default_model = _cached_model_default()
             if not default_model:
                 default_model = None
                 logger.warning("No models available - setting default_model to None")

@@ -857,6 +857,7 @@ def chat_interface():
                     "🧑‍🔧 Agent Type:",
                 agent_types,
                 index=agent_index,
+                key="agent_type_dropdown",
                 help=agent_type_descriptions.get(st.session_state.agent_type, "")
                 )
         
@@ -867,9 +868,10 @@ def chat_interface():
                 metacognitive_types = ["None"] + list(get_metacognitive_prompt().keys())
                 metacog_index = metacognitive_types.index(st.session_state.metacognitive_type) if st.session_state.metacognitive_type in metacognitive_types else 0
                 st.session_state.metacognitive_type = st.selectbox(
-                "🧠 Metacognitive Type:", 
-                metacognitive_types, 
-                index=metacog_index
+                "🧠 Metacognitive Type:",
+                metacognitive_types,
+                index=metacog_index,
+                key="metacognitive_type_dropdown"
                 )
             
                 # Voice Type Selection
@@ -879,9 +881,10 @@ def chat_interface():
                 voice_options = ["None"] + list(get_voice_prompt().keys())
                 voice_index = voice_options.index(st.session_state.voice_type) if st.session_state.voice_type in voice_options else 0
                 st.session_state.voice_type = st.selectbox(
-                "🗣️ Voice Type:", 
-                voice_options, 
-                index=voice_index
+                "🗣️ Voice Type:",
+                voice_options,
+                index=voice_index,
+                key="voice_type_dropdown"
                 )
             
                 # Corpus Selection
@@ -894,9 +897,10 @@ def chat_interface():
             
                 corpus_index = corpus_options.index(st.session_state.selected_corpus) if st.session_state.selected_corpus in corpus_options else 0
                 st.session_state.selected_corpus = st.selectbox(
-                    "📚 Knowledge Corpus (RAG):", 
-                    corpus_options, 
-                    index=corpus_index
+                    "📚 Knowledge Corpus (RAG):",
+                    corpus_options,
+                    index=corpus_index,
+                    key="selected_corpus_dropdown"
                 )
                 
                 # Save Settings button for this section

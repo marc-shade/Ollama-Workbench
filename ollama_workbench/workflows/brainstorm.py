@@ -32,7 +32,7 @@ ANIMAL_EMOJIS = [
 ]
 
 try:
-    from files_management import get_corpus_options
+    from ollama_workbench.workflows.projects import get_corpus_options
 except ImportError:
     def get_corpus_options(): return []
 
@@ -139,15 +139,20 @@ def get_available_workflows():
         os.makedirs(WORKFLOWS_DIR)
     return [f[:-5] for f in os.listdir(WORKFLOWS_DIR) if f.endswith('.json')]
 
-def save_workflow(workflow_name, agent_sequence):
+def _save_workflow(workflow_name, agent_sequence):
+    """Pure function: saves a workflow to disk. No Streamlit dependency."""
     if not os.path.exists(WORKFLOWS_DIR):
         os.makedirs(WORKFLOWS_DIR)
     workflow_path = os.path.join(WORKFLOWS_DIR, f"{workflow_name}.json")
     with open(workflow_path, 'w') as f:
         json.dump(agent_sequence, f, indent=2)
-    st.success(f"Workflow '{workflow_name}' saved successfully!")
     print(f"Saved workflow: {workflow_name}")
     print(f"Agent sequence: {agent_sequence}")
+
+def save_workflow(workflow_name, agent_sequence):
+    """UI wrapper: saves workflow and displays success message."""
+    _save_workflow(workflow_name, agent_sequence)
+    st.success(f"Workflow '{workflow_name}' saved successfully!")
 
 def load_workflow(workflow_name):
     workflow_path = os.path.join(WORKFLOWS_DIR, f"{workflow_name}.json")
@@ -262,6 +267,30 @@ def manage_agents():
     
     save_agent_settings(settings)
 
+def _generate_agent_responses(agents, agent_sequence, messages, group_chat_manager):
+    """Pure function: generates agent responses for a brainstorm session. No Streamlit dependency.
+
+    Args:
+        agents: List of agent objects.
+        agent_sequence: List of agent names in order.
+        messages: Current conversation messages list.
+        group_chat_manager: The group chat manager instance.
+
+    Returns:
+        List of dicts with 'agent_name' and 'response' for each agent that responded.
+    """
+    results = []
+    for agent_name in agent_sequence:
+        if agent_name:
+            selected_agent_obj = next((agent for agent in agents if agent.name == agent_name), None)
+            if selected_agent_obj:
+                response = selected_agent_obj.generate_reply(messages, sender=group_chat_manager, config=None)
+                messages.append({"role": "assistant", "name": agent_name, "content": response})
+                results.append({"agent_name": agent_name, "response": response})
+            else:
+                results.append({"agent_name": agent_name, "response": None, "error": f"Agent '{agent_name}' not found."})
+    return results
+
 def brainstorm_session(use_docker):
     settings = load_agent_settings()
     api_keys = load_api_keys()
@@ -354,16 +383,16 @@ def brainstorm_session(use_docker):
             st.session_state.group_chat.messages.append({"role": "user", "name": "User", "content": user_message})
 
             # Generate responses from the sequence of agents
-            for agent_name in st.session_state.agent_sequence:
-                if agent_name:  # Skip empty selections
-                    with st.spinner(f"{agent_name} is thinking..."):
-                        selected_agent_obj = next((agent for agent in agents if agent.name == agent_name), None)
-                        if selected_agent_obj:
-                            response = selected_agent_obj.generate_reply(st.session_state.group_chat.messages, sender=st.session_state.group_chat_manager, config=None)
-                            # Add agent's response to the group chat
-                            st.session_state.group_chat.messages.append({"role": "assistant", "name": agent_name, "content": response})
-                        else:
-                            st.error(f"Agent '{agent_name}' not found.")
+            with st.spinner("Agents are thinking..."):
+                results = _generate_agent_responses(
+                    agents,
+                    st.session_state.agent_sequence,
+                    st.session_state.group_chat.messages,
+                    st.session_state.group_chat_manager
+                )
+            for result in results:
+                if result.get("error"):
+                    st.error(result["error"])
 
     # Display conversation history with formatting
     st.subheader("📜 Conversation History")

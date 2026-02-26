@@ -184,71 +184,27 @@ def apply_modern_styling():
 def enhanced_chat_interface():
     """
     Enhanced chat interface that preserves original functionality with improved styling.
-    This is a wrapper around the original chat_interface() function with fixes for Streamlit form elements.
+    This is a wrapper around the original chat_interface() function.
+
+    The underlying chat_interface() selectboxes now handle their own index
+    computation from session state, so no monkey-patching is needed.
     """
     # Apply modern styling
     apply_modern_styling()
-    
-    # Fix for model dropdown - ensure session state is loaded properly
+
+    # Ensure session state is loaded properly
     load_settings()
-    
+
     # Debug: Log current session state for model selection
     logger.info(f"Current model selection: {st.session_state.get('selected_model')}")
     logger.info(f"Current agent type: {st.session_state.get('agent_type')}")
-    
-    # Create a callback to handle form element changes without reloading the page
-    def handle_session_state_update(key, value):
-        st.session_state[key] = value
-        # No rerun here - let the user control when to save
-    
+
     # Ensure chat_interface function knows it's being run in enhanced mode
     if "enhanced_mode" not in st.session_state:
         st.session_state.enhanced_mode = True
-    
-    # Fix model dropdown issue by adding a custom handler for selectbox
-    original_selectbox = st.selectbox
-    
-    def fixed_selectbox(*args, **kwargs):
-        """Custom selectbox that prevents unwanted reruns"""
-        # Check if this is a model or agent selectbox that needs special handling
-        key = kwargs.get("key")
-        if key in ["selected_model", "agent_type", "metacognitive_type", "voice_type", "selected_corpus"]:
-            # Get the current value from session state
-            current_value = st.session_state.get(key)
-            
-            # Make sure we have the correct index for the current value
-            options = args[1] if len(args) > 1 else kwargs.get("options", [])
-            if current_value in options:
-                # Override the default index to ensure current value is selected
-                kwargs["index"] = options.index(current_value)
-            
-            # Call the original selectbox with our modifications
-            result = original_selectbox(*args, **kwargs)
-            
-            # After user selects something, update session state without rerun
-            if result != current_value:
-                # Set value in session state
-                st.session_state[key] = result
-                # Log the change
-                logger.info(f"Updated {key} from {current_value} to {result}")
-            
-            return result
-        else:
-            # For other selectboxes, use normal behavior
-            return original_selectbox(*args, **kwargs)
-    
-    # Temporarily replace st.selectbox with our fixed version
-    st.selectbox = fixed_selectbox
-    
-    try:
-        # Run the original chat interface with all functionality preserved
-        chat_interface()
-    finally:
-        # Restore original selectbox function
-        st.selectbox = original_selectbox
-    
-    # Optional: Add any additional UI elements at the bottom without disturbing original functionality
-    # No footer text needed
+
+    # Run the original chat interface with all functionality preserved
+    chat_interface()
 
 if __name__ == "__main__":
     enhanced_chat_interface()

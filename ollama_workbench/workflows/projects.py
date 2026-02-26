@@ -39,22 +39,38 @@ class DateTimeEncoder(json.JSONEncoder):
             return obj.__dict__
         return super().default(obj)
 
-def load_projects():
+def _load_projects():
+    """Pure function: loads projects from disk. No Streamlit dependency.
+
+    Returns:
+        Tuple of (projects_list, error_message_or_None).
+    """
     try:
         with open('projects/projects.json', 'r') as f:
             content = f.read()
-            return json.loads(content) if content else []
+            return json.loads(content) if content else [], None
     except FileNotFoundError:
-        return []
+        return [], None
     except json.JSONDecodeError as e:
-        st.error(f"Error loading projects: {str(e)}. Starting with an empty project list.")
-        return []
+        return [], f"Error loading projects: {str(e)}. Starting with an empty project list."
+
+def load_projects():
+    """UI wrapper: loads projects and displays any errors."""
+    projects, error = _load_projects()
+    if error:
+        st.error(error)
+    return projects
 
 def save_projects(projects):
     with open('projects/projects.json', 'w') as f:
         json.dump(projects, f)
 
-def load_tasks(project_name):
+def _load_tasks(project_name):
+    """Pure function: loads tasks for a project from disk. No Streamlit dependency.
+
+    Returns:
+        Tuple of (tasks_list, error_message_or_None).
+    """
     try:
         with open(f'projects/{project_name}_tasks.json', 'r') as f:
             content = f.read()
@@ -72,12 +88,18 @@ def load_tasks(project_name):
                 task_id=data['task_id']
             )
             tasks.append(task)
-        return tasks
+        return tasks, None
     except FileNotFoundError:
-        return []
+        return [], None
     except json.JSONDecodeError as e:
-        st.error(f"Error loading tasks for {project_name}: {str(e)}. Starting with an empty task list.")
-        return []
+        return [], f"Error loading tasks for {project_name}: {str(e)}. Starting with an empty task list."
+
+def load_tasks(project_name):
+    """UI wrapper: loads tasks and displays any errors."""
+    tasks, error = _load_tasks(project_name)
+    if error:
+        st.error(error)
+    return tasks
 
 # Callback function to update task status in session state
 def update_task_status(task_index, status, result=None):
@@ -122,16 +144,27 @@ def save_tasks(project_name, tasks):
     with open(f'projects/{project_name}_tasks.json', 'w') as f:
         json.dump([task.__dict__ for task in tasks], f, cls=DateTimeEncoder)
 
-def load_agents(project_name):
+def _load_agents(project_name):
+    """Pure function: loads agents for a project from disk. No Streamlit dependency.
+
+    Returns:
+        Tuple of (agents_dict, error_message_or_None).
+    """
     try:
         with open(f'projects/{project_name}_agents.json', 'r') as f:
             content = f.read()
-            return json.loads(content) if content else {}
+            return json.loads(content) if content else {}, None
     except FileNotFoundError:
-        return {}
+        return {}, None
     except json.JSONDecodeError as e:
-        st.error(f"Error loading agents for {project_name}: {str(e)}. Starting with an empty agent list.")
-        return {}
+        return {}, f"Error loading agents for {project_name}: {str(e)}. Starting with an empty agent list."
+
+def load_agents(project_name):
+    """UI wrapper: loads agents and displays any errors."""
+    agents, error = _load_agents(project_name)
+    if error:
+        st.error(error)
+    return agents
 
 def save_agents(project_name, agents):
     with open(f'projects/{project_name}_agents.json', 'w') as f:
@@ -218,8 +251,24 @@ class ProjectManagerAgent:
 
     @lru_cache(maxsize=None)
     def generate_workflow(self, user_request: str):
+        """UI wrapper: generates workflow and displays results/errors in Streamlit."""
+        tasks, agents, raw_workflow, error = self._generate_workflow(user_request)
+        if raw_workflow:
+            st.write("Generated Workflow:", raw_workflow)
+        if error:
+            st.error(error)
+        return tasks, agents
+
+    def _generate_workflow(self, user_request: str):
+        """Pure function: generates a workflow of tasks and agents from a user request. No Streamlit dependency.
+
+        Returns:
+            Tuple of (tasks, agents, raw_workflow_string, error_message_or_None).
+            On success: (list_of_Tasks, agents_dict, raw_string, None).
+            On failure: (None, None, raw_string_or_None, error_string).
+        """
         generation_prompt = f"""
-        Generate a JSON list of tasks and agents to fulfill the following user request. 
+        Generate a JSON list of tasks and agents to fulfill the following user request.
 
         User Request: {user_request}
 
@@ -247,7 +296,7 @@ class ProjectManagerAgent:
                     "priority": "Low", "Medium", or "High",
                     "completed": false,
                     "agent": "Agent Name",
-                    "result": null 
+                    "result": null
                 }},
                 ...
             ],
@@ -294,15 +343,13 @@ class ProjectManagerAgent:
         generated_workflow = re.sub(r"(\\s*)'(\w+)'(\\s*):", r'\1"\2"\3:', generated_workflow)
         generated_workflow = re.sub(r"([}\]])(\\s*)(?=[{\\\\\\[\\]\"a-zA-Z])", r"\1,\2", generated_workflow)
 
-        st.write("Generated Workflow:", generated_workflow)
-
         try:
             generated_workflow = generated_workflow.strip()
             if not generated_workflow.startswith("{"):
                 generated_workflow = "{" + generated_workflow
             if not generated_workflow.endswith("}"):
                 generated_workflow = generated_workflow + "}"
-            
+
             workflow_data = json.loads(generated_workflow)
 
             tasks = []
@@ -320,12 +367,11 @@ class ProjectManagerAgent:
 
             agents = workflow_data.get('agents', {})
 
-            return tasks, agents
+            return tasks, agents, generated_workflow, None
 
         except json.JSONDecodeError as e:
-            st.error(f"Error loading or post-processing JSON: {e}")
-            st.error(f"Generated workflow: {generated_workflow}")
-            return None, None
+            error_msg = f"Error loading or post-processing JSON: {e}\nGenerated workflow: {generated_workflow}"
+            return None, None, generated_workflow, error_msg
 
 def projects_main():
     initialize_session_state()
