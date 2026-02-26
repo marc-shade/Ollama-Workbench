@@ -40,7 +40,7 @@ class TestFileOperations:
             json.dump(test_keys, f)
         
         # Mock the file path
-        with patch('ollama_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
     
@@ -55,7 +55,7 @@ class TestFileOperations:
         test_keys = {"openai": "test-key-123"}
         api_file = tmp_path / "api_keys.json"
         
-        with patch('ollama_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
             
             # Verify file was saved correctly
@@ -70,7 +70,7 @@ class TestFileOperations:
         with open(settings_file, "w") as f:
             json.dump(test_settings, f)
         
-        with patch('ollama_utils.MODEL_SETTINGS_FILE', str(settings_file)):
+        with patch('ollama_workbench.providers.ollama_utils.MODEL_SETTINGS_FILE', str(settings_file)):
             loaded_settings = load_model_settings()
             assert loaded_settings == test_settings
     
@@ -79,7 +79,7 @@ class TestFileOperations:
         test_settings = {"model1": {"temp": 0.7}}
         settings_file = tmp_path / "model_settings.json"
         
-        with patch('ollama_utils.MODEL_SETTINGS_FILE', str(settings_file)):
+        with patch('ollama_workbench.providers.ollama_utils.MODEL_SETTINGS_FILE', str(settings_file)):
             save_model_settings(test_settings)
             
             with open(settings_file, "r") as f:
@@ -92,25 +92,25 @@ class TestOllamaConfiguration:
     
     def test_get_ollama_url_default(self):
         """Test getting default Ollama URL"""
-        with patch('ollama_utils.get_config', return_value={}):
+        with patch('ollama_workbench.providers.ollama_utils.get_config', return_value={}):
             url = get_ollama_url()
             assert url == "http://localhost:11434/api"
     
     def test_get_ollama_url_custom_host(self):
         """Test getting Ollama URL with custom host"""
-        with patch('ollama_utils.get_config', return_value={"OLLAMA_HOST": "http://custom:8080"}):
+        with patch('ollama_workbench.providers.ollama_utils.get_config', return_value={"OLLAMA_HOST": "http://custom:8080"}):
             url = get_ollama_url()
             assert url == "http://custom:8080/api"
     
     def test_get_ollama_url_adds_http_prefix(self):
         """Test that http:// is added if missing"""
-        with patch('ollama_utils.get_config', return_value={"OLLAMA_HOST": "localhost:8080"}):
+        with patch('ollama_workbench.providers.ollama_utils.get_config', return_value={"OLLAMA_HOST": "localhost:8080"}):
             url = get_ollama_url()
             assert url == "http://localhost:8080/api"
     
     def test_get_ollama_url_adds_default_port(self):
         """Test that default port is added if missing"""
-        with patch('ollama_utils.get_config', return_value={"OLLAMA_HOST": "http://custom"}):
+        with patch('ollama_workbench.providers.ollama_utils.get_config', return_value={"OLLAMA_HOST": "http://custom"}):
             url = get_ollama_url()
             assert url == "http://custom:11434/api"
 
@@ -118,8 +118,8 @@ class TestOllamaConfiguration:
 class TestOllamaClient:
     """Test Ollama client initialization"""
     
-    @patch('ollama_utils.get_config')
-    @patch('ollama_utils.ollama')
+    @patch('ollama_workbench.providers.ollama_utils.get_config')
+    @patch('ollama_workbench.providers.ollama_utils.ollama')
     def test_get_ollama_client_with_client_class(self, mock_ollama, mock_config):
         """Test getting client when Client class is available"""
         mock_config.return_value = {"OLLAMA_HOST": "http://localhost:11434"}
@@ -131,8 +131,8 @@ class TestOllamaClient:
         assert client == mock_client
         mock_ollama.Client.assert_called_once_with(host="http://localhost:11434")
     
-    @patch('ollama_utils.get_config')
-    @patch('ollama_utils.ollama')
+    @patch('ollama_workbench.providers.ollama_utils.get_config')
+    @patch('ollama_workbench.providers.ollama_utils.ollama')
     def test_get_ollama_client_fallback_module_level(self, mock_ollama, mock_config):
         """Test fallback to module-level functions when Client not available"""
         mock_config.return_value = {"OLLAMA_HOST": "http://localhost:11434"}
@@ -143,8 +143,8 @@ class TestOllamaClient:
         client = get_ollama_client()
         assert client is None  # Should return None to indicate module-level usage
     
-    @patch('ollama_utils.get_config')
-    @patch('ollama_utils.ollama')
+    @patch('ollama_workbench.providers.ollama_utils.get_config')
+    @patch('ollama_workbench.providers.ollama_utils.ollama')
     def test_get_ollama_client_error_handling(self, mock_ollama, mock_config):
         """Test client error handling"""
         mock_config.return_value = {"OLLAMA_HOST": "http://localhost:11434"}
@@ -157,7 +157,7 @@ class TestOllamaClient:
 class TestModelOperations:
     """Test model listing and information operations"""
     
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_get_available_models_with_client(self, mock_get_client):
         """Test getting models using client"""
         mock_client = Mock()
@@ -174,8 +174,8 @@ class TestModelOperations:
         assert models == ["llama2", "codellama"]
         assert "embed-model" not in models
     
-    @patch('ollama_utils.get_ollama_client')
-    @patch('ollama_utils.ollama')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.ollama')
     def test_get_available_models_module_fallback(self, mock_ollama, mock_get_client):
         """Test getting models using module-level functions"""
         # Clear the cache before testing
@@ -192,8 +192,8 @@ class TestModelOperations:
         models = get_available_models()
         assert models == ["llama2", "mistral"]
     
-    @patch('ollama_utils.get_ollama_client')
-    @patch('ollama_utils.ollama')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.ollama')
     @patch('requests.get')
     def test_get_available_models_api_fallback(self, mock_requests, mock_ollama, mock_get_client):
         """Test getting models using direct API call"""
@@ -216,8 +216,8 @@ class TestModelOperations:
         models = get_available_models()
         assert models == ["llama2", "phi"]
     
-    @patch('ollama_utils.get_ollama_client')
-    @patch('ollama_utils.ollama')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.ollama')
     @patch('requests.get')
     @patch('subprocess.run')
     def test_get_available_models_cli_fallback(self, mock_subprocess, mock_requests, mock_ollama, mock_get_client):
@@ -243,7 +243,7 @@ class TestModelOperations:
 class TestCallOllamaEndpoint:
     """Test the main endpoint calling function"""
     
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_call_endpoint_text_generation(self, mock_get_client):
         """Test basic text generation"""
         mock_client = Mock()
@@ -266,7 +266,7 @@ class TestCallOllamaEndpoint:
         assert eval_count == 2
         assert eval_duration == 1000000000
     
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_call_endpoint_with_image(self, mock_get_client):
         """Test multimodal processing with image"""
         mock_client = Mock()
@@ -287,7 +287,7 @@ class TestCallOllamaEndpoint:
         assert response == "I see an image"
         assert eval_count == 10
     
-    @patch('ollama_utils.call_ollama_cli_verbose')
+    @patch('ollama_workbench.providers.ollama_utils.call_ollama_cli_verbose')
     def test_call_endpoint_capture_metrics(self, mock_cli):
         """Test calling with capture_metrics flag"""
         mock_cli.return_value = ("Response", None, 5, 1000000000, {"detailed": "metrics"})
@@ -306,7 +306,7 @@ class TestCallOllamaEndpoint:
 class TestEmbeddings:
     """Test embedding generation functions"""
     
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_generate_embeddings_ollama(self, mock_get_client):
         """Test generating embeddings with Ollama"""
         mock_client = Mock()
@@ -326,14 +326,14 @@ class TestEmbeddings:
         assert total_duration == 1000000000
         assert eval_count == 5
     
-    @patch('ollama_utils.get_local_embeddings')
+    @patch('ollama_workbench.providers.ollama_utils.get_local_embeddings')
     def test_generate_embeddings_groq(self, mock_groq_embeddings):
         """Test generating embeddings with Groq"""
         mock_groq_embeddings.return_value = [0.4, 0.5, 0.6]
         
         from ollama_workbench.providers.ollama_utils import GROQ_MODELS
         test_model = GROQ_MODELS[0] if GROQ_MODELS else "groq-model"
-        with patch('ollama_utils.GROQ_MODELS', [test_model]):
+        with patch('ollama_workbench.providers.ollama_utils.GROQ_MODELS', [test_model]):
             embedding = generate_embeddings(test_model, "test text")
             assert embedding == [0.4, 0.5, 0.6]
 
@@ -344,7 +344,7 @@ class TestModelManagement:
     @patch('streamlit.progress')
     @patch('streamlit.empty')
     @patch('streamlit.write')
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_pull_model_with_client(self, mock_get_client, mock_write, mock_empty, mock_progress):
         """Test pulling model with client"""
         mock_client = Mock()
@@ -368,7 +368,7 @@ class TestModelManagement:
         mock_progress_bar.progress.assert_any_call(0.5)
         mock_progress_bar.progress.assert_any_call(1.0)
     
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_show_model_info(self, mock_get_client):
         """Test showing model information"""
         mock_client = Mock()
@@ -385,7 +385,7 @@ class TestModelManagement:
         assert info["name"] == "llama2"
         assert info["size"] == 3825819519
     
-    @patch('ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_remove_model(self, mock_get_client):
         """Test removing a model"""
         mock_client = Mock()
@@ -403,7 +403,7 @@ class TestUtilityFunctions:
     
     def test_check_json_handling(self):
         """Test JSON handling check"""
-        with patch('ollama_utils.call_ollama_endpoint') as mock_call:
+        with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_call:
             # Valid JSON response
             mock_call.return_value = ('{"name": "John", "age": 30, "city": "New York"}', None, None, None)
             assert check_json_handling("llama2", 0.5, 100, 0, 0) is True
@@ -414,7 +414,7 @@ class TestUtilityFunctions:
     
     def test_check_function_calling(self):
         """Test function calling check"""
-        with patch('ollama_utils.call_ollama_endpoint') as mock_call:
+        with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_call:
             # Response contains "8" (5 + 3)
             mock_call.return_value = ('def add(a, b): return a + b\nresult = add(5, 3)\nprint(result)  # 8', None, None, None)
             assert check_function_calling("llama2", 0.5, 100, 0, 0) is True
@@ -470,7 +470,7 @@ class TestUtilityFunctions:
     def test_log_model_stats(self):
         """Test logging model statistics"""
         # Patch at the model_management module level since it's imported inside the function
-        with patch('model_management.log_model_usage') as mock_log:
+        with patch('ollama_workbench.models.model_management.log_model_usage') as mock_log:
             result = log_model_stats("llama2", 100, 2.5, "generate")
             assert result is True
             mock_log.assert_called_once_with(
@@ -481,7 +481,7 @@ class TestUtilityFunctions:
             )
         
         # Test when logging module is not available
-        with patch.dict('sys.modules', {'model_management': None}):
+        with patch.dict('sys.modules', {'ollama_workbench.models.model_management': None}):
             result = log_model_stats("llama2", 100, 2.5, "generate")
             assert result is False
 
@@ -572,7 +572,7 @@ class TestIntegration:
     
     def test_get_all_models(self):
         """Test getting all models from all providers"""
-        with patch('ollama_utils.get_available_models', return_value=["llama2", "codellama"]):
+        with patch('ollama_workbench.providers.ollama_utils.get_available_models', return_value=["llama2", "codellama"]):
             all_models = get_all_models()
             
             # Should include Ollama models

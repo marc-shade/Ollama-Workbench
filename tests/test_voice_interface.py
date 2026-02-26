@@ -21,8 +21,8 @@ class TestVoiceInterface:
         if hasattr(st, 'session_state'):
             st.session_state.clear()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_settings_ui_basic_structure(self, mock_st, mock_voice_utils):
         """Test basic structure of voice settings UI"""
         # Mock available voices
@@ -53,8 +53,8 @@ class TestVoiceInterface:
         mock_st.tabs.assert_called_once()
         mock_voice_utils.get_available_voices.assert_called_once()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_settings_profile_management(self, mock_st, mock_voice_utils):
         """Test voice profile management functionality"""
         # Setup mocks
@@ -83,8 +83,8 @@ class TestVoiceInterface:
         mock_voice_utils.remove_voice_profile.assert_called_with('test_profile')
         mock_voice_utils.add_voice_profile.assert_called()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_settings_test_functionality(self, mock_st, mock_voice_utils):
         """Test voice testing functionality"""
         # Setup mocks
@@ -113,8 +113,8 @@ class TestVoiceInterface:
         mock_voice_utils.text_to_speech.assert_called_with('Test speech', 'default')
         mock_voice_utils.play_speech.assert_called_with('/tmp/test.mp3')
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_input_component_basic(self, mock_st, mock_voice_utils):
         """Test basic voice input component functionality"""
         # Mock session state
@@ -138,8 +138,8 @@ class TestVoiceInterface:
         mock_st.button.assert_called()
         mock_st.text_input.assert_called()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_input_component_start_listening(self, mock_st, mock_voice_utils):
         """Test starting voice input listening"""
         # Mock session state
@@ -164,8 +164,8 @@ class TestVoiceInterface:
         mock_voice_utils.start_voice_input.assert_called_once()
         mock_st.rerun.assert_called_once()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_input_component_stop_listening(self, mock_st, mock_voice_utils):
         """Test stopping voice input listening"""
         # Mock session state
@@ -194,9 +194,9 @@ class TestVoiceInterface:
         callback.assert_called_with("Hello world")
         mock_st.rerun.assert_called_once()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
-    @patch('voice_interface.call_ollama_endpoint')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint')
     def test_voice_chat_interface_basic_structure(self, mock_ollama, mock_st, mock_voice_utils):
         """Test basic structure of voice chat interface"""
         # Mock session state
@@ -215,7 +215,7 @@ class TestVoiceInterface:
         mock_voice_utils.get_available_voices.return_value = ['default']
         
         # Mock get_all_models
-        with patch('voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3', 'mixtral']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -227,9 +227,9 @@ class TestVoiceInterface:
         mock_st.chat_input.assert_called_once()
         mock_voice_utils.get_available_voices.assert_called_once()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
-    @patch('voice_interface.call_ollama_endpoint')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint')
     def test_voice_chat_interface_message_handling(self, mock_ollama, mock_st, mock_voice_utils):
         """Test message handling in voice chat interface"""
         # Setup chat history
@@ -260,7 +260,7 @@ class TestVoiceInterface:
         mock_ollama.return_value = ("Generated response", None, None, None)
         
         # Mock get_all_models
-        with patch('voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3', 'mixtral']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -273,9 +273,9 @@ class TestVoiceInterface:
         mock_voice_utils.text_to_speech.assert_called_once()
         mock_voice_utils.play_speech.assert_called_once()
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
-    @patch('voice_interface.call_groq_api')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.call_groq_api')
     def test_voice_chat_interface_groq_provider(self, mock_groq, mock_st, mock_voice_utils):
         """Test voice chat with Groq provider"""
         # Mock session state with Groq model
@@ -307,7 +307,7 @@ class TestVoiceInterface:
         }
         
         # Mock get_all_models
-        with patch('voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['🚀 Groq Models mixtral-8x7b']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -321,9 +321,9 @@ class TestVoiceInterface:
         assert kwargs['temperature'] == 0.7
         assert kwargs['max_tokens'] == 500
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
-    @patch('voice_interface.call_openai_api')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.call_openai_api')
     def test_voice_chat_interface_openai_provider(self, mock_openai, mock_st, mock_voice_utils):
         """Test voice chat with OpenAI provider"""
         # Mock session state with OpenAI model
@@ -355,7 +355,7 @@ class TestVoiceInterface:
         }
         
         # Mock get_all_models
-        with patch('voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['🤖 OpenAI Models gpt-4']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -369,8 +369,8 @@ class TestVoiceInterface:
         assert kwargs['temperature'] == 0.5
         assert kwargs['max_tokens'] == 1000
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_chat_interface_error_handling(self, mock_st, mock_voice_utils):
         """Test error handling in voice chat interface"""
         # Mock session state
@@ -397,11 +397,11 @@ class TestVoiceInterface:
         mock_voice_utils.play_speech.return_value = None
         
         # Mock get_all_models
-        with patch('voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3']
             
             # Mock ollama call to raise exception
-            with patch('voice_interface.call_ollama_endpoint') as mock_ollama:
+            with patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint') as mock_ollama:
                 mock_ollama.side_effect = Exception("Test error")
                 
                 import ollama_workbench.chat.voice_interface as voice_interface
@@ -416,7 +416,7 @@ class TestVoiceInterface:
         assert len(mock_session_state['voice_chat_history']) == 2
         assert "error" in mock_session_state['voice_chat_history'][1]['content'].lower()
     
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_main_function_structure(self, mock_st):
         """Test main function structure when run as script"""
         # Mock streamlit components
@@ -424,8 +424,8 @@ class TestVoiceInterface:
         mock_st.tabs.return_value = [Mock(), Mock()]
         
         # Mock the main functions to avoid running full UI
-        with patch('voice_interface.voice_chat_interface') as mock_chat:
-            with patch('voice_interface.voice_settings_ui') as mock_settings:
+        with patch('ollama_workbench.chat.voice_interface.voice_chat_interface') as mock_chat:
+            with patch('ollama_workbench.chat.voice_interface.voice_settings_ui') as mock_settings:
                 # Import and run the main block
                 import ollama_workbench.chat.voice_interface as voice_interface
 
@@ -440,8 +440,8 @@ class TestVoiceInterface:
         assert hasattr(voice_interface, 'voice_chat_interface')
         assert hasattr(voice_interface, 'voice_settings_ui')
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_voice_chat_conversation_context(self, mock_st, mock_voice_utils):
         """Test conversation context handling in voice chat"""
         # Setup conversation history
@@ -471,11 +471,11 @@ class TestVoiceInterface:
         mock_voice_utils.play_speech.return_value = None
         
         # Mock get_all_models
-        with patch('voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3']
             
             # Mock ollama call
-            with patch('voice_interface.call_ollama_endpoint') as mock_ollama:
+            with patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint') as mock_ollama:
                 mock_ollama.return_value = ("Machine learning is...", None, None, None)
                 
                 import ollama_workbench.chat.voice_interface as voice_interface
@@ -491,8 +491,8 @@ class TestVoiceInterface:
 class TestVoiceInterfaceIntegration:
     """Integration tests for voice interface components"""
     
-    @patch('voice_interface.voice_utils')
-    @patch('voice_interface.st')
+    @patch('ollama_workbench.chat.voice_interface.voice_utils')
+    @patch('ollama_workbench.chat.voice_interface.st')
     def test_complete_voice_workflow(self, mock_st, mock_voice_utils):
         """Test complete voice workflow from input to output"""
         # Mock session state

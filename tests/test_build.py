@@ -58,11 +58,12 @@ class TestBuildUtilities:
         finally:
             os.unlink(tmp_path)
     
-    @patch('build.save_json_file')
-    @patch('build.load_json_file')
+    @patch('ollama_workbench.workflows.build.save_json_file')
+    @patch('ollama_workbench.workflows.build.load_json_file')
     def test_api_key_management(self, mock_load, mock_save):
         """Test API key loading and saving"""
-        from ollama_workbench.workflows.build import load_api_keys, save_api_keys, set_openai_api_key
+        from ollama_workbench.workflows.build import load_api_keys, save_api_keys
+        from ollama_workbench.providers.openai_utils import set_openai_api_key
         
         # Test load_api_keys
         mock_load.return_value = {"existing_key": "value"}
@@ -81,8 +82,8 @@ class TestBuildUtilities:
         expected_keys = {"openai_api_key": "new_key"}
         mock_save.assert_called_with("api_keys.json", expected_keys)
     
-    @patch('build.save_json_file')
-    @patch('build.load_json_file')
+    @patch('ollama_workbench.workflows.build.save_json_file')
+    @patch('ollama_workbench.workflows.build.load_json_file')
     def test_settings_management(self, mock_load, mock_save):
         """Test settings loading and saving"""
         from ollama_workbench.workflows.build import load_settings, save_settings
@@ -102,8 +103,8 @@ class TestBuildUtilities:
 class TestAPIIntegrations:
     """Test API integration functions"""
     
-    @patch('build.openai.ChatCompletion.create')
-    @patch('build.load_api_keys')
+    @patch('ollama_workbench.workflows.build.openai.ChatCompletion.create')
+    @patch('ollama_workbench.workflows.build.load_api_keys')
     def test_call_openai_api_success(self, mock_load_keys, mock_openai):
         """Test successful OpenAI API call"""
         from ollama_workbench.workflows.build import call_openai_api
@@ -122,7 +123,7 @@ class TestAPIIntegrations:
         assert result == "Test response"
         mock_openai.assert_called_once()
     
-    @patch('build.load_api_keys')
+    @patch('ollama_workbench.workflows.build.load_api_keys')
     def test_call_openai_api_missing_key(self, mock_load_keys):
         """Test OpenAI API call with missing key"""
         from ollama_workbench.workflows.build import call_openai_api
@@ -142,7 +143,7 @@ class TestAPIIntegrations:
         with pytest.raises(ValueError, match="Invalid value for one of the numerical parameters"):
             call_openai_api("gpt-4", messages, temperature="invalid")
     
-    @patch('build.get_available_groq_models')
+    @patch('ollama_workbench.workflows.build.get_available_groq_models')
     def test_is_groq_model(self, mock_get_groq):
         """Test Groq model detection"""
         from ollama_workbench.workflows.build import is_groq_model
@@ -156,7 +157,7 @@ class TestAPIIntegrations:
 class TestSearchFunctionality:
     """Test search functionality"""
     
-    @patch('build.DDGS')
+    @patch('ollama_workbench.workflows.build.DDGS')
     def test_perform_search_duckduckgo(self, mock_ddgs):
         """Test DuckDuckGo search"""
         from ollama_workbench.workflows.build import perform_search
@@ -179,7 +180,7 @@ class TestSearchFunctionality:
         assert results == expected
         mock_search_instance.text.assert_called_with("test query", max_results=2)
     
-    @patch('build.build')
+    @patch('ollama_workbench.workflows.build.build')
     def test_perform_search_google(self, mock_build_service):
         """Test Google search"""
         from ollama_workbench.workflows.build import perform_search
@@ -249,8 +250,8 @@ class TestAgentTasks:
         assert context["current_task"] == "current task"
         assert context["previous_tasks"] == ["task1", "task2"]
     
-    @patch('build.OpenAI')
-    @patch('build.load_api_keys')
+    @patch('ollama_workbench.workflows.build.OpenAI')
+    @patch('ollama_workbench.workflows.build.load_api_keys')
     def test_manager_agent_task_openai(self, mock_load_keys, mock_openai_class):
         """Test manager agent task with OpenAI"""
         from ollama_workbench.workflows.build import manager_agent_task
@@ -272,7 +273,7 @@ class TestAgentTasks:
         assert result["instructions"] == "do this"
         assert error is None
     
-    @patch('build.call_groq_api')
+    @patch('ollama_workbench.workflows.build.call_groq_api')
     def test_manager_agent_task_groq(self, mock_groq):
         """Test manager agent task with Groq"""
         from ollama_workbench.workflows.build import manager_agent_task
@@ -280,7 +281,7 @@ class TestAgentTasks:
         # Setup mock
         mock_groq.return_value = '{"analysis": "groq test", "work_plan": "groq plan", "priorities": [], "instructions": "groq task", "create_files": true}'
         
-        with patch('build.GROQ_MODELS', ["mixtral-8x7b"]):
+        with patch('ollama_workbench.workflows.build.GROQ_MODELS', ["mixtral-8x7b"]):
             context = {"project_state": {"status": "active"}, "current_task": "test"}
             result, error = manager_agent_task(context, "mixtral-8x7b", 0.7, 1000)
             
@@ -288,7 +289,7 @@ class TestAgentTasks:
             assert result["create_files"] is True
             assert error is None
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_manager_agent_task_ollama(self, mock_ollama):
         """Test manager agent task with Ollama"""
         from ollama_workbench.workflows.build import manager_agent_task
@@ -303,7 +304,7 @@ class TestAgentTasks:
         assert result["create_files"] is False
         assert error is None
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_manager_agent_task_json_error(self, mock_ollama):
         """Test manager agent task with JSON parsing error"""
         from ollama_workbench.workflows.build import manager_agent_task
@@ -321,7 +322,7 @@ class TestAgentTasks:
 class TestCodeGeneration:
     """Test code generation and file creation"""
     
-    @patch('build.call_openai_api')
+    @patch('ollama_workbench.workflows.build.call_openai_api')
     def test_coding_agent_task_openai(self, mock_openai):
         """Test coding agent task with OpenAI"""
         from ollama_workbench.workflows.build import coding_agent_task
@@ -329,7 +330,7 @@ class TestCodeGeneration:
         # Setup mock
         mock_openai.return_value = '{"implementation": "code here", "explanation": "This is test code"}'
         
-        with patch('build.OpenAI') as mock_openai_class:
+        with patch('ollama_workbench.workflows.build.OpenAI') as mock_openai_class:
             mock_client = Mock()
             mock_response = Mock()
             mock_response.choices = [Mock()]
@@ -346,7 +347,7 @@ class TestCodeGeneration:
             assert result["implementation"] == "code here"
             assert result["explanation"] == "This is test code"
     
-    @patch('build.call_groq_api')
+    @patch('ollama_workbench.workflows.build.call_groq_api')
     def test_coding_agent_task_groq(self, mock_groq):
         """Test coding agent task with Groq"""
         from ollama_workbench.workflows.build import coding_agent_task
@@ -354,7 +355,7 @@ class TestCodeGeneration:
         # Setup mock
         mock_groq.return_value = '{"code": "groq generated code", "notes": "Groq implementation"}'
         
-        with patch('build.GROQ_MODELS', ["mixtral-8x7b"]):
+        with patch('ollama_workbench.workflows.build.GROQ_MODELS', ["mixtral-8x7b"]):
             result = coding_agent_task(
                 "Create a class",
                 "mixtral-8x7b",
@@ -364,7 +365,7 @@ class TestCodeGeneration:
             assert result["code"] == "groq generated code"
             assert result["notes"] == "Groq implementation"
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_coding_agent_task_ollama(self, mock_ollama):
         """Test coding agent task with Ollama"""
         from ollama_workbench.workflows.build import coding_agent_task
@@ -384,7 +385,7 @@ class TestCodeGeneration:
         with pytest.raises(ValueError, match="Prompt cannot be empty"):
             coding_agent_task("", "llama3")
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_coding_agent_task_with_search(self, mock_ollama):
         """Test coding agent task with search results"""
         from ollama_workbench.workflows.build import coding_agent_task
@@ -583,7 +584,7 @@ class TestProjectBuilding:
         assert result["success"] is True
         assert "project_dir" in result
     
-    @patch('build.call_openai_api')
+    @patch('ollama_workbench.workflows.build.call_openai_api')
     def test_generate_readme(self, mock_openai):
         """Test README generation"""
         from ollama_workbench.workflows.build import generate_readme
@@ -601,7 +602,7 @@ class TestProjectBuilding:
         assert "# Test Project" in readme
         assert "This is a test README" in readme
     
-    @patch('build.subprocess.run')
+    @patch('ollama_workbench.workflows.build.subprocess.run')
     def test_execute_code_command_line(self, mock_run):
         """Test executing command-line code"""
         from ollama_workbench.workflows.build import execute_code
@@ -614,7 +615,7 @@ class TestProjectBuilding:
         assert result == "Command executed successfully"
         mock_run.assert_called_once()
     
-    @patch('build.subprocess.Popen')
+    @patch('ollama_workbench.workflows.build.subprocess.Popen')
     def test_execute_code_streamlit(self, mock_popen):
         """Test executing Streamlit app"""
         from ollama_workbench.workflows.build import execute_code
@@ -638,7 +639,7 @@ class TestProjectBuilding:
 class TestRefinerTasks:
     """Test refiner task functionality"""
     
-    @patch('build.call_openai_api')
+    @patch('ollama_workbench.workflows.build.call_openai_api')
     def test_refine_task_openai(self, mock_openai):
         """Test refine task with OpenAI"""
         from ollama_workbench.workflows.build import refine_task
@@ -657,14 +658,14 @@ class TestRefinerTasks:
         assert result == "Refined output with improved code and structure."
         mock_openai.assert_called_once()
     
-    @patch('build.call_groq_api')
+    @patch('ollama_workbench.workflows.build.call_groq_api')
     def test_refine_task_groq(self, mock_groq):
         """Test refine task with Groq"""
         from ollama_workbench.workflows.build import refine_task
         
         mock_groq.return_value = "Groq refined output"
         
-        with patch('build.is_groq_model', return_value=True):
+        with patch('ollama_workbench.workflows.build.is_groq_model', return_value=True):
             result = refine_task(
                 "Create a tool",
                 "mixtral-8x7b",
@@ -676,7 +677,7 @@ class TestRefinerTasks:
             
             assert result == "Groq refined output"
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_refine_task_ollama(self, mock_ollama):
         """Test refine task with Ollama"""
         from ollama_workbench.workflows.build import refine_task
@@ -693,7 +694,7 @@ class TestRefinerTasks:
         
         assert result == "Ollama refined output"
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_refine_task_continuation(self, mock_ollama):
         """Test refine task with continuation"""
         from ollama_workbench.workflows.build import refine_task
@@ -720,8 +721,8 @@ class TestRefinerTasks:
 class TestStreamlitInterface:
     """Test Streamlit interface components"""
     
-    @patch('build.st')
-    @patch('build.get_all_models')
+    @patch('ollama_workbench.workflows.build.st')
+    @patch('ollama_workbench.workflows.build.get_all_models')
     def test_build_interface_initialization(self, mock_get_models, mock_st):
         """Test build interface initialization"""
         from ollama_workbench.workflows.build import build_interface
@@ -755,7 +756,7 @@ class TestStreamlitInterface:
 class TestErrorHandling:
     """Test error handling throughout the build system"""
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_manager_agent_task_exception(self, mock_ollama):
         """Test manager agent task with exception"""
         from ollama_workbench.workflows.build import manager_agent_task
@@ -768,7 +769,7 @@ class TestErrorHandling:
         assert result == {}
         assert error is None  # Function handles exceptions internally
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_coding_agent_task_exception(self, mock_ollama):
         """Test coding agent task with exception"""
         from ollama_workbench.workflows.build import coding_agent_task
@@ -780,7 +781,7 @@ class TestErrorHandling:
         assert "error" in result
         assert "Model error" in result["error"]
     
-    @patch('build.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.build.call_ollama_endpoint')
     def test_refine_task_exception(self, mock_ollama):
         """Test refine task with exception"""
         from ollama_workbench.workflows.build import refine_task

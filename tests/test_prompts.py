@@ -16,9 +16,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class TestFilePathManagement:
     """Test prompt file path management"""
     
-    @patch('prompts.SCRIPT_DIR', '/test/dir')
-    @patch('prompts.os.path.exists')
-    @patch('prompts.os.makedirs')
+    @patch('ollama_workbench.ui.prompts.SCRIPT_DIR', '/test/dir')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.os.makedirs')
     def test_get_prompts_file_path_creates_directory(self, mock_makedirs, mock_exists):
         """Test that prompts directory is created if it doesn't exist"""
         from ollama_workbench.ui.prompts import get_prompts_file_path
@@ -31,9 +31,9 @@ class TestFilePathManagement:
         assert result == expected_path
         mock_makedirs.assert_called_once_with("/test/dir/prompts")
     
-    @patch('prompts.SCRIPT_DIR', '/test/dir')
-    @patch('prompts.os.path.exists')
-    @patch('prompts.os.makedirs')
+    @patch('ollama_workbench.ui.prompts.SCRIPT_DIR', '/test/dir')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.os.makedirs')
     def test_get_prompts_file_path_existing_directory(self, mock_makedirs, mock_exists):
         """Test file path when directory already exists"""
         from ollama_workbench.ui.prompts import get_prompts_file_path
@@ -50,8 +50,8 @@ class TestFilePathManagement:
         """Test file paths for different prompt types"""
         from ollama_workbench.ui.prompts import get_prompts_file_path
         
-        with patch('prompts.SCRIPT_DIR', '/base'):
-            with patch('prompts.os.path.exists', return_value=True):
+        with patch('ollama_workbench.ui.prompts.SCRIPT_DIR', '/base'):
+            with patch('ollama_workbench.ui.prompts.os.path.exists', return_value=True):
                 assert get_prompts_file_path("agent").endswith("agent_prompts.json")
                 assert get_prompts_file_path("voice").endswith("voice_prompts.json")
                 assert get_prompts_file_path("identity").endswith("identity_prompts.json")
@@ -60,10 +60,10 @@ class TestFilePathManagement:
 class TestPromptLoading:
     """Test prompt loading functionality"""
     
-    @patch('prompts.get_prompts_file_path')
-    @patch('prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('prompts.json.load')
+    @patch('ollama_workbench.ui.prompts.json.load')
     def test_load_prompts_existing_file(self, mock_json_load, mock_file, mock_exists, mock_path):
         """Test loading prompts from existing file"""
         from ollama_workbench.ui.prompts import load_prompts
@@ -80,8 +80,8 @@ class TestPromptLoading:
         mock_file.assert_called_once_with("/path/to/agent_prompts.json", "r")
         mock_json_load.assert_called_once()
     
-    @patch('prompts.get_prompts_file_path')
-    @patch('prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
     def test_load_prompts_nonexistent_file(self, mock_exists, mock_path):
         """Test loading prompts when file doesn't exist"""
         from ollama_workbench.ui.prompts import load_prompts
@@ -93,10 +93,10 @@ class TestPromptLoading:
         
         assert result == {}
     
-    @patch('prompts.get_prompts_file_path')
-    @patch('prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('prompts.json.load')
+    @patch('ollama_workbench.ui.prompts.json.load')
     def test_load_prompts_json_decode_error(self, mock_json_load, mock_file, mock_exists, mock_path):
         """Test loading prompts with JSON decode error"""
         from ollama_workbench.ui.prompts import load_prompts
@@ -112,9 +112,9 @@ class TestPromptLoading:
 class TestPromptSaving:
     """Test prompt saving functionality"""
     
-    @patch('prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('prompts.json.dump')
+    @patch('ollama_workbench.ui.prompts.json.dump')
     def test_save_prompts_success(self, mock_json_dump, mock_file, mock_path):
         """Test successful prompt saving"""
         from ollama_workbench.ui.prompts import save_prompts
@@ -127,9 +127,9 @@ class TestPromptSaving:
         mock_file.assert_called_once_with("/path/to/agent_prompts.json", "w")
         mock_json_dump.assert_called_once_with(test_prompts, mock_file(), indent=4)
     
-    @patch('prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('prompts.json.dump')
+    @patch('ollama_workbench.ui.prompts.json.dump')
     def test_save_prompts_different_types(self, mock_json_dump, mock_file, mock_path):
         """Test saving different types of prompts"""
         from ollama_workbench.ui.prompts import save_prompts
@@ -147,9 +147,9 @@ class TestPromptSaving:
         assert mock_json_dump.call_count == 3
         assert mock_file.call_count == 3
     
-    @patch('prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('prompts.json.dump')
+    @patch('ollama_workbench.ui.prompts.json.dump')
     def test_save_prompts_file_error(self, mock_json_dump, mock_file, mock_path):
         """Test saving prompts with file write error"""
         from ollama_workbench.ui.prompts import save_prompts
@@ -164,8 +164,8 @@ class TestPromptSaving:
 class TestAgentPrompts:
     """Test agent prompt management"""
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_agent_prompt_existing(self, mock_save, mock_load):
         """Test getting agent prompts when they exist"""
         from ollama_workbench.ui.prompts import get_agent_prompt
@@ -184,8 +184,8 @@ class TestAgentPrompts:
         mock_load.assert_called_once_with("agent")
         mock_save.assert_called_once()  # Should save updated prompts
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_agent_prompt_create_default(self, mock_save, mock_load):
         """Test creating default agent prompts when none exist"""
         from ollama_workbench.ui.prompts import get_agent_prompt
@@ -206,8 +206,8 @@ class TestAgentPrompts:
         
         mock_save.assert_called_once_with("agent", result)
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_agent_prompt_convert_string_prompts(self, mock_save, mock_load):
         """Test converting old string prompts to new dict format"""
         from ollama_workbench.ui.prompts import get_agent_prompt
@@ -233,8 +233,8 @@ class TestAgentPrompts:
         
         mock_save.assert_called_once()
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_agent_prompt_add_missing_voice(self, mock_save, mock_load):
         """Test adding missing model_voice to existing prompts"""
         from ollama_workbench.ui.prompts import get_agent_prompt
@@ -255,8 +255,8 @@ class TestAgentPrompts:
 class TestOtherPromptTypes:
     """Test metacognitive, voice, and identity prompts"""
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_metacognitive_prompt_existing(self, mock_save, mock_load):
         """Test getting existing metacognitive prompts"""
         from ollama_workbench.ui.prompts import get_metacognitive_prompt
@@ -272,8 +272,8 @@ class TestOtherPromptTypes:
         mock_load.assert_called_once_with("metacognitive")
         mock_save.assert_not_called()
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_metacognitive_prompt_create_default(self, mock_save, mock_load):
         """Test creating default metacognitive prompts"""
         from ollama_workbench.ui.prompts import get_metacognitive_prompt
@@ -288,8 +288,8 @@ class TestOtherPromptTypes:
         
         mock_save.assert_called_once_with("metacognitive", result)
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_voice_prompt_existing(self, mock_save, mock_load):
         """Test getting existing voice prompts"""
         from ollama_workbench.ui.prompts import get_voice_prompt
@@ -305,8 +305,8 @@ class TestOtherPromptTypes:
         mock_load.assert_called_once_with("voice")
         mock_save.assert_not_called()
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_voice_prompt_create_default(self, mock_save, mock_load):
         """Test creating default voice prompts"""
         from ollama_workbench.ui.prompts import get_voice_prompt
@@ -321,7 +321,7 @@ class TestOtherPromptTypes:
         
         mock_save.assert_called_once_with("voice", result)
     
-    @patch('prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
     def test_get_identity_prompt(self, mock_load):
         """Test getting identity prompts"""
         from ollama_workbench.ui.prompts import get_identity_prompt
@@ -341,7 +341,7 @@ class TestStreamlitInterface:
     @pytest.fixture
     def mock_streamlit(self):
         """Mock Streamlit components"""
-        with patch('prompts.st') as mock_st:
+        with patch('ollama_workbench.ui.prompts.st') as mock_st:
             mock_st.title = Mock()
             mock_st.selectbox = Mock()
             mock_st.markdown = Mock()
@@ -354,8 +354,8 @@ class TestStreamlitInterface:
             mock_st.rerun = Mock()
             yield mock_st
     
-    @patch('prompts.get_agent_prompt')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.get_agent_prompt')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_manage_prompts_agent_selection(self, mock_save, mock_get_agent, mock_streamlit):
         """Test managing agent prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -386,7 +386,7 @@ class TestStreamlitInterface:
         mock_streamlit.title.assert_called_once_with("✨ Prompts")
         mock_get_agent.assert_called_once()
     
-    @patch('prompts.get_metacognitive_prompt')
+    @patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
     def test_manage_prompts_metacognitive_selection(self, mock_get_meta, mock_streamlit):
         """Test managing metacognitive prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -404,7 +404,7 @@ class TestStreamlitInterface:
         mock_get_meta.assert_called_once()
         mock_streamlit.data_editor.assert_called_once()
     
-    @patch('prompts.get_voice_prompt')
+    @patch('ollama_workbench.ui.prompts.get_voice_prompt')
     def test_manage_prompts_voice_selection(self, mock_get_voice, mock_streamlit):
         """Test managing voice prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -422,7 +422,7 @@ class TestStreamlitInterface:
         mock_get_voice.assert_called_once()
         mock_streamlit.data_editor.assert_called_once()
     
-    @patch('prompts.get_identity_prompt')
+    @patch('ollama_workbench.ui.prompts.get_identity_prompt')
     def test_manage_prompts_identity_selection(self, mock_get_identity, mock_streamlit):
         """Test managing identity prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -440,7 +440,7 @@ class TestStreamlitInterface:
         mock_get_identity.assert_called_once()
         mock_streamlit.data_editor.assert_called_once()
     
-    @patch('prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
     def test_manage_prompts_model_voice_selection(self, mock_load, mock_streamlit):
         """Test managing model voice prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -458,8 +458,8 @@ class TestStreamlitInterface:
         mock_load.assert_called_once_with("model_voice")
         mock_streamlit.data_editor.assert_called_once()
     
-    @patch('prompts.get_agent_prompt')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.get_agent_prompt')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_manage_prompts_save_agent(self, mock_save, mock_get_agent, mock_streamlit):
         """Test saving agent prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -491,8 +491,8 @@ class TestStreamlitInterface:
         mock_streamlit.success.assert_called_once()
         mock_streamlit.rerun.assert_called_once()
     
-    @patch('prompts.get_metacognitive_prompt')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_manage_prompts_save_metacognitive(self, mock_save, mock_get_meta, mock_streamlit):
         """Test saving metacognitive prompts"""
         from ollama_workbench.ui.prompts import manage_prompts
@@ -516,15 +516,15 @@ class TestStreamlitInterface:
 class TestVRMIntegration:
     """Test VRM model integration"""
     
-    @patch('prompts.global_vrm_loader')
-    @patch('prompts.os.path.exists')
-    @patch('prompts.os.makedirs')
+    @patch('ollama_workbench.ui.prompts.global_vrm_loader')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.os.makedirs')
     @patch('builtins.open', new_callable=mock_open)
     def test_vrm_model_upload(self, mock_file, mock_makedirs, mock_exists, mock_vrm_loader):
         """Test VRM model upload functionality"""
         from ollama_workbench.ui.prompts import manage_prompts
         
-        with patch('prompts.st') as mock_st:
+        with patch('ollama_workbench.ui.prompts.st') as mock_st:
             # Setup mocks
             mock_st.title = Mock()
             mock_st.selectbox.return_value = "Agent"
@@ -548,7 +548,7 @@ class TestVRMIntegration:
             
             mock_exists.return_value = False  # Directory doesn't exist
             
-            with patch('prompts.get_agent_prompt') as mock_get_agent:
+            with patch('ollama_workbench.ui.prompts.get_agent_prompt') as mock_get_agent:
                 mock_get_agent.return_value = {
                     "Test Agent": {
                         "prompt": "Test prompt",
@@ -556,7 +556,7 @@ class TestVRMIntegration:
                     }
                 }
                 
-                with patch('prompts.SCRIPT_DIR', '/test/dir'):
+                with patch('ollama_workbench.ui.prompts.SCRIPT_DIR', '/test/dir'):
                     manage_prompts()
         
         # Verify directory creation
@@ -576,13 +576,13 @@ class TestVRMIntegration:
 class TestAgentPromptManagement:
     """Test agent prompt specific management features"""
     
-    @patch('prompts.get_agent_prompt')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.get_agent_prompt')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_add_new_agent_prompt(self, mock_save, mock_get_agent):
         """Test adding new agent prompt"""
         from ollama_workbench.ui.prompts import manage_prompts
         
-        with patch('prompts.st') as mock_st:
+        with patch('ollama_workbench.ui.prompts.st') as mock_st:
             mock_st.title = Mock()
             mock_st.selectbox.return_value = "Agent"
             mock_st.markdown = Mock()
@@ -626,8 +626,8 @@ class TestAgentPromptManagement:
 class TestErrorHandling:
     """Test error handling scenarios"""
     
-    @patch('prompts.get_prompts_file_path')
-    @patch('prompts.os.path.exists')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.os.path.exists')
     @patch('builtins.open', new_callable=mock_open)
     def test_load_prompts_file_permission_error(self, mock_file, mock_exists, mock_path):
         """Test loading prompts with file permission error"""
@@ -640,9 +640,9 @@ class TestErrorHandling:
         with pytest.raises(PermissionError):
             load_prompts("agent")
     
-    @patch('prompts.get_prompts_file_path')
+    @patch('ollama_workbench.ui.prompts.get_prompts_file_path')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('prompts.json.dump')
+    @patch('ollama_workbench.ui.prompts.json.dump')
     def test_save_prompts_json_error(self, mock_json_dump, mock_file, mock_path):
         """Test saving prompts with JSON serialization error"""
         from ollama_workbench.ui.prompts import save_prompts
@@ -653,8 +653,8 @@ class TestErrorHandling:
         with pytest.raises(TypeError):
             save_prompts("agent", {"test": Mock()})  # Mock object not serializable
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_get_agent_prompt_save_error(self, mock_save, mock_load):
         """Test agent prompt loading with save error"""
         from ollama_workbench.ui.prompts import get_agent_prompt
@@ -684,8 +684,8 @@ class TestIntegration:
         assert hasattr(prompts, 'get_identity_prompt')
         assert hasattr(prompts, 'manage_prompts')
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_prompt_type_consistency(self, mock_save, mock_load):
         """Test consistency across different prompt types"""
         from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
@@ -713,12 +713,12 @@ class TestIntegration:
             assert "prompt" in value
             assert "model_voice" in value
     
-    @patch('prompts.SCRIPT_DIR', '/test/workbench')
+    @patch('ollama_workbench.ui.prompts.SCRIPT_DIR', '/test/workbench')
     def test_directory_structure_consistency(self):
         """Test that directory paths are consistent"""
         from ollama_workbench.ui.prompts import get_prompts_file_path
         
-        with patch('prompts.os.path.exists', return_value=True):
+        with patch('ollama_workbench.ui.prompts.os.path.exists', return_value=True):
             agent_path = get_prompts_file_path("agent")
             voice_path = get_prompts_file_path("voice")
             meta_path = get_prompts_file_path("metacognitive")
@@ -737,8 +737,8 @@ class TestIntegration:
 class TestDefaultPromptContent:
     """Test default prompt content and structure"""
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_default_agent_prompts_content(self, mock_save, mock_load):
         """Test content of default agent prompts"""
         from ollama_workbench.ui.prompts import get_agent_prompt
@@ -765,8 +765,8 @@ class TestDefaultPromptContent:
         assert "technical" in technical["prompt"].lower() or "documentation" in technical["prompt"].lower()
         assert technical["model_voice"] == "en-US-Wavenet-C"
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_default_metacognitive_prompts_content(self, mock_save, mock_load):
         """Test content of default metacognitive prompts"""
         from ollama_workbench.ui.prompts import get_metacognitive_prompt
@@ -785,8 +785,8 @@ class TestDefaultPromptContent:
         assert "intuitive" in result["Intuitive"].lower() or "creative" in result["Intuitive"].lower()
         assert "collaborative" in result["Collaborative"].lower() or "involving" in result["Collaborative"].lower()
     
-    @patch('prompts.load_prompts')
-    @patch('prompts.save_prompts')
+    @patch('ollama_workbench.ui.prompts.load_prompts')
+    @patch('ollama_workbench.ui.prompts.save_prompts')
     def test_default_voice_prompts_content(self, mock_save, mock_load):
         """Test content of default voice prompts"""
         from ollama_workbench.ui.prompts import get_voice_prompt

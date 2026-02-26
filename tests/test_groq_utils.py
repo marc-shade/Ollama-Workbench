@@ -45,7 +45,7 @@ class TestAPIKeyManagement:
         with open(api_file, "w") as f:
             json.dump(test_keys, f)
         
-        with patch('groq_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.groq_utils.API_KEYS_FILE', str(api_file)):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
             assert loaded_keys["groq_api_key"] == "gsk_test123"
@@ -61,7 +61,7 @@ class TestAPIKeyManagement:
         test_keys = {"groq_api_key": "gsk_test456", "another_key": "another_value"}
         api_file = tmp_path / "api_keys.json"
         
-        with patch('groq_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.groq_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
             
             # Verify file was saved correctly
@@ -74,7 +74,7 @@ class TestAPIKeyManagement:
 class TestGroqClient:
     """Test Groq client initialization"""
     
-    @patch('groq_utils.Groq')
+    @patch('ollama_workbench.providers.groq_utils.Groq')
     def test_get_groq_client_with_key(self, mock_groq_class):
         """Test getting Groq client with valid API key"""
         mock_client = Mock()
@@ -94,7 +94,7 @@ class TestGroqClient:
         assert client is None
     
     @patch('streamlit.warning')
-    @patch('groq_utils.Groq')
+    @patch('ollama_workbench.providers.groq_utils.Groq')
     def test_get_groq_client_error(self, mock_groq_class, mock_warning):
         """Test Groq client error handling"""
         mock_groq_class.side_effect = Exception("Invalid API key")
@@ -168,7 +168,7 @@ class TestGroqAPI:
 class TestEmbeddings:
     """Test embedding generation functions"""
     
-    @patch('groq_utils.SentenceTransformer')
+    @patch('ollama_workbench.providers.groq_utils.SentenceTransformer')
     def test_load_embedding_model_cached(self, mock_transformer_class):
         """Test that embedding model loading is cached"""
         # Mock the SentenceTransformer
@@ -188,7 +188,7 @@ class TestEmbeddings:
         # Should only be called once due to caching
         mock_transformer_class.assert_called_once_with('all-MiniLM-L6-v2')
     
-    @patch('groq_utils.SentenceTransformer')
+    @patch('ollama_workbench.providers.groq_utils.SentenceTransformer')
     def test_load_embedding_model_loads_correct_model(self, mock_transformer_class):
         """Test that the correct embedding model is loaded"""
         mock_model = Mock()
@@ -197,13 +197,13 @@ class TestEmbeddings:
         # Clear cache and reload module to apply mock
         load_embedding_model.clear()
         
-        with patch('groq_utils.st.cache_resource', lambda f: f):
+        with patch('ollama_workbench.providers.groq_utils.st.cache_resource', lambda f: f):
             model = load_embedding_model()
         
         assert model == mock_model
         mock_transformer_class.assert_called_once_with('all-MiniLM-L6-v2')
     
-    @patch('groq_utils.load_embedding_model')
+    @patch('ollama_workbench.providers.groq_utils.load_embedding_model')
     def test_get_local_embeddings(self, mock_load_model):
         """Test local embedding generation"""
         # Mock the model and its encode method
@@ -218,7 +218,7 @@ class TestEmbeddings:
         assert embeddings == [0.1, 0.2, 0.3, 0.4, 0.5]
         mock_model.encode.assert_called_once_with("Test text")
     
-    @patch('groq_utils.load_embedding_model')
+    @patch('ollama_workbench.providers.groq_utils.load_embedding_model')
     def test_get_local_embeddings_different_texts(self, mock_load_model):
         """Test embedding generation with different texts"""
         mock_model = Mock()
@@ -249,11 +249,11 @@ class TestUIFunctions:
     """Test UI-related functions"""
     
     @patch('streamlit.success')
-    @patch('groq_utils.save_api_keys')
+    @patch('ollama_workbench.providers.groq_utils.save_api_keys')
     @patch('streamlit.sidebar.button')
     @patch('streamlit.sidebar.text_input')
     @patch('streamlit.sidebar.subheader')
-    @patch('groq_utils.load_api_keys')
+    @patch('ollama_workbench.providers.groq_utils.load_api_keys')
     def test_display_groq_settings_save_key(
         self, mock_load_keys, mock_subheader, mock_text_input,
         mock_button, mock_save_keys, mock_success
@@ -281,11 +281,11 @@ class TestUIFunctions:
         mock_save_keys.assert_called_once_with(expected_keys)
         mock_success.assert_called_once_with("Groq API key saved!")
     
-    @patch('groq_utils.save_api_keys')
+    @patch('ollama_workbench.providers.groq_utils.save_api_keys')
     @patch('streamlit.sidebar.button')
     @patch('streamlit.sidebar.text_input')
     @patch('streamlit.sidebar.subheader')
-    @patch('groq_utils.load_api_keys')
+    @patch('ollama_workbench.providers.groq_utils.load_api_keys')
     def test_display_groq_settings_no_save(
         self, mock_load_keys, mock_subheader, mock_text_input,
         mock_button, mock_save_keys
@@ -313,12 +313,12 @@ class TestUIFunctions:
 class TestIntegration:
     """Integration tests for complete workflows"""
     
-    @patch('groq_utils.Groq')
+    @patch('ollama_workbench.providers.groq_utils.Groq')
     def test_complete_api_flow(self, mock_groq_class, tmp_path):
         """Test complete flow: save key, load, create client, and use API"""
         api_file = tmp_path / "api_keys.json"
         
-        with patch('groq_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.groq_utils.API_KEYS_FILE', str(api_file)):
             # Save API key
             save_api_keys({"groq_api_key": "gsk_integration_test"})
             
@@ -349,7 +349,7 @@ class TestIntegration:
             
             assert result == "Integration test response"
     
-    @patch('groq_utils.SentenceTransformer')
+    @patch('ollama_workbench.providers.groq_utils.SentenceTransformer')
     def test_embedding_flow(self, mock_transformer_class):
         """Test embedding generation flow"""
         # Mock the transformer
@@ -360,7 +360,7 @@ class TestIntegration:
         
         # Clear cache and use no-op decorator
         load_embedding_model.clear()
-        with patch('groq_utils.st.cache_resource', lambda f: f):
+        with patch('ollama_workbench.providers.groq_utils.st.cache_resource', lambda f: f):
             # Generate embeddings
             embeddings = get_local_embeddings("Test embedding generation")
         

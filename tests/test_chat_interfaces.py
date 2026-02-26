@@ -29,8 +29,6 @@ try:
     import streamlit as st
     from ollama_workbench.chat.chat_interface import chat_interface, load_settings, save_settings
     from ollama_workbench.chat.enhanced_chat_interface import enhanced_chat_interface
-    from modern_chat_interface import modern_chat_interface, initialize_session_state
-    from simple_modern_interface import simple_modern_interface
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")
     raise
@@ -111,7 +109,7 @@ class TestChatInterfaces(unittest.TestCase):
     def mock_ollama_client(self):
         """Mock ollama client"""
         # Create mock for ollama client
-        self.ollama_client_patch = patch('ollama_utils.get_ollama_client')
+        self.ollama_client_patch = patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
         self.ollama_client_mock = self.ollama_client_patch.start()
         
         # Configure mock to return a client that returns a response
@@ -120,11 +118,11 @@ class TestChatInterfaces(unittest.TestCase):
         self.ollama_client_mock.return_value = mock_client
         
         # Mock get_available_models
-        self.get_models_patch = patch('ollama_utils.get_available_models', return_value=["llama2", "mistral"])
+        self.get_models_patch = patch('ollama_workbench.providers.ollama_utils.get_available_models', return_value=["llama2", "mistral"])
         self.get_models_mock = self.get_models_patch.start()
         
         # Mock call_ollama_endpoint
-        self.call_ollama_patch = patch('ollama_utils.call_ollama_endpoint', 
+        self.call_ollama_patch = patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint', 
                                        return_value=("Test response", 0, 0, 0))
         self.call_ollama_mock = self.call_ollama_patch.start()
         
@@ -149,21 +147,7 @@ class TestChatInterfaces(unittest.TestCase):
         
         logger.info("CHECKPOINT: Test settings file created successfully")
     
-    def test_session_state_initialization(self):
-        """Test that session state is properly initialized"""
-        logger.info("Testing session state initialization")
-        
-        # Call initialize_session_state
-        initialize_session_state()
-        
-        # Check that session state variables are initialized
-        self.assertIn("chat_history", self.mock_session_state)
-        self.assertIn("current_model", self.mock_session_state)
-        
-        logger.info("Session state initialization test passed")
-        logger.info("CHECKPOINT: Session state initialization test completed successfully")
-    
-    @patch('chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_load_settings(self):
         """Test loading settings from file"""
         logger.info("Testing load settings")
@@ -178,7 +162,7 @@ class TestChatInterfaces(unittest.TestCase):
         logger.info("Load settings test passed")
         logger.info("CHECKPOINT: Load settings test completed successfully")
     
-    @patch('chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_save_settings(self):
         """Test saving settings to file"""
         logger.info("Testing save settings")
@@ -294,8 +278,8 @@ class TestChatInterfaceIntegration(unittest.TestCase):
     @patch('streamlit.markdown', MagicMock())
     @patch('streamlit.text_input', return_value="Test message")
     @patch('streamlit.button', return_value=True)
-    @patch('ollama_utils.get_ollama_client')
-    @patch('ollama_utils.get_available_models', return_value=["llama2", "mistral"])
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_available_models', return_value=["llama2", "mistral"])
     def test_chat_interface_integration(self, mock_get_models, mock_get_client, mock_button, mock_text_input):
         """Test chat_interface integration"""
         logger.info("Testing chat_interface integration")

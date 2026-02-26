@@ -46,7 +46,7 @@ class TestAPIKeyManagement:
         with open(api_file, "w") as f:
             json.dump(test_keys, f)
         
-        with patch('mistral_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.mistral_utils.API_KEYS_FILE', str(api_file)):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
             assert loaded_keys["mistral_api_key"] == "msk_test123"
@@ -62,7 +62,7 @@ class TestAPIKeyManagement:
         test_keys = {"mistral_api_key": "msk_test456", "another_key": "another_value"}
         api_file = tmp_path / "api_keys.json"
         
-        with patch('mistral_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.mistral_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
             
             # Verify file was saved correctly
@@ -75,7 +75,7 @@ class TestAPIKeyManagement:
 class TestMistralClient:
     """Test Mistral client initialization"""
     
-    @patch('mistral_utils.Mistral')
+    @patch('ollama_workbench.providers.mistral_utils.Mistral')
     def test_get_mistral_client_with_key(self, mock_mistral_class):
         """Test getting Mistral client with valid API key"""
         mock_client = Mock()
@@ -86,8 +86,8 @@ class TestMistralClient:
         assert client == mock_client
         mock_mistral_class.assert_called_once_with(api_key="msk_valid_key")
     
-    @patch('mistral_utils.load_api_keys')
-    @patch('mistral_utils.Mistral')
+    @patch('ollama_workbench.providers.mistral_utils.load_api_keys')
+    @patch('ollama_workbench.providers.mistral_utils.Mistral')
     def test_get_mistral_client_from_saved_key(self, mock_mistral_class, mock_load_keys):
         """Test getting Mistral client from saved API key"""
         mock_load_keys.return_value = {"mistral_api_key": "msk_saved_key"}
@@ -101,12 +101,12 @@ class TestMistralClient:
     
     def test_get_mistral_client_no_key(self):
         """Test getting Mistral client with no API key"""
-        with patch('mistral_utils.load_api_keys', return_value={}):
+        with patch('ollama_workbench.providers.mistral_utils.load_api_keys', return_value={}):
             client = get_mistral_client()
             assert client is None
     
     @patch('streamlit.warning')
-    @patch('mistral_utils.Mistral')
+    @patch('ollama_workbench.providers.mistral_utils.Mistral')
     def test_get_mistral_client_error(self, mock_mistral_class, mock_warning):
         """Test Mistral client error handling"""
         mock_mistral_class.side_effect = Exception("Invalid API key")
@@ -122,7 +122,7 @@ class TestMistralClient:
 class TestMistralAPI:
     """Test Mistral API calling functions"""
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_api_no_client(self, mock_get_client):
         """Test API call with no client"""
         mock_get_client.return_value = None
@@ -130,7 +130,7 @@ class TestMistralAPI:
         result = call_mistral_api("mistral-large-latest", prompt="Test")
         assert result is None
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_api_with_prompt(self, mock_get_client):
         """Test successful Mistral API call with prompt"""
         # Mock client and response
@@ -163,7 +163,7 @@ class TestMistralAPI:
         assert call_args["temperature"] == 0.7
         assert call_args["max_tokens"] == 100
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_api_with_messages(self, mock_get_client):
         """Test Mistral API call with messages"""
         mock_client = Mock()
@@ -191,7 +191,7 @@ class TestMistralAPI:
         call_args = mock_client.chat.complete.call_args[1]
         assert call_args["messages"] == messages
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_api_stream(self, mock_get_client):
         """Test Mistral API call with streaming"""
         mock_client = Mock()
@@ -208,7 +208,7 @@ class TestMistralAPI:
         assert result == mock_stream
         mock_client.chat.stream.assert_called_once()
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_api_json_response(self, mock_get_client):
         """Test Mistral API call with JSON response format"""
         mock_client = Mock()
@@ -233,7 +233,7 @@ class TestMistralAPI:
         assert call_args["response_format"] == {"type": "json_object"}
     
     @patch('streamlit.error')
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_api_error(self, mock_get_client, mock_error):
         """Test Mistral API call error handling"""
         mock_client = Mock()
@@ -251,7 +251,7 @@ class TestMistralAPI:
         """Test API call without prompt or messages"""
         mock_client = Mock()
         
-        with patch('mistral_utils.get_mistral_client', return_value=mock_client):
+        with patch('ollama_workbench.providers.mistral_utils.get_mistral_client', return_value=mock_client):
             with patch('streamlit.error') as mock_error:
                 result = call_mistral_api("mistral-tiny")
                 
@@ -265,7 +265,7 @@ class TestMistralAPIAsync:
     """Test async Mistral API functions"""
     
     @pytest.mark.asyncio
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     async def test_call_mistral_api_async_success(self, mock_get_client):
         """Test successful async API call"""
         mock_client = Mock()
@@ -284,7 +284,7 @@ class TestMistralAPIAsync:
         mock_async_response.assert_called_once()
     
     @pytest.mark.asyncio
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     async def test_call_mistral_api_async_no_client(self, mock_get_client):
         """Test async API call with no client"""
         mock_get_client.return_value = None
@@ -298,7 +298,7 @@ class TestMistralAPIAsync:
     
     @pytest.mark.asyncio
     @patch('streamlit.error')
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     async def test_call_mistral_api_async_error(self, mock_get_client, mock_error):
         """Test async API error handling"""
         mock_client = Mock()
@@ -319,7 +319,7 @@ class TestMistralAPIAsync:
 class TestEmbeddings:
     """Test embedding functions"""
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_embeddings_single_text(self, mock_get_client):
         """Test embeddings with single text"""
         mock_client = Mock()
@@ -339,7 +339,7 @@ class TestEmbeddings:
             inputs=["Test text"]
         )
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_embeddings_multiple_texts(self, mock_get_client):
         """Test embeddings with multiple texts"""
         mock_client = Mock()
@@ -364,7 +364,7 @@ class TestEmbeddings:
             inputs=texts
         )
     
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_embeddings_no_client(self, mock_get_client):
         """Test embeddings with no client"""
         mock_get_client.return_value = None
@@ -373,7 +373,7 @@ class TestEmbeddings:
         assert result is None
     
     @patch('streamlit.error')
-    @patch('mistral_utils.get_mistral_client')
+    @patch('ollama_workbench.providers.mistral_utils.get_mistral_client')
     def test_call_mistral_embeddings_error(self, mock_get_client, mock_error):
         """Test embeddings error handling"""
         mock_client = Mock()
@@ -392,11 +392,11 @@ class TestUIFunctions:
     """Test UI-related functions"""
     
     @patch('streamlit.success')
-    @patch('mistral_utils.save_api_keys')
+    @patch('ollama_workbench.providers.mistral_utils.save_api_keys')
     @patch('streamlit.sidebar.button')
     @patch('streamlit.sidebar.text_input')
     @patch('streamlit.sidebar.subheader')
-    @patch('mistral_utils.load_api_keys')
+    @patch('ollama_workbench.providers.mistral_utils.load_api_keys')
     def test_display_mistral_settings_save_key(
         self, mock_load_keys, mock_subheader, mock_text_input,
         mock_button, mock_save_keys, mock_success
@@ -424,11 +424,11 @@ class TestUIFunctions:
         mock_save_keys.assert_called_once_with(expected_keys)
         mock_success.assert_called_once_with("Mistral API key saved!")
     
-    @patch('mistral_utils.save_api_keys')
+    @patch('ollama_workbench.providers.mistral_utils.save_api_keys')
     @patch('streamlit.sidebar.button')
     @patch('streamlit.sidebar.text_input')
     @patch('streamlit.sidebar.subheader')
-    @patch('mistral_utils.load_api_keys')
+    @patch('ollama_workbench.providers.mistral_utils.load_api_keys')
     def test_display_mistral_settings_no_save(
         self, mock_load_keys, mock_subheader, mock_text_input,
         mock_button, mock_save_keys
@@ -456,12 +456,12 @@ class TestUIFunctions:
 class TestIntegration:
     """Integration tests for complete workflows"""
     
-    @patch('mistral_utils.Mistral')
+    @patch('ollama_workbench.providers.mistral_utils.Mistral')
     def test_complete_api_flow(self, mock_mistral_class, tmp_path):
         """Test complete flow: save key, load, create client, and use API"""
         api_file = tmp_path / "api_keys.json"
         
-        with patch('mistral_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.mistral_utils.API_KEYS_FILE', str(api_file)):
             # Save API key
             save_api_keys({"mistral_api_key": "msk_integration_test"})
             

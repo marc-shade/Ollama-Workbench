@@ -123,8 +123,8 @@ class TestDateTimeEncoder:
 class TestDataPersistence:
     """Test data persistence functions"""
     
-    @patch('projects.os.makedirs')
-    @patch('projects.os.path.exists')
+    @patch('ollama_workbench.workflows.projects.os.makedirs')
+    @patch('ollama_workbench.workflows.projects.os.path.exists')
     def test_directory_creation(self, mock_exists, mock_makedirs):
         """Test projects directory creation"""
         mock_exists.return_value = False
@@ -146,7 +146,7 @@ class TestDataPersistence:
         
         assert result == test_projects
     
-    @patch('projects.os.path.exists')
+    @patch('ollama_workbench.workflows.projects.os.path.exists')
     def test_load_projects_nonexistent_file(self, mock_exists):
         """Test loading projects when file doesn't exist"""
         from ollama_workbench.workflows.projects import load_projects
@@ -158,7 +158,7 @@ class TestDataPersistence:
         
         assert result == []
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_load_projects_json_error(self, mock_st):
         """Test loading projects with JSON decode error"""
         from ollama_workbench.workflows.projects import load_projects
@@ -179,7 +179,7 @@ class TestDataPersistence:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('projects.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_projects(test_projects)
         
         mock_file.assert_called_once_with('projects/projects.json', 'w')
@@ -212,7 +212,7 @@ class TestDataPersistence:
         assert result[0].priority == "High"
         assert result[0].task_id == "task-1"
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_load_tasks_json_error(self, mock_st):
         """Test loading tasks with JSON decode error"""
         from ollama_workbench.workflows.projects import load_tasks
@@ -236,7 +236,7 @@ class TestDataPersistence:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('projects.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_tasks("test_project", tasks)
         
         mock_file.assert_called_once_with('projects/test_project_tasks.json', 'w')
@@ -258,7 +258,7 @@ class TestDataPersistence:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('projects.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_tasks("test_project", tasks)
         
         # Should only save the task with valid deadline
@@ -283,7 +283,7 @@ class TestDataPersistence:
         
         assert result == agent_data
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_load_agents_json_error(self, mock_st):
         """Test loading agents with JSON decode error"""
         from ollama_workbench.workflows.projects import load_agents
@@ -307,7 +307,7 @@ class TestDataPersistence:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('projects.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_agents("test_project", agents)
         
         mock_file.assert_called_once_with('projects/test_project_agents.json', 'w')
@@ -317,10 +317,10 @@ class TestDataPersistence:
 class TestCorpusManagement:
     """Test corpus management functions"""
     
-    @patch('projects.os.makedirs')
-    @patch('projects.os.path.exists')
-    @patch('projects.os.listdir')
-    @patch('projects.os.path.isdir')
+    @patch('ollama_workbench.workflows.projects.os.makedirs')
+    @patch('ollama_workbench.workflows.projects.os.path.exists')
+    @patch('ollama_workbench.workflows.projects.os.listdir')
+    @patch('ollama_workbench.workflows.projects.os.path.isdir')
     def test_get_corpus_options(self, mock_isdir, mock_listdir, mock_exists, mock_makedirs):
         """Test getting corpus options"""
         from ollama_workbench.workflows.projects import get_corpus_options
@@ -335,8 +335,8 @@ class TestCorpusManagement:
         assert result == ["None", "corpus1", "corpus2"]
         mock_exists.assert_called_with("corpus")
     
-    @patch('projects.os.makedirs')
-    @patch('projects.os.path.exists')
+    @patch('ollama_workbench.workflows.projects.os.makedirs')
+    @patch('ollama_workbench.workflows.projects.os.path.exists')
     def test_get_corpus_options_no_directory(self, mock_exists, mock_makedirs):
         """Test getting corpus options when directory doesn't exist"""
         from ollama_workbench.workflows.projects import get_corpus_options
@@ -361,11 +361,11 @@ class TestCorpusManagement:
 class TestAIAgentIntegration:
     """Test AI agent integration"""
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_openai_api')
-    @patch('projects.get_agent_prompt')
-    @patch('projects.get_metacognitive_prompt')
-    @patch('projects.get_voice_prompt')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_openai_api')
+    @patch('ollama_workbench.workflows.projects.get_agent_prompt')
+    @patch('ollama_workbench.workflows.projects.get_metacognitive_prompt')
+    @patch('ollama_workbench.workflows.projects.get_voice_prompt')
     def test_ai_agent_openai(self, mock_voice, mock_metacog, mock_agent, mock_openai, mock_keys):
         """Test AI agent with OpenAI model"""
         from ollama_workbench.workflows.projects import ai_agent, OPENAI_MODELS
@@ -377,7 +377,7 @@ class TestAIAgentIntegration:
         mock_metacog.return_value = {"Logical": "Think logically"}
         mock_voice.return_value = {"Formal": "Speak formally"}
         
-        with patch('projects.OPENAI_MODELS', ["gpt-4"]):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', ["gpt-4"]):
             result = ai_agent(
                 user_input="Test input",
                 model="gpt-4",
@@ -400,9 +400,9 @@ class TestAIAgentIntegration:
         assert "Speak formally" in prompt_content
         assert "Test input" in prompt_content
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_groq_api')
-    @patch('projects.get_agent_prompt')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_groq_api')
+    @patch('ollama_workbench.workflows.projects.get_agent_prompt')
     def test_ai_agent_groq(self, mock_agent, mock_groq, mock_keys):
         """Test AI agent with Groq model"""
         from ollama_workbench.workflows.projects import ai_agent, GROQ_MODELS
@@ -412,7 +412,7 @@ class TestAIAgentIntegration:
         mock_groq.return_value = "Groq response"
         mock_agent.return_value = {"Creative": "Be creative"}
         
-        with patch('projects.GROQ_MODELS', ["mixtral-8x7b"]):
+        with patch('ollama_workbench.workflows.projects.GROQ_MODELS', ["mixtral-8x7b"]):
             result = ai_agent(
                 user_input="Creative task",
                 model="mixtral-8x7b",
@@ -427,9 +427,9 @@ class TestAIAgentIntegration:
         assert result == "Groq response"
         mock_groq.assert_called_once()
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_ollama_endpoint')
-    @patch('projects.get_agent_prompt')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.projects.get_agent_prompt')
     def test_ai_agent_ollama(self, mock_agent, mock_ollama, mock_keys):
         """Test AI agent with Ollama model"""
         from ollama_workbench.workflows.projects import ai_agent
@@ -439,8 +439,8 @@ class TestAIAgentIntegration:
         mock_ollama.return_value = ("Ollama response", None, None, None)
         mock_agent.return_value = {"Researcher": "Research thoroughly"}
         
-        with patch('projects.OPENAI_MODELS', []):
-            with patch('projects.GROQ_MODELS', []):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', []):
+            with patch('ollama_workbench.workflows.projects.GROQ_MODELS', []):
                 result = ai_agent(
                     user_input="Research task",
                     model="llama3",
@@ -455,9 +455,9 @@ class TestAIAgentIntegration:
         assert result == "Ollama response"
         mock_ollama.assert_called_once()
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_ollama_endpoint')
-    @patch('projects.get_corpus_context_from_db')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.projects.get_corpus_context_from_db')
     def test_ai_agent_with_corpus(self, mock_corpus, mock_ollama, mock_keys):
         """Test AI agent with corpus context"""
         from ollama_workbench.workflows.projects import ai_agent
@@ -467,8 +467,8 @@ class TestAIAgentIntegration:
         mock_ollama.return_value = ("Response with context", None, None, None)
         mock_corpus.return_value = "Relevant corpus context"
         
-        with patch('projects.OPENAI_MODELS', []):
-            with patch('projects.GROQ_MODELS', []):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', []):
+            with patch('ollama_workbench.workflows.projects.GROQ_MODELS', []):
                 result = ai_agent(
                     user_input="Task with corpus",
                     model="llama3",
@@ -487,8 +487,8 @@ class TestAIAgentIntegration:
         call_args = mock_ollama.call_args[1]
         assert "Relevant corpus context" in call_args["prompt"]
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_ollama_endpoint')
     def test_ai_agent_with_previous_responses(self, mock_ollama, mock_keys):
         """Test AI agent with previous responses"""
         from ollama_workbench.workflows.projects import ai_agent
@@ -499,8 +499,8 @@ class TestAIAgentIntegration:
         
         previous_responses = ["First response", "Second response"]
         
-        with patch('projects.OPENAI_MODELS', []):
-            with patch('projects.GROQ_MODELS', []):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', []):
+            with patch('ollama_workbench.workflows.projects.GROQ_MODELS', []):
                 result = ai_agent(
                     user_input="Continue task",
                     model="llama3",
@@ -524,12 +524,12 @@ class TestAIAgentIntegration:
 class TestAgentDefinition:
     """Test agent definition functionality"""
     
-    @patch('projects.st')
-    @patch('projects.get_all_models')
-    @patch('projects.get_agent_prompt')
-    @patch('projects.get_metacognitive_prompt')
-    @patch('projects.get_voice_prompt')
-    @patch('projects.get_corpus_options')
+    @patch('ollama_workbench.workflows.projects.st')
+    @patch('ollama_workbench.workflows.projects.get_all_models')
+    @patch('ollama_workbench.workflows.projects.get_agent_prompt')
+    @patch('ollama_workbench.workflows.projects.get_metacognitive_prompt')
+    @patch('ollama_workbench.workflows.projects.get_voice_prompt')
+    @patch('ollama_workbench.workflows.projects.get_corpus_options')
     def test_define_agent_block_new_agent(self, mock_corpus, mock_voice, mock_metacog, 
                                           mock_agent, mock_models, mock_st):
         """Test defining new agent block"""
@@ -561,12 +561,12 @@ class TestAgentDefinition:
         assert mock_st.selectbox.call_count == 5
         assert mock_st.slider.call_count == 2
     
-    @patch('projects.st')
-    @patch('projects.get_all_models')
-    @patch('projects.get_agent_prompt')
-    @patch('projects.get_metacognitive_prompt')
-    @patch('projects.get_voice_prompt')
-    @patch('projects.get_corpus_options')
+    @patch('ollama_workbench.workflows.projects.st')
+    @patch('ollama_workbench.workflows.projects.get_all_models')
+    @patch('ollama_workbench.workflows.projects.get_agent_prompt')
+    @patch('ollama_workbench.workflows.projects.get_metacognitive_prompt')
+    @patch('ollama_workbench.workflows.projects.get_voice_prompt')
+    @patch('ollama_workbench.workflows.projects.get_corpus_options')
     def test_define_agent_block_existing_agent(self, mock_corpus, mock_voice, mock_metacog, 
                                                mock_agent, mock_models, mock_st):
         """Test defining agent block with existing data"""
@@ -622,9 +622,9 @@ class TestProjectManagerAgent:
         assert agent.temperature == 0.7
         assert agent.max_tokens == 4000
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_openai_api')
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_openai_api')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_generate_workflow_openai_success(self, mock_st, mock_openai, mock_keys):
         """Test successful workflow generation with OpenAI"""
         from ollama_workbench.workflows.projects import ProjectManagerAgent, OPENAI_MODELS
@@ -659,7 +659,7 @@ class TestProjectManagerAgent:
         mock_st.write = Mock()
         
         # Create agent and generate workflow
-        with patch('projects.OPENAI_MODELS', ["gpt-4"]):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', ["gpt-4"]):
             agent = ProjectManagerAgent("gpt-4", "Task Planner", 0.7, 4000)
             tasks, agents = agent.generate_workflow("Create a research project")
         
@@ -678,9 +678,9 @@ class TestProjectManagerAgent:
         # Verify API was called
         mock_openai.assert_called_once()
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_groq_api')
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_groq_api')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_generate_workflow_groq_success(self, mock_st, mock_groq, mock_keys):
         """Test successful workflow generation with Groq"""
         from ollama_workbench.workflows.projects import ProjectManagerAgent, GROQ_MODELS
@@ -715,7 +715,7 @@ class TestProjectManagerAgent:
         mock_st.write = Mock()
         
         # Create agent and generate workflow
-        with patch('projects.GROQ_MODELS', ["mixtral-8x7b"]):
+        with patch('ollama_workbench.workflows.projects.GROQ_MODELS', ["mixtral-8x7b"]):
             agent = ProjectManagerAgent("mixtral-8x7b", "Task Planner", 0.6, 3500)
             tasks, agents = agent.generate_workflow("Analyze dataset")
         
@@ -730,9 +730,9 @@ class TestProjectManagerAgent:
         # Verify API was called
         mock_groq.assert_called_once()
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_ollama_endpoint')
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_generate_workflow_ollama_success(self, mock_st, mock_ollama, mock_keys):
         """Test successful workflow generation with Ollama"""
         from ollama_workbench.workflows.projects import ProjectManagerAgent
@@ -767,8 +767,8 @@ class TestProjectManagerAgent:
         mock_st.write = Mock()
         
         # Create agent and generate workflow
-        with patch('projects.OPENAI_MODELS', []):
-            with patch('projects.GROQ_MODELS', []):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', []):
+            with patch('ollama_workbench.workflows.projects.GROQ_MODELS', []):
                 agent = ProjectManagerAgent("llama3", "Task Planner", 0.8, 4000)
                 tasks, agents = agent.generate_workflow("Create marketing content")
         
@@ -782,9 +782,9 @@ class TestProjectManagerAgent:
         # Verify API was called
         mock_ollama.assert_called_once()
     
-    @patch('projects.load_api_keys')
-    @patch('projects.call_ollama_endpoint')
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.load_api_keys')
+    @patch('ollama_workbench.workflows.projects.call_ollama_endpoint')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_generate_workflow_json_error(self, mock_st, mock_ollama, mock_keys):
         """Test workflow generation with JSON error"""
         from ollama_workbench.workflows.projects import ProjectManagerAgent
@@ -796,8 +796,8 @@ class TestProjectManagerAgent:
         mock_st.error = Mock()
         
         # Create agent and generate workflow
-        with patch('projects.OPENAI_MODELS', []):
-            with patch('projects.GROQ_MODELS', []):
+        with patch('ollama_workbench.workflows.projects.OPENAI_MODELS', []):
+            with patch('ollama_workbench.workflows.projects.GROQ_MODELS', []):
                 agent = ProjectManagerAgent("llama3", "Task Planner", 0.7, 4000)
                 tasks, agents = agent.generate_workflow("Invalid request")
         
@@ -810,9 +810,9 @@ class TestProjectManagerAgent:
 class TestSessionStateManagement:
     """Test session state management"""
     
-    @patch('projects.st')
-    @patch('projects.load_projects')
-    @patch('projects.get_all_models')
+    @patch('ollama_workbench.workflows.projects.st')
+    @patch('ollama_workbench.workflows.projects.load_projects')
+    @patch('ollama_workbench.workflows.projects.get_all_models')
     def test_initialize_session_state(self, mock_models, mock_load_projects, mock_st):
         """Test session state initialization"""
         from ollama_workbench.workflows.projects import initialize_session_state
@@ -840,9 +840,9 @@ class TestSessionStateManagement:
         assert settings["temperature"] == 0.7
         assert settings["max_tokens"] == 4000
     
-    @patch('projects.st')
-    @patch('projects.load_projects')
-    @patch('projects.get_all_models')
+    @patch('ollama_workbench.workflows.projects.st')
+    @patch('ollama_workbench.workflows.projects.load_projects')
+    @patch('ollama_workbench.workflows.projects.get_all_models')
     def test_initialize_session_state_no_models(self, mock_models, mock_load_projects, mock_st):
         """Test session state initialization with no models available"""
         from ollama_workbench.workflows.projects import initialize_session_state
@@ -862,7 +862,7 @@ class TestSessionStateManagement:
 class TestUserInputHandling:
     """Test user input handling"""
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_handle_user_input_file_path_success(self, mock_st):
         """Test handling file path input successfully"""
         from ollama_workbench.workflows.projects import handle_user_input
@@ -886,7 +886,7 @@ class TestUserInputHandling:
         assert task_data["file_path"] == "/path/to/file.csv"
         mock_st.warning.assert_not_called()
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_handle_user_input_file_path_empty(self, mock_st):
         """Test handling empty file path input"""
         from ollama_workbench.workflows.projects import handle_user_input
@@ -910,7 +910,7 @@ class TestUserInputHandling:
         assert "file_path" not in task_data
         mock_st.warning.assert_called_with("Please provide a file path.")
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_handle_user_input_options_success(self, mock_st):
         """Test handling options input successfully"""
         from ollama_workbench.workflows.projects import handle_user_input
@@ -935,7 +935,7 @@ class TestUserInputHandling:
         assert task_data["selected_option"] == "Option A"
         mock_st.warning.assert_not_called()
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_handle_user_input_confirmation_confirmed(self, mock_st):
         """Test handling confirmation input when confirmed"""
         from ollama_workbench.workflows.projects import handle_user_input
@@ -958,7 +958,7 @@ class TestUserInputHandling:
         assert result is True
         mock_st.warning.assert_not_called()
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_handle_user_input_confirmation_not_confirmed(self, mock_st):
         """Test handling confirmation input when not confirmed"""
         from ollama_workbench.workflows.projects import handle_user_input
@@ -999,7 +999,7 @@ class TestUserInputHandling:
 class TestTaskStatusUpdate:
     """Test task status update functionality"""
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_update_task_status_basic(self, mock_st):
         """Test basic task status update"""
         from ollama_workbench.workflows.projects import update_task_status
@@ -1017,7 +1017,7 @@ class TestTaskStatusUpdate:
         assert mock_st.session_state["bm_tasks"][0]["status"] == "Completed"
         assert mock_st.session_state["bm_tasks"][0]["result"] == "Task completed successfully"
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_update_task_status_no_result(self, mock_st):
         """Test task status update without result"""
         from ollama_workbench.workflows.projects import update_task_status
@@ -1034,7 +1034,7 @@ class TestTaskStatusUpdate:
         assert mock_st.session_state["bm_tasks"][0]["status"] == "In Progress"
         assert mock_st.session_state["bm_tasks"][0]["result"] is None
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_update_task_status_invalid_index(self, mock_st):
         """Test task status update with invalid index"""
         from ollama_workbench.workflows.projects import update_task_status
@@ -1056,7 +1056,7 @@ class TestTaskStatusUpdate:
 class TestUtilityFunctions:
     """Test utility functions"""
     
-    @patch('projects.get_available_models')
+    @patch('ollama_workbench.workflows.projects.get_available_models')
     def test_get_all_models(self, mock_available):
         """Test getting all available models"""
         from ollama_workbench.workflows.projects import get_all_models, OPENAI_MODELS, GROQ_MODELS
@@ -1072,7 +1072,7 @@ class TestUtilityFunctions:
 class TestErrorHandling:
     """Test error handling scenarios"""
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_load_projects_empty_file(self, mock_st):
         """Test loading projects from empty file"""
         from ollama_workbench.workflows.projects import load_projects
@@ -1084,7 +1084,7 @@ class TestErrorHandling:
         
         assert result == []
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_load_tasks_empty_file(self, mock_st):
         """Test loading tasks from empty file"""
         from ollama_workbench.workflows.projects import load_tasks
@@ -1096,7 +1096,7 @@ class TestErrorHandling:
         
         assert result == []
     
-    @patch('projects.st')
+    @patch('ollama_workbench.workflows.projects.st')
     def test_load_agents_empty_file(self, mock_st):
         """Test loading agents from empty file"""
         from ollama_workbench.workflows.projects import load_agents
@@ -1123,8 +1123,8 @@ class TestIntegrationScenarios:
                 Task("Task 2", "Description 2", deadline=pd.Timestamp("2024-01-01"), priority="High")
             ]
             
-            with patch('projects.open', mock_open()) as mock_file:
-                with patch('projects.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.projects.open', mock_open()) as mock_file:
+                with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                     save_tasks("test_project", tasks)
                     
                     # Verify save was called correctly
@@ -1152,8 +1152,8 @@ class TestIntegrationScenarios:
             }
         }
         
-        with patch('projects.open', mock_open()) as mock_file:
-            with patch('projects.json.dump') as mock_dump:
+        with patch('ollama_workbench.workflows.projects.open', mock_open()) as mock_file:
+            with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_agents("test_project", agents)
                 
                 # Verify save was called correctly

@@ -74,27 +74,27 @@ class TestThinkingTypes(unittest.TestCase):
     def mock_api_calls(self):
         """Mock API calls to language models"""
         # Mock OpenAI API
-        self.call_openai_patch = patch('chat_interface.call_openai_api')
+        self.call_openai_patch = patch('ollama_workbench.chat.chat_interface.call_openai_api')
         self.call_openai_mock = self.call_openai_patch.start()
         self.call_openai_mock.return_value = "This is a test response using step-by-step thinking."
         
         # Mock Groq API
-        self.call_groq_patch = patch('chat_interface.call_groq_api')
+        self.call_groq_patch = patch('ollama_workbench.chat.chat_interface.call_groq_api')
         self.call_groq_mock = self.call_groq_patch.start()
         self.call_groq_mock.return_value = "This is a test response using step-by-step thinking."
         
         # Mock Mistral API
-        self.call_mistral_patch = patch('chat_interface.call_mistral_api')
+        self.call_mistral_patch = patch('ollama_workbench.chat.chat_interface.call_mistral_api')
         self.call_mistral_mock = self.call_mistral_patch.start()
         self.call_mistral_mock.return_value = "This is a test response using step-by-step thinking."
         
         # Mock Ollama API
-        self.call_ollama_patch = patch('ollama_utils.call_ollama_endpoint')
+        self.call_ollama_patch = patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
         self.call_ollama_mock = self.call_ollama_patch.start()
         self.call_ollama_mock.return_value = ("This is a test response using step-by-step thinking.", 0, 0, 0)
         
         # Add a patch for the import in chat_interface
-        self.call_ollama_import_patch = patch('chat_interface.call_ollama_endpoint', self.call_ollama_mock)
+        self.call_ollama_import_patch = patch('ollama_workbench.chat.chat_interface.call_ollama_endpoint', self.call_ollama_mock)
         self.call_ollama_import_patch.start()
         
         logger.info("CHECKPOINT: API calls mocked successfully")
@@ -113,7 +113,7 @@ class TestThinkingTypes(unittest.TestCase):
         
         logger.info("CHECKPOINT: Candidate prompts test passed")
     
-    @patch('chat_interface.call_openai_api')
+    @patch('ollama_workbench.chat.chat_interface.call_openai_api')
     def test_instance_adaptive_cot(self, mock_call_openai):
         """Test instance-adaptive CoT prompting"""
         logger.info("Testing instance-adaptive CoT")
@@ -145,7 +145,7 @@ class TestThinkingTypes(unittest.TestCase):
         
         logger.info("CHECKPOINT: Instance-adaptive CoT test passed")
     
-    @patch('chat_interface.call_openai_api')
+    @patch('ollama_workbench.chat.chat_interface.call_openai_api')
     def test_advanced_thinking_step(self, mock_call_openai):
         """Test advanced thinking step"""
         logger.info("Testing advanced thinking step")
@@ -201,7 +201,7 @@ class TestEpisodicMemory(unittest.TestCase):
         
         logger.info("CHECKPOINT: Episodic memory initialization test passed")
     
-    @patch('chat_interface.EpisodicMemory.segment_text_into_events')
+    @patch('ollama_workbench.chat.chat_interface.EpisodicMemory.segment_text_into_events')
     def test_model_memory_handler(self, mock_segment):
         """Test model memory handler"""
         logger.info("Testing model memory handler")
@@ -272,8 +272,8 @@ class TestEpisodicMemory(unittest.TestCase):
         
         logger.info("CHECKPOINT: Refine boundaries test passed")
     
-    @patch('chat_interface.EpisodicMemory.segment_text_into_events')
-    @patch('chat_interface.EpisodicMemory.retrieve_events')
+    @patch('ollama_workbench.chat.chat_interface.EpisodicMemory.segment_text_into_events')
+    @patch('ollama_workbench.chat.chat_interface.EpisodicMemory.retrieve_events')
     def test_memory_retrieval(self, mock_retrieve, mock_segment):
         """Test memory retrieval"""
         logger.info("Testing memory retrieval")
@@ -342,7 +342,7 @@ class TestRAGFeatures(unittest.TestCase):
     def mock_graph_rag(self):
         """Mock GraphRAGCorpus"""
         # Mock GraphRAGCorpus
-        self.graph_rag_patch = patch('chat_interface.GraphRAGCorpus')
+        self.graph_rag_patch = patch('ollama_workbench.chat.chat_interface.GraphRAGCorpus')
         self.graph_rag_mock = self.graph_rag_patch.start()
         
         # Configure mock
@@ -355,7 +355,7 @@ class TestRAGFeatures(unittest.TestCase):
         
         logger.info("CHECKPOINT: GraphRAGCorpus mocked successfully")
     
-    @patch('chat_interface.get_graphrag_context')
+    @patch('ollama_workbench.chat.chat_interface.get_graphrag_context')
     def test_rag_context_retrieval(self, mock_get_context):
         """Test RAG context retrieval"""
         logger.info("CHECKPOINT: Testing RAG context retrieval")
@@ -381,7 +381,7 @@ class TestRAGFeatures(unittest.TestCase):
         
         logger.info("CHECKPOINT: RAG context retrieval test passed")
     
-    @patch('chat_interface.GraphRAGCorpus')
+    @patch('ollama_workbench.chat.chat_interface.GraphRAGCorpus')
     def test_graphrag_corpus_query(self, mock_graph_rag):
         """Test GraphRAGCorpus query"""
         logger.info("Testing GraphRAGCorpus query")

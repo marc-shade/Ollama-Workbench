@@ -34,7 +34,7 @@ class TestAPIKeyManagement:
         
         try:
             # Patch the file path
-            with patch('research.os.path.exists', return_value=True):
+            with patch('ollama_workbench.workflows.research.os.path.exists', return_value=True):
                 with patch('builtins.open', mock_open(read_data=json.dumps(test_keys))):
                     result = load_api_keys()
                     assert result == test_keys
@@ -45,7 +45,7 @@ class TestAPIKeyManagement:
         """Test loading API keys when file doesn't exist"""
         from ollama_workbench.workflows.research import load_api_keys
         
-        with patch('research.os.path.exists', return_value=False):
+        with patch('ollama_workbench.workflows.research.os.path.exists', return_value=False):
             result = load_api_keys()
             assert result == {}
     
@@ -60,7 +60,7 @@ class TestAPIKeyManagement:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('research.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.research.json.dump') as mock_dump:
                 save_api_keys(test_keys)
                 
                 mock_file.assert_called_once_with("api_keys.json", "w")
@@ -74,7 +74,7 @@ class TestDatabaseFunctions:
         """Setup test database"""
         self.test_db = ":memory:"
     
-    @patch('research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_init_db(self, mock_connect):
         """Test database initialization"""
         from ollama_workbench.workflows.research import init_db
@@ -91,8 +91,8 @@ class TestDatabaseFunctions:
         mock_conn.commit.assert_called_once()
         mock_conn.close.assert_called_once()
     
-    @patch('research.sqlite3.connect')
-    @patch('research.datetime')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.datetime')
     def test_save_report(self, mock_datetime, mock_connect):
         """Test saving report to database"""
         from ollama_workbench.workflows.research import save_report
@@ -115,7 +115,7 @@ class TestDatabaseFunctions:
         mock_conn.commit.assert_called_once()
         mock_conn.close.assert_called_once()
     
-    @patch('research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_get_all_reports(self, mock_connect):
         """Test getting all reports from database"""
         from ollama_workbench.workflows.research import get_all_reports
@@ -138,7 +138,7 @@ class TestDatabaseFunctions:
         assert result == [(1, "Report 1", "2023-01-01"), (2, "Report 2", "2023-01-02")]
         mock_conn.close.assert_called_once()
     
-    @patch('research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_get_report_content(self, mock_connect):
         """Test getting specific report content"""
         from ollama_workbench.workflows.research import get_report_content
@@ -158,7 +158,7 @@ class TestDatabaseFunctions:
         assert result == "Report content here"
         mock_conn.close.assert_called_once()
     
-    @patch('research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_delete_report(self, mock_connect):
         """Test deleting report from database"""
         from ollama_workbench.workflows.research import delete_report
@@ -192,7 +192,7 @@ class TestResearchModelSettings:
             "agent_temperature": 0.8
         }
         
-        with patch('research.os.path.exists', return_value=True):
+        with patch('ollama_workbench.workflows.research.os.path.exists', return_value=True):
             with patch('builtins.open', mock_open(read_data=json.dumps(test_settings))):
                 result = load_research_model_settings()
                 assert result == test_settings
@@ -201,7 +201,7 @@ class TestResearchModelSettings:
         """Test loading research model settings when file doesn't exist"""
         from ollama_workbench.workflows.research import load_research_model_settings
         
-        with patch('research.os.path.exists', return_value=False):
+        with patch('ollama_workbench.workflows.research.os.path.exists', return_value=False):
             result = load_research_model_settings()
             assert result == {}
     
@@ -217,7 +217,7 @@ class TestResearchModelSettings:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('research.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.research.json.dump') as mock_dump:
                 save_research_model_settings(test_settings)
                 
                 mock_file.assert_called_once_with("research_models.json", "w")
@@ -227,8 +227,8 @@ class TestResearchModelSettings:
 class TestExportFunctions:
     """Test export functionality"""
     
-    @patch('research.SimpleDocTemplate')
-    @patch('research.os.path.join')
+    @patch('ollama_workbench.workflows.research.SimpleDocTemplate')
+    @patch('ollama_workbench.workflows.research.os.path.join')
     def test_export_to_pdf(self, mock_join, mock_pdf_doc):
         """Test PDF export functionality"""
         from ollama_workbench.workflows.research import export_to_pdf
@@ -258,7 +258,7 @@ Result 2 content"""
         mock_doc_instance.build.assert_called_once()
         assert result == "/path/to/test.pdf"
     
-    @patch('research.os.path.join')
+    @patch('ollama_workbench.workflows.research.os.path.join')
     def test_export_to_txt(self, mock_join):
         """Test TXT export functionality"""
         from ollama_workbench.workflows.research import export_to_txt
@@ -280,11 +280,11 @@ Result 2 content"""
 class TestResearchInterface:
     """Test research interface components"""
     
-    @patch('research.st')
-    @patch('research.init_db')
-    @patch('research.load_api_keys')
-    @patch('research.load_research_model_settings')
-    @patch('research.get_available_models')
+    @patch('ollama_workbench.workflows.research.st')
+    @patch('ollama_workbench.workflows.research.init_db')
+    @patch('ollama_workbench.workflows.research.load_api_keys')
+    @patch('ollama_workbench.workflows.research.load_research_model_settings')
+    @patch('ollama_workbench.workflows.research.get_available_models')
     def test_research_interface_initialization(self, mock_get_models, mock_load_settings, 
                                              mock_load_keys, mock_init_db, mock_st):
         """Test research interface initialization"""
@@ -313,12 +313,12 @@ class TestResearchInterface:
         mock_get_models.assert_called()
         mock_st.title.assert_called()
     
-    @patch('research.st')
-    @patch('research.save_api_keys')
-    @patch('research.init_db')
-    @patch('research.load_api_keys')
-    @patch('research.load_research_model_settings')
-    @patch('research.get_available_models')
+    @patch('ollama_workbench.workflows.research.st')
+    @patch('ollama_workbench.workflows.research.save_api_keys')
+    @patch('ollama_workbench.workflows.research.init_db')
+    @patch('ollama_workbench.workflows.research.load_api_keys')
+    @patch('ollama_workbench.workflows.research.load_research_model_settings')
+    @patch('ollama_workbench.workflows.research.get_available_models')
     def test_api_key_saving(self, mock_get_models, mock_load_settings, 
                            mock_load_keys, mock_init_db, mock_save_keys, mock_st):
         """Test API key saving functionality"""
@@ -349,12 +349,12 @@ class TestResearchInterface:
         # Verify save_api_keys was called
         mock_save_keys.assert_called_once()
     
-    @patch('research.st')
-    @patch('research.save_research_model_settings')
-    @patch('research.init_db')
-    @patch('research.load_api_keys')
-    @patch('research.load_research_model_settings')
-    @patch('research.get_available_models')
+    @patch('ollama_workbench.workflows.research.st')
+    @patch('ollama_workbench.workflows.research.save_research_model_settings')
+    @patch('ollama_workbench.workflows.research.init_db')
+    @patch('ollama_workbench.workflows.research.load_api_keys')
+    @patch('ollama_workbench.workflows.research.load_research_model_settings')
+    @patch('ollama_workbench.workflows.research.get_available_models')
     def test_model_settings_saving(self, mock_get_models, mock_load_settings, 
                                   mock_load_keys, mock_init_db, mock_save_settings, mock_st):
         """Test model settings saving functionality"""
@@ -381,13 +381,13 @@ class TestResearchInterface:
         assert "manager_model" in call_args
         assert "agent_model" in call_args
     
-    @patch('research.st')
-    @patch('research.SearchManager')
-    @patch('research.save_report')
-    @patch('research.init_db')
-    @patch('research.load_api_keys')
-    @patch('research.load_research_model_settings')
-    @patch('research.get_available_models')
+    @patch('ollama_workbench.workflows.research.st')
+    @patch('ollama_workbench.workflows.research.SearchManager')
+    @patch('ollama_workbench.workflows.research.save_report')
+    @patch('ollama_workbench.workflows.research.init_db')
+    @patch('ollama_workbench.workflows.research.load_api_keys')
+    @patch('ollama_workbench.workflows.research.load_research_model_settings')
+    @patch('ollama_workbench.workflows.research.get_available_models')
     def test_research_execution(self, mock_get_models, mock_load_settings, 
                                mock_load_keys, mock_init_db, mock_save_report, 
                                mock_search_manager_class, mock_st):
@@ -436,16 +436,16 @@ class TestResearchInterface:
         mock_search_manager.run_research.assert_called_once()
         mock_save_report.assert_called_once()
     
-    @patch('research.st')
-    @patch('research.get_all_reports')
-    @patch('research.get_report_content')
-    @patch('research.export_to_pdf')
-    @patch('research.export_to_txt')
-    @patch('research.delete_report')
-    @patch('research.init_db')
-    @patch('research.load_api_keys')
-    @patch('research.load_research_model_settings')
-    @patch('research.get_available_models')
+    @patch('ollama_workbench.workflows.research.st')
+    @patch('ollama_workbench.workflows.research.get_all_reports')
+    @patch('ollama_workbench.workflows.research.get_report_content')
+    @patch('ollama_workbench.workflows.research.export_to_pdf')
+    @patch('ollama_workbench.workflows.research.export_to_txt')
+    @patch('ollama_workbench.workflows.research.delete_report')
+    @patch('ollama_workbench.workflows.research.init_db')
+    @patch('ollama_workbench.workflows.research.load_api_keys')
+    @patch('ollama_workbench.workflows.research.load_research_model_settings')
+    @patch('ollama_workbench.workflows.research.get_available_models')
     def test_saved_reports_management(self, mock_get_models, mock_load_settings, 
                                      mock_load_keys, mock_init_db, mock_delete_report,
                                      mock_export_txt, mock_export_pdf, mock_get_content,
@@ -481,13 +481,13 @@ class TestResearchInterface:
         # Verify report management functions were called
         mock_get_reports.assert_called_once()
     
-    @patch('research.st')
-    @patch('research.get_all_reports')
-    @patch('research.delete_report')
-    @patch('research.init_db')
-    @patch('research.load_api_keys')
-    @patch('research.load_research_model_settings')
-    @patch('research.get_available_models')
+    @patch('ollama_workbench.workflows.research.st')
+    @patch('ollama_workbench.workflows.research.get_all_reports')
+    @patch('ollama_workbench.workflows.research.delete_report')
+    @patch('ollama_workbench.workflows.research.init_db')
+    @patch('ollama_workbench.workflows.research.load_api_keys')
+    @patch('ollama_workbench.workflows.research.load_research_model_settings')
+    @patch('ollama_workbench.workflows.research.get_available_models')
     def test_delete_report_functionality(self, mock_get_models, mock_load_settings, 
                                         mock_load_keys, mock_init_db, mock_delete_report,
                                         mock_get_reports, mock_st):
@@ -522,10 +522,10 @@ class TestResearchInterface:
 class TestFileOperations:
     """Test file operations and directory management"""
     
-    @patch('research.os.makedirs')
-    @patch('research.os.path.join')
-    @patch('research.os.path.dirname')
-    @patch('research.os.path.abspath')
+    @patch('ollama_workbench.workflows.research.os.makedirs')
+    @patch('ollama_workbench.workflows.research.os.path.join')
+    @patch('ollama_workbench.workflows.research.os.path.dirname')
+    @patch('ollama_workbench.workflows.research.os.path.abspath')
     def test_files_directory_creation(self, mock_abspath, mock_dirname, mock_join, mock_makedirs):
         """Test files directory creation on module import"""
         # Setup mocks
@@ -544,7 +544,7 @@ class TestFileOperations:
 class TestIntegrationScenarios:
     """Test integration scenarios"""
     
-    @patch('research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_full_database_workflow(self, mock_connect):
         """Test complete database workflow"""
         from ollama_workbench.workflows.research import init_db, save_report, get_all_reports, get_report_content, delete_report
@@ -557,7 +557,7 @@ class TestIntegrationScenarios:
         init_db()
         
         # Save a report
-        with patch('research.datetime') as mock_datetime:
+        with patch('ollama_workbench.workflows.research.datetime') as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "2023-01-01 12:00:00"
             save_report("Test Report", "Test Content")
         
@@ -596,7 +596,7 @@ Agent 2:
 Collected data on machine learning applications."""
         
         with tempfile.TemporaryDirectory() as tmp_dir:
-            with patch('research.files_dir', tmp_dir):
+            with patch('ollama_workbench.workflows.research.files_dir', tmp_dir):
                 txt_path = export_to_txt(content, "test_report.txt")
                 
                 # Verify file was created and content is correct
@@ -609,7 +609,7 @@ Collected data on machine learning applications."""
 class TestErrorHandling:
     """Test error handling scenarios"""
     
-    @patch('research.sqlite3.connect')
+    @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_database_connection_error(self, mock_connect):
         """Test database connection error handling"""
         from ollama_workbench.workflows.research import save_report
@@ -620,9 +620,9 @@ class TestErrorHandling:
         with pytest.raises(sqlite3.Error):
             save_report("Test", "Content")
     
-    @patch('research.json.load')
+    @patch('ollama_workbench.workflows.research.json.load')
     @patch('builtins.open')
-    @patch('research.os.path.exists')
+    @patch('ollama_workbench.workflows.research.os.path.exists')
     def test_json_loading_error(self, mock_exists, mock_open, mock_json_load):
         """Test JSON loading error handling"""
         from ollama_workbench.workflows.research import load_api_keys
@@ -634,7 +634,7 @@ class TestErrorHandling:
         with pytest.raises(json.JSONDecodeError):
             load_api_keys()
     
-    @patch('research.os.path.join')
+    @patch('ollama_workbench.workflows.research.os.path.join')
     @patch('builtins.open')
     def test_file_writing_error(self, mock_open, mock_join):
         """Test file writing error handling"""

@@ -16,9 +16,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class TestVoiceUtils:
     """Test voice utilities"""
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
     def test_voice_manager_import(self, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test that voice_utils can be imported"""
         import ollama_workbench.chat.voice_utils as voice_utils
@@ -45,7 +45,7 @@ class TestVoiceUtils:
         for func in functions:
             assert hasattr(voice_utils, func), f"Missing function: {func}"
     
-    @patch('voice_utils.voice_manager')
+    @patch('ollama_workbench.chat.voice_utils.voice_manager')
     def test_text_to_speech_function(self, mock_manager):
         """Test text_to_speech convenience function"""
         import ollama_workbench.chat.voice_utils as voice_utils
@@ -58,7 +58,7 @@ class TestVoiceUtils:
         mock_manager.text_to_speech.assert_called_once_with("Hello", 'test', None)
         assert result == "audio.mp3"
     
-    @patch('voice_utils.voice_manager')
+    @patch('ollama_workbench.chat.voice_utils.voice_manager')
     def test_get_available_voices(self, mock_manager):
         """Test get_available_voices function"""
         import ollama_workbench.chat.voice_utils as voice_utils
@@ -71,7 +71,7 @@ class TestVoiceUtils:
         assert voices == ['default', 'custom']
         mock_manager.get_available_voices.assert_called_once()
     
-    @patch('voice_utils.voice_manager')
+    @patch('ollama_workbench.chat.voice_utils.voice_manager')
     def test_start_stop_voice_input(self, mock_manager):
         """Test start and stop voice input functions"""
         import ollama_workbench.chat.voice_utils as voice_utils
@@ -88,7 +88,7 @@ class TestVoiceUtils:
         voice_utils.stop_voice_input()
         mock_manager.stop_listening.assert_called_once()
     
-    @patch('voice_utils.voice_manager')
+    @patch('ollama_workbench.chat.voice_utils.voice_manager')
     def test_voice_profile_management(self, mock_manager):
         """Test voice profile management functions"""
         import ollama_workbench.chat.voice_utils as voice_utils
@@ -109,7 +109,7 @@ class TestVoiceUtils:
         assert result is True
         mock_manager.remove_voice_profile.assert_called_once_with('spanish')
     
-    @patch('voice_utils.voice_manager')
+    @patch('ollama_workbench.chat.voice_utils.voice_manager')
     def test_play_and_stop_speech(self, mock_manager):
         """Test play and stop speech functions"""
         import ollama_workbench.chat.voice_utils as voice_utils
@@ -127,12 +127,12 @@ class TestVoiceUtils:
 class TestVoiceManagerClass:
     """Test VoiceManager class directly"""
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
-    @patch('voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
     @patch('builtins.open', create=True)
-    @patch('voice_utils.json.dump')
+    @patch('ollama_workbench.chat.voice_utils.json.dump')
     def test_voice_manager_initialization(self, mock_dump, mock_open, mock_exists, 
                                         mock_recognizer, mock_pyaudio, mock_pygame):
         """Test VoiceManager initialization"""
@@ -151,10 +151,10 @@ class TestVoiceManagerClass:
         assert 'male' in manager.voices
         assert 'female' in manager.voices
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
-    @patch('voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
     def test_voice_settings_methods(self, mock_exists, mock_recognizer, 
                                    mock_pyaudio, mock_pygame):
         """Test voice settings methods"""
@@ -187,12 +187,12 @@ class TestVoiceManagerClass:
         result = manager.remove_voice_profile('default')
         assert result is False
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pygame.mixer.get_init', return_value=True)
-    @patch('voice_utils.pygame.mixer.quit')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
-    @patch('voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.get_init', return_value=True)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.quit')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
     def test_cleanup(self, mock_exists, mock_recognizer, mock_pyaudio,
                     mock_quit, mock_get_init, mock_pygame):
         """Test cleanup method"""
@@ -211,11 +211,11 @@ class TestVoiceManagerClass:
         mock_audio_instance.terminate.assert_called_once()
         mock_quit.assert_called_once()
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
-    @patch('voice_utils.os.path.exists', return_value=False)
-    @patch('voice_utils.gTTS')
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.gTTS')
     @patch('tempfile.NamedTemporaryFile')
     def test_text_to_speech_gtts(self, mock_tempfile, mock_gtts, mock_exists,
                                  mock_recognizer, mock_pyaudio, mock_pygame):
@@ -240,14 +240,14 @@ class TestVoiceManagerClass:
         mock_tts_instance.save.assert_called_once()
         assert result == mock_file.name
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
-    @patch('voice_utils.os.path.exists', return_value=False)
-    @patch('voice_utils.pygame.mixer.music.load')
-    @patch('voice_utils.pygame.mixer.music.play')
-    @patch('voice_utils.pygame.mixer.music.get_busy')
-    @patch('voice_utils.time.sleep')
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.music.load')
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.music.play')
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.music.get_busy')
+    @patch('ollama_workbench.chat.voice_utils.time.sleep')
     def test_play_speech(self, mock_sleep, mock_get_busy, mock_play, mock_load,
                         mock_exists, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test play speech functionality"""
@@ -264,10 +264,10 @@ class TestVoiceManagerClass:
         mock_play.assert_called_once()
         assert mock_get_busy.call_count >= 1
     
-    @patch('voice_utils.pygame.mixer.init')
-    @patch('voice_utils.pyaudio.PyAudio')
-    @patch('voice_utils.sr.Recognizer')
-    @patch('voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
+    @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
+    @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
+    @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
     def test_listening_methods(self, mock_exists, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test start/stop listening methods"""
         from ollama_workbench.chat.voice_utils import VoiceManager

@@ -105,7 +105,7 @@ class TestModelSettings(unittest.TestCase):
     def mock_ollama_client(self):
         """Mock ollama client"""
         # Create mock for ollama client
-        self.ollama_client_patch = patch('ollama_utils.get_ollama_client')
+        self.ollama_client_patch = patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
         self.ollama_client_mock = self.ollama_client_patch.start()
         
         # Configure mock to return a client that returns a response
@@ -114,7 +114,7 @@ class TestModelSettings(unittest.TestCase):
         self.ollama_client_mock.return_value = mock_client
         
         # Mock get_available_models
-        self.get_models_patch = patch('ollama_utils.get_available_models', 
+        self.get_models_patch = patch('ollama_workbench.providers.ollama_utils.get_available_models', 
                                       return_value=["llama2", "mistral", "llama3", "phi3"])
         self.get_models_mock = self.get_models_patch.start()
         
@@ -139,7 +139,7 @@ class TestModelSettings(unittest.TestCase):
         
         logger.info("CHECKPOINT: Test settings file created successfully")
     
-    @patch('chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_change_model_setting(self):
         """Test changing model settings"""
         logger.info("Testing changing model settings")
@@ -172,7 +172,7 @@ class TestModelSettings(unittest.TestCase):
         
         logger.info("CHECKPOINT: Model settings change test passed")
     
-    @patch('chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_change_agent_settings(self):
         """Test changing agent settings"""
         logger.info("Testing changing agent settings")
@@ -205,9 +205,9 @@ class TestModelSettings(unittest.TestCase):
         
         logger.info("CHECKPOINT: Agent settings change test passed")
     
-    @patch('prompts.get_agent_prompt')
-    @patch('prompts.get_metacognitive_prompt')
-    @patch('prompts.get_voice_prompt')
+    @patch('ollama_workbench.ui.prompts.get_agent_prompt')
+    @patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
+    @patch('ollama_workbench.ui.prompts.get_voice_prompt')
     def test_construct_agent_prompt(self, mock_voice_prompt, mock_metacog_prompt, mock_agent_prompt):
         """Test constructing agent prompt from different types"""
         logger.info("Testing agent prompt construction")
@@ -338,7 +338,7 @@ class TestAgentFeatures(unittest.TestCase):
     def mock_prompts(self):
         """Mock prompts module"""
         # Create mock for prompts functions
-        self.agent_prompt_patch = patch('prompts.get_agent_prompt')
+        self.agent_prompt_patch = patch('ollama_workbench.ui.prompts.get_agent_prompt')
         self.agent_prompt_mock = self.agent_prompt_patch.start()
         self.agent_prompt_mock.return_value = {
             "Researcher": "You are a research assistant.",
@@ -347,7 +347,7 @@ class TestAgentFeatures(unittest.TestCase):
             "Writer": "You are a writing assistant."
         }
         
-        self.metacog_prompt_patch = patch('prompts.get_metacognitive_prompt')
+        self.metacog_prompt_patch = patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
         self.metacog_prompt_mock = self.metacog_prompt_patch.start()
         self.metacog_prompt_mock.return_value = {
             "Analytical": "You think analytically.",
@@ -356,7 +356,7 @@ class TestAgentFeatures(unittest.TestCase):
             "Reflective": "You think reflectively."
         }
         
-        self.voice_prompt_patch = patch('prompts.get_voice_prompt')
+        self.voice_prompt_patch = patch('ollama_workbench.ui.prompts.get_voice_prompt')
         self.voice_prompt_mock = self.voice_prompt_patch.start()
         self.voice_prompt_mock.return_value = {
             "Friendly": "You speak in a friendly tone.",

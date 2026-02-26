@@ -40,9 +40,9 @@ class TestPerformanceMetricsInterface(TestCase):
     
     @patch('streamlit.title')
     @patch('streamlit.tabs')
-    @patch('performance_metrics.display_response_time_metrics')
-    @patch('performance_metrics.display_token_usage_metrics')
-    @patch('performance_metrics.display_model_comparison')
+    @patch('ollama_workbench.server.performance_metrics.display_response_time_metrics')
+    @patch('ollama_workbench.server.performance_metrics.display_token_usage_metrics')
+    @patch('ollama_workbench.server.performance_metrics.display_model_comparison')
     def test_performance_metrics_interface(self, mock_model_comp, mock_token_usage, 
                                          mock_response_time, mock_tabs, mock_title):
         """Test main interface creates tabs and calls display functions"""
@@ -103,7 +103,7 @@ class TestDisplayResponseTimeMetrics(TestCase):
     
     @patch('streamlit.subheader')
     @patch('streamlit.info')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_response_time_metrics_no_data(self, mock_load, mock_info, mock_subheader):
         """Test display when no metrics data available"""
         mock_load.return_value = []
@@ -115,7 +115,7 @@ class TestDisplayResponseTimeMetrics(TestCase):
     
     @patch('streamlit.subheader')
     @patch('streamlit.info')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_response_time_metrics_no_response_time_data(self, mock_load, mock_info, mock_subheader):
         """Test display when metrics exist but no response time data"""
         mock_load.return_value = [{"timestamp": "2024-01-01", "model": "test"}]
@@ -126,7 +126,7 @@ class TestDisplayResponseTimeMetrics(TestCase):
     
     @patch('streamlit.plotly_chart')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_response_time_metrics_with_data(self, mock_load, mock_subheader, mock_plotly):
         """Test display with valid response time data"""
         mock_load.return_value = self.sample_metrics
@@ -147,7 +147,7 @@ class TestDisplayResponseTimeMetrics(TestCase):
     
     @patch('streamlit.plotly_chart')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_response_time_metrics_missing_fields(self, mock_load, mock_subheader, mock_plotly):
         """Test display with data missing some fields"""
         incomplete_metrics = [
@@ -188,7 +188,7 @@ class TestDisplayTokenUsageMetrics(TestCase):
     
     @patch('streamlit.subheader')
     @patch('streamlit.info')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_token_usage_metrics_no_data(self, mock_load, mock_info, mock_subheader):
         """Test display when no metrics data available"""
         mock_load.return_value = []
@@ -200,7 +200,7 @@ class TestDisplayTokenUsageMetrics(TestCase):
     
     @patch('streamlit.subheader')
     @patch('streamlit.info')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_token_usage_metrics_no_token_data(self, mock_load, mock_info, mock_subheader):
         """Test display when metrics exist but no token data"""
         mock_load.return_value = [{"timestamp": "2024-01-01", "model": "test"}]
@@ -211,7 +211,7 @@ class TestDisplayTokenUsageMetrics(TestCase):
     
     @patch('streamlit.plotly_chart')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_token_usage_metrics_with_data(self, mock_load, mock_subheader, mock_plotly):
         """Test display with valid token usage data"""
         mock_load.return_value = self.sample_metrics
@@ -232,7 +232,7 @@ class TestDisplayTokenUsageMetrics(TestCase):
     
     @patch('streamlit.plotly_chart')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_token_usage_metrics_missing_fields(self, mock_load, mock_subheader, mock_plotly):
         """Test display with data missing some token fields"""
         incomplete_metrics = [
@@ -275,7 +275,7 @@ class TestDisplayModelComparison(TestCase):
     
     @patch('streamlit.subheader')
     @patch('streamlit.info')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_model_comparison_no_data(self, mock_load, mock_info, mock_subheader):
         """Test display when no metrics data available"""
         mock_load.return_value = []
@@ -287,7 +287,7 @@ class TestDisplayModelComparison(TestCase):
     
     @patch('streamlit.subheader')
     @patch('streamlit.info')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_model_comparison_insufficient_data(self, mock_load, mock_info, mock_subheader):
         """Test display when data exists but is insufficient for comparison"""
         incomplete_metrics = [
@@ -307,7 +307,7 @@ class TestDisplayModelComparison(TestCase):
     @patch('streamlit.plotly_chart')
     @patch('streamlit.dataframe')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_model_comparison_with_data(self, mock_load, mock_subheader, mock_dataframe, mock_plotly):
         """Test display with sufficient comparison data"""
         mock_load.return_value = self.sample_metrics
@@ -330,7 +330,7 @@ class TestDisplayModelComparison(TestCase):
     @patch('streamlit.plotly_chart')
     @patch('streamlit.dataframe')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_display_model_comparison_division_by_zero_handling(self, mock_load, mock_subheader, mock_dataframe, mock_plotly):
         """Test handling of division by zero in tokens per second calculation"""
         zero_time_metrics = [
@@ -553,7 +553,7 @@ class TestDataProcessingEdgeCases(TestCase):
     
     @patch('streamlit.plotly_chart')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_response_time_metrics_with_invalid_timestamps(self, mock_load, mock_subheader, mock_plotly):
         """Test handling of invalid timestamp formats"""
         invalid_timestamp_metrics = [
@@ -581,7 +581,7 @@ class TestDataProcessingEdgeCases(TestCase):
     
     @patch('streamlit.plotly_chart')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_token_usage_metrics_with_negative_values(self, mock_load, mock_subheader, mock_plotly):
         """Test handling of negative token values"""
         negative_token_metrics = [
@@ -610,7 +610,7 @@ class TestDataProcessingEdgeCases(TestCase):
     @patch('streamlit.plotly_chart')
     @patch('streamlit.dataframe')
     @patch('streamlit.subheader')
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_model_comparison_with_single_model(self, mock_load, mock_subheader, mock_dataframe, mock_plotly):
         """Test model comparison with only one model"""
         single_model_metrics = [
@@ -675,7 +675,7 @@ class TestIntegrationScenarios(TestCase):
         finally:
             shutil.rmtree(temp_dir)
     
-    @patch('performance_metrics.load_metrics_data')
+    @patch('ollama_workbench.server.performance_metrics.load_metrics_data')
     def test_large_dataset_handling(self, mock_load):
         """Test handling of large datasets"""
         # Create large dataset

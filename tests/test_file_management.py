@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class TestTokenCounting:
     """Test token counting functionality"""
     
-    @patch('file_management.tiktoken.get_encoding')
+    @patch('ollama_workbench.ui.file_management.tiktoken.get_encoding')
     def test_count_tokens_success(self, mock_get_encoding):
         """Test successful token counting"""
         from ollama_workbench.ui.file_management import count_tokens
@@ -33,8 +33,8 @@ class TestTokenCounting:
         mock_get_encoding.assert_called_once_with("cl100k_base")
         mock_encoding.encode.assert_called_once_with("Hello world test")
     
-    @patch('file_management.tiktoken.get_encoding')
-    @patch('file_management.logger')
+    @patch('ollama_workbench.ui.file_management.tiktoken.get_encoding')
+    @patch('ollama_workbench.ui.file_management.logger')
     def test_count_tokens_tiktoken_error(self, mock_logger, mock_get_encoding):
         """Test token counting when tiktoken fails"""
         from ollama_workbench.ui.file_management import count_tokens
@@ -51,7 +51,7 @@ class TestTokenCounting:
         """Test token counting with empty string"""
         from ollama_workbench.ui.file_management import count_tokens
         
-        with patch('file_management.tiktoken.get_encoding') as mock_get_encoding:
+        with patch('ollama_workbench.ui.file_management.tiktoken.get_encoding') as mock_get_encoding:
             mock_encoding = Mock()
             mock_encoding.encode.return_value = []
             mock_get_encoding.return_value = mock_encoding
@@ -60,7 +60,7 @@ class TestTokenCounting:
             
             assert result == 0
     
-    @patch('file_management.tiktoken.get_encoding')
+    @patch('ollama_workbench.ui.file_management.tiktoken.get_encoding')
     def test_count_tokens_long_text(self, mock_get_encoding):
         """Test token counting with long text"""
         from ollama_workbench.ui.file_management import count_tokens
@@ -157,7 +157,7 @@ class TestFileSplitting:
         """Test splitting non-existent file"""
         from ollama_workbench.ui.file_management import split_file
         
-        with patch('file_management.logger') as mock_logger:
+        with patch('ollama_workbench.ui.file_management.logger') as mock_logger:
             result = split_file("/nonexistent/file.txt", 100)
             
             assert result == []
@@ -168,13 +168,13 @@ class TestFileSplitting:
         from ollama_workbench.ui.file_management import split_file
         
         with patch('builtins.open', side_effect=PermissionError("Access denied")):
-            with patch('file_management.logger') as mock_logger:
+            with patch('ollama_workbench.ui.file_management.logger') as mock_logger:
                 result = split_file("/restricted/file.txt", 100)
                 
                 assert result == []
                 mock_logger.error.assert_called_once()
     
-    @patch('file_management.split_pdf_file')
+    @patch('ollama_workbench.ui.file_management.split_pdf_file')
     def test_split_pdf_file_fallback(self, mock_split_pdf):
         """Test PDF file splitting fallback"""
         from ollama_workbench.ui.file_management import split_file
@@ -204,7 +204,7 @@ class TestFileSplitting:
 class TestPDFSplitting:
     """Test PDF splitting functionality"""
     
-    @patch('file_management.logger')
+    @patch('ollama_workbench.ui.file_management.logger')
     def test_split_pdf_file_stub(self, mock_logger):
         """Test PDF splitting stub implementation"""
         from ollama_workbench.ui.file_management import split_pdf_file
@@ -251,10 +251,10 @@ class TestFileMetadata:
         from ollama_workbench.ui.file_management import get_file_metadata
         
         # Mock a large file
-        with patch('file_management.os.path.getsize', return_value=1024*1024*5):  # 5MB
-            with patch('file_management.os.path.getmtime', return_value=time.time()):
-                with patch('file_management.os.path.splitext', return_value=('/path/large', '.bin')):
-                    with patch('file_management.os.path.basename', return_value='large.bin'):
+        with patch('ollama_workbench.ui.file_management.os.path.getsize', return_value=1024*1024*5):  # 5MB
+            with patch('ollama_workbench.ui.file_management.os.path.getmtime', return_value=time.time()):
+                with patch('ollama_workbench.ui.file_management.os.path.splitext', return_value=('/path/large', '.bin')):
+                    with patch('ollama_workbench.ui.file_management.os.path.basename', return_value='large.bin'):
                         metadata = get_file_metadata('/path/large.bin')
         
         assert "MB" in metadata["size_human"]
@@ -265,10 +265,10 @@ class TestFileMetadata:
         from ollama_workbench.ui.file_management import get_file_metadata
         
         # Mock a 2GB file
-        with patch('file_management.os.path.getsize', return_value=1024*1024*1024*2):
-            with patch('file_management.os.path.getmtime', return_value=time.time()):
-                with patch('file_management.os.path.splitext', return_value=('/path/huge', '.data')):
-                    with patch('file_management.os.path.basename', return_value='huge.data'):
+        with patch('ollama_workbench.ui.file_management.os.path.getsize', return_value=1024*1024*1024*2):
+            with patch('ollama_workbench.ui.file_management.os.path.getmtime', return_value=time.time()):
+                with patch('ollama_workbench.ui.file_management.os.path.splitext', return_value=('/path/huge', '.data')):
+                    with patch('ollama_workbench.ui.file_management.os.path.basename', return_value='huge.data'):
                         metadata = get_file_metadata('/path/huge.data')
         
         assert "GB" in metadata["size_human"]
@@ -294,7 +294,7 @@ class TestFileMetadata:
         """Test metadata for non-existent file"""
         from ollama_workbench.ui.file_management import get_file_metadata
         
-        with patch('file_management.logger') as mock_logger:
+        with patch('ollama_workbench.ui.file_management.logger') as mock_logger:
             metadata = get_file_metadata("/nonexistent/file.txt")
             
             assert "error" in metadata
@@ -306,8 +306,8 @@ class TestFileMetadata:
         """Test metadata with permission error"""
         from ollama_workbench.ui.file_management import get_file_metadata
         
-        with patch('file_management.os.path.getsize', side_effect=PermissionError("Access denied")):
-            with patch('file_management.logger') as mock_logger:
+        with patch('ollama_workbench.ui.file_management.os.path.getsize', side_effect=PermissionError("Access denied")):
+            with patch('ollama_workbench.ui.file_management.logger') as mock_logger:
                 metadata = get_file_metadata("/restricted/file.txt")
                 
                 assert "error" in metadata
@@ -320,10 +320,10 @@ class TestFileMetadata:
         # Mock specific timestamp
         test_timestamp = 1640995200  # 2022-01-01 00:00:00 UTC
         
-        with patch('file_management.os.path.getsize', return_value=100):
-            with patch('file_management.os.path.getmtime', return_value=test_timestamp):
-                with patch('file_management.os.path.splitext', return_value=('/path/test', '.txt')):
-                    with patch('file_management.os.path.basename', return_value='test.txt'):
+        with patch('ollama_workbench.ui.file_management.os.path.getsize', return_value=100):
+            with patch('ollama_workbench.ui.file_management.os.path.getmtime', return_value=test_timestamp):
+                with patch('ollama_workbench.ui.file_management.os.path.splitext', return_value=('/path/test', '.txt')):
+                    with patch('ollama_workbench.ui.file_management.os.path.basename', return_value='test.txt'):
                         metadata = get_file_metadata('/path/test.txt')
         
         # Should have formatted timestamp
@@ -337,7 +337,7 @@ class TestStreamlitInterface:
     @pytest.fixture
     def mock_streamlit(self):
         """Mock Streamlit components"""
-        with patch('file_management.st') as mock_st:
+        with patch('ollama_workbench.ui.file_management.st') as mock_st:
             mock_st.title = Mock()
             mock_st.write = Mock()
             mock_st.button = Mock(return_value=False)
@@ -356,10 +356,10 @@ class TestStreamlitInterface:
             mock_st.session_state = {}
             yield mock_st
     
-    @patch('file_management.os.path.exists')
-    @patch('file_management.os.makedirs')
-    @patch('file_management.os.listdir')
-    @patch('file_management.os.path.isfile')
+    @patch('ollama_workbench.ui.file_management.os.path.exists')
+    @patch('ollama_workbench.ui.file_management.os.makedirs')
+    @patch('ollama_workbench.ui.file_management.os.listdir')
+    @patch('ollama_workbench.ui.file_management.os.path.isfile')
     def test_files_tab_basic_setup(self, mock_isfile, mock_listdir, mock_makedirs, 
                                   mock_exists, mock_streamlit):
         """Test basic files tab setup"""
@@ -374,9 +374,9 @@ class TestStreamlitInterface:
         mock_streamlit.title.assert_called_once_with("📂 Files")
         mock_makedirs.assert_called_once_with("files")
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir')
-    @patch('file_management.os.path.isfile')
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir')
+    @patch('ollama_workbench.ui.file_management.os.path.isfile')
     def test_files_tab_with_files(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test files tab with existing files"""
         from ollama_workbench.ui.file_management import files_tab
@@ -390,9 +390,9 @@ class TestStreamlitInterface:
         assert mock_streamlit.write.call_count >= 3  # At least one call per file
         assert mock_streamlit.button.call_count >= 9  # At least 3 buttons per file
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir')
-    @patch('file_management.os.path.isfile')
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir')
+    @patch('ollama_workbench.ui.file_management.os.path.isfile')
     def test_files_tab_file_filtering(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test file filtering by allowed extensions"""
         from ollama_workbench.ui.file_management import files_tab
@@ -414,8 +414,8 @@ class TestStreamlitInterface:
         assert 'disallowed.exe' not in write_calls
         assert 'disallowed.dll' not in write_calls
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', side_effect=PermissionError("Access denied"))
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', side_effect=PermissionError("Access denied"))
     def test_files_tab_directory_error(self, mock_listdir, mock_exists, mock_streamlit):
         """Test files tab with directory access error"""
         from ollama_workbench.ui.file_management import files_tab
@@ -426,9 +426,9 @@ class TestStreamlitInterface:
         error_message = mock_streamlit.error.call_args[0][0]
         assert "Error reading files directory" in error_message
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=['test.txt'])
-    @patch('file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.txt'])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     def test_files_tab_view_file(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test viewing a file"""
         from ollama_workbench.ui.file_management import files_tab
@@ -444,9 +444,9 @@ class TestStreamlitInterface:
         text_area_call = mock_streamlit.text_area.call_args
         assert "File content here" in str(text_area_call)
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=['test.txt'])
-    @patch('file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.txt'])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     def test_files_tab_edit_file(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test editing a file"""
         from ollama_workbench.ui.file_management import files_tab
@@ -463,9 +463,9 @@ class TestStreamlitInterface:
         assert mock_file.call_count >= 2  # At least read and write
         mock_streamlit.success.assert_called()
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=['test.pdf'])
-    @patch('file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.pdf'])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     def test_files_tab_download_pdf(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test downloading a PDF file"""
         from ollama_workbench.ui.file_management import files_tab
@@ -481,10 +481,10 @@ class TestStreamlitInterface:
         download_call = mock_streamlit.download_button.call_args
         assert download_call[1]['mime'] == 'application/pdf'
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=['test.txt'])
-    @patch('file_management.os.path.isfile', return_value=True)
-    @patch('file_management.os.remove')
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.txt'])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.remove')
     def test_files_tab_delete_file(self, mock_remove, mock_isfile, mock_listdir, 
                                   mock_exists, mock_streamlit):
         """Test deleting a file"""
@@ -500,9 +500,9 @@ class TestStreamlitInterface:
         mock_streamlit.success.assert_called()
         mock_streamlit.rerun.assert_called()
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=[])
-    @patch('file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=[])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     def test_files_tab_file_upload(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test file upload functionality"""
         from ollama_workbench.ui.file_management import files_tab
@@ -522,10 +522,10 @@ class TestStreamlitInterface:
         mock_streamlit.success.assert_called()
         mock_streamlit.rerun.assert_called()
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=['test.txt', 'doc.md'])
-    @patch('file_management.os.path.isfile', return_value=True)
-    @patch('file_management.split_file')
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.txt', 'doc.md'])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.split_file')
     def test_files_tab_file_splitting(self, mock_split_file, mock_isfile, mock_listdir, 
                                      mock_exists, mock_streamlit):
         """Test file splitting functionality"""
@@ -545,9 +545,9 @@ class TestStreamlitInterface:
         mock_streamlit.success.assert_called()
         mock_streamlit.rerun.assert_called()
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=[])
-    @patch('file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=[])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     def test_files_tab_split_no_file_selected(self, mock_isfile, mock_listdir, 
                                              mock_exists, mock_streamlit):
         """Test file splitting with no file selected"""
@@ -565,14 +565,14 @@ class TestStreamlitInterface:
 class TestFileOperationErrors:
     """Test file operation error handling"""
     
-    @patch('file_management.os.path.exists', return_value=True)
-    @patch('file_management.os.listdir', return_value=['corrupted.txt'])
-    @patch('file_management.os.path.isfile', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
+    @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['corrupted.txt'])
+    @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     def test_files_tab_view_unicode_error(self, mock_isfile, mock_listdir, mock_exists):
         """Test viewing file with unicode decode error"""
         from ollama_workbench.ui.file_management import files_tab
         
-        with patch('file_management.st') as mock_st:
+        with patch('ollama_workbench.ui.file_management.st') as mock_st:
             mock_st.title = Mock()
             mock_st.write = Mock()
             mock_st.button = Mock(return_value=False)
@@ -642,7 +642,7 @@ class TestIntegration:
         """Test logging integration across functions"""
         from ollama_workbench.ui.file_management import split_file, get_file_metadata
         
-        with patch('file_management.logger') as mock_logger:
+        with patch('ollama_workbench.ui.file_management.logger') as mock_logger:
             # Test error logging in split_file
             split_file("/nonexistent/file.txt", 100)
             

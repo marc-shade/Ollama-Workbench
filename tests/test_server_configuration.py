@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class TestDefaultConfiguration:
     """Test default configuration functions"""
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_default_model_dir_darwin(self, mock_system):
         """Test default model directory for macOS"""
         from ollama_workbench.server.server_configuration import get_default_model_dir
@@ -32,7 +32,7 @@ class TestDefaultConfiguration:
         assert result == "/Users/test/.ollama/models"
         mock_expanduser.assert_called_once_with("~/.ollama/models")
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_default_model_dir_linux(self, mock_system):
         """Test default model directory for Linux"""
         from ollama_workbench.server.server_configuration import get_default_model_dir
@@ -42,8 +42,8 @@ class TestDefaultConfiguration:
         
         assert result == "/usr/share/ollama/.ollama/models"
     
-    @patch('server_configuration.platform.system')
-    @patch('server_configuration.os.environ')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.os.environ')
     def test_get_default_model_dir_windows(self, mock_environ, mock_system):
         """Test default model directory for Windows"""
         from ollama_workbench.server.server_configuration import get_default_model_dir
@@ -55,7 +55,7 @@ class TestDefaultConfiguration:
         
         assert result == "C:\\Users\\test\\.ollama\\models"
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_default_model_dir_unknown(self, mock_system):
         """Test default model directory for unknown system"""
         from ollama_workbench.server.server_configuration import get_default_model_dir
@@ -65,8 +65,8 @@ class TestDefaultConfiguration:
         
         assert result == ""
     
-    @patch('server_configuration.platform.system')
-    @patch('server_configuration.platform.machine')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.machine')
     def test_get_default_max_loaded_models_windows_64(self, mock_machine, mock_system):
         """Test default max loaded models for 64-bit Windows"""
         from ollama_workbench.server.server_configuration import get_default_max_loaded_models
@@ -78,8 +78,8 @@ class TestDefaultConfiguration:
         
         assert result == 1
     
-    @patch('server_configuration.platform.system')
-    @patch('server_configuration.platform.machine')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.machine')
     def test_get_default_max_loaded_models_windows_32(self, mock_machine, mock_system):
         """Test default max loaded models for 32-bit Windows"""
         from ollama_workbench.server.server_configuration import get_default_max_loaded_models
@@ -97,7 +97,7 @@ class TestDefaultConfiguration:
         
         assert result == 6  # 3 * 2 GPUs
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_default_max_loaded_models_linux_with_gpu(self, mock_system):
         """Test default max loaded models for Linux with GPU"""
         from ollama_workbench.server.server_configuration import get_default_max_loaded_models
@@ -114,7 +114,7 @@ class TestDefaultConfiguration:
         
         assert result == 3  # 3 * 1 GPU
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_default_max_loaded_models_no_gpu(self, mock_system):
         """Test default max loaded models without GPU"""
         from ollama_workbench.server.server_configuration import get_default_max_loaded_models
@@ -126,7 +126,7 @@ class TestDefaultConfiguration:
         
         assert result == 3
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_default_max_loaded_models_no_gpus(self, mock_system):
         """Test default max loaded models with no GPUs available"""
         from ollama_workbench.server.server_configuration import get_default_max_loaded_models
@@ -147,10 +147,10 @@ class TestDefaultConfiguration:
 class TestServerControl:
     """Test server start/stop functionality"""
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.shutil.which')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.shutil.which')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_stop_server_linux_systemctl(self, mock_system, mock_which, mock_subprocess, mock_st):
         """Test stopping server on Linux with systemctl"""
         from ollama_workbench.server.server_configuration import stop_server
@@ -165,10 +165,10 @@ class TestServerControl:
         )
         mock_st.success.assert_called_once_with("Ollama server has been stopped.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.shutil.which')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.shutil.which')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_stop_server_linux_killall(self, mock_system, mock_which, mock_subprocess, mock_st):
         """Test stopping server on Linux with killall"""
         from ollama_workbench.server.server_configuration import stop_server
@@ -181,10 +181,10 @@ class TestServerControl:
         mock_subprocess.assert_called_once_with(["killall", "ollama"], check=False)
         mock_st.success.assert_called_once_with("Ollama server has been stopped.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.shutil.which')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.shutil.which')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_stop_server_darwin(self, mock_system, mock_which, mock_subprocess, mock_st):
         """Test stopping server on macOS"""
         from ollama_workbench.server.server_configuration import stop_server
@@ -197,9 +197,9 @@ class TestServerControl:
         mock_subprocess.assert_called_once_with(["pkill", "ollama"], check=False)
         mock_st.success.assert_called_once_with("Ollama server has been stopped.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_stop_server_windows(self, mock_system, mock_subprocess, mock_st):
         """Test stopping server on Windows"""
         from ollama_workbench.server.server_configuration import stop_server
@@ -213,9 +213,9 @@ class TestServerControl:
         )
         mock_st.success.assert_called_once_with("Ollama server has been stopped.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_stop_server_exception(self, mock_system, mock_subprocess, mock_st):
         """Test stopping server with exception"""
         from ollama_workbench.server.server_configuration import stop_server
@@ -227,11 +227,11 @@ class TestServerControl:
         
         mock_st.error.assert_called_once_with("Failed to stop Ollama server: Command failed")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.subprocess.Popen')
-    @patch('server_configuration.shutil.which')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.subprocess.Popen')
+    @patch('ollama_workbench.server.server_configuration.shutil.which')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_start_server_linux_systemctl(self, mock_system, mock_which, mock_popen, mock_run, mock_st):
         """Test starting server on Linux with systemctl"""
         from ollama_workbench.server.server_configuration import start_server
@@ -246,10 +246,10 @@ class TestServerControl:
         )
         mock_st.success.assert_called_once_with("Ollama server has been started.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.Popen')
-    @patch('server_configuration.shutil.which')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.Popen')
+    @patch('ollama_workbench.server.server_configuration.shutil.which')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_start_server_linux_direct(self, mock_system, mock_which, mock_popen, mock_st):
         """Test starting server on Linux directly"""
         from ollama_workbench.server.server_configuration import start_server
@@ -264,10 +264,10 @@ class TestServerControl:
         )
         mock_st.success.assert_called_once_with("Ollama server has been started.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.Popen')
-    @patch('server_configuration.shutil.which')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.Popen')
+    @patch('ollama_workbench.server.server_configuration.shutil.which')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_start_server_darwin(self, mock_system, mock_which, mock_popen, mock_st):
         """Test starting server on macOS"""
         from ollama_workbench.server.server_configuration import start_server
@@ -282,9 +282,9 @@ class TestServerControl:
         )
         mock_st.success.assert_called_once_with("Ollama server has been started.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.Popen')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.Popen')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_start_server_windows(self, mock_system, mock_popen, mock_st):
         """Test starting server on Windows"""
         from ollama_workbench.server.server_configuration import start_server
@@ -298,9 +298,9 @@ class TestServerControl:
         )
         mock_st.success.assert_called_once_with("Ollama server has been started.")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.Popen')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.Popen')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_start_server_exception(self, mock_system, mock_popen, mock_st):
         """Test starting server with exception"""
         from ollama_workbench.server.server_configuration import start_server
@@ -316,10 +316,10 @@ class TestServerControl:
 class TestServerSettings:
     """Test server settings management"""
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.update_config')
-    @patch('server_configuration.os.makedirs')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.update_config')
+    @patch('ollama_workbench.server.server_configuration.os.makedirs')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_apply_server_settings_linux(self, mock_system, mock_makedirs, mock_update_config, mock_st):
         """Test applying server settings on Linux"""
         from ollama_workbench.server.server_configuration import apply_server_settings
@@ -327,7 +327,7 @@ class TestServerSettings:
         mock_system.return_value = "Linux"
         
         with patch('builtins.open', mock_open()) as mock_file:
-            with patch('server_configuration.json.dump') as mock_json_dump:
+            with patch('ollama_workbench.server.server_configuration.json.dump') as mock_json_dump:
                 apply_server_settings(
                     "127.0.0.1:11434",
                     "127.0.0.1,0.0.0.0",
@@ -353,11 +353,11 @@ class TestServerSettings:
         mock_update_config.assert_called_once_with({"OLLAMA_HOST": "127.0.0.1:11434"})
         mock_st.success.assert_called_once_with("Server settings applied to /etc/ollama/config.json")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.update_config')
-    @patch('server_configuration.os.makedirs')
-    @patch('server_configuration.os.path.expanduser')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.update_config')
+    @patch('ollama_workbench.server.server_configuration.os.makedirs')
+    @patch('ollama_workbench.server.server_configuration.os.path.expanduser')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_apply_server_settings_darwin(self, mock_system, mock_expanduser, mock_makedirs, mock_update_config, mock_st):
         """Test applying server settings on macOS"""
         from ollama_workbench.server.server_configuration import apply_server_settings
@@ -366,7 +366,7 @@ class TestServerSettings:
         mock_expanduser.return_value = "/Users/test/.ollama/config.json"
         
         with patch('builtins.open', mock_open()) as mock_file:
-            with patch('server_configuration.json.dump') as mock_json_dump:
+            with patch('ollama_workbench.server.server_configuration.json.dump') as mock_json_dump:
                 apply_server_settings(
                     "127.0.0.1:11434",
                     "127.0.0.1",
@@ -382,11 +382,11 @@ class TestServerSettings:
         mock_file.assert_called_once_with("/Users/test/.ollama/config.json", "w")
         mock_st.success.assert_called_once_with("Server settings applied to /Users/test/.ollama/config.json")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.update_config')
-    @patch('server_configuration.os.makedirs')
-    @patch('server_configuration.os.environ')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.update_config')
+    @patch('ollama_workbench.server.server_configuration.os.makedirs')
+    @patch('ollama_workbench.server.server_configuration.os.environ')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_apply_server_settings_windows(self, mock_system, mock_environ, mock_makedirs, mock_update_config, mock_st):
         """Test applying server settings on Windows"""
         from ollama_workbench.server.server_configuration import apply_server_settings
@@ -395,8 +395,8 @@ class TestServerSettings:
         mock_environ.__getitem__.return_value = "C:\\Users\\test"
         
         with patch('builtins.open', mock_open()) as mock_file:
-            with patch('server_configuration.json.dump') as mock_json_dump:
-                with patch('server_configuration.os.path.join') as mock_join:
+            with patch('ollama_workbench.server.server_configuration.json.dump') as mock_json_dump:
+                with patch('ollama_workbench.server.server_configuration.os.path.join') as mock_join:
                     mock_join.return_value = "C:\\Users\\test\\.ollama\\config.json"
                     
                     apply_server_settings(
@@ -414,8 +414,8 @@ class TestServerSettings:
         mock_file.assert_called_once_with("C:\\Users\\test\\.ollama\\config.json", "w")
         mock_st.success.assert_called_once_with("Server settings applied to C:\\Users\\test\\.ollama\\config.json")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_apply_server_settings_exception(self, mock_system, mock_st):
         """Test applying server settings with exception"""
         from ollama_workbench.server.server_configuration import apply_server_settings
@@ -431,8 +431,8 @@ class TestServerSettings:
 class TestServerStatus:
     """Test server status checking"""
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
     def test_get_server_status_api_success(self, mock_get, mock_config):
         """Test server status check via API (successful)"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -447,8 +447,8 @@ class TestServerStatus:
         assert result is True
         mock_get.assert_called_with("http://localhost:11434/api/tags", timeout=2)
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
     def test_get_server_status_api_version_success(self, mock_get, mock_config):
         """Test server status check via version API (successful)"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -471,9 +471,9 @@ class TestServerStatus:
         assert result is True
         assert mock_get.call_count == 2
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
-    @patch('server_configuration.psutil.process_iter')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
     def test_get_server_status_process_check(self, mock_process_iter, mock_get, mock_config):
         """Test server status check via process detection"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -490,9 +490,9 @@ class TestServerStatus:
         
         assert result is True
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
-    @patch('server_configuration.psutil.process_iter')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
     def test_get_server_status_process_check_windows(self, mock_process_iter, mock_get, mock_config):
         """Test server status check via process detection on Windows"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -509,9 +509,9 @@ class TestServerStatus:
         
         assert result is True
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
-    @patch('server_configuration.psutil.process_iter')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
     def test_get_server_status_localhost_fallback(self, mock_process_iter, mock_get, mock_config):
         """Test server status check with localhost fallback"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -538,9 +538,9 @@ class TestServerStatus:
         assert mock_get.call_count == 3
         mock_get.assert_any_call("http://localhost:11434/api/tags", timeout=1)
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
-    @patch('server_configuration.psutil.process_iter')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
     def test_get_server_status_all_checks_fail(self, mock_process_iter, mock_get, mock_config):
         """Test server status check when all checks fail"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -557,8 +557,8 @@ class TestServerStatus:
         
         assert result is False
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
     def test_get_server_status_host_without_protocol(self, mock_get, mock_config):
         """Test server status check with host without protocol"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -577,12 +577,12 @@ class TestServerStatus:
 class TestStreamlitInterface:
     """Test Streamlit interface functions"""
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.get_server_status')
-    @patch('server_configuration.get_default_model_dir')
-    @patch('server_configuration.get_default_max_loaded_models')
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.CONFIG')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.get_server_status')
+    @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
+    @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.CONFIG')
     def test_server_configuration_interface_running(self, mock_config_dict, mock_get_config, 
                                                    mock_default_max, mock_default_dir, 
                                                    mock_server_status, mock_st):
@@ -608,7 +608,7 @@ class TestStreamlitInterface:
         mock_st.info = Mock()
         
         # Mock the config UI
-        with patch('server_configuration.server_config_ui') as mock_config_ui:
+        with patch('ollama_workbench.server.server_configuration.server_config_ui') as mock_config_ui:
             server_configuration()
         
         # Verify the interface was set up correctly
@@ -616,12 +616,12 @@ class TestStreamlitInterface:
         mock_st.success.assert_called_with("✅ Ollama server is running")
         mock_config_ui.assert_called_once()
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.get_server_status')
-    @patch('server_configuration.get_default_model_dir')
-    @patch('server_configuration.get_default_max_loaded_models')
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.CONFIG')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.get_server_status')
+    @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
+    @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.CONFIG')
     def test_server_configuration_interface_not_running(self, mock_config_dict, mock_get_config,
                                                        mock_default_max, mock_default_dir,
                                                        mock_server_status, mock_st):
@@ -647,20 +647,20 @@ class TestStreamlitInterface:
         mock_st.info = Mock()
         
         # Mock the config UI
-        with patch('server_configuration.server_config_ui') as mock_config_ui:
+        with patch('ollama_workbench.server.server_configuration.server_config_ui') as mock_config_ui:
             server_configuration()
         
         # Verify the interface shows server not running
         mock_st.header.assert_called_with("⚙️ Ollama Server Configuration")
         mock_st.error.assert_called_with("❌ Ollama server is not running")
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.get_server_status')
-    @patch('server_configuration.apply_server_settings')
-    @patch('server_configuration.get_default_model_dir')
-    @patch('server_configuration.get_default_max_loaded_models')
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.CONFIG')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.get_server_status')
+    @patch('ollama_workbench.server.server_configuration.apply_server_settings')
+    @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
+    @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.CONFIG')
     def test_server_configuration_apply_settings(self, mock_config_dict, mock_get_config,
                                                 mock_default_max, mock_default_dir,
                                                 mock_apply_settings, mock_server_status, mock_st):
@@ -688,7 +688,7 @@ class TestStreamlitInterface:
         mock_st.info = Mock()
         
         # Mock the config UI
-        with patch('server_configuration.server_config_ui') as mock_config_ui:
+        with patch('ollama_workbench.server.server_configuration.server_config_ui') as mock_config_ui:
             server_configuration()
         
         # Verify settings were applied
@@ -696,13 +696,13 @@ class TestStreamlitInterface:
             "127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m", 3, 4, 512
         )
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.get_server_status')
-    @patch('server_configuration.stop_server')
-    @patch('server_configuration.get_default_model_dir')
-    @patch('server_configuration.get_default_max_loaded_models')
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.CONFIG')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.get_server_status')
+    @patch('ollama_workbench.server.server_configuration.stop_server')
+    @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
+    @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.CONFIG')
     def test_server_configuration_stop_server(self, mock_config_dict, mock_get_config,
                                              mock_default_max, mock_default_dir,
                                              mock_stop_server, mock_server_status, mock_st):
@@ -730,19 +730,19 @@ class TestStreamlitInterface:
         mock_st.info = Mock()
         
         # Mock the config UI
-        with patch('server_configuration.server_config_ui') as mock_config_ui:
+        with patch('ollama_workbench.server.server_configuration.server_config_ui') as mock_config_ui:
             server_configuration()
         
         # Verify server was stopped
         mock_stop_server.assert_called_once()
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.get_server_status')
-    @patch('server_configuration.start_server')
-    @patch('server_configuration.get_default_model_dir')
-    @patch('server_configuration.get_default_max_loaded_models')
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.CONFIG')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.get_server_status')
+    @patch('ollama_workbench.server.server_configuration.start_server')
+    @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
+    @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.CONFIG')
     def test_server_configuration_start_server(self, mock_config_dict, mock_get_config,
                                               mock_default_max, mock_default_dir,
                                               mock_start_server, mock_server_status, mock_st):
@@ -770,21 +770,21 @@ class TestStreamlitInterface:
         mock_st.info = Mock()
         
         # Mock the config UI
-        with patch('server_configuration.server_config_ui') as mock_config_ui:
+        with patch('ollama_workbench.server.server_configuration.server_config_ui') as mock_config_ui:
             server_configuration()
         
         # Verify server was started
         mock_start_server.assert_called_once()
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.get_server_status')
-    @patch('server_configuration.stop_server')
-    @patch('server_configuration.start_server')
-    @patch('server_configuration.time.sleep')
-    @patch('server_configuration.get_default_model_dir')
-    @patch('server_configuration.get_default_max_loaded_models')
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.CONFIG')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.get_server_status')
+    @patch('ollama_workbench.server.server_configuration.stop_server')
+    @patch('ollama_workbench.server.server_configuration.start_server')
+    @patch('ollama_workbench.server.server_configuration.time.sleep')
+    @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
+    @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.CONFIG')
     def test_server_configuration_restart_server(self, mock_config_dict, mock_get_config,
                                                 mock_default_max, mock_default_dir, mock_sleep,
                                                 mock_start_server, mock_stop_server, 
@@ -813,7 +813,7 @@ class TestStreamlitInterface:
         mock_st.info = Mock()
         
         # Mock the config UI
-        with patch('server_configuration.server_config_ui') as mock_config_ui:
+        with patch('ollama_workbench.server.server_configuration.server_config_ui') as mock_config_ui:
             server_configuration()
         
         # Verify server was stopped, paused, then started
@@ -839,8 +839,8 @@ class TestIntegration:
         assert hasattr(server_configuration, 'get_server_status')
         assert hasattr(server_configuration, 'server_configuration')
     
-    @patch('server_configuration.platform.system')
-    @patch('server_configuration.os.path.expanduser')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.os.path.expanduser')
     def test_model_dir_and_max_models_consistency(self, mock_expanduser, mock_system):
         """Test that model directory and max models work together"""
         from ollama_workbench.server.server_configuration import get_default_model_dir, get_default_max_loaded_models
@@ -855,9 +855,9 @@ class TestIntegration:
         assert isinstance(max_models, int)
         assert max_models > 0
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.subprocess.run')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.subprocess.run')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_server_lifecycle(self, mock_system, mock_subprocess, mock_st):
         """Test complete server lifecycle (stop -> start)"""
         from ollama_workbench.server.server_configuration import stop_server, start_server
@@ -865,11 +865,11 @@ class TestIntegration:
         mock_system.return_value = "Linux"
         
         # Test stopping server
-        with patch('server_configuration.shutil.which', return_value="/usr/bin/systemctl"):
+        with patch('ollama_workbench.server.server_configuration.shutil.which', return_value="/usr/bin/systemctl"):
             stop_server()
         
         # Test starting server
-        with patch('server_configuration.shutil.which', return_value="/usr/bin/systemctl"):
+        with patch('ollama_workbench.server.server_configuration.shutil.which', return_value="/usr/bin/systemctl"):
             start_server()
         
         # Verify both operations were attempted
@@ -880,9 +880,9 @@ class TestIntegration:
 class TestErrorHandling:
     """Test error handling in various scenarios"""
     
-    @patch('server_configuration.st')
-    @patch('server_configuration.json.dump')
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.st')
+    @patch('ollama_workbench.server.server_configuration.json.dump')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_apply_settings_json_error(self, mock_system, mock_json_dump, mock_st):
         """Test applying settings with JSON serialization error"""
         from ollama_workbench.server.server_configuration import apply_server_settings
@@ -896,9 +896,9 @@ class TestErrorHandling:
         mock_st.error.assert_called_once()
         assert "Failed to apply server settings" in mock_st.error.call_args[0][0]
     
-    @patch('server_configuration.get_config')
-    @patch('server_configuration.requests.get')
-    @patch('server_configuration.psutil.process_iter')
+    @patch('ollama_workbench.server.server_configuration.get_config')
+    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
     def test_server_status_all_exceptions(self, mock_process_iter, mock_get, mock_config):
         """Test server status when all detection methods throw exceptions"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -912,7 +912,7 @@ class TestErrorHandling:
         # Should return False when all methods fail
         assert result is False
     
-    @patch('server_configuration.platform.system')
+    @patch('ollama_workbench.server.server_configuration.platform.system')
     def test_get_model_dir_exception_handling(self, mock_system):
         """Test model directory function with exception"""
         from ollama_workbench.server.server_configuration import get_default_model_dir
@@ -944,11 +944,11 @@ class TestConfigurationValidation:
             "0.0.0.0:11434"
         ]
         
-        with patch('server_configuration.st'):
-            with patch('server_configuration.update_config'):
-                with patch('server_configuration.platform.system', return_value="Linux"):
+        with patch('ollama_workbench.server.server_configuration.st'):
+            with patch('ollama_workbench.server.server_configuration.update_config'):
+                with patch('ollama_workbench.server.server_configuration.platform.system', return_value="Linux"):
                     with patch('builtins.open', mock_open()):
-                        with patch('server_configuration.json.dump'):
+                        with patch('ollama_workbench.server.server_configuration.json.dump'):
                             for host in test_hosts:
                                 # Should not raise exceptions for valid hosts
                                 apply_server_settings(host, "*", "/models", "5m", 1, 4, 512)
@@ -957,11 +957,11 @@ class TestConfigurationValidation:
         """Test numeric parameter validation"""
         from ollama_workbench.server.server_configuration import apply_server_settings
         
-        with patch('server_configuration.st'):
-            with patch('server_configuration.update_config'):
-                with patch('server_configuration.platform.system', return_value="Linux"):
+        with patch('ollama_workbench.server.server_configuration.st'):
+            with patch('ollama_workbench.server.server_configuration.update_config'):
+                with patch('ollama_workbench.server.server_configuration.platform.system', return_value="Linux"):
                     with patch('builtins.open', mock_open()):
-                        with patch('server_configuration.json.dump'):
+                        with patch('ollama_workbench.server.server_configuration.json.dump'):
                             # Test extreme values
                             apply_server_settings(
                                 "127.0.0.1",

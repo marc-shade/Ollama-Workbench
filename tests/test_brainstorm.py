@@ -18,8 +18,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class TestCustomConversableAgent:
     """Test CustomConversableAgent class"""
     
-    @patch('brainstorm.Teachability')
-    @patch('brainstorm.ConversableAgent.__init__')
+    @patch('ollama_workbench.workflows.brainstorm.Teachability')
+    @patch('ollama_workbench.workflows.brainstorm.ConversableAgent.__init__')
     def test_custom_conversable_agent_init(self, mock_super_init, mock_teachability):
         """Test CustomConversableAgent initialization"""
         from ollama_workbench.workflows.brainstorm import CustomConversableAgent
@@ -64,9 +64,9 @@ class TestCustomConversableAgent:
         # Verify API key was set in environment
         assert os.environ.get("OPENAI_API_KEY") == "test_key"
     
-    @patch('brainstorm.Teachability')
-    @patch('brainstorm.ConversableAgent.__init__')
-    @patch('brainstorm.ConversableAgent.generate_reply')
+    @patch('ollama_workbench.workflows.brainstorm.Teachability')
+    @patch('ollama_workbench.workflows.brainstorm.ConversableAgent.__init__')
+    @patch('ollama_workbench.workflows.brainstorm.ConversableAgent.generate_reply')
     def test_generate_reply(self, mock_super_reply, mock_super_init, mock_teachability):
         """Test CustomConversableAgent generate_reply method"""
         from ollama_workbench.workflows.brainstorm import CustomConversableAgent
@@ -120,8 +120,8 @@ class TestCustomConversableAgent:
 class TestAgentCreation:
     """Test agent creation functionality"""
     
-    @patch('brainstorm.CustomConversableAgent')
-    @patch('brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.CustomConversableAgent')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
     def test_create_agent_openai(self, mock_load_keys, mock_agent_class):
         """Test creating agent with OpenAI model"""
         from ollama_workbench.workflows.brainstorm import create_agent, OPENAI_MODELS
@@ -148,7 +148,7 @@ class TestAgentCreation:
             "db_path": "./gpt_db"
         }
         
-        with patch('brainstorm.OPENAI_MODELS', ["gpt-4", "gpt-3.5-turbo"]):
+        with patch('ollama_workbench.workflows.brainstorm.OPENAI_MODELS', ["gpt-4", "gpt-3.5-turbo"]):
             result = create_agent(settings)
         
         # Verify agent creation
@@ -163,8 +163,8 @@ class TestAgentCreation:
         assert llm_config["model"] == "gpt-4"
         assert llm_config["request_timeout"] == 120
     
-    @patch('brainstorm.CustomConversableAgent')
-    @patch('brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.CustomConversableAgent')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
     def test_create_agent_groq(self, mock_load_keys, mock_agent_class):
         """Test creating agent with Groq model"""
         from ollama_workbench.workflows.brainstorm import create_agent, GROQ_MODELS
@@ -191,7 +191,7 @@ class TestAgentCreation:
             "db_path": "./groq_db"
         }
         
-        with patch('brainstorm.GROQ_MODELS', ["mixtral-8x7b-32768", "llama2-70b-4096"]):
+        with patch('ollama_workbench.workflows.brainstorm.GROQ_MODELS', ["mixtral-8x7b-32768", "llama2-70b-4096"]):
             result = create_agent(settings)
         
         # Verify agent creation
@@ -204,8 +204,8 @@ class TestAgentCreation:
         assert llm_config["api_key"] == "test_groq_key"
         assert llm_config["model"] == "mixtral-8x7b-32768"
     
-    @patch('brainstorm.CustomConversableAgent')
-    @patch('brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.CustomConversableAgent')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
     def test_create_agent_ollama(self, mock_load_keys, mock_agent_class):
         """Test creating agent with Ollama model"""
         from ollama_workbench.workflows.brainstorm import create_agent
@@ -232,8 +232,8 @@ class TestAgentCreation:
             "db_path": "./llama_db"
         }
         
-        with patch('brainstorm.OPENAI_MODELS', []):
-            with patch('brainstorm.GROQ_MODELS', []):
+        with patch('ollama_workbench.workflows.brainstorm.OPENAI_MODELS', []):
+            with patch('ollama_workbench.workflows.brainstorm.GROQ_MODELS', []):
                 result = create_agent(settings)
         
         # Verify agent creation
@@ -265,7 +265,7 @@ class TestSettingsManagement:
             ]
         }
         
-        with patch('brainstorm.os.path.exists', return_value=True):
+        with patch('ollama_workbench.workflows.brainstorm.os.path.exists', return_value=True):
             with patch('builtins.open', mock_open(read_data=json.dumps(test_settings))):
                 result = load_agent_settings()
         
@@ -275,7 +275,7 @@ class TestSettingsManagement:
         """Test loading agent settings when file doesn't exist"""
         from ollama_workbench.workflows.brainstorm import load_agent_settings
         
-        with patch('brainstorm.os.path.exists', return_value=False):
+        with patch('ollama_workbench.workflows.brainstorm.os.path.exists', return_value=False):
             result = load_agent_settings()
         
         assert result == {"agents": []}
@@ -296,7 +296,7 @@ class TestSettingsManagement:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('brainstorm.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.brainstorm.json.dump') as mock_dump:
                 save_agent_settings(test_settings)
         
         mock_file.assert_called_once_with("brainstorm_agents_settings.json", 'w')
@@ -306,9 +306,9 @@ class TestSettingsManagement:
 class TestWorkflowManagement:
     """Test workflow management functions"""
     
-    @patch('brainstorm.os.makedirs')
-    @patch('brainstorm.os.path.exists')
-    @patch('brainstorm.os.listdir')
+    @patch('ollama_workbench.workflows.brainstorm.os.makedirs')
+    @patch('ollama_workbench.workflows.brainstorm.os.path.exists')
+    @patch('ollama_workbench.workflows.brainstorm.os.listdir')
     def test_get_available_workflows(self, mock_listdir, mock_exists, mock_makedirs):
         """Test getting available workflows"""
         from ollama_workbench.workflows.brainstorm import get_available_workflows
@@ -323,9 +323,9 @@ class TestWorkflowManagement:
         mock_exists.assert_called_once()
         mock_makedirs.assert_not_called()
     
-    @patch('brainstorm.os.makedirs')
-    @patch('brainstorm.os.path.exists')
-    @patch('brainstorm.os.listdir')
+    @patch('ollama_workbench.workflows.brainstorm.os.makedirs')
+    @patch('ollama_workbench.workflows.brainstorm.os.path.exists')
+    @patch('ollama_workbench.workflows.brainstorm.os.listdir')
     def test_get_available_workflows_no_directory(self, mock_listdir, mock_exists, mock_makedirs):
         """Test getting available workflows when directory doesn't exist"""
         from ollama_workbench.workflows.brainstorm import get_available_workflows
@@ -339,9 +339,9 @@ class TestWorkflowManagement:
         assert result == []
         mock_makedirs.assert_called_once_with("brainstorm_workflows")
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.os.makedirs')
-    @patch('brainstorm.os.path.exists')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.os.makedirs')
+    @patch('ollama_workbench.workflows.brainstorm.os.path.exists')
     def test_save_workflow(self, mock_exists, mock_makedirs, mock_st):
         """Test saving workflow"""
         from ollama_workbench.workflows.brainstorm import save_workflow
@@ -354,7 +354,7 @@ class TestWorkflowManagement:
         
         mock_file = Mock()
         with patch('builtins.open', mock_file):
-            with patch('brainstorm.json.dump') as mock_dump:
+            with patch('ollama_workbench.workflows.brainstorm.json.dump') as mock_dump:
                 save_workflow("test_workflow", agent_sequence)
         
         # Verify directory creation and file saving
@@ -363,7 +363,7 @@ class TestWorkflowManagement:
         mock_dump.assert_called_once_with(agent_sequence, mock_file().__enter__(), indent=2)
         mock_st.success.assert_called_once_with("Workflow 'test_workflow' saved successfully!")
     
-    @patch('brainstorm.os.path.exists')
+    @patch('ollama_workbench.workflows.brainstorm.os.path.exists')
     def test_load_workflow_existing(self, mock_exists):
         """Test loading existing workflow"""
         from ollama_workbench.workflows.brainstorm import load_workflow
@@ -377,7 +377,7 @@ class TestWorkflowManagement:
         
         assert result == test_sequence
     
-    @patch('brainstorm.os.path.exists')
+    @patch('ollama_workbench.workflows.brainstorm.os.path.exists')
     def test_load_workflow_nonexistent(self, mock_exists):
         """Test loading non-existent workflow"""
         from ollama_workbench.workflows.brainstorm import load_workflow
@@ -392,13 +392,13 @@ class TestWorkflowManagement:
 class TestAgentEditing:
     """Test agent editing functionality"""
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.get_all_models')
-    @patch('brainstorm.get_voice_prompt')
-    @patch('brainstorm.get_agent_prompt')
-    @patch('brainstorm.get_identity_prompt')
-    @patch('brainstorm.get_metacognitive_prompt')
-    @patch('brainstorm.get_corpus_options')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.get_all_models')
+    @patch('ollama_workbench.workflows.brainstorm.get_voice_prompt')
+    @patch('ollama_workbench.workflows.brainstorm.get_agent_prompt')
+    @patch('ollama_workbench.workflows.brainstorm.get_identity_prompt')
+    @patch('ollama_workbench.workflows.brainstorm.get_metacognitive_prompt')
+    @patch('ollama_workbench.workflows.brainstorm.get_corpus_options')
     def test_edit_agent_settings(self, mock_corpus, mock_metacog, mock_identity, 
                                 mock_agent, mock_voice, mock_models, mock_st):
         """Test agent settings editing UI"""
@@ -454,11 +454,11 @@ class TestAgentEditing:
 class TestAgentManagement:
     """Test agent management interface"""
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.load_agent_settings')
-    @patch('brainstorm.save_agent_settings')
-    @patch('brainstorm.edit_agent_settings')
-    @patch('brainstorm.get_all_models')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.load_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.save_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.edit_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.get_all_models')
     def test_manage_agents_display(self, mock_models, mock_edit, mock_save, mock_load, mock_st):
         """Test agent management display"""
         from ollama_workbench.workflows.brainstorm import manage_agents
@@ -486,11 +486,11 @@ class TestAgentManagement:
         mock_save.assert_called()
         assert mock_st.expander.call_count >= 2  # One per agent plus "Add New Agent"
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.load_agent_settings')
-    @patch('brainstorm.save_agent_settings')
-    @patch('brainstorm.edit_agent_settings')
-    @patch('brainstorm.get_all_models')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.load_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.save_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.edit_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.get_all_models')
     def test_manage_agents_remove(self, mock_models, mock_edit, mock_save, mock_load, mock_st):
         """Test removing agent"""
         from ollama_workbench.workflows.brainstorm import manage_agents
@@ -521,11 +521,11 @@ class TestAgentManagement:
         mock_st.success.assert_called_with("Agent Agent 1 removed.")
         mock_st.rerun.assert_called_once()
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.load_agent_settings')
-    @patch('brainstorm.save_agent_settings')
-    @patch('brainstorm.edit_agent_settings')
-    @patch('brainstorm.get_all_models')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.load_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.save_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.edit_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.get_all_models')
     def test_manage_agents_add_new(self, mock_models, mock_edit, mock_save, mock_load, mock_st):
         """Test adding new agent"""
         from ollama_workbench.workflows.brainstorm import manage_agents
@@ -564,14 +564,14 @@ class TestAgentManagement:
 class TestBrainstormSession:
     """Test brainstorm session functionality"""
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.load_agent_settings')
-    @patch('brainstorm.load_api_keys')
-    @patch('brainstorm.create_agent')
-    @patch('brainstorm.UserProxyAgent')
-    @patch('brainstorm.GroupChat')
-    @patch('brainstorm.GroupChatManager')
-    @patch('brainstorm.get_available_workflows')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.load_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.create_agent')
+    @patch('ollama_workbench.workflows.brainstorm.UserProxyAgent')
+    @patch('ollama_workbench.workflows.brainstorm.GroupChat')
+    @patch('ollama_workbench.workflows.brainstorm.GroupChatManager')
+    @patch('ollama_workbench.workflows.brainstorm.get_available_workflows')
     def test_brainstorm_session_initialization(self, mock_workflows, mock_manager, 
                                              mock_group_chat, mock_user_proxy, 
                                              mock_create_agent, mock_load_keys, 
@@ -610,12 +610,12 @@ class TestBrainstormSession:
         mock_create_agent.assert_called_once()
         mock_workflows.assert_called_once()
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.load_agent_settings')
-    @patch('brainstorm.load_api_keys')
-    @patch('brainstorm.create_agent')
-    @patch('brainstorm.load_workflow')
-    @patch('brainstorm.get_available_workflows')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.load_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.create_agent')
+    @patch('ollama_workbench.workflows.brainstorm.load_workflow')
+    @patch('ollama_workbench.workflows.brainstorm.get_available_workflows')
     def test_workflow_loading(self, mock_workflows, mock_load_workflow, 
                              mock_create_agent, mock_load_keys, 
                              mock_load_settings, mock_st):
@@ -647,12 +647,12 @@ class TestBrainstormSession:
         mock_load_workflow.assert_called_with("test_workflow")
         mock_st.success.assert_called_with("Workflow 'test_workflow' loaded successfully!")
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.load_agent_settings')
-    @patch('brainstorm.load_api_keys')
-    @patch('brainstorm.create_agent')
-    @patch('brainstorm.save_workflow')
-    @patch('brainstorm.get_available_workflows')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.load_agent_settings')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.create_agent')
+    @patch('ollama_workbench.workflows.brainstorm.save_workflow')
+    @patch('ollama_workbench.workflows.brainstorm.get_available_workflows')
     def test_workflow_saving(self, mock_workflows, mock_save_workflow, 
                             mock_create_agent, mock_load_keys, 
                             mock_load_settings, mock_st):
@@ -685,7 +685,7 @@ class TestBrainstormSession:
 class TestDockerIntegration:
     """Test Docker integration functionality"""
     
-    @patch('brainstorm.subprocess.run')
+    @patch('ollama_workbench.workflows.brainstorm.subprocess.run')
     def test_is_docker_running_success(self, mock_run):
         """Test Docker running check - success case"""
         from ollama_workbench.workflows.brainstorm import is_docker_running
@@ -703,7 +703,7 @@ class TestDockerIntegration:
             stderr=subprocess.PIPE
         )
     
-    @patch('brainstorm.subprocess.run')
+    @patch('ollama_workbench.workflows.brainstorm.subprocess.run')
     def test_is_docker_running_not_running(self, mock_run):
         """Test Docker running check - Docker not running"""
         from ollama_workbench.workflows.brainstorm import is_docker_running
@@ -715,7 +715,7 @@ class TestDockerIntegration:
         
         assert result is False
     
-    @patch('brainstorm.subprocess.run')
+    @patch('ollama_workbench.workflows.brainstorm.subprocess.run')
     def test_is_docker_running_not_installed(self, mock_run):
         """Test Docker running check - Docker not installed"""
         from ollama_workbench.workflows.brainstorm import is_docker_running
@@ -731,10 +731,10 @@ class TestDockerIntegration:
 class TestMainInterface:
     """Test main brainstorm interface"""
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.is_docker_running')
-    @patch('brainstorm.brainstorm_session')
-    @patch('brainstorm.manage_agents')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.is_docker_running')
+    @patch('ollama_workbench.workflows.brainstorm.brainstorm_session')
+    @patch('ollama_workbench.workflows.brainstorm.manage_agents')
     def test_brainstorm_interface_docker_enabled(self, mock_manage, mock_session, 
                                                  mock_docker_running, mock_st):
         """Test brainstorm interface with Docker enabled"""
@@ -759,10 +759,10 @@ class TestMainInterface:
         mock_st.warning.assert_not_called()
         mock_st.stop.assert_not_called()
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.is_docker_running')
-    @patch('brainstorm.brainstorm_session')
-    @patch('brainstorm.manage_agents')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.is_docker_running')
+    @patch('ollama_workbench.workflows.brainstorm.brainstorm_session')
+    @patch('ollama_workbench.workflows.brainstorm.manage_agents')
     def test_brainstorm_interface_docker_disabled(self, mock_manage, mock_session, 
                                                   mock_docker_running, mock_st):
         """Test brainstorm interface with Docker disabled"""
@@ -785,8 +785,8 @@ class TestMainInterface:
         # Verify AUTOGEN_USE_DOCKER environment variable was set
         assert os.environ.get("AUTOGEN_USE_DOCKER") == "0"
     
-    @patch('brainstorm.st')
-    @patch('brainstorm.is_docker_running')
+    @patch('ollama_workbench.workflows.brainstorm.st')
+    @patch('ollama_workbench.workflows.brainstorm.is_docker_running')
     def test_brainstorm_interface_docker_not_running(self, mock_docker_running, mock_st):
         """Test brainstorm interface when Docker is not running"""
         from ollama_workbench.workflows.brainstorm import brainstorm_interface
@@ -840,7 +840,7 @@ class TestConstants:
 class TestImportHandling:
     """Test import handling and fallbacks"""
     
-    @patch('brainstorm.get_corpus_options')
+    @patch('ollama_workbench.workflows.brainstorm.get_corpus_options')
     def test_corpus_options_import_success(self, mock_get_corpus):
         """Test successful import of get_corpus_options"""
         mock_get_corpus.return_value = ["Tech", "Business", "Science"]
@@ -869,8 +869,8 @@ class TestImportHandling:
 class TestErrorHandling:
     """Test error handling scenarios"""
     
-    @patch('brainstorm.json.load')
-    @patch('brainstorm.os.path.exists')
+    @patch('ollama_workbench.workflows.brainstorm.json.load')
+    @patch('ollama_workbench.workflows.brainstorm.os.path.exists')
     def test_load_settings_json_error(self, mock_exists, mock_json_load):
         """Test handling of JSON loading errors"""
         from ollama_workbench.workflows.brainstorm import load_agent_settings
@@ -882,8 +882,8 @@ class TestErrorHandling:
             with pytest.raises(json.JSONDecodeError):
                 load_agent_settings()
     
-    @patch('brainstorm.CustomConversableAgent')
-    @patch('brainstorm.load_api_keys')
+    @patch('ollama_workbench.workflows.brainstorm.CustomConversableAgent')
+    @patch('ollama_workbench.workflows.brainstorm.load_api_keys')
     def test_create_agent_missing_api_key(self, mock_load_keys, mock_agent_class):
         """Test creating agent with missing API key"""
         from ollama_workbench.workflows.brainstorm import create_agent
@@ -908,7 +908,7 @@ class TestErrorHandling:
             "db_path": "./test_db"
         }
         
-        with patch('brainstorm.OPENAI_MODELS', ["gpt-4"]):
+        with patch('ollama_workbench.workflows.brainstorm.OPENAI_MODELS', ["gpt-4"]):
             result = create_agent(settings)
         
         # Should still create agent, but with None API key
@@ -926,10 +926,10 @@ class TestIntegrationScenarios:
         from ollama_workbench.workflows.brainstorm import save_workflow, load_workflow
         
         with tempfile.TemporaryDirectory() as tmp_dir:
-            with patch('brainstorm.WORKFLOWS_DIR', tmp_dir):
+            with patch('ollama_workbench.workflows.brainstorm.WORKFLOWS_DIR', tmp_dir):
                 # Save a workflow
                 agent_sequence = ["Agent 1", "Agent 2", "Agent 3"]
-                with patch('brainstorm.st') as mock_st:
+                with patch('ollama_workbench.workflows.brainstorm.st') as mock_st:
                     mock_st.success = Mock()
                     save_workflow("test_integration", agent_sequence)
                 
@@ -947,7 +947,7 @@ class TestIntegrationScenarios:
             tmp_path = tmp.name
         
         try:
-            with patch('brainstorm.SETTINGS_FILE', tmp_path):
+            with patch('ollama_workbench.workflows.brainstorm.SETTINGS_FILE', tmp_path):
                 # Save settings
                 test_settings = {
                     "agents": [

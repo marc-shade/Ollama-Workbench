@@ -46,7 +46,7 @@ with patch.dict('sys.modules', {
 class TestUserAgentUtils(TestCase):
     """Test user agent utility functions"""
     
-    @patch('web_to_corpus.UserAgent')
+    @patch('ollama_workbench.knowledge.web_to_corpus.UserAgent')
     def test_get_random_user_agent_success(self, mock_ua_class):
         """Test successful user agent generation"""
         mock_ua = Mock()
@@ -58,7 +58,7 @@ class TestUserAgentUtils(TestCase):
         self.assertEqual(result, "Mozilla/5.0 (Test Browser)")
         mock_ua_class.assert_called_once()
     
-    @patch('web_to_corpus.UserAgent')
+    @patch('ollama_workbench.knowledge.web_to_corpus.UserAgent')
     def test_get_random_user_agent_fallback(self, mock_ua_class):
         """Test fallback when UserAgent fails"""
         mock_ua_class.side_effect = Exception("UserAgent failed")
@@ -84,12 +84,12 @@ class TestWebsiteCrawlerInit(TestCase):
         """Clean up test environment"""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
     
-    @patch('web_to_corpus.tempfile.mkdtemp')
-    @patch('web_to_corpus.webdriver.Chrome')
-    @patch('web_to_corpus.ChromeDriverManager')
-    @patch('web_to_corpus.Service')
-    @patch('web_to_corpus.Options')
-    @patch('web_to_corpus.get_random_user_agent')
+    @patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp')
+    @patch('ollama_workbench.knowledge.web_to_corpus.webdriver.Chrome')
+    @patch('ollama_workbench.knowledge.web_to_corpus.ChromeDriverManager')
+    @patch('ollama_workbench.knowledge.web_to_corpus.Service')
+    @patch('ollama_workbench.knowledge.web_to_corpus.Options')
+    @patch('ollama_workbench.knowledge.web_to_corpus.get_random_user_agent')
     def test_crawler_init_success(self, mock_ua, mock_options, mock_service, 
                                  mock_driver_manager, mock_chrome, mock_mkdtemp):
         """Test successful crawler initialization"""
@@ -109,8 +109,8 @@ class TestWebsiteCrawlerInit(TestCase):
         self.assertEqual(crawler.driver, mock_chrome_instance)
         self.assertEqual(crawler.crawled_data, [])
     
-    @patch('web_to_corpus.tempfile.mkdtemp')
-    @patch('web_to_corpus.webdriver.Chrome')
+    @patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp')
+    @patch('ollama_workbench.knowledge.web_to_corpus.webdriver.Chrome')
     @patch('streamlit.warning')
     def test_crawler_init_chrome_failure(self, mock_warning, mock_chrome, mock_mkdtemp):
         """Test crawler initialization when Chrome driver fails"""
@@ -124,8 +124,8 @@ class TestWebsiteCrawlerInit(TestCase):
         self.assertIn("PDF", crawler.output_format)
         self.assertIn("pdf_options", crawler.__dict__)
     
-    @patch('web_to_corpus.tempfile.mkdtemp')
-    @patch('web_to_corpus.Options')
+    @patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp')
+    @patch('ollama_workbench.knowledge.web_to_corpus.Options')
     @patch('streamlit.warning')
     def test_crawler_init_options_failure(self, mock_warning, mock_options, mock_mkdtemp):
         """Test crawler initialization when Chrome options setup fails"""
@@ -141,13 +141,13 @@ class TestWebsiteCrawlerInit(TestCase):
 class TestWebsiteCrawlerCleanup(TestCase):
     """Test WebsiteCrawler cleanup functionality"""
     
-    @patch('web_to_corpus.shutil.rmtree')
+    @patch('ollama_workbench.knowledge.web_to_corpus.shutil.rmtree')
     def test_crawler_del_with_driver(self, mock_rmtree):
         """Test crawler cleanup with active driver"""
         mock_driver = Mock()
         
         # Create a minimal crawler instance
-        with patch('web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
             mock_mkdtemp.return_value = "/temp/path"
             crawler = WebsiteCrawler("https://example.com", "TXT")
             crawler.driver = mock_driver
@@ -158,10 +158,10 @@ class TestWebsiteCrawlerCleanup(TestCase):
             mock_driver.quit.assert_called_once()
             mock_rmtree.assert_called_with("/temp/path", ignore_errors=True)
     
-    @patch('web_to_corpus.shutil.rmtree')
+    @patch('ollama_workbench.knowledge.web_to_corpus.shutil.rmtree')
     def test_crawler_del_without_driver(self, mock_rmtree):
         """Test crawler cleanup without driver"""
-        with patch('web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
             mock_mkdtemp.return_value = "/temp/path"
             crawler = WebsiteCrawler("https://example.com", "TXT")
             crawler.driver = None
@@ -171,7 +171,7 @@ class TestWebsiteCrawlerCleanup(TestCase):
             
             mock_rmtree.assert_called_with("/temp/path", ignore_errors=True)
     
-    @patch('web_to_corpus.shutil.rmtree')
+    @patch('ollama_workbench.knowledge.web_to_corpus.shutil.rmtree')
     @patch('builtins.print')
     def test_crawler_del_with_errors(self, mock_print, mock_rmtree):
         """Test crawler cleanup with errors"""
@@ -179,7 +179,7 @@ class TestWebsiteCrawlerCleanup(TestCase):
         mock_driver.quit.side_effect = Exception("Driver quit failed")
         mock_rmtree.side_effect = Exception("Rmtree failed")
         
-        with patch('web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
             mock_mkdtemp.return_value = "/temp/path"
             crawler = WebsiteCrawler("https://example.com", "TXT")
             crawler.driver = mock_driver
@@ -196,12 +196,12 @@ class TestWebsiteCrawlerFetching(TestCase):
     
     def setUp(self):
         """Set up test crawler"""
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             self.crawler = WebsiteCrawler("https://example.com", "TXT")
             self.crawler.driver = None
     
-    @patch('web_to_corpus.requests.get')
-    @patch('web_to_corpus.get_random_user_agent')
+    @patch('ollama_workbench.knowledge.web_to_corpus.requests.get')
+    @patch('ollama_workbench.knowledge.web_to_corpus.get_random_user_agent')
     def test_fetch_page_success(self, mock_ua, mock_get):
         """Test successful page fetching with requests"""
         mock_ua.return_value = "Test User Agent"
@@ -221,7 +221,7 @@ class TestWebsiteCrawlerFetching(TestCase):
         self.assertIn('Accept', headers)
         self.assertEqual(call_args[1]['timeout'], 10)
     
-    @patch('web_to_corpus.requests.get')
+    @patch('ollama_workbench.knowledge.web_to_corpus.requests.get')
     @patch('streamlit.error')
     def test_fetch_page_request_exception(self, mock_error, mock_get):
         """Test page fetching with request exception"""
@@ -233,7 +233,7 @@ class TestWebsiteCrawlerFetching(TestCase):
         mock_error.assert_called_once()
         self.assertIn("Failed to fetch", mock_error.call_args[0][0])
     
-    @patch('web_to_corpus.requests.get')
+    @patch('ollama_workbench.knowledge.web_to_corpus.requests.get')
     @patch('streamlit.error')
     def test_fetch_page_http_error(self, mock_error, mock_get):
         """Test page fetching with HTTP error"""
@@ -246,8 +246,8 @@ class TestWebsiteCrawlerFetching(TestCase):
         self.assertIsNone(result)
         mock_error.assert_called_once()
     
-    @patch('web_to_corpus.time.sleep')
-    @patch('web_to_corpus.random.uniform')
+    @patch('ollama_workbench.knowledge.web_to_corpus.time.sleep')
+    @patch('ollama_workbench.knowledge.web_to_corpus.random.uniform')
     def test_fetch_page_selenium_success(self, mock_uniform, mock_sleep):
         """Test successful page fetching with Selenium"""
         mock_uniform.return_value = 3.5
@@ -290,10 +290,10 @@ class TestWebsiteCrawlerContentExtraction(TestCase):
     
     def setUp(self):
         """Set up test crawler"""
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             self.crawler = WebsiteCrawler("https://example.com", "TXT")
     
-    @patch('web_to_corpus.BeautifulSoup')
+    @patch('ollama_workbench.knowledge.web_to_corpus.BeautifulSoup')
     def test_extract_main_content_basic(self, mock_soup_class):
         """Test basic content extraction"""
         # Mock BeautifulSoup behavior
@@ -312,7 +312,7 @@ class TestWebsiteCrawlerContentExtraction(TestCase):
         self.assertEqual(result, expected)
         mock_soup_class.assert_called_once_with("<html><body>Test</body></html>", 'html.parser')
     
-    @patch('web_to_corpus.BeautifulSoup')
+    @patch('ollama_workbench.knowledge.web_to_corpus.BeautifulSoup')
     def test_extract_main_content_with_scripts(self, mock_soup_class):
         """Test content extraction with script removal"""
         mock_soup = Mock()
@@ -331,7 +331,7 @@ class TestWebsiteCrawlerContentExtraction(TestCase):
         mock_script.decompose.assert_called_once()
         mock_style.decompose.assert_called_once()
     
-    @patch('web_to_corpus.BeautifulSoup')
+    @patch('ollama_workbench.knowledge.web_to_corpus.BeautifulSoup')
     def test_extract_main_content_complex_whitespace(self, mock_soup_class):
         """Test content extraction with complex whitespace"""
         mock_soup = Mock()
@@ -352,12 +352,12 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
     
     def setUp(self):
         """Set up test crawler"""
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             self.crawler = WebsiteCrawler("https://example.com", "TXT")
     
-    @patch('web_to_corpus.BeautifulSoup')
-    @patch('web_to_corpus.urljoin')
-    @patch('web_to_corpus.urldefrag')
+    @patch('ollama_workbench.knowledge.web_to_corpus.BeautifulSoup')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urljoin')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urldefrag')
     def test_find_links_on_page_valid_links(self, mock_urldefrag, mock_urljoin, mock_soup_class):
         """Test finding valid links on page"""
         # Mock BeautifulSoup
@@ -390,7 +390,7 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
             expected_links = {"https://example.com/page1", "https://example.com/page2"}
             self.assertEqual(self.crawler.to_visit_links, expected_links)
     
-    @patch('web_to_corpus.BeautifulSoup')
+    @patch('ollama_workbench.knowledge.web_to_corpus.BeautifulSoup')
     def test_find_links_on_page_invalid_links(self, mock_soup_class):
         """Test finding invalid links on page"""
         mock_soup = Mock()
@@ -400,10 +400,10 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
         mock_link.__getitem__.return_value = "/invalid"
         mock_soup.find_all.return_value = [mock_link]
         
-        with patch('web_to_corpus.urljoin') as mock_urljoin:
+        with patch('ollama_workbench.knowledge.web_to_corpus.urljoin') as mock_urljoin:
             mock_urljoin.return_value = "https://other-domain.com/page"
             
-            with patch('web_to_corpus.urldefrag') as mock_urldefrag:
+            with patch('ollama_workbench.knowledge.web_to_corpus.urldefrag') as mock_urldefrag:
                 mock_urldefrag.return_value = ("https://other-domain.com/page", "")
                 
                 with patch.object(self.crawler, 'is_valid_url') as mock_is_valid:
@@ -414,7 +414,7 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
                     # Should not add invalid links
                     self.assertEqual(len(self.crawler.to_visit_links), 1)  # Only root URL
     
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_is_valid_url_same_domain(self, mock_urlparse):
         """Test URL validation for same domain"""
         mock_parsed = Mock()
@@ -428,7 +428,7 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
         
         self.assertTrue(result)
     
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_is_valid_url_different_domain(self, mock_urlparse):
         """Test URL validation for different domain"""
         mock_parsed = Mock()
@@ -442,7 +442,7 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
         
         self.assertFalse(result)
     
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_is_valid_url_invalid_scheme(self, mock_urlparse):
         """Test URL validation for invalid scheme"""
         mock_parsed = Mock()
@@ -456,7 +456,7 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
         
         self.assertFalse(result)
     
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_is_valid_url_excluded_extensions(self, mock_urlparse):
         """Test URL validation for excluded file extensions"""
         mock_parsed = Mock()
@@ -470,7 +470,7 @@ class TestWebsiteCrawlerLinkDiscovery(TestCase):
         
         self.assertFalse(result)
     
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_is_valid_url_excluded_query_params(self, mock_urlparse):
         """Test URL validation for excluded query parameters"""
         mock_parsed = Mock()
@@ -492,7 +492,7 @@ class TestWebsiteCrawlerFileSaving(TestCase):
         """Set up test crawler and temp directory"""
         self.temp_dir = tempfile.mkdtemp()
         
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             self.crawler = WebsiteCrawler("https://example.com", "PDF")
             self.crawler.temp_dir = self.temp_dir
     
@@ -500,9 +500,9 @@ class TestWebsiteCrawlerFileSaving(TestCase):
         """Clean up temp directory"""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
     
-    @patch('web_to_corpus.os.path.exists')
-    @patch('web_to_corpus.os.makedirs')
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.os.path.exists')
+    @patch('ollama_workbench.knowledge.web_to_corpus.os.makedirs')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_get_filename_basic(self, mock_urlparse, mock_makedirs, mock_exists):
         """Test basic filename generation"""
         mock_exists.return_value = False
@@ -510,15 +510,15 @@ class TestWebsiteCrawlerFileSaving(TestCase):
         mock_parsed.path = "/path/to/page"
         mock_urlparse.return_value = mock_parsed
         
-        with patch('web_to_corpus.SCRIPT_DIR', '/script'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.SCRIPT_DIR', '/script'):
             result = self.crawler.get_filename("https://example.com/path/to/page", "txt")
             
             expected = "/script/files/path_to_page.txt"
             self.assertEqual(result, expected)
             mock_makedirs.assert_called_once_with("/script/files")
     
-    @patch('web_to_corpus.os.path.exists')
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.os.path.exists')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_get_filename_root_path(self, mock_urlparse, mock_exists):
         """Test filename generation for root path"""
         mock_exists.return_value = True
@@ -526,14 +526,14 @@ class TestWebsiteCrawlerFileSaving(TestCase):
         mock_parsed.path = "/"
         mock_urlparse.return_value = mock_parsed
         
-        with patch('web_to_corpus.SCRIPT_DIR', '/script'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.SCRIPT_DIR', '/script'):
             result = self.crawler.get_filename("https://example.com/", "pdf")
             
             expected = "/script/files/index.pdf"
             self.assertEqual(result, expected)
     
     @patch('streamlit.info')
-    @patch('web_to_corpus.pdfkit.from_string')
+    @patch('ollama_workbench.knowledge.web_to_corpus.pdfkit.from_string')
     def test_save_page_as_pdf_success(self, mock_pdfkit, mock_info):
         """Test successful PDF saving"""
         mock_pdfkit.return_value = None
@@ -549,7 +549,7 @@ class TestWebsiteCrawlerFileSaving(TestCase):
     
     @patch('streamlit.info')
     @patch('streamlit.warning')
-    @patch('web_to_corpus.pdfkit.from_string')
+    @patch('ollama_workbench.knowledge.web_to_corpus.pdfkit.from_string')
     @patch('builtins.open', new_callable=mock_open)
     def test_save_page_as_pdf_fallback_to_text(self, mock_file, mock_pdfkit, mock_warning, mock_info):
         """Test PDF saving fallback to text file"""
@@ -566,7 +566,7 @@ class TestWebsiteCrawlerFileSaving(TestCase):
     
     @patch('streamlit.info')
     @patch('streamlit.error')
-    @patch('web_to_corpus.pdfkit.from_string')
+    @patch('ollama_workbench.knowledge.web_to_corpus.pdfkit.from_string')
     def test_save_page_as_pdf_general_exception(self, mock_pdfkit, mock_error, mock_info):
         """Test PDF saving with general exception"""
         mock_pdfkit.side_effect = Exception("General error")
@@ -587,7 +587,7 @@ class TestWebsiteCrawlerOutputGeneration(TestCase):
         """Set up test crawler and data"""
         self.temp_dir = tempfile.mkdtemp()
         
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             self.crawler = WebsiteCrawler("https://example.com", "TXT")
             self.crawler.temp_dir = self.temp_dir
             
@@ -600,7 +600,7 @@ class TestWebsiteCrawlerOutputGeneration(TestCase):
         """Clean up temp directory"""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
     
-    @patch('web_to_corpus.os.path.join')
+    @patch('ollama_workbench.knowledge.web_to_corpus.os.path.join')
     def test_generate_output_txt(self, mock_join):
         """Test TXT output generation"""
         mock_join.return_value = "/test/output.txt"
@@ -611,7 +611,7 @@ class TestWebsiteCrawlerOutputGeneration(TestCase):
             
             mock_save_txt.assert_called_once_with("/test/output.txt")
     
-    @patch('web_to_corpus.os.path.join')
+    @patch('ollama_workbench.knowledge.web_to_corpus.os.path.join')
     def test_generate_output_json(self, mock_join):
         """Test JSON output generation"""
         mock_join.return_value = "/test/output.json"
@@ -622,7 +622,7 @@ class TestWebsiteCrawlerOutputGeneration(TestCase):
             
             mock_save_json.assert_called_once_with("/test/output.json")
     
-    @patch('web_to_corpus.os.path.join')
+    @patch('ollama_workbench.knowledge.web_to_corpus.os.path.join')
     def test_generate_output_pdf(self, mock_join):
         """Test PDF output generation"""
         mock_join.return_value = "/test/output.pdf"
@@ -664,7 +664,7 @@ class TestWebsiteCrawlerOutputGeneration(TestCase):
             indent=4
         )
     
-    @patch('web_to_corpus.PdfMerger')
+    @patch('ollama_workbench.knowledge.web_to_corpus.PdfMerger')
     def test_merge_pdfs(self, mock_pdf_merger_class):
         """Test PDF merging"""
         mock_merger = Mock()
@@ -691,7 +691,7 @@ class TestWebsiteCrawlerMainCrawl(TestCase):
     
     def setUp(self):
         """Set up test crawler"""
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             self.crawler = WebsiteCrawler("https://example.com", "TXT")
             
         # Mock Streamlit components
@@ -700,8 +700,8 @@ class TestWebsiteCrawlerMainCrawl(TestCase):
     
     @patch('streamlit.progress')
     @patch('streamlit.empty')
-    @patch('web_to_corpus.time.sleep')
-    @patch('web_to_corpus.random.uniform')
+    @patch('ollama_workbench.knowledge.web_to_corpus.time.sleep')
+    @patch('ollama_workbench.knowledge.web_to_corpus.random.uniform')
     def test_crawl_basic_flow(self, mock_uniform, mock_sleep, mock_empty, mock_progress):
         """Test basic crawling flow"""
         mock_progress.return_value = self.mock_progress
@@ -748,8 +748,8 @@ class TestWebsiteCrawlerMainCrawl(TestCase):
                     mock_extract.return_value = "Selenium extracted"
                     
                     with patch.object(self.crawler, 'find_links_on_page'):
-                        with patch('web_to_corpus.time.sleep'):
-                            with patch('web_to_corpus.random.uniform'):
+                        with patch('ollama_workbench.knowledge.web_to_corpus.time.sleep'):
+                            with patch('ollama_workbench.knowledge.web_to_corpus.random.uniform'):
                                 self.crawler.crawl()
                                 
                                 # Should try Selenium after requests fails
@@ -771,8 +771,8 @@ class TestWebsiteCrawlerMainCrawl(TestCase):
             with patch.object(self.crawler, 'fetch_page_selenium') as mock_selenium:
                 mock_selenium.return_value = None
                 
-                with patch('web_to_corpus.time.sleep'):
-                    with patch('web_to_corpus.random.uniform'):
+                with patch('ollama_workbench.knowledge.web_to_corpus.time.sleep'):
+                    with patch('ollama_workbench.knowledge.web_to_corpus.random.uniform'):
                         self.crawler.crawl()
                         
                         # Should visit the URL but not add to crawled_data
@@ -799,8 +799,8 @@ class TestWebsiteCrawlerMainCrawl(TestCase):
                     mock_save_pdf.return_value = "/path/test.pdf"
                     
                     with patch.object(self.crawler, 'find_links_on_page'):
-                        with patch('web_to_corpus.time.sleep'):
-                            with patch('web_to_corpus.random.uniform'):
+                        with patch('ollama_workbench.knowledge.web_to_corpus.time.sleep'):
+                            with patch('ollama_workbench.knowledge.web_to_corpus.random.uniform'):
                                 self.crawler.crawl()
                                 
                                 mock_save_pdf.assert_called_once_with("https://example.com", "Content")
@@ -842,7 +842,7 @@ class TestMainStreamlitApp(TestCase):
     @patch('streamlit.success')
     @patch('streamlit.download_button')
     @patch('builtins.open', new_callable=mock_open, read_data=b"test content")
-    @patch('web_to_corpus.urlparse')
+    @patch('ollama_workbench.knowledge.web_to_corpus.urlparse')
     def test_main_app_crawling_flow(self, mock_urlparse, mock_file, mock_download, 
                                    mock_success, mock_button, mock_selectbox, 
                                    mock_text_input, mock_columns, mock_write, mock_title):
@@ -859,14 +859,14 @@ class TestMainStreamlitApp(TestCase):
         mock_urlparse.return_value = mock_parsed
         
         # Mock crawler
-        with patch('web_to_corpus.WebsiteCrawler') as mock_crawler_class:
+        with patch('ollama_workbench.knowledge.web_to_corpus.WebsiteCrawler') as mock_crawler_class:
             mock_crawler = Mock()
             mock_crawler_class.return_value = mock_crawler
             
-            with patch('web_to_corpus.os.path.join') as mock_join:
+            with patch('ollama_workbench.knowledge.web_to_corpus.os.path.join') as mock_join:
                 mock_join.return_value = "/test/example.com.json"
                 
-                with patch('web_to_corpus.os.path.exists') as mock_exists:
+                with patch('ollama_workbench.knowledge.web_to_corpus.os.path.exists') as mock_exists:
                     mock_exists.return_value = True
                     
                     main()
@@ -905,10 +905,10 @@ class TestIntegrationScenarios(TestCase):
     
     def test_crawler_full_workflow_txt(self):
         """Test complete crawler workflow for TXT output"""
-        with patch('web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp') as mock_mkdtemp:
             mock_mkdtemp.return_value = "/temp"
             
-            with patch('web_to_corpus.webdriver.Chrome'):
+            with patch('ollama_workbench.knowledge.web_to_corpus.webdriver.Chrome'):
                 crawler = WebsiteCrawler("https://example.com", "TXT")
                 
                 # Mock all external dependencies
@@ -918,7 +918,7 @@ class TestIntegrationScenarios(TestCase):
                     with patch.object(crawler, 'extract_main_content') as mock_extract:
                         mock_extract.return_value = "Extracted content"
                         
-                        with patch('web_to_corpus.BeautifulSoup') as mock_soup_class:
+                        with patch('ollama_workbench.knowledge.web_to_corpus.BeautifulSoup') as mock_soup_class:
                             # Mock link discovery
                             mock_soup = Mock()
                             mock_link = Mock()
@@ -926,16 +926,16 @@ class TestIntegrationScenarios(TestCase):
                             mock_soup.find_all.return_value = [mock_link]
                             mock_soup_class.return_value = mock_soup
                             
-                            with patch('web_to_corpus.urljoin') as mock_urljoin:
+                            with patch('ollama_workbench.knowledge.web_to_corpus.urljoin') as mock_urljoin:
                                 mock_urljoin.return_value = "https://example.com/page1"
                                 
-                                with patch('web_to_corpus.urldefrag') as mock_urldefrag:
+                                with patch('ollama_workbench.knowledge.web_to_corpus.urldefrag') as mock_urldefrag:
                                     mock_urldefrag.return_value = ("https://example.com/page1", "")
                                     
                                     with patch('streamlit.progress') as mock_progress:
                                         with patch('streamlit.empty') as mock_empty:
-                                            with patch('web_to_corpus.time.sleep'):
-                                                with patch('web_to_corpus.random.uniform'):
+                                            with patch('ollama_workbench.knowledge.web_to_corpus.time.sleep'):
+                                                with patch('ollama_workbench.knowledge.web_to_corpus.random.uniform'):
                                                     # Limit to one iteration
                                                     original_to_visit = crawler.to_visit_links.copy()
                                                     crawler.to_visit_links = {"https://example.com"}
@@ -949,7 +949,7 @@ class TestIntegrationScenarios(TestCase):
     
     def test_error_handling_resilience(self):
         """Test crawler resilience to various errors"""
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             crawler = WebsiteCrawler("https://example.com", "PDF")
             
             # Test with various exception scenarios
@@ -969,8 +969,8 @@ class TestIntegrationScenarios(TestCase):
                         
                         with patch('streamlit.progress'):
                             with patch('streamlit.empty'):
-                                with patch('web_to_corpus.time.sleep'):
-                                    with patch('web_to_corpus.random.uniform'):
+                                with patch('ollama_workbench.knowledge.web_to_corpus.time.sleep'):
+                                    with patch('ollama_workbench.knowledge.web_to_corpus.random.uniform'):
                                         # Should not crash
                                         crawler.to_visit_links = {"https://example.com/test"}
                                         crawler.visited_links = set()
@@ -983,7 +983,7 @@ class TestIntegrationScenarios(TestCase):
     
     def test_memory_and_resource_management(self):
         """Test memory management for large crawls"""
-        with patch('web_to_corpus.tempfile.mkdtemp'):
+        with patch('ollama_workbench.knowledge.web_to_corpus.tempfile.mkdtemp'):
             crawler = WebsiteCrawler("https://example.com", "TXT")
             
             # Simulate large number of URLs
@@ -996,8 +996,8 @@ class TestIntegrationScenarios(TestCase):
                 
                 with patch('streamlit.progress'):
                     with patch('streamlit.empty'):
-                        with patch('web_to_corpus.time.sleep'):
-                            with patch('web_to_corpus.random.uniform'):
+                        with patch('ollama_workbench.knowledge.web_to_corpus.time.sleep'):
+                            with patch('ollama_workbench.knowledge.web_to_corpus.random.uniform'):
                                 # Should handle large sets without memory issues
                                 crawler.crawl()
                                 

@@ -213,8 +213,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_basic_layout(self, mock_load_keys, mock_save_keys,
                                                mock_title, mock_columns, mock_header,
                                                mock_text_input, mock_checkbox, mock_button,
@@ -245,8 +245,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_search_provider_inputs(self, mock_load_keys, mock_save_keys,
                                                          mock_title, mock_columns, mock_header,
                                                          mock_text_input, mock_checkbox, mock_button,
@@ -284,8 +284,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_ai_provider_inputs(self, mock_load_keys, mock_save_keys,
                                                      mock_title, mock_columns, mock_header,
                                                      mock_text_input, mock_checkbox, mock_button,
@@ -326,8 +326,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_password_input_type(self, mock_load_keys, mock_save_keys,
                                                       mock_title, mock_columns, mock_header,
                                                       mock_text_input, mock_checkbox, mock_button,
@@ -355,8 +355,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_default_values(self, mock_load_keys, mock_save_keys,
                                                  mock_title, mock_columns, mock_header,
                                                  mock_text_input, mock_checkbox, mock_button,
@@ -395,8 +395,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_save_button_not_pressed(self, mock_load_keys, mock_save_keys,
                                                           mock_title, mock_columns, mock_header,
                                                           mock_text_input, mock_checkbox, mock_button,
@@ -426,8 +426,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_save_button_pressed(self, mock_load_keys, mock_save_keys,
                                                       mock_title, mock_columns, mock_header,
                                                       mock_text_input, mock_checkbox, mock_button,
@@ -485,8 +485,8 @@ class TestExternalProvidersUI(TestCase):
     @patch('streamlit.header')
     @patch('streamlit.columns')
     @patch('streamlit.title')
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_external_providers_ui_empty_api_keys(self, mock_load_keys, mock_save_keys,
                                                  mock_title, mock_columns, mock_header,
                                                  mock_text_input, mock_checkbox, mock_button,
@@ -519,7 +519,7 @@ class TestExternalProvidersUI(TestCase):
 class TestUIIntegration(TestCase):
     """Test integration scenarios and edge cases"""
     
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_load_api_keys_integration(self, mock_load_keys):
         """Test that load_api_keys is called during UI initialization"""
         mock_load_keys.return_value = {}
@@ -535,8 +535,8 @@ class TestUIIntegration(TestCase):
         
         mock_load_keys.assert_called_once()
     
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_save_api_keys_integration(self, mock_load_keys, mock_save_keys):
         """Test that save_api_keys is called with correct data when button pressed"""
         mock_load_keys.return_value = {"existing_key": "existing_value"}
@@ -589,7 +589,7 @@ class TestUIIntegration(TestCase):
 class TestErrorHandling(TestCase):
     """Test error handling and edge cases"""
     
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_load_api_keys_exception_handling(self, mock_load_keys):
         """Test handling when load_api_keys raises an exception"""
         mock_load_keys.side_effect = Exception("API key loading failed")
@@ -608,8 +608,8 @@ class TestErrorHandling(TestCase):
             
             self.assertIn("API key loading failed", str(context.exception))
     
-    @patch('external_providers.save_api_keys')
-    @patch('external_providers.load_api_keys')
+    @patch('ollama_workbench.providers.external_providers.save_api_keys')
+    @patch('ollama_workbench.providers.external_providers.load_api_keys')
     def test_save_api_keys_exception_handling(self, mock_load_keys, mock_save_keys):
         """Test handling when save_api_keys raises an exception"""
         mock_load_keys.return_value = {}

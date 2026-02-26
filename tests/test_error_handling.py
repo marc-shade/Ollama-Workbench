@@ -144,7 +144,7 @@ class TestWorkbenchError(TestCase):
         
         self.assertEqual(result, expected)
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_log_info_level(self, mock_logger):
         """Test logging at INFO level"""
         error = WorkbenchError("Test message", level=ErrorLevel.INFO)
@@ -154,7 +154,7 @@ class TestWorkbenchError(TestCase):
         call_args = mock_logger.info.call_args[0][0]
         self.assertIn("Test message", call_args)
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_log_warning_level(self, mock_logger):
         """Test logging at WARNING level"""
         error = WorkbenchError("Test message", level=ErrorLevel.WARNING)
@@ -164,7 +164,7 @@ class TestWorkbenchError(TestCase):
         call_args = mock_logger.warning.call_args[0][0]
         self.assertIn("Test message", call_args)
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_log_error_level(self, mock_logger):
         """Test logging at ERROR level"""
         error = WorkbenchError("Test message", level=ErrorLevel.ERROR)
@@ -174,7 +174,7 @@ class TestWorkbenchError(TestCase):
         call_args = mock_logger.error.call_args[0][0]
         self.assertIn("Test message", call_args)
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_log_critical_level(self, mock_logger):
         """Test logging at CRITICAL level"""
         error = WorkbenchError("Test message", level=ErrorLevel.CRITICAL)
@@ -184,7 +184,7 @@ class TestWorkbenchError(TestCase):
         call_args = mock_logger.critical.call_args[0][0]
         self.assertIn("Test message", call_args)
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_log_with_details_and_original_error(self, mock_logger):
         """Test logging with details and original error"""
         original_error = ValueError("Original")
@@ -387,8 +387,8 @@ class TestHandleRequestsError(TestCase):
 class TestHandleApiErrorDecorator(TestCase):
     """Test handle_api_error decorator"""
     
-    @patch('error_handling.display_error')
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.display_error')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_decorator_catches_requests_exception(self, mock_logger, mock_display):
         """Test decorator catches requests exceptions"""
         
@@ -403,8 +403,8 @@ class TestHandleApiErrorDecorator(TestCase):
         # Check that an error was logged
         self.assertTrue(mock_logger.method_calls)
     
-    @patch('error_handling.display_error')
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.display_error')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_decorator_catches_general_exception(self, mock_logger, mock_display):
         """Test decorator catches general exceptions"""
         
@@ -432,8 +432,8 @@ class TestHandleApiErrorDecorator(TestCase):
 class TestCaptureExceptionsDecorator(TestCase):
     """Test capture_exceptions decorator"""
     
-    @patch('error_handling.display_error')
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.display_error')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_decorator_catches_workbench_error(self, mock_logger, mock_display):
         """Test decorator catches WorkbenchError"""
         
@@ -446,8 +446,8 @@ class TestCaptureExceptionsDecorator(TestCase):
         self.assertIsNone(result)
         mock_display.assert_called_once()
     
-    @patch('error_handling.display_error')
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.display_error')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_decorator_catches_general_exception(self, mock_logger, mock_display):
         """Test decorator catches general exceptions"""
         
@@ -815,7 +815,7 @@ class TestCreateOllamaClient(TestCase):
 class TestErrorMiddleware(TestCase):
     """Test error_middleware function"""
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_middleware_successful_callback(self, mock_logger):
         """Test middleware with successful callback"""
         def test_callback(app_state, action):
@@ -827,7 +827,7 @@ class TestErrorMiddleware(TestCase):
         self.assertEqual(result, {"success": True})
         mock_logger.error.assert_not_called()
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_middleware_error_callback(self, mock_logger):
         """Test middleware with error in callback"""
         def test_callback(app_state, action):
@@ -886,7 +886,7 @@ class TestIntegrationScenarios(TestCase):
         self.assertEqual(error_dict["details"]["status_code"], 503)
         self.assertEqual(error_dict["original_error"], "Original issue")
     
-    @patch('error_handling.logger')
+    @patch('ollama_workbench.core.error_handling.logger')
     def test_multiple_decorator_layers(self, mock_logger):
         """Test multiple error handling decorators"""
         
@@ -895,7 +895,7 @@ class TestIntegrationScenarios(TestCase):
         def test_func():
             raise requests.Timeout("Request timed out")
         
-        with patch('error_handling.display_error'):
+        with patch('ollama_workbench.core.error_handling.display_error'):
             result = test_func()
         
         self.assertIsNone(result)

@@ -9,7 +9,7 @@ import ollama_workbench.providers.ollama_utils as ollama_utils
 
 class TestMultimodalChatInterface(unittest.TestCase):
 
-    @patch('ollama_utils.get_available_models')
+    @patch('ollama_workbench.providers.ollama_utils.get_available_models')
     def test_interface_exists(self, mock_get_available_models):
         # Mock get_available_models to return an empty list
         mock_get_available_models.return_value = []
@@ -21,7 +21,7 @@ class TestMultimodalChatInterface(unittest.TestCase):
         except Exception as e:
             self.fail(f"Exception raised: {e}")
 
-    @patch('ollama_utils.call_ollama_endpoint')
+    @patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
     @patch('streamlit.text_area')
     @patch('streamlit.chat_message')
     def test_text_input_ollama(self, mock_chat_message, mock_text_area, mock_generate_ollama_response):

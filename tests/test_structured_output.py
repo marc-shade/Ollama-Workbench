@@ -2,6 +2,7 @@
 Test suite for structured_output.py - Structured output generation functionality
 """
 
+import os
 import pytest
 import json
 import time
@@ -157,7 +158,7 @@ class TestJSONEditor:
     @pytest.fixture
     def mock_streamlit(self):
         """Mock Streamlit components"""
-        with patch('structured_output.st') as mock_st:
+        with patch('ollama_workbench.ui.structured_output.st') as mock_st:
             mock_st.text_area = Mock()
             mock_st.error = Mock()
             yield mock_st
@@ -209,15 +210,15 @@ class TestSchemaVisualization:
     @pytest.fixture
     def mock_streamlit(self):
         """Mock Streamlit components"""
-        with patch('structured_output.st') as mock_st:
+        with patch('ollama_workbench.ui.structured_output.st') as mock_st:
             mock_st.json = Mock()
             mock_st.markdown = Mock()
             mock_st.warning = Mock()
             mock_st.info = Mock()
             yield mock_st
     
-    @patch('structured_output.HAS_JSF', True)
-    @patch('structured_output.jsf')
+    @patch('ollama_workbench.ui.structured_output.HAS_JSF', True)
+    @patch('ollama_workbench.ui.structured_output.jsf')
     def test_visualize_schema_with_jsf(self, mock_jsf, mock_streamlit):
         """Test schema visualization with json-schema-for-humans"""
         from ollama_workbench.ui.structured_output import visualize_schema
@@ -230,8 +231,8 @@ class TestSchemaVisualization:
         mock_jsf.generate_from_schema.assert_called_once_with(schema, "md")
         mock_streamlit.markdown.assert_called_once_with("<h1>Schema HTML</h1>", unsafe_allow_html=True)
     
-    @patch('structured_output.HAS_JSF', True)
-    @patch('structured_output.jsf')
+    @patch('ollama_workbench.ui.structured_output.HAS_JSF', True)
+    @patch('ollama_workbench.ui.structured_output.jsf')
     def test_visualize_schema_jsf_error(self, mock_jsf, mock_streamlit):
         """Test schema visualization with JSF error"""
         from ollama_workbench.ui.structured_output import visualize_schema
@@ -245,7 +246,7 @@ class TestSchemaVisualization:
         mock_streamlit.json.assert_called_once_with(schema)
         mock_streamlit.warning.assert_called_once()
     
-    @patch('structured_output.HAS_JSF', False)
+    @patch('ollama_workbench.ui.structured_output.HAS_JSF', False)
     def test_visualize_schema_no_jsf(self, mock_streamlit):
         """Test schema visualization without json-schema-for-humans"""
         from ollama_workbench.ui.structured_output import visualize_schema
@@ -262,8 +263,8 @@ class TestSchemaVisualization:
 class TestJSONGeneration:
     """Test JSON generation from text"""
     
-    @patch('structured_output.logger')
-    @patch('structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
     def test_generate_json_cli_success(self, mock_subprocess, mock_logger):
         """Test successful JSON generation via CLI"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -279,9 +280,9 @@ class TestJSONGeneration:
         assert result == {"name": "John Doe"}
         mock_subprocess.assert_called_once()
     
-    @patch('structured_output.logger')
-    @patch('structured_output.subprocess.run')
-    @patch('structured_output.get_ollama_client')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.get_ollama_client')
     def test_generate_json_cli_fallback_to_api(self, mock_get_client, mock_subprocess, mock_logger):
         """Test JSON generation falling back from CLI to API"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -301,10 +302,10 @@ class TestJSONGeneration:
         assert result == {"name": "Jane Smith"}
         mock_client.generate.assert_called_once()
     
-    @patch('structured_output.logger')
-    @patch('structured_output.subprocess.run')
-    @patch('structured_output.get_ollama_client')
-    @patch('structured_output.call_ollama_endpoint')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.get_ollama_client')
+    @patch('ollama_workbench.ui.structured_output.call_ollama_endpoint')
     def test_generate_json_final_fallback(self, mock_call_endpoint, mock_get_client, 
                                          mock_subprocess, mock_logger):
         """Test JSON generation with final fallback"""
@@ -326,7 +327,7 @@ class TestJSONGeneration:
         assert result == {"name": "Bob Wilson"}
         mock_call_endpoint.assert_called_once()
     
-    @patch('structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.logger')
     def test_generate_json_no_model(self, mock_logger):
         """Test JSON generation with no model"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -337,8 +338,8 @@ class TestJSONGeneration:
         
         assert result == {}
     
-    @patch('structured_output.logger')
-    @patch('structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
     def test_generate_json_malformed_response(self, mock_subprocess, mock_logger):
         """Test JSON generation with malformed response"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -353,8 +354,8 @@ class TestJSONGeneration:
         
         assert result == {}
     
-    @patch('structured_output.logger')
-    @patch('structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
     def test_generate_json_partial_json(self, mock_subprocess, mock_logger):
         """Test JSON generation with partial JSON in response"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -369,8 +370,8 @@ class TestJSONGeneration:
         
         assert result == {"name": "Alice"}
     
-    @patch('structured_output.logger')
-    @patch('structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
     def test_generate_json_single_quotes_fix(self, mock_subprocess, mock_logger):
         """Test JSON generation with single quotes that get fixed"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -392,7 +393,7 @@ class TestStreamlitUI:
     @pytest.fixture
     def mock_streamlit(self):
         """Mock Streamlit components"""
-        with patch('structured_output.st') as mock_st:
+        with patch('ollama_workbench.ui.structured_output.st') as mock_st:
             mock_st.title = Mock()
             mock_st.write = Mock()
             mock_st.selectbox = Mock()
@@ -415,7 +416,7 @@ class TestStreamlitUI:
             mock_st.session_state = {}
             yield mock_st
     
-    @patch('structured_output.get_available_models')
+    @patch('ollama_workbench.ui.structured_output.get_available_models')
     def test_structured_output_ui_basic_setup(self, mock_get_models, mock_streamlit):
         """Test basic UI setup"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -430,8 +431,8 @@ class TestStreamlitUI:
         mock_streamlit.title.assert_called_once_with("🔍 Structured Output Generator")
         mock_get_models.assert_called_once()
     
-    @patch('structured_output.get_available_models', return_value=[])
-    @patch('structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.get_available_models', return_value=[])
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
     def test_structured_output_ui_no_models_cli_fallback(self, mock_subprocess, mock_get_models, mock_streamlit):
         """Test UI with no models from API, using CLI fallback"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -452,8 +453,8 @@ class TestStreamlitUI:
         mock_subprocess.assert_called_once()
         mock_streamlit.error.assert_not_called()
     
-    @patch('structured_output.get_available_models', return_value=[])
-    @patch('structured_output.subprocess.run')
+    @patch('ollama_workbench.ui.structured_output.get_available_models', return_value=[])
+    @patch('ollama_workbench.ui.structured_output.subprocess.run')
     def test_structured_output_ui_no_models_available(self, mock_subprocess, mock_get_models, mock_streamlit):
         """Test UI with no models available"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -470,8 +471,8 @@ class TestStreamlitUI:
         error_message = mock_streamlit.error.call_args[0][0]
         assert "No Ollama models found" in error_message
     
-    @patch('structured_output.get_available_models')
-    @patch('structured_output.generate_json_from_text')
+    @patch('ollama_workbench.ui.structured_output.get_available_models')
+    @patch('ollama_workbench.ui.structured_output.generate_json_from_text')
     def test_structured_output_ui_generation(self, mock_generate, mock_get_models, mock_streamlit):
         """Test output generation in UI"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -510,8 +511,8 @@ class TestStreamlitUI:
         # Should display result
         mock_streamlit.json.assert_called()
     
-    @patch('structured_output.get_available_models')
-    @patch('structured_output.generate_json_from_text')
+    @patch('ollama_workbench.ui.structured_output.get_available_models')
+    @patch('ollama_workbench.ui.structured_output.generate_json_from_text')
     def test_structured_output_ui_table_format(self, mock_generate, mock_get_models, mock_streamlit):
         """Test table format output"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -547,7 +548,7 @@ class TestStreamlitUI:
         mock_spinner.__exit__ = Mock(return_value=None)
         mock_streamlit.spinner.return_value = mock_spinner
         
-        with patch('structured_output.pd.DataFrame') as mock_df:
+        with patch('ollama_workbench.ui.structured_output.pd.DataFrame') as mock_df:
             mock_df.return_value = Mock()
             structured_output_ui()
             
@@ -555,7 +556,7 @@ class TestStreamlitUI:
             mock_df.assert_called_once()
             mock_streamlit.table.assert_called_once()
     
-    @patch('structured_output.get_available_models')
+    @patch('ollama_workbench.ui.structured_output.get_available_models')
     def test_structured_output_ui_history_functionality(self, mock_get_models, mock_streamlit):
         """Test history functionality in UI"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -601,9 +602,9 @@ class TestStreamlitUI:
 class TestErrorHandling:
     """Test error handling scenarios"""
     
-    @patch('structured_output.st')
-    @patch('structured_output.logger')
-    @patch('structured_output.get_available_models')
+    @patch('ollama_workbench.ui.structured_output.st')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.get_available_models')
     def test_ui_model_fetch_error(self, mock_get_models, mock_logger, mock_st):
         """Test UI error handling when model fetch fails"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -611,17 +612,17 @@ class TestErrorHandling:
         mock_get_models.side_effect = Exception("API error")
         
         # Mock subprocess to also fail
-        with patch('structured_output.subprocess.run', side_effect=Exception("CLI error")):
+        with patch('ollama_workbench.ui.structured_output.subprocess.run', side_effect=Exception("CLI error")):
             structured_output_ui()
         
         mock_st.error.assert_called()
         error_message = mock_st.error.call_args[0][0]
         assert "Error fetching models" in error_message
     
-    @patch('structured_output.st')
-    @patch('structured_output.logger')
-    @patch('structured_output.get_available_models')
-    @patch('structured_output.generate_json_from_text')
+    @patch('ollama_workbench.ui.structured_output.st')
+    @patch('ollama_workbench.ui.structured_output.logger')
+    @patch('ollama_workbench.ui.structured_output.get_available_models')
+    @patch('ollama_workbench.ui.structured_output.generate_json_from_text')
     def test_ui_generation_error(self, mock_generate, mock_get_models, mock_logger, mock_st):
         """Test UI error handling during generation"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -680,7 +681,7 @@ class TestIntegration:
         schema = DEFAULT_SCHEMAS["person_details"]
         
         # Mock the generation process
-        with patch('structured_output.subprocess.run') as mock_subprocess:
+        with patch('ollama_workbench.ui.structured_output.subprocess.run') as mock_subprocess:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_result.stdout = '{"name": "Integration Test", "age": 25, "email": "test@example.com"}'
@@ -705,7 +706,7 @@ class TestIntegration:
         original_schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         
         # Mock editing
-        with patch('structured_output.st') as mock_st:
+        with patch('ollama_workbench.ui.structured_output.st') as mock_st:
             mock_st.text_area.return_value = json.dumps({
                 "type": "object",
                 "properties": {
@@ -720,7 +721,7 @@ class TestIntegration:
             edited_schema = json_editor(original_schema, "test")
             
             # Visualize edited schema
-            with patch('structured_output.HAS_JSF', False):
+            with patch('ollama_workbench.ui.structured_output.HAS_JSF', False):
                 visualize_schema(edited_schema)
         
         # Should have added age property
@@ -738,7 +739,7 @@ class TestPerformance:
         # Use the most complex schema
         complex_schema = DEFAULT_SCHEMAS["data_analysis"]
         
-        with patch('structured_output.st') as mock_st:
+        with patch('ollama_workbench.ui.structured_output.st') as mock_st:
             mock_st.text_area.return_value = json.dumps(complex_schema)
             
             # Should handle large schema without issues
@@ -761,8 +762,8 @@ class TestPerformance:
                 "timestamp": f"2024-01-01 12:{i:02d}:00"
             })
         
-        with patch('structured_output.st') as mock_st:
-            with patch('structured_output.get_available_models', return_value=["llama3"]):
+        with patch('ollama_workbench.ui.structured_output.st') as mock_st:
+            with patch('ollama_workbench.ui.structured_output.get_available_models', return_value=["llama3"]):
                 mock_st.session_state = {
                     "structured_output_history": large_history,
                     "structured_output_result": {}

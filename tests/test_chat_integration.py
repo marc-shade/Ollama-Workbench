@@ -37,19 +37,8 @@ try:
         # Use st in a way that doesn't trigger unused import warning
         _ = st.__name__
     
-    # Check if modules are available before importing
-    if importlib.util.find_spec("chat_interface"):
-        from ollama_workbench.chat.chat_interface import load_settings, save_settings
-    
-    if importlib.util.find_spec("modern_chat_interface"):
-        from modern_chat_interface import initialize_session_state
-        
-    # We don't need to import these since we're not actually calling them
-    # We're just mocking them in the tests
-    # from chat_interface import chat_interface
-    # from enhanced_chat_interface import enhanced_chat_interface
-    # from modern_chat_interface import modern_chat_interface
-    # from simple_modern_interface import simple_modern_interface
+    from ollama_workbench.chat.chat_interface import load_settings, save_settings
+    from ollama_workbench.core.session_utils import initialize_session_state
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")
     raise
@@ -140,7 +129,7 @@ class TestChatIntegration(unittest.TestCase):
     def mock_ollama_client(self):
         """Mock ollama client"""
         # Create mock for ollama client
-        self.ollama_client_patch = patch('ollama_utils.get_ollama_client')
+        self.ollama_client_patch = patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
         self.ollama_client_mock = self.ollama_client_patch.start()
         
         # Configure mock to return a client that returns a response
@@ -149,12 +138,12 @@ class TestChatIntegration(unittest.TestCase):
         self.ollama_client_mock.return_value = mock_client
         
         # Mock get_available_models
-        self.get_models_patch = patch('ollama_utils.get_available_models', 
+        self.get_models_patch = patch('ollama_workbench.providers.ollama_utils.get_available_models', 
                                       return_value=["llama2", "mistral", "llama3", "phi3"])
         self.get_models_mock = self.get_models_patch.start()
         
         # Mock call_ollama_endpoint
-        self.call_ollama_patch = patch('ollama_utils.call_ollama_endpoint', 
+        self.call_ollama_patch = patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint', 
                                        return_value=("Test response", 0, 0, 0))
         self.call_ollama_mock = self.call_ollama_patch.start()
         
@@ -163,7 +152,7 @@ class TestChatIntegration(unittest.TestCase):
     def mock_prompts(self):
         """Mock prompts module"""
         # Create mock for prompts functions
-        self.agent_prompt_patch = patch('prompts.get_agent_prompt')
+        self.agent_prompt_patch = patch('ollama_workbench.ui.prompts.get_agent_prompt')
         self.agent_prompt_mock = self.agent_prompt_patch.start()
         self.agent_prompt_mock.return_value = {
             "Researcher": "You are a research assistant.",
@@ -172,7 +161,7 @@ class TestChatIntegration(unittest.TestCase):
             "Writer": "You are a writing assistant."
         }
         
-        self.metacog_prompt_patch = patch('prompts.get_metacognitive_prompt')
+        self.metacog_prompt_patch = patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
         self.metacog_prompt_mock = self.metacog_prompt_patch.start()
         self.metacog_prompt_mock.return_value = {
             "Analytical": "You think analytically.",
@@ -181,7 +170,7 @@ class TestChatIntegration(unittest.TestCase):
             "Reflective": "You think reflectively."
         }
         
-        self.voice_prompt_patch = patch('prompts.get_voice_prompt')
+        self.voice_prompt_patch = patch('ollama_workbench.ui.prompts.get_voice_prompt')
         self.voice_prompt_mock = self.voice_prompt_patch.start()
         self.voice_prompt_mock.return_value = {
             "Friendly": "You speak in a friendly tone.",
@@ -211,7 +200,7 @@ class TestChatIntegration(unittest.TestCase):
         
         logger.info("CHECKPOINT: Test settings file created successfully")
     
-    @patch('chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_chat_interface_with_model_settings(self):
         """Test chat_interface with model settings"""
         logger.info("Testing chat_interface with model settings")
@@ -265,16 +254,16 @@ class TestChatIntegration(unittest.TestCase):
         
         logger.info("CHECKPOINT: chat_interface with model settings test passed")
     
-    @patch('enhanced_chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.enhanced_chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_enhanced_chat_interface_with_agent_features(self):
         """Test enhanced_chat_interface with agent features"""
         logger.info("Testing enhanced_chat_interface with agent features")
-        
-        # Load settings
-        from fixed_chat_settings import fixed_load_settings
-        fixed_load_settings()
+
+        # Load settings using the standard load_settings
+        from ollama_workbench.chat.chat_interface import load_settings
+        load_settings()
         logger.info("CHECKPOINT: Loaded settings for enhanced_chat_interface test")
-        
+
         # Set up session state
         self.mock_session_state["chat_history"] = []
         self.mock_session_state["selected_model"] = "llama2"
@@ -497,10 +486,9 @@ class TestChatIntegration(unittest.TestCase):
         # Clear session state
         self.mock_session_state.clear()
         
-        # Load settings for modern_chat_interface
+        # Load settings via the standard path (modern_chat_interface was removed)
         initialize_session_state()
-        from modern_chat_interface import load_settings as modern_load_settings
-        modern_load_settings()
+        load_settings()
         
         # Check that settings were loaded correctly
         # In this test, we'll just verify that settings were loaded, not necessarily matching exactly
@@ -559,7 +547,7 @@ class TestChatIntegration(unittest.TestCase):
         self.mock_session_state["chat_history"].append({"role": "user", "content": "What is the capital of France?"})
         
         # Mock GraphRAGCorpus for RAG context
-        with patch('chat_interface.GraphRAGCorpus') as mock_graph_rag:
+        with patch('ollama_workbench.chat.chat_interface.GraphRAGCorpus') as mock_graph_rag:
             # Configure mock
             mock_instance = MagicMock()
             mock_instance.query.return_value = [
@@ -569,11 +557,11 @@ class TestChatIntegration(unittest.TestCase):
             mock_graph_rag.load.return_value = mock_instance
             
             # Mock construct_agent_prompt for agent features
-            with patch('chat_interface.construct_agent_prompt') as mock_construct_prompt:
+            with patch('ollama_workbench.chat.chat_interface.construct_agent_prompt') as mock_construct_prompt:
                 mock_construct_prompt.return_value = "You are a teaching assistant. You think reflectively. You speak in a formal tone."
                 
                 # Mock instance_adaptive_cot for thinking types
-                with patch('chat_interface.instance_adaptive_cot') as mock_adaptive_cot:
+                with patch('ollama_workbench.chat.chat_interface.instance_adaptive_cot') as mock_adaptive_cot:
                     mock_adaptive_cot.return_value = "Let me think step by step. Paris is the capital of France."
                     
                     # Run chat interface (can't actually run it, but we can simulate response)

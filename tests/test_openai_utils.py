@@ -29,7 +29,7 @@ class TestAPIKeyManagement:
             json.dump(test_keys, f)
         
         # Mock the file path
-        with patch('openai_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
             assert loaded_keys["openai_api_key"] == "sk-test-123"
@@ -45,7 +45,7 @@ class TestAPIKeyManagement:
         test_keys = {"openai_api_key": "sk-test-456", "another_key": "another_value"}
         api_file = tmp_path / "api_keys.json"
         
-        with patch('openai_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
             
             # Verify file was saved correctly
@@ -63,7 +63,7 @@ class TestAPIKeyManagement:
         with open(api_file, "w") as f:
             json.dump(initial_keys, f)
         
-        with patch('openai_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
             set_openai_api_key("sk-new-key-789")
             
             # Verify key was saved
@@ -79,7 +79,7 @@ class TestAPIKeyManagement:
 class TestOpenAIAPIFunctions:
     """Test OpenAI API calling functions"""
     
-    @patch('openai_utils.OpenAI')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
     def test_call_openai_api_success(self, mock_openai_class):
         """Test successful OpenAI API call"""
         # Mock the client and response
@@ -117,7 +117,7 @@ class TestOpenAIAPIFunctions:
             stream=False
         )
     
-    @patch('openai_utils.OpenAI')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
     def test_call_openai_api_stream(self, mock_openai_class):
         """Test OpenAI API call with streaming"""
         mock_client = Mock()
@@ -146,7 +146,7 @@ class TestOpenAIAPIFunctions:
         )
     
     @patch('streamlit.error')
-    @patch('openai_utils.OpenAI')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
     def test_call_openai_api_error(self, mock_openai_class, mock_error):
         """Test OpenAI API call error handling"""
         mock_client = Mock()
@@ -164,7 +164,7 @@ class TestOpenAIAPIFunctions:
         assert result is None
         mock_error.assert_called_once_with("Error calling OpenAI API: API Error")
     
-    @patch('openai_utils.OpenAI')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
     def test_call_openai_embeddings_success(self, mock_openai_class):
         """Test successful OpenAI embeddings call"""
         mock_client = Mock()
@@ -179,7 +179,7 @@ class TestOpenAIAPIFunctions:
         mock_client.embeddings.create.return_value = mock_response
         
         # Need to mock load_api_keys for this function
-        with patch('openai_utils.load_api_keys', return_value={'openai_api_key': 'sk-test-key'}):
+        with patch('ollama_workbench.providers.openai_utils.load_api_keys', return_value={'openai_api_key': 'sk-test-key'}):
             result = call_openai_embeddings("text-embedding-ada-002", "Test text")
         
         assert result == [0.1, 0.2, 0.3, 0.4, 0.5]
@@ -189,7 +189,7 @@ class TestOpenAIAPIFunctions:
         )
     
     @patch('streamlit.error')
-    @patch('openai_utils.OpenAI')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
     def test_call_openai_embeddings_error(self, mock_openai_class, mock_error):
         """Test OpenAI embeddings error handling"""
         mock_client = Mock()
@@ -198,7 +198,7 @@ class TestOpenAIAPIFunctions:
         # Mock an exception
         mock_client.embeddings.create.side_effect = Exception("Embeddings Error")
         
-        with patch('openai_utils.load_api_keys', return_value={'openai_api_key': 'sk-test-key'}):
+        with patch('ollama_workbench.providers.openai_utils.load_api_keys', return_value={'openai_api_key': 'sk-test-key'}):
             result = call_openai_embeddings("text-embedding-ada-002", "Test text")
         
         assert result is None
@@ -214,8 +214,8 @@ class TestUIFunctions:
     @patch('streamlit.sidebar.button')
     @patch('streamlit.sidebar.text_input')
     @patch('streamlit.sidebar.subheader')
-    @patch('openai_utils.set_openai_api_key')
-    @patch('openai_utils.load_api_keys')
+    @patch('ollama_workbench.providers.openai_utils.set_openai_api_key')
+    @patch('ollama_workbench.providers.openai_utils.load_api_keys')
     def test_display_openai_settings_save_key(
         self, mock_load_keys, mock_set_key, mock_subheader, 
         mock_text_input, mock_button
@@ -242,7 +242,7 @@ class TestUIFunctions:
     @patch('streamlit.sidebar.button')
     @patch('streamlit.sidebar.text_input')
     @patch('streamlit.sidebar.subheader')
-    @patch('openai_utils.load_api_keys')
+    @patch('ollama_workbench.providers.openai_utils.load_api_keys')
     def test_display_openai_settings_no_save(
         self, mock_load_keys, mock_subheader, mock_text_input, mock_button
     ):
@@ -262,7 +262,7 @@ class TestUIFunctions:
             type="password"
         )
         # set_openai_api_key should not be called
-        with patch('openai_utils.set_openai_api_key') as mock_set_key:
+        with patch('ollama_workbench.providers.openai_utils.set_openai_api_key') as mock_set_key:
             mock_set_key.assert_not_called()
 
 
@@ -286,12 +286,12 @@ class TestConstants:
 class TestIntegration:
     """Integration tests for complete workflows"""
     
-    @patch('openai_utils.OpenAI')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
     def test_complete_api_flow(self, mock_openai_class, tmp_path):
         """Test complete flow: set key, save, load, and use API"""
         api_file = tmp_path / "api_keys.json"
         
-        with patch('openai_utils.API_KEYS_FILE', str(api_file)):
+        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
             # Set API key
             with patch('streamlit.success'):
                 set_openai_api_key("sk-integration-test")

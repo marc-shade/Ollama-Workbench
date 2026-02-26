@@ -11,7 +11,6 @@ import os
 import json
 import logging
 from datetime import datetime
-import time
 
 logger = logging.getLogger(__name__)
 

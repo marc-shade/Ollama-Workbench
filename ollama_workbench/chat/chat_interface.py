@@ -84,16 +84,7 @@ class ModelMemoryHandler:
 
     def segment_text(self, model, text, api_keys):
         logger.info(f"CHECKPOINT: Segmenting text with model {model}")
-        
-        # Special case for the test
-        if model == "llama2" and text == "This is a test text for segmentation.":
-            logger.info("CHECKPOINT: Using test case for segmentation")
-            events = self.episodic_memory.segment_text_into_events(model, text, api_keys=api_keys)
-            # Store the events in memory
-            self.episodic_memory.events = events
-            return events
-        
-        # Normal case
+
         if self.model_type == "openai":
             return self.segment_text_openai(model, text, api_keys)
         elif self.model_type == "groq":
@@ -246,29 +237,11 @@ class EpisodicMemory:
                     'importance': 0.5,
                     'length': len(text)
                 }]
-            
-            # For the test case, ensure we have events
-            if model == "llama2" and text == "This is a test text for segmentation." and len(self.events) == 0:
-                logger.info("CHECKPOINT: Creating mock events for test case")
-                self.events = [
-                    {"text": "Event 1", "embedding": np.random.rand(384)},
-                    {"text": "Event 2", "embedding": np.random.rand(384)}
-                ]
-            
+
             return self.events
         except Exception as e:
             error_message = f"Error segmenting text: {e}"
             logger.error(error_message)
-            
-            # For the test case, ensure we have events even if there's an error
-            if model == "llama2" and text == "This is a test text for segmentation.":
-                logger.info("CHECKPOINT: Creating mock events for test case after error")
-                self.events = [
-                    {"text": "Event 1", "embedding": np.random.rand(384)},
-                    {"text": "Event 2", "embedding": np.random.rand(384)}
-                ]
-                return self.events
-            
             return []
 
     def retrieve_events(self, query_embedding: np.ndarray, top_k: int = None) -> list:

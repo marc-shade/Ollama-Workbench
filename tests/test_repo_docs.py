@@ -43,23 +43,23 @@ with patch.dict('sys.modules', {
 class TestPDFClass(TestCase):
     """Test PDF class functionality"""
     
-    @patch('repo_docs.fpdf_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', True)
     def test_pdf_init_with_fpdf_available(self):
         """Test PDF initialization when FPDF is available"""
-        with patch('repo_docs.FPDF.__init__', return_value=None):
+        with patch('ollama_workbench.knowledge.repo_docs.FPDF.__init__', return_value=None):
             pdf = PDF()
             self.assertIsInstance(pdf, PDF)
     
-    @patch('repo_docs.fpdf_available', False)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', False)
     def test_pdf_init_without_fpdf(self):
         """Test PDF initialization when FPDF is not available"""
         pdf = PDF()
         self.assertIsInstance(pdf, PDF)
     
-    @patch('repo_docs.fpdf_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', True)
     def test_pdf_header_with_fpdf(self):
         """Test PDF header method when FPDF is available"""
-        with patch('repo_docs.FPDF.__init__', return_value=None):
+        with patch('ollama_workbench.knowledge.repo_docs.FPDF.__init__', return_value=None):
             pdf = PDF()
             pdf.set_font = Mock()
             pdf.cell = Mock()
@@ -69,17 +69,17 @@ class TestPDFClass(TestCase):
             pdf.set_font.assert_called_once_with('Arial', 'B', 12)
             pdf.cell.assert_called_once_with(0, 10, 'Repository Analysis', 0, 1, 'C')
     
-    @patch('repo_docs.fpdf_available', False)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', False)
     def test_pdf_header_without_fpdf(self):
         """Test PDF header method when FPDF is not available"""
         pdf = PDF()
         # Should not raise an exception
         pdf.header()
     
-    @patch('repo_docs.fpdf_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', True)
     def test_pdf_add_chapter_with_fpdf(self):
         """Test PDF add_chapter method when FPDF is available"""
-        with patch('repo_docs.FPDF.__init__', return_value=None):
+        with patch('ollama_workbench.knowledge.repo_docs.FPDF.__init__', return_value=None):
             pdf = PDF()
             pdf.add_page = Mock()
             pdf.chapter_title = Mock()
@@ -91,7 +91,7 @@ class TestPDFClass(TestCase):
             pdf.chapter_title.assert_called_once_with("Test Title")
             pdf.chapter_body.assert_called_once_with("Test Body")
     
-    @patch('repo_docs.fpdf_available', False)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', False)
     def test_pdf_add_chapter_without_fpdf(self):
         """Test PDF add_chapter method when FPDF is not available"""
         pdf = PDF()
@@ -158,9 +158,9 @@ class TestOllamaEndpoint(TestCase):
 class TestModelFunctions(TestCase):
     """Test model-related functions"""
     
-    @patch('repo_docs.get_ollama_models')
-    @patch('repo_docs.OPENAI_MODELS', ['gpt-4'])
-    @patch('repo_docs.GROQ_MODELS', ['llama-3'])
+    @patch('ollama_workbench.knowledge.repo_docs.get_ollama_models')
+    @patch('ollama_workbench.knowledge.repo_docs.OPENAI_MODELS', ['gpt-4'])
+    @patch('ollama_workbench.knowledge.repo_docs.GROQ_MODELS', ['llama-3'])
     def test_get_available_models(self, mock_get_ollama):
         """Test getting available models"""
         mock_get_ollama.return_value = ['mistral:instruct']
@@ -174,7 +174,7 @@ class TestModelFunctions(TestCase):
 class TestDocumentationGeneration(TestCase):
     """Test documentation generation functionality"""
     
-    @patch('repo_docs.load_api_keys')
+    @patch('ollama_workbench.knowledge.repo_docs.load_api_keys')
     @patch('requests.post')
     def test_generate_documentation_stream_ollama(self, mock_post, mock_load_keys):
         """Test documentation generation with Ollama model"""
@@ -197,9 +197,9 @@ class TestDocumentationGeneration(TestCase):
         
         self.assertEqual(chunks, ["Generated ", "documentation"])
     
-    @patch('repo_docs.load_api_keys')
-    @patch('repo_docs.call_openai_api')
-    @patch('repo_docs.OPENAI_MODELS', ['gpt-4'])
+    @patch('ollama_workbench.knowledge.repo_docs.load_api_keys')
+    @patch('ollama_workbench.knowledge.repo_docs.call_openai_api')
+    @patch('ollama_workbench.knowledge.repo_docs.OPENAI_MODELS', ['gpt-4'])
     def test_generate_documentation_stream_openai(self, mock_openai_call, mock_load_keys):
         """Test documentation generation with OpenAI model"""
         mock_load_keys.return_value = {'openai_api_key': 'test_key'}
@@ -212,9 +212,9 @@ class TestDocumentationGeneration(TestCase):
         self.assertEqual(chunks, ["OpenAI generated documentation"])
         mock_openai_call.assert_called_once()
     
-    @patch('repo_docs.load_api_keys')
-    @patch('repo_docs.call_groq_api')
-    @patch('repo_docs.GROQ_MODELS', ['llama-3'])
+    @patch('ollama_workbench.knowledge.repo_docs.load_api_keys')
+    @patch('ollama_workbench.knowledge.repo_docs.call_groq_api')
+    @patch('ollama_workbench.knowledge.repo_docs.GROQ_MODELS', ['llama-3'])
     def test_generate_documentation_stream_groq(self, mock_groq_call, mock_load_keys):
         """Test documentation generation with Groq model"""
         mock_load_keys.return_value = {'groq_api_key': 'test_key'}
@@ -318,12 +318,12 @@ class TestFileOperations(TestCase):
         self.assertIn(py_file, code_files)
         self.assertNotIn(excluded_file, code_files)
     
-    @patch('repo_docs.radon_available', True)
-    @patch('repo_docs.flake8_available', True)
-    @patch('repo_docs.cc_visit')
-    @patch('repo_docs.mi_visit')
-    @patch('repo_docs.h_visit')
-    @patch('repo_docs.flake8.get_style_guide')
+    @patch('ollama_workbench.knowledge.repo_docs.radon_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.flake8_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.cc_visit')
+    @patch('ollama_workbench.knowledge.repo_docs.mi_visit')
+    @patch('ollama_workbench.knowledge.repo_docs.h_visit')
+    @patch('ollama_workbench.knowledge.repo_docs.flake8.get_style_guide')
     def test_get_file_info_python_with_analysis(self, mock_style_guide, mock_h_visit, 
                                                mock_mi_visit, mock_cc_visit):
         """Test getting file info for Python file with code analysis"""
@@ -351,8 +351,8 @@ class TestFileOperations(TestCase):
         self.assertIn("Style Violations", file_info)
         self.assertIn("Code", file_info)
     
-    @patch('repo_docs.radon_available', False)
-    @patch('repo_docs.flake8_available', False)
+    @patch('ollama_workbench.knowledge.repo_docs.radon_available', False)
+    @patch('ollama_workbench.knowledge.repo_docs.flake8_available', False)
     def test_get_file_info_python_without_analysis(self):
         """Test getting file info for Python file without analysis tools"""
         # Create test Python file
@@ -378,7 +378,7 @@ class TestFileOperations(TestCase):
         with open(js_file, 'w') as f:
             f.write("console.log('hello');")
         
-        with patch('repo_docs.run_eslint') as mock_eslint:
+        with patch('ollama_workbench.knowledge.repo_docs.run_eslint') as mock_eslint:
             mock_eslint.return_value = "eslint output"
             
             file_info = get_file_info(js_file)
@@ -455,7 +455,7 @@ class TestPDFGeneration(TestCase):
         """Clean up temp directory"""
         shutil.rmtree(self.temp_dir)
     
-    @patch('repo_docs.fpdf_available', False)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', False)
     def test_generate_pdf_without_fpdf(self):
         """Test PDF generation when FPDF is not available"""
         output_path = os.path.join(self.temp_dir, "test.pdf")
@@ -471,12 +471,12 @@ class TestPDFGeneration(TestCase):
             self.assertIn("Repository Analysis Report", content)
             self.assertIn("file1.py", content)
     
-    @patch('repo_docs.fpdf_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', True)
     def test_generate_pdf_with_fpdf(self):
         """Test PDF generation when FPDF is available"""
         output_path = os.path.join(self.temp_dir, "test.pdf")
         
-        with patch('repo_docs.PDF') as mock_pdf_class:
+        with patch('ollama_workbench.knowledge.repo_docs.PDF') as mock_pdf_class:
             mock_pdf = Mock()
             mock_pdf_class.return_value = mock_pdf
             
@@ -486,12 +486,12 @@ class TestPDFGeneration(TestCase):
             mock_pdf.add_chapter.assert_called()
             mock_pdf.output.assert_called_once_with(output_path, 'F')
     
-    @patch('repo_docs.fpdf_available', True)
+    @patch('ollama_workbench.knowledge.repo_docs.fpdf_available', True)
     def test_generate_pdf_error_handling(self):
         """Test PDF generation error handling"""
         output_path = os.path.join(self.temp_dir, "test.pdf")
         
-        with patch('repo_docs.PDF') as mock_pdf_class:
+        with patch('ollama_workbench.knowledge.repo_docs.PDF') as mock_pdf_class:
             mock_pdf_class.side_effect = Exception("PDF generation failed")
             
             result_path = generate_pdf(self.test_results, output_path, "documentation")
@@ -558,7 +558,7 @@ class TestProjectSummaryGeneration(TestCase):
         with open(py_file, 'w') as f:
             f.write("def hello(): pass")
         
-        with patch('repo_docs.get_file_info') as mock_get_info:
+        with patch('ollama_workbench.knowledge.repo_docs.get_file_info') as mock_get_info:
             mock_get_info.return_value = {
                 'Full Path': py_file,
                 'Extension': '.py',
@@ -697,8 +697,8 @@ class TestProcessFileWithUpdates(TestCase):
         """Clean up"""
         shutil.rmtree(self.temp_dir)
     
-    @patch('repo_docs.generate_documentation_stream')
-    @patch('repo_docs.run_pylint')
+    @patch('ollama_workbench.knowledge.repo_docs.generate_documentation_stream')
+    @patch('ollama_workbench.knowledge.repo_docs.run_pylint')
     def test_process_file_with_updates_success(self, mock_pylint, mock_generate):
         """Test successful file processing"""
         mock_generate.return_value = ["Generated ", "documentation"]
@@ -737,8 +737,8 @@ class TestProcessFileWithUpdates(TestCase):
 class TestMainFunction(TestCase):
     """Test main Streamlit application function"""
     
-    @patch('repo_docs.load_model_settings')
-    @patch('repo_docs.load_api_keys')
+    @patch('ollama_workbench.knowledge.repo_docs.load_model_settings')
+    @patch('ollama_workbench.knowledge.repo_docs.load_api_keys')
     @patch('streamlit.title')
     @patch('streamlit.write')
     @patch('streamlit.columns')
@@ -768,7 +768,7 @@ class TestMainFunction(TestCase):
         mock_sidebar.__enter__ = Mock(return_value=mock_sidebar)
         mock_sidebar.__exit__ = Mock(return_value=None)
         
-        with patch('repo_docs.get_available_models', return_value=['mistral:instruct']):
+        with patch('ollama_workbench.knowledge.repo_docs.get_available_models', return_value=['mistral:instruct']):
             main()
         
         # Verify UI components were created
