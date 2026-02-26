@@ -120,15 +120,16 @@ except ImportError:
 # Global variable to store the port number
 ollama_port = None 
 
-# Create a native messaging host manifest 
-NATIVE_HOST_MANIFEST = "native_host_manifest.json" 
-with open(NATIVE_HOST_MANIFEST, "w") as f:
-    json.dump({
-        "name": "ollama_workbench_host",
-        "description": "Native messaging host for Ollama Workbench",
-        "path": os.path.abspath(__file__), 
-        "type": "stdio"
-    }, f, indent=4)
+# Create a native messaging host manifest (only if it doesn't already exist)
+NATIVE_HOST_MANIFEST = "native_host_manifest.json"
+if not os.path.exists(NATIVE_HOST_MANIFEST):
+    with open(NATIVE_HOST_MANIFEST, "w") as f:
+        json.dump({
+            "name": "ollama_workbench_host",
+            "description": "Native messaging host for Ollama Workbench",
+            "path": os.path.abspath(__file__),
+            "type": "stdio"
+        }, f, indent=4)
 
 # Apply modern styling from the styles module
 colors, theme = apply_styles()
@@ -239,8 +240,6 @@ def create_sidebar():
         # Define the sub navigation menu based on the selected main menu
         if main_menu == "Chat":
             st.session_state.selected_test = "Chat"
-        elif main_menu == "Multimodal Chat":
-            st.session_state.selected_test = "Multimodal Chat"
         elif main_menu == "Multi-Model Chat":
             st.session_state.selected_test = "Multi-Model Chat"
         elif main_menu == "Voice Chat":
@@ -293,16 +292,8 @@ def main_content():
             st.warning("Voice chat features are not available. Please install the required dependencies:")
             st.code("pip install SpeechRecognition pyaudio gtts pygame", language="bash")
             st.info("Once installed, restart the application to use voice features.")
-            st.info("CHECKPOINT: Voice interface dependencies missing, showing installation instructions")
-            # Provide detailed logging to help with troubleshooting
-            st.markdown("### Detailed Error Information")
             st.info("The application is missing the 'speech_recognition' module which is required for voice functionality.")
             st.info("This does not affect other features of the Ollama Workbench.")
-            st.info("You can continue to use all other features, including the multimodal chat functionality.")
-            st.success("The multimodal chat functionality has been integrated into the main Chat interface.")
-            st.info("Click on the camera icon (📷) in the chat interface to upload images.")
-            st.info("The application will automatically detect if your selected model supports vision capabilities.")
-            st.info("CHECKPOINT: Providing detailed instructions for multimodal chat usage")
     elif st.session_state.selected_test == "Tool Playground":
         tool_playground()
     elif st.session_state.selected_test == "Structured Output":
@@ -361,10 +352,6 @@ def main_content():
         contextual_response_test()
     elif st.session_state.selected_test == "Vision":
         vision_comparison_test()
-    elif st.session_state.selected_test == "Tool Playground":
-        tool_playground()
-    elif st.session_state.selected_test == "Structured Output":
-        structured_output_ui()
     elif st.session_state.selected_test == "Model Capabilities":
         model_capabilities_ui()
     elif st.session_state.selected_test == "Test Visualization":
@@ -373,8 +360,14 @@ def main_content():
         enhanced_rag_interface()
     elif st.session_state.selected_test == "Collaborative Workspace":
         def model_callback(prompt):
-            # Get the currently selected model
-            model = st.session_state.get("selected_model", "llama3")
+            # Get the currently selected model with dynamic fallback
+            try:
+                from ollama_utils import get_dynamic_model_default
+                dynamic_default = get_dynamic_model_default()
+                model = st.session_state.get("selected_model", dynamic_default)
+            except Exception:
+                model = st.session_state.get("selected_model", None)
+            
             # Get provider (default to Ollama)
             provider = st.session_state.get("selected_provider", "ollama")
             # Use the model to generate a response
@@ -407,12 +400,6 @@ def get_prompts():
         "voice": get_voice_prompt(),
         "identity": get_identity_prompt()
     })
-
-@app.route('/openai-key')
-def get_openai_key():
-    """Returns the OpenAI API key."""
-    api_keys = load_api_keys()
-    return jsonify({"openai_api_key": api_keys.get("openai_api_key")})
 
 @app.route('/identifier')
 def get_identifier():

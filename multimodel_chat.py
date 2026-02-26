@@ -8,7 +8,8 @@ import re
 import ollama
 from ollama_utils import (
     get_available_models, get_all_models, load_api_keys, get_token_embeddings, 
-    get_ollama_client, call_ollama_endpoint
+    get_ollama_client, call_ollama_endpoint, get_dynamic_model_default, 
+    validate_model_exists, get_available_models_with_fallback
 )
 from openai_utils import call_openai_api, OPENAI_MODELS
 from groq_utils import get_groq_client, call_groq_api, GROQ_MODELS
@@ -54,6 +55,18 @@ class MultiModelChat:
             
         if "selected_models" not in st.session_state:
             st.session_state.selected_models = []
+        
+        # Ensure selected_models contains only valid models
+        if st.session_state.selected_models:
+            try:
+                available_models = get_all_models()
+                valid_models = [model for model in st.session_state.selected_models if model in available_models]
+                if len(valid_models) != len(st.session_state.selected_models):
+                    logger.info(f"Filtered selected_models from {len(st.session_state.selected_models)} to {len(valid_models)} valid models")
+                    st.session_state.selected_models = valid_models
+            except Exception as e:
+                logger.error(f"Error validating selected_models: {e}")
+                st.session_state.selected_models = []
             
         if "comparison_mode" not in st.session_state:
             st.session_state.comparison_mode = "side-by-side"  # Options: "side-by-side", "tabbed"
@@ -64,11 +77,11 @@ class MultiModelChat:
         if "shared_context" not in st.session_state:
             st.session_state.shared_context = True
             
-        # Ensure total_tokens is a dictionary
-        if "total_tokens" not in st.session_state:
-            st.session_state.total_tokens = {}
-        elif not isinstance(st.session_state.total_tokens, dict):
-            st.session_state.total_tokens = {}
+        # Ensure multimodel_total_tokens is a dictionary
+        if "multimodel_total_tokens" not in st.session_state:
+            st.session_state.multimodel_total_tokens = {}
+        elif not isinstance(st.session_state.multimodel_total_tokens, dict):
+            st.session_state.multimodel_total_tokens = {}
         
         if "api_keys" not in st.session_state:
             st.session_state.api_keys = load_api_keys()
@@ -77,14 +90,31 @@ class MultiModelChat:
             st.session_state.response_comparisons = []
     
     def load_settings(self):
-        """Load saved settings from file."""
+        """Load saved settings from file with model validation."""
         if os.path.exists(SETTINGS_FILE):
             try:
                 with open(SETTINGS_FILE, "r") as f:
                     settings = json.load(f)
+                    
+                    # Get available models for validation
+                    try:
+                        available_models = get_all_models()
+                    except Exception:
+                        available_models = []
+                    
                     for key, value in settings.items():
                         if value != "None":  # Only set non-None values
-                            st.session_state[key] = value
+                            if key == "selected_models" and isinstance(value, list):
+                                # Validate selected models exist
+                                valid_models = [model for model in value if model in available_models]
+                                if valid_models:
+                                    st.session_state[key] = valid_models
+                                    logger.info(f"Loaded {len(valid_models)} valid models from {len(value)} saved models")
+                                else:
+                                    logger.warning(f"No valid models found in saved settings, will use dynamic default")
+                            else:
+                                st.session_state[key] = value
+                                
                 logger.info(f"Multi-model chat settings loaded: {settings}")
             except Exception as e:
                 logger.error(f"Error loading multi-model chat settings: {str(e)}")
@@ -143,18 +173,39 @@ class MultiModelChat:
         """Create the model selection UI."""
         st.sidebar.subheader("🤖 Model Selection")
         
-        # Ensure total_tokens is a dictionary
-        if not isinstance(st.session_state.total_tokens, dict):
-            st.session_state.total_tokens = {}
+        # Ensure multimodel_total_tokens is a dictionary
+        if not isinstance(st.session_state.multimodel_total_tokens, dict):
+            st.session_state.multimodel_total_tokens = {}
             
-        # Get all available models
-        available_models = get_all_models()
+        # Get all available models with fallback
+        try:
+            available_models = get_all_models()
+            # Check if we got any real models
+            if not available_models:
+                available_models = ["No models available - Please install Ollama models first"]
+                st.sidebar.error("No models found. Please install Ollama models.")
+        except Exception as e:
+            available_models = ["Error loading models - Check Ollama installation"]
+            st.sidebar.error(f"Error loading models: {e}")
+            logger.error(f"Error in model_selector: {e}")
+        
+        # Filter out invalid models from session state
+        valid_selected_models = [
+            model for model in st.session_state.selected_models 
+            if model in available_models
+        ]
+        
+        # If no valid models and models are available, select first available as default
+        if not valid_selected_models and available_models:
+            # Check if available_models contains placeholder messages
+            if not any("No models available" in str(model) or "Error loading" in str(model) for model in available_models):
+                valid_selected_models = [available_models[0]]  # Select first available model
         
         # Allow selecting multiple models
         selected_models = st.sidebar.multiselect(
             "Select Models for Comparison",
             options=available_models,
-            default=st.session_state.selected_models[:2] if len(st.session_state.selected_models) > 0 else [],
+            default=valid_selected_models,
             help="Select up to 4 models to compare side by side"
         )
         
@@ -177,8 +228,8 @@ class MultiModelChat:
                 }
             
             # Initialize token counter if needed
-            if model not in st.session_state.total_tokens:
-                st.session_state.total_tokens[model] = 0
+            if model not in st.session_state.multimodel_total_tokens:
+                st.session_state.multimodel_total_tokens[model] = 0
         
         # Model options
         st.sidebar.subheader("⚙️ Configuration")
@@ -251,7 +302,7 @@ class MultiModelChat:
                     key=f"frequency_{model}"
                 )
                 
-                st.info(f"Total tokens used: {st.session_state.total_tokens.get(model, 0)}")
+                st.info(f"Total tokens used: {st.session_state.multimodel_total_tokens.get(model, 0)}")
     
     def create_model_prompt(self, model, user_input):
         """Create a prompt for the specified model."""
@@ -340,7 +391,7 @@ Assistant: Let me think about this thoughtfully.
         
         # Count tokens in the prompt
         token_count = self.count_tokens(final_prompt)
-        st.session_state.total_tokens[model] = st.session_state.total_tokens.get(model, 0) + token_count
+        st.session_state.multimodel_total_tokens[model] = st.session_state.multimodel_total_tokens.get(model, 0) + token_count
         
         return final_prompt
 
@@ -605,7 +656,7 @@ Assistant: Let me think about this thoughtfully.
                         # Show token usage
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.caption(f"Tokens: {st.session_state.total_tokens.get(model, 0)}")
+                            st.caption(f"Tokens: {st.session_state.multimodel_total_tokens.get(model, 0)}")
                         with col2:
                             if st.button("🔊 Speak", key=f"speak_{model}"):
                                 try:
@@ -635,7 +686,7 @@ Assistant: Let me think about this thoughtfully.
                         # Show token usage and TTS button
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.caption(f"Tokens: {st.session_state.total_tokens.get(model, 0)}")
+                            st.caption(f"Tokens: {st.session_state.multimodel_total_tokens.get(model, 0)}")
                         with col2:
                             if st.button("🔊 Speak", key=f"speak_tab_{model}"):
                                 try:
@@ -648,8 +699,31 @@ Assistant: Let me think about this thoughtfully.
         """Main interface for the multi-model chat."""
         # Show sidebar configuration
         selected_models = self.model_selector()
+        
+        # Check if we have any valid models available
+        try:
+            available_models = get_all_models()
+            if not available_models or any("No models available" in str(model) or "Error loading" in str(model) for model in available_models):
+                st.error("❌ No models available. Please install Ollama models first.")
+                st.info("""
+                To install models:
+                1. Make sure Ollama is running
+                2. Install a model: `ollama pull llama3.2`
+                3. Refresh this page
+                """)
+                return
+        except Exception as e:
+            st.error(f"❌ Error loading models: {e}")
+            return
+        
         if selected_models:
-            self.model_settings_ui()
+            # Filter out placeholder messages
+            valid_models = [model for model in selected_models if not ("No models available" in str(model) or "Error loading" in str(model))]
+            if valid_models:
+                self.model_settings_ui()
+            else:
+                st.warning("Please select at least one valid model to begin.")
+                return
         else:
             st.warning("Please select at least one model to begin.")
             return
@@ -708,7 +782,7 @@ Assistant: Let me think about this thoughtfully.
                     
                     # Update token count for response
                     token_count = self.count_tokens(response)
-                    st.session_state.total_tokens[model] = st.session_state.total_tokens.get(model, 0) + token_count
+                    st.session_state.multimodel_total_tokens[model] = st.session_state.multimodel_total_tokens.get(model, 0) + token_count
                     
                     st.write(f"✓ Response generated in {generation_time:.2f} seconds")
                 

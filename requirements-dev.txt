@@ -1,0 +1,10 @@
+# Development and testing dependencies
+# Install with: pip install -r requirements-dev.txt
+-r requirements.txt
+
+pytest>=8.3.2
+pytest-html>=4.1.1
+flake8==7.1.1
+ruff==0.6.3
+radon==6.0.1
+Pygments==2.18.0

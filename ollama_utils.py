@@ -112,6 +112,7 @@ def save_api_keys(api_keys):
     """Saves API keys to the JSON file."""
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
+    os.chmod(API_KEYS_FILE, 0o600)
 
 def load_model_settings():
     """Loads model settings from the JSON file."""
@@ -2011,6 +2012,49 @@ def monitor_model_health(model_name, alert_thresholds=None):
             "status": "unknown",
             "error": str(e)
         }
+
+def get_dynamic_model_default():
+    """Get the first available model as a dynamic default, with fallbacks."""
+    try:
+        # Get all available models
+        all_models = get_all_models()
+        
+        if all_models:
+            # Return the first available model
+            default_model = all_models[0]
+            logger.info(f"Dynamic default model selected: {default_model}")
+            return default_model
+        else:
+            logger.warning("No models available - returning None")
+            return None
+    except Exception as e:
+        logger.error(f"Error getting dynamic default model: {e}")
+        return None
+
+def validate_model_exists(model_name):
+    """Check if a specific model exists in available models."""
+    if not model_name:
+        return False
+        
+    try:
+        all_models = get_all_models()
+        exists = model_name in all_models
+        logger.info(f"Model '{model_name}' {'exists' if exists else 'does not exist'}")
+        return exists
+    except Exception as e:
+        logger.error(f"Error validating model {model_name}: {e}")
+        return False
+
+def get_available_models_with_fallback():
+    """Get available models with fallback message if none available."""
+    try:
+        models = get_available_models()
+        if not models:
+            return ["No models available - Please install Ollama models first"]
+        return models
+    except Exception as e:
+        logger.error(f"Error getting models with fallback: {e}")
+        return ["Error loading models - Check Ollama installation"]
 
 def get_all_models():
     """Gets all available models, including Ollama, Groq, OpenAI, and Mistral with enhanced logging."""

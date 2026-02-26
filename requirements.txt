@@ -12,10 +12,8 @@ mistralai>=1.9.3
 
 # Streamlit Extensions
 streamlit-extras==0.4.7
-streamlit-flow==0.1.0
 streamlit-javascript==0.1.5
 streamlit-option-menu>=0.3.13
-streamlit-flow-component==1.2.9
 
 # Machine Learning & Data Science
 numpy>=1.26.4
@@ -31,7 +29,6 @@ spacy>=3.8.2
 # Language Model Frameworks
 langchain>=0.2.15
 langchain-community>=0.2.15
-autogen
 pyautogen==0.2.35
 
 # Observability & Monitoring
@@ -75,7 +72,6 @@ json-schema-for-humans
 
 # Web Scraping & Search
 beautifulsoup4==4.12.3
-bs4==0.0.2
 duckduckgo-search
 google-search-results==2.4.2
 google-api-python-client==2.143.0
@@ -97,16 +93,7 @@ tqdm==4.66.5
 
 # Visualization
 plotly>=5.24.0
-plotly-express>=0.4.0
 matplotlib==3.9.2
-
-# Development & Testing
-pytest>=8.3.2
-pytest-html>=4.1.1
-flake8==7.1.1
-ruff==0.6.3
-radon==6.0.1
-Pygments==2.18.0
 
 # Configuration & Environment
 python-dotenv>=1.0.1

@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+api_keys.json
+
+# Databases
+*.db
+
+# Logs
+*.log
+logs/
+
+# Sessions
+sessions/
+
+# Backup files
+*.bak
+*.bak.*
+
+# Generated / transient artifacts
+native_host_manifest.json
+test_report.json
+test_run.log
+modernization_validation_report.json
+MODERNIZATION_STATUS.md

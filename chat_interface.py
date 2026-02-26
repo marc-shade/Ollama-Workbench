@@ -1,5 +1,3 @@
-# chat_interface.py
-
 import streamlit as st
 import os
 import json
@@ -17,13 +15,22 @@ from streamlit_extras.bottom_container import bottom
 import sqlite3
 import sqlite3 as sqlite
 
-# Import utilities
+# Import ollama utilities
 from ollama_utils import (
     get_available_models, get_all_models, load_api_keys, get_token_embeddings,
-    call_ollama_endpoint
+    call_ollama_endpoint, get_dynamic_model_default, validate_model_exists
 )
+
+# Import session utilities for consistent session handling
+from session_utils import (
+    initialize_session_state, load_settings, save_settings,
+    save_chat_session, load_chat_session, synchronize_model_variables,
+    get_agent_prompt, get_rag_context, safe_rerun, log_message
+)
+
+# chat_interface.py
 from openai_utils import call_openai_api, OPENAI_MODELS
-from groq_utils import get_groq_client, call_groq_api, GROQ_MODELS
+from groq_utils import call_groq_api, GROQ_MODELS
 from mistral_utils import call_mistral_api, MISTRAL_MODELS
 from prompts import (
     get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
@@ -498,8 +505,7 @@ def instance_adaptive_cot(prompt: str, model: str, api_keys: dict) -> str:
         return response
     elif model.startswith("groq"):
         logger.info(f"CHECKPOINT: Calling Groq API with model {model}")
-        client = get_groq_client(api_keys.get("groq_api_key"))
-        response = call_groq_api(client=client, model=model.replace("groq/", ""), messages=[{"role": "user", "content": full_prompt}])
+        response = call_groq_api(model=model.replace("groq/", ""), messages=[{"role": "user", "content": full_prompt}], groq_api_key=api_keys.get("groq_api_key"))
         return response
     elif model.startswith("mistral"):
         logger.info(f"CHECKPOINT: Calling Mistral API with model {model}")
@@ -513,7 +519,7 @@ def instance_adaptive_cot(prompt: str, model: str, api_keys: dict) -> str:
 def construct_agent_prompt(agent_type, metacognitive_type, voice_type, selected_prompt=None):
     """Constructs the agent prompt based on selected types and chat mode."""
     prompt_parts = []
-    
+
     # Add agent type prompt if selected
     if agent_type != "None":
         agent_prompts = get_agent_prompt()
@@ -522,23 +528,23 @@ def construct_agent_prompt(agent_type, metacognitive_type, voice_type, selected_
                 prompt_parts.append(agent_prompts[agent_type]["prompt"])
             else:
                 prompt_parts.append(agent_prompts[agent_type])
-    
+
     # Add metacognitive type prompt if selected
     if metacognitive_type != "None":
         metacog_prompts = get_metacognitive_prompt()
         if metacognitive_type in metacog_prompts:
             prompt_parts.append(metacog_prompts[metacognitive_type])
-    
+
     # Add voice type prompt if selected
     if voice_type != "None":
         voice_prompts = get_voice_prompt()
         if voice_type in voice_prompts:
             prompt_parts.append(voice_prompts[voice_type])
-            
+
     # Add selected prompt if provided
     if selected_prompt:
         prompt_parts.append(selected_prompt)
-    
+
     # Return combined prompt
     return "\n\n".join(prompt_parts) if prompt_parts else ""
 
@@ -546,19 +552,18 @@ def advanced_thinking_step(prompt: str, model: str, api_keys: dict, step: str) -
     """Processes a single thinking step and returns the result."""
     try:
         logger.info(f"CHECKPOINT: Starting thinking step: {step}")
-        
+
         # Construct a thinking prompt that includes the step
         thinking_prompt = f"{prompt}\n\n**{step}**\n\nLet me think about this carefully."
         logger.info(f"CHECKPOINT: Constructed thinking prompt for step: {step}")
-        
+
         # Call appropriate API based on model
         if model.startswith("gpt"):
             logger.info(f"CHECKPOINT: Calling OpenAI API with model {model}")
             response = call_openai_api(prompt=thinking_prompt, model=model, openai_api_key=api_keys.get("openai_api_key"))
         elif model.startswith("groq"):
             logger.info(f"CHECKPOINT: Calling Groq API with model {model}")
-            client = get_groq_client(api_keys.get("groq_api_key"))
-            response = call_groq_api(client=client, model=model.replace("groq/", ""), messages=[{"role": "user", "content": thinking_prompt}])
+            response = call_groq_api(model=model.replace("groq/", ""), messages=[{"role": "user", "content": thinking_prompt}], groq_api_key=api_keys.get("groq_api_key"))
         elif model.startswith("mistral"):
             logger.info(f"CHECKPOINT: Calling Mistral API with model {model}")
             response = call_mistral_api(model=model.replace("mistral/", ""), prompt=thinking_prompt, mistral_api_key=api_keys.get("mistral_api_key"))
@@ -587,10 +592,12 @@ def load_settings():
                     st.session_state[key] = value
                     logger.debug(f"Loaded setting: {key}={value}")
             
-            # Ensure basic settings exist
+            # Ensure basic settings exist with dynamic default
             if "selected_model" not in st.session_state or not st.session_state.selected_model:
-                logger.warning("No model selected in settings, using default")
-                st.session_state.selected_model = "llama2"
+                logger.warning("No model selected in settings, using dynamic default")
+                dynamic_default = get_dynamic_model_default()
+                st.session_state.selected_model = dynamic_default
+                logger.info(f"Set selected_model to dynamic default: {dynamic_default}")
             
             # Handle current_model and selected_model sync
             if "current_model" in settings and settings["current_model"] is not None:
@@ -634,9 +641,10 @@ def save_settings():
         # Make sure we have a valid model
         if not st.session_state.get("selected_model"):
             logger.warning("No selected_model in session state!")
-            # Try to get model from model_selector or current_model
+            # Try to get model from model_selector or current_model or dynamic default
+            dynamic_default = get_dynamic_model_default()
             selected_model = st.session_state.get("model_selector", 
-                                             st.session_state.get("current_model", "llama2"))
+                                             st.session_state.get("current_model", dynamic_default))
             logger.info(f"Using fallback model: {selected_model}")
             st.session_state.selected_model = selected_model
             st.session_state.current_model = selected_model
@@ -755,7 +763,9 @@ def chat_interface():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "selected_model" not in st.session_state:
-        st.session_state.selected_model = "llama2"
+        dynamic_default = get_dynamic_model_default()
+        st.session_state.selected_model = dynamic_default
+        logger.info(f"Initialized selected_model to dynamic default: {dynamic_default}")
     
     # Sync with current_model for compatibility with other interfaces
     if "current_model" not in st.session_state:
@@ -797,11 +807,37 @@ def chat_interface():
             logger.info("CHECKPOINT: Returning empty list due to error in loading model descriptions")
             return []
         
-        # Find index of current model
+        # Validate and find index of current model
         model_index = 0
-        if st.session_state.selected_model in available_models:
+        if st.session_state.selected_model and st.session_state.selected_model in available_models:
             model_index = available_models.index(st.session_state.selected_model)
+        else:
+            # Invalid model selected, use dynamic default
+            dynamic_default = get_dynamic_model_default()
+            if dynamic_default and dynamic_default in available_models:
+                st.session_state.selected_model = dynamic_default
+                st.session_state.current_model = dynamic_default
+                model_index = available_models.index(dynamic_default)
+                logger.info(f"Replaced invalid model with dynamic default: {dynamic_default}")
+            elif available_models:
+                # Use first available model as last resort
+                st.session_state.selected_model = available_models[0]
+                st.session_state.current_model = available_models[0]
+                model_index = 0
+                logger.info(f"Used first available model as fallback: {available_models[0]}")
             
+        # Check if we have any models available
+        if not available_models or not st.session_state.selected_model:
+            st.sidebar.error("❌ No models available")
+            st.sidebar.info("""
+            To use the chat interface:
+            1. Make sure Ollama is running
+            2. Install a model: `ollama pull llama3.2`
+            3. Refresh this page
+            """)
+            st.error("❌ No models available. Please install Ollama models first.")
+            return
+        
         # Now create the sidebar with all UI elements
         with st.sidebar:
             # 🤖 Chat Agent Settings
@@ -1228,7 +1264,8 @@ def chat_interface():
                 
                 # Combine everything into the full prompt
                 # Get the model name to include in prompt
-                model_name = st.session_state.get("selected_model", st.session_state.get("current_model", "llama2"))
+                dynamic_default = get_dynamic_model_default()
+                model_name = st.session_state.get("selected_model", st.session_state.get("current_model", dynamic_default))
                 
                 prompt = f"""
                 {system_prompt}
@@ -1300,8 +1337,9 @@ def chat_interface():
                             
                         else:
                             # Ollama model - streaming version
-                        # Use the model name from selected_model, falling back to current_model
-                            model_to_use = st.session_state.get("selected_model", st.session_state.get("current_model", "llama2"))
+                        # Use the model name from selected_model, falling back to current_model or dynamic default
+                            dynamic_default = get_dynamic_model_default()
+                            model_to_use = st.session_state.get("selected_model", st.session_state.get("current_model", dynamic_default))
                             logger.info(f"Using model: {model_to_use}")
                             
                             # Check if we have an image for vision models
