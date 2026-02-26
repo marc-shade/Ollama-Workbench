@@ -10,9 +10,9 @@ from ollama_workbench.providers.ollama_utils import (
     get_available_models, get_all_models, load_api_keys, get_token_embeddings,
     get_dynamic_model_default, validate_model_exists, get_available_models_with_fallback
 )
-from ollama_workbench.providers.openai_utils import OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import GROQ_MODELS
-from ollama_workbench.providers.mistral_utils import MISTRAL_MODELS
+from ollama_workbench.providers.openai_utils import OPENAI_MODELS, get_openai_models
+from ollama_workbench.providers.groq_utils import GROQ_MODELS, get_groq_models
+from ollama_workbench.providers.mistral_utils import MISTRAL_MODELS, get_mistral_models
 from ollama_workbench.ui.prompts import (
     get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 )
@@ -266,7 +266,7 @@ class MultiModelChat:
                     key=f"temp_{model}"
                 )
                 
-                max_tokens_limit = 8000 if model in GROQ_MODELS or model in MISTRAL_MODELS else 16000
+                max_tokens_limit = 8000 if model in get_groq_models() or model in get_mistral_models() else 16000
                 st.session_state.model_settings[model]["max_tokens"] = st.slider(
                     "Max Tokens",
                     min_value=1000,
@@ -389,11 +389,11 @@ Assistant: Let me think about this thoughtfully.
 
     def _resolve_provider_name(self, model: str) -> str:
         """Determine which provider owns the given model name."""
-        if model in OPENAI_MODELS:
+        if model in get_openai_models():
             return "openai"
-        elif model in GROQ_MODELS:
+        elif model in get_groq_models():
             return "groq"
-        elif model in MISTRAL_MODELS:
+        elif model in get_mistral_models():
             return "mistral"
         else:
             return "ollama"

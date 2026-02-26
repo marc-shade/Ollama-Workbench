@@ -190,11 +190,11 @@ def multimodal_chat_interface():
             
             elif selected_provider == "OpenAI":
                 # Import OpenAI models
-                from ollama_workbench.providers.openai_utils import OPENAI_MODELS
-                
+                from ollama_workbench.providers.openai_utils import get_openai_models
+
                 # Filter to only vision-capable models
                 vision_models = ["gpt-4-vision-preview", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
-                model_options = [model for model in OPENAI_MODELS if model in vision_models]
+                model_options = [model for model in get_openai_models() if model in vision_models]
                 
                 if not model_options:
                     st.warning("No OpenAI vision models available.")
@@ -207,11 +207,11 @@ def multimodal_chat_interface():
             
             elif selected_provider == "Groq":
                 # Import Groq models
-                from ollama_workbench.providers.groq_utils import GROQ_MODELS
-                
+                from ollama_workbench.providers.groq_utils import get_groq_models
+
                 # Currently, Groq doesn't support vision models, but we'll prepare for when they do
                 st.warning("Groq currently doesn't support multimodal/vision models. Please use another provider for image processing.")
-                model_options = GROQ_MODELS
+                model_options = get_groq_models()
                 
                 # API key input
                 groq_api_key = st.text_input("Groq API Key:", type="password", 
@@ -221,15 +221,15 @@ def multimodal_chat_interface():
                 
             elif selected_provider == "Mistral":
                 # Import Mistral models
-                from ollama_workbench.providers.mistral_utils import MISTRAL_MODELS
-                
+                from ollama_workbench.providers.mistral_utils import get_mistral_models
+
                 # Filter to vision-capable models when available
                 # For now, just use all models but warn
                 st.warning("Only Mistral Large 2 (and newer) supports vision. Other models will not process images.")
-                
+
                 # Model options with vision label
                 model_options = []
-                for model in MISTRAL_MODELS:
+                for model in get_mistral_models():
                     if "large-2" in model.lower():
                         model_options.append(f"{model} (vision)")
                     else:

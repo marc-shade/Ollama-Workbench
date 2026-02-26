@@ -1,0 +1,14 @@
+# Ruff configuration for Ollama Workbench
+target-version = "py312"
+line-length = 120
+
+[lint]
+# E: pycodestyle errors, F: pyflakes, I: isort
+select = ["E", "F", "I"]
+# E501: line too long (handled by formatter), F401: unused import (too many false positives with star imports),
+# F403/F405: star import issues (used intentionally), E402: module level import not at top (conditional imports)
+ignore = ["E501", "F401", "F403", "F405", "E402"]
+
+[lint.per-file-ignores]
+"tests/*" = ["E", "F"]  # Relaxed for test files
+"scripts/*" = ["E", "F"]  # Relaxed for scripts

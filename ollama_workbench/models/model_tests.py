@@ -9,7 +9,7 @@ import io # Added import
 import asyncio
 from ollama import AsyncClient
 from typing import Callable
-from ollama_workbench.providers.groq_utils import load_api_keys, GROQ_MODELS
+from ollama_workbench.providers.groq_utils import load_api_keys, GROQ_MODELS, get_groq_models
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":
@@ -27,7 +27,7 @@ def performance_test(models, prompt, temperature=0.7, max_tokens=1000, presence_
                 result = call_openai_api(model, [{"role": "user", "content": prompt}], temperature, max_tokens, api_keys.get("openai_api_key"))
                 response_text = result.get('choices')[0].get('text') if result.get('choices') else None
                 results[model] = (response_text, None, None, None)  # Adjust as necessary
-            elif model in GROQ_MODELS:
+            elif model in get_groq_models():
                 result = call_groq_api(model, prompt, temperature, max_tokens, api_keys.get("groq_api_key"))
                 response_text = result.get('choices')[0].get('text') if result.get('choices') else None
                 results[model] = (response_text, None, None, None)  # Adjust as necessary

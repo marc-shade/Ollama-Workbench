@@ -55,9 +55,9 @@ class GroqProvider(BaseProvider):
             return ProviderResponse(error=str(e), latency=latency)
 
     def get_models(self) -> List[str]:
-        """Return the static list of known Groq models."""
-        from .groq_utils import GROQ_MODELS
-        return list(GROQ_MODELS)
+        """Return available Groq models (fetched from API with fallback)."""
+        from .groq_utils import get_groq_models
+        return get_groq_models()
 
     def is_available(self) -> bool:
         """Check whether a Groq API key is configured."""

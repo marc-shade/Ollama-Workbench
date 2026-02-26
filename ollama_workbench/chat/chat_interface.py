@@ -29,9 +29,9 @@ from ollama_workbench.core.session_utils import (
 )
 
 # chat_interface.py
-from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS
-from ollama_workbench.providers.mistral_utils import call_mistral_api, MISTRAL_MODELS
+from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS, get_openai_models
+from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
+from ollama_workbench.providers.mistral_utils import call_mistral_api, MISTRAL_MODELS, get_mistral_models
 from ollama_workbench.ui.prompts import (
     get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 )

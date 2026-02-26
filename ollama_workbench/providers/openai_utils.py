@@ -1,8 +1,15 @@
 # openai_utils.py
+import logging
+import re
 import streamlit as st
 from openai import OpenAI
+from typing import List
 from .ollama_utils import load_api_keys, save_api_keys
 
+logger = logging.getLogger(__name__)
+
+# Hardcoded fallback list -- kept for backward compatibility and as a safety net
+# when the API is unreachable or no API key is configured.
 OPENAI_MODELS = [
     # GPT-4.1 models (2025)
     "gpt-4.1",
@@ -37,6 +44,52 @@ OPENAI_MODELS = [
     "o3-mini",
     "o4-mini",
 ]
+
+# Regex pattern for chat-capable OpenAI models
+_OPENAI_CHAT_MODEL_RE = re.compile(
+    r"^(gpt-|o1-|o3-|o4-|chatgpt-)"
+)
+
+
+def _fetch_openai_models_cached(api_key: str) -> List[str]:
+    """Fetch models from the OpenAI API. Cached for 5 minutes via st.cache_data.
+
+    The api_key parameter doubles as the cache key so different keys get
+    separate cache entries.
+    """
+    client = OpenAI(api_key=api_key)
+    models_response = client.models.list()
+    chat_models = sorted(
+        m.id for m in models_response.data
+        if _OPENAI_CHAT_MODEL_RE.match(m.id)
+    )
+    return chat_models
+
+
+# Apply Streamlit caching if available (degrades gracefully in non-Streamlit contexts)
+try:
+    _fetch_openai_models_cached = st.cache_data(ttl=300)(_fetch_openai_models_cached)
+except Exception:
+    pass
+
+
+def get_openai_models() -> List[str]:
+    """Return available OpenAI chat models.
+
+    Tries to fetch the live model list from the API (cached 5 min).
+    Falls back to the hardcoded ``OPENAI_MODELS`` list if no API key
+    is configured or the API call fails.
+    """
+    try:
+        api_key = load_api_keys().get("openai_api_key")
+        if not api_key:
+            return list(OPENAI_MODELS)
+        models = _fetch_openai_models_cached(api_key)
+        if models:
+            return models
+    except Exception as exc:
+        logger.warning("Failed to fetch OpenAI models from API, using fallback list: %s", exc)
+    return list(OPENAI_MODELS)
 
 
 def set_openai_api_key(api_key):

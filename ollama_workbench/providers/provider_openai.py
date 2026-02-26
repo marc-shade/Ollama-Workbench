@@ -60,9 +60,9 @@ class OpenAIProvider(BaseProvider):
             return ProviderResponse(error=str(e), latency=latency)
 
     def get_models(self) -> List[str]:
-        """Return the static list of known OpenAI models."""
-        from .openai_utils import OPENAI_MODELS
-        return list(OPENAI_MODELS)
+        """Return available OpenAI models (fetched from API with fallback)."""
+        from .openai_utils import get_openai_models
+        return get_openai_models()
 
     def is_available(self) -> bool:
         """Check whether an OpenAI API key is configured."""

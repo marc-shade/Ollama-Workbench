@@ -64,8 +64,8 @@ except ImportError as e:
 from ollama_workbench.providers.ollama_utils import get_available_models as get_ollama_models
 from ollama_workbench.providers.ollama_utils import load_api_keys
 from ollama_workbench.providers.ollama_utils import call_ollama_endpoint
-from ollama_workbench.providers.openai_utils import OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import GROQ_MODELS
+from ollama_workbench.providers.openai_utils import OPENAI_MODELS, get_openai_models
+from ollama_workbench.providers.groq_utils import GROQ_MODELS, get_groq_models
 
 # Settings file for model settings
 MODEL_SETTINGS_FILE = "model_settings.json"
@@ -109,7 +109,7 @@ class PDF(FPDF):
 @st.cache_data
 def get_available_models():
     ollama_models = get_ollama_models()
-    all_models = ollama_models + OPENAI_MODELS + GROQ_MODELS
+    all_models = ollama_models + get_openai_models() + get_groq_models()
     return all_models
 
 def generate_documentation_stream(file_content, task_type, model, temperature, max_tokens, repo_info=None):
@@ -276,11 +276,11 @@ INSTRUCTION: Use appropriate Markdown formatting to make the project summary vis
         return None
     api_keys = load_api_keys()
     
-    if model in OPENAI_MODELS:
+    if model in get_openai_models():
         from ollama_workbench.providers.openai_utils import call_openai_api
         response = call_openai_api(model, [{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_keys.get('openai_api_key'))
         yield response
-    elif model in GROQ_MODELS:
+    elif model in get_groq_models():
         from ollama_workbench.providers.groq_utils import call_groq_api
         response = call_groq_api(model, prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_keys.get('groq_api_key'))
         yield response
@@ -878,7 +878,7 @@ def main():
             model_settings["model"] = st.selectbox("Select Model", available_models, index=available_models.index(model_settings["model"]) if model_settings["model"] in available_models else 0)
 
             # API Key input (for OpenAI and Groq models)
-            if model_settings["model"] in OPENAI_MODELS or model_settings["model"] in GROQ_MODELS:
+            if model_settings["model"] in get_openai_models() or model_settings["model"] in get_groq_models():
                 model_settings["api_key"] = st.text_input("API Key", value=model_settings.get("api_key", ""), type="password")
 
             # Temperature slider

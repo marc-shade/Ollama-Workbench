@@ -12,8 +12,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Union, Tuple
 from ollama_workbench.providers.ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
-from ollama_workbench.providers.openai_utils import OPENAI_MODELS, call_openai_api
-from ollama_workbench.providers.groq_utils import GROQ_MODELS, call_groq_api
+from ollama_workbench.providers.openai_utils import OPENAI_MODELS, call_openai_api, get_openai_models
+from ollama_workbench.providers.groq_utils import GROQ_MODELS, call_groq_api, get_groq_models
 from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 
 logger = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ class Edge:
 def get_all_models() -> list:
     """Retrieves a list of all available models."""
     ollama_models = get_available_models()
-    all_models = ollama_models + OPENAI_MODELS + GROQ_MODELS
+    all_models = ollama_models + get_openai_models() + get_groq_models()
     return all_models
 
 def call_api_and_decode_response(api_function, *args, **kwargs) -> dict:
@@ -194,7 +194,7 @@ def generate_workflow(user_request: str, model: str) -> Tuple[List[Node], List[E
     api_keys = load_api_keys()
 
     try:
-        if model in OPENAI_MODELS:
+        if model in get_openai_models():
             response = call_openai_api(
                 model,
                 [{"role": "user", "content": prompt}],
@@ -204,7 +204,7 @@ def generate_workflow(user_request: str, model: str) -> Tuple[List[Node], List[E
             )
             # OpenAI models return the response directly, so we need to parse it
             workflow_data = parse_openai_response(response)
-        elif model in GROQ_MODELS:
+        elif model in get_groq_models():
             response = call_groq_api(
                 model,
                 prompt,
@@ -392,7 +392,7 @@ def handle_llm_node(node: Node, incoming_edges: List[Edge], process_node, api_ke
     prompt = node.data['prompt']
     complete_prompt = construct_prompt(node, prompt, input_text)
     
-    if node.data['model_name'] in OPENAI_MODELS:
+    if node.data['model_name'] in get_openai_models():
         response = call_openai_api(
             node.data['model_name'], 
             [{"role": "user", "content": complete_prompt}],
@@ -400,7 +400,7 @@ def handle_llm_node(node: Node, incoming_edges: List[Edge], process_node, api_ke
             max_tokens=node.data['max_tokens'],
             openai_api_key=api_keys.get("openai_api_key")
         )
-    elif node.data['model_name'] in GROQ_MODELS:
+    elif node.data['model_name'] in get_groq_models():
         response = call_groq_api(
             node.data['model_name'],
             complete_prompt,

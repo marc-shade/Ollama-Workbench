@@ -1,4 +1,6 @@
 # chroma_client.py
+# NOTE: This module is currently unused. ChromaDB integration is available
+# but not wired into any active feature.
 
 import os
 import chromadb

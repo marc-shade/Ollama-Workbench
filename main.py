@@ -177,11 +177,22 @@ def create_sidebar():
             unsafe_allow_html=True,
         )
 
+        # Build navigation options dynamically (Voice Chat only when deps available)
+        nav_options = ["Chat", "Multi-Model Chat"]
+        nav_icons = ["chat", "chat-square-text"]
+        if voice_interface_available:
+            nav_options.append("Voice Chat")
+            nav_icons.append("mic")
+        nav_options += ["Tool Playground", "Structured Output", "Enhanced RAG", "Collaborative Workspace"]
+        nav_icons += ["tools", "braces", "book", "pencil-square"]
+        nav_options += list(SIDEBAR_SECTIONS.keys())
+        nav_icons += ["gear", "folder", "tools", "clipboard-check", "question-circle"]
+
         # Define the main navigation menu with modern styling
         main_menu = option_menu(
             menu_title="",
-            options=["Chat", "Multi-Model Chat", "Voice Chat", "Tool Playground", "Structured Output", "Enhanced RAG", "Collaborative Workspace"] + list(SIDEBAR_SECTIONS.keys()),
-            icons=["chat", "chat-square-text", "mic", "tools", "braces", "book", "pencil-square", "gear", "folder", "tools", "clipboard-check", "question-circle"],
+            options=nav_options,
+            icons=nav_icons,
             menu_icon="cast",
             default_index=0,
             styles={

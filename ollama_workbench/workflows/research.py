@@ -13,8 +13,8 @@ from .agents import SearchManager, SearchAgent
 from ollama_workbench.knowledge.search_libraries import duckduckgo_search, google_search, serpapi_search, serper_search, bing_search
 from ollama_workbench.providers.ollama_utils import get_available_models
 from ollama_workbench.providers.ollama_utils import load_api_keys, save_api_keys
-from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS
+from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS, get_openai_models
+from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
 import sqlite3
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
@@ -166,7 +166,7 @@ def research_interface():
 
         # Model Settings in a collapsed section
         with st.expander("🤖 Model Settings", expanded=False):
-            available_models = get_available_models() + OPENAI_MODELS + GROQ_MODELS
+            available_models = get_available_models() + get_openai_models() + get_groq_models()
 
             # Load settings or defaults
             manager_model = research_model_settings.get("manager_model", available_models[0])

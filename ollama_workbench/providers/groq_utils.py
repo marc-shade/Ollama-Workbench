@@ -1,10 +1,15 @@
 # groq_utils.py
+import logging
 import streamlit as st
 from groq import Groq
 from typing import List, Dict
 from sentence_transformers import SentenceTransformer
 from .ollama_utils import load_api_keys, save_api_keys
 
+logger = logging.getLogger(__name__)
+
+# Hardcoded fallback list -- kept for backward compatibility and as a safety net
+# when the API is unreachable or no API key is configured.
 GROQ_MODELS = [
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
@@ -13,6 +18,47 @@ GROQ_MODELS = [
     "mixtral-8x7b-32768",
     "gemma2-9b-it",
 ]
+
+
+def _fetch_groq_models_cached(api_key: str) -> List[str]:
+    """Fetch models from the Groq API. Cached for 5 minutes via st.cache_data.
+
+    The api_key parameter doubles as the cache key so different keys get
+    separate cache entries.
+    """
+    client = Groq(api_key=api_key)
+    models_response = client.models.list()
+    active_models = sorted(
+        m.id for m in models_response.data
+        if getattr(m, "active", True)
+    )
+    return active_models
+
+
+# Apply Streamlit caching if available (degrades gracefully in non-Streamlit contexts)
+try:
+    _fetch_groq_models_cached = st.cache_data(ttl=300)(_fetch_groq_models_cached)
+except Exception:
+    pass
+
+
+def get_groq_models() -> List[str]:
+    """Return available Groq models.
+
+    Tries to fetch the live model list from the API (cached 5 min).
+    Falls back to the hardcoded ``GROQ_MODELS`` list if no API key
+    is configured or the API call fails.
+    """
+    try:
+        api_key = load_api_keys().get("groq_api_key")
+        if not api_key:
+            return list(GROQ_MODELS)
+        models = _fetch_groq_models_cached(api_key)
+        if models:
+            return models
+    except Exception as exc:
+        logger.warning("Failed to fetch Groq models from API, using fallback list: %s", exc)
+    return list(GROQ_MODELS)
 
 # Load the embedding model
 @st.cache_resource

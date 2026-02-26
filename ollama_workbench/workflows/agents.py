@@ -9,8 +9,8 @@ import re
 import spacy
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
-from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS
+from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS, get_openai_models
+from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
 
 # Load the spaCy language model
 nlp = spacy.load("en_core_web_sm")
@@ -79,9 +79,9 @@ class SearchAgent(Agent):
         """
 
         try:
-            if self.model in OPENAI_MODELS:
+            if self.model in get_openai_models():
                 response = call_openai_api(self.model, [{"role": "user", "content": prompt}], temperature=0.7, max_tokens=1000, openai_api_key=self.api_key)
-            elif self.model in GROQ_MODELS:
+            elif self.model in get_groq_models():
                 response = call_groq_api(self.model, prompt, temperature=0.7, max_tokens=1000, groq_api_key=self.api_key)
             else:
                 response = ollama.generate(model=self.model, prompt=prompt)
@@ -137,9 +137,9 @@ class SearchManager(Agent):
         """
 
         try:
-            if self.model in OPENAI_MODELS:
+            if self.model in get_openai_models():
                 response = call_openai_api(self.model, [{"role": "user", "content": agent_definition_prompt}], temperature=self.temperature, max_tokens=self.max_tokens, openai_api_key=self.api_keys.get("openai_api_key"))
-            elif self.model in GROQ_MODELS:
+            elif self.model in get_groq_models():
                 response = call_groq_api(self.model, agent_definition_prompt, temperature=self.temperature, max_tokens=self.max_tokens, groq_api_key=self.api_keys.get("groq_api_key"))
             else:
                 response = ollama.generate(
@@ -278,9 +278,9 @@ class SearchManager(Agent):
         """
         logging.info("Search Manager is generating the final report...")
         try:
-            if self.model in OPENAI_MODELS:
+            if self.model in get_openai_models():
                 final_report = call_openai_api(self.model, [{"role": "user", "content": final_report_prompt}], temperature=self.temperature, max_tokens=self.max_tokens, openai_api_key=self.api_keys.get("openai_api_key"))
-            elif self.model in GROQ_MODELS:
+            elif self.model in get_groq_models():
                 final_report = call_groq_api(self.model, final_report_prompt, temperature=self.temperature, max_tokens=self.max_tokens, groq_api_key=self.api_keys.get("groq_api_key"))
             else:
                 response = ollama.generate(

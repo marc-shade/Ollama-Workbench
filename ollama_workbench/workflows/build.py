@@ -21,7 +21,7 @@ import streamlit as st
 
 from ollama_workbench.providers.ollama_utils import call_ollama_endpoint, get_all_models, load_api_keys, save_api_keys
 from ollama_workbench.providers.openai_utils import call_openai_api
-from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS
+from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
 from ollama_workbench.providers.external_providers import get_available_groq_models
 
 API_KEYS_FILE = "api_keys.json"
@@ -161,7 +161,7 @@ def manager_agent_task(
                 response_format={"type": "json_object"}
             )
             response_content = response.choices[0].message.content
-        elif model in GROQ_MODELS:
+        elif model in get_groq_models():
             api_keys = load_api_keys()
             response_content = call_groq_api(
                 model,
@@ -281,7 +281,7 @@ def coding_agent_task(
                 response_format={"type": "json_object"}
             )
             response_content = response.choices[0].message.content
-        elif model in GROQ_MODELS:
+        elif model in get_groq_models():
             api_keys = load_api_keys()
             response_content = call_groq_api(
                 model,
@@ -679,7 +679,7 @@ def build_interface() -> None:
     all_models = get_all_models()
     available_groq_models = get_available_groq_models(st.session_state.api_keys)
     all_models = [
-        model for model in all_models if model not in GROQ_MODELS or model in available_groq_models
+        model for model in all_models if model not in get_groq_models() or model in available_groq_models
     ]
 
     progress_bar = st.progress(0)

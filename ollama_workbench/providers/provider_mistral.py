@@ -56,9 +56,9 @@ class MistralProvider(BaseProvider):
             return ProviderResponse(error=str(e), latency=latency)
 
     def get_models(self) -> List[str]:
-        """Return the static list of known Mistral models."""
-        from .mistral_utils import MISTRAL_MODELS
-        return list(MISTRAL_MODELS)
+        """Return available Mistral models (fetched from API with fallback)."""
+        from .mistral_utils import get_mistral_models
+        return get_mistral_models()
 
     def is_available(self) -> bool:
         """Check whether a Mistral API key is configured."""

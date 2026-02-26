@@ -113,10 +113,23 @@ def save_model_settings(settings):
 # Cross-provider imports (MUST be after load_api_keys/save_api_keys to avoid circular import)
 from .openai_utils import (
     call_openai_api,
-    OPENAI_MODELS
+    OPENAI_MODELS,
 )
 from .groq_utils import get_local_embeddings, GROQ_MODELS
 from .mistral_utils import MISTRAL_MODELS
+
+# Lazy accessors for dynamic model lists (avoids circular import at module load time)
+def get_openai_models():
+    from .openai_utils import get_openai_models as _fn
+    return _fn()
+
+def get_groq_models():
+    from .groq_utils import get_groq_models as _fn
+    return _fn()
+
+def get_mistral_models():
+    from .mistral_utils import get_mistral_models as _fn
+    return _fn()
 
 # Get Ollama URL from config
 def get_ollama_url():
@@ -1127,7 +1140,7 @@ def check_json_handling(model, temperature, max_tokens, presence_penalty, freque
 def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
     """Gets embeddings for each token in the text and returns a 2D array."""
     try:
-        if model in OPENAI_MODELS:
+        if model in get_openai_models():
             response = call_openai_api(
                 "text-embedding-ada-002",  # OpenAI's embedding model
                 prompt=[{"role": "user", "content": text}],
@@ -1135,7 +1148,7 @@ def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
                 use_chat=False
             )
             embeddings = np.array(response['data'][0]['embedding'])
-        elif model in GROQ_MODELS:
+        elif model in get_groq_models():
             embeddings = get_local_embeddings(text)
         else:
             client = get_ollama_client()
@@ -1567,7 +1580,7 @@ def generate_embeddings(model, text):
     
     # Enhanced metadata for comprehensive observability
     if OBSERVABILITY_AVAILABLE:
-        provider = "groq" if model in GROQ_MODELS else "openai" if model in OPENAI_MODELS else "ollama"
+        provider = "groq" if model in get_groq_models() else "openai" if model in get_openai_models() else "ollama"
         metadata = {
             "operation_id": operation_id,
             "model": model,
@@ -1592,7 +1605,7 @@ def generate_embeddings(model, text):
         })
     
     try:
-        if model in GROQ_MODELS:
+        if model in get_groq_models():
             # Use Groq API for embedding
             embeddings = get_local_embeddings(text)
             
@@ -1612,7 +1625,7 @@ def generate_embeddings(model, text):
                 logger.debug(f"Could not log embedding usage: {str(log_error)}")
                 
             return embeddings
-        elif model in OPENAI_MODELS:
+        elif model in get_openai_models():
             # Use OpenAI API for embedding
             response = call_openai_api(model, prompt=[{"role": "user", "content": text}], use_chat=False)
             
@@ -1794,7 +1807,7 @@ def generate_embeddings(model, text):
             "text_length": len(text),
             "word_count": len(text.split()),
             "operation_type": "embedding",
-            "provider": "groq" if model in GROQ_MODELS else "openai" if model in OPENAI_MODELS else "ollama",
+            "provider": "groq" if model in get_groq_models() else "openai" if model in get_openai_models() else "ollama",
             "elapsed_time": elapsed_time,
             "error_type": type(e).__name__,
             "error_message": str(e),
@@ -2058,22 +2071,25 @@ def get_all_models():
         
         # Combine all models - remove the headers that were causing selection issues
         # Just return the actual model names without the category headers
-        all_models = ollama_model_names + GROQ_MODELS + OPENAI_MODELS + MISTRAL_MODELS
-        
+        groq_models = get_groq_models()
+        openai_models = get_openai_models()
+        mistral_models = get_mistral_models()
+        all_models = ollama_model_names + groq_models + openai_models + mistral_models
+
         elapsed_time = time.time() - start_time
-        
+
         # Log model discovery metrics
         logger.info(f"Model discovery completed", extra={
             "ollama_models_count": len(ollama_model_names),
-            "groq_models_count": len(GROQ_MODELS),
-            "openai_models_count": len(OPENAI_MODELS),
-            "mistral_models_count": len(MISTRAL_MODELS),
+            "groq_models_count": len(groq_models),
+            "openai_models_count": len(openai_models),
+            "mistral_models_count": len(mistral_models),
             "total_models_count": len(all_models),
             "discovery_time": elapsed_time
         })
-        
+
         return all_models
-        
+
     except Exception as e:
         logger.error(f"Model discovery failed", extra={
             "error_type": type(e).__name__,
@@ -2081,7 +2097,7 @@ def get_all_models():
             "elapsed_time": time.time() - start_time
         })
         # Return at least the static models if Ollama discovery fails
-        return GROQ_MODELS + OPENAI_MODELS + MISTRAL_MODELS
+        return get_groq_models() + get_openai_models() + get_mistral_models()
 
 def create_observability_context(operation_type, model_name, **kwargs):
     """
@@ -2102,7 +2118,7 @@ def create_observability_context(operation_type, model_name, **kwargs):
         "operation_id": operation_id,
         "operation_type": operation_type,
         "model_name": model_name,
-        "provider": "groq" if model_name in GROQ_MODELS else "openai" if model_name in OPENAI_MODELS else "mistral" if model_name in MISTRAL_MODELS else "ollama",
+        "provider": "groq" if model_name in get_groq_models() else "openai" if model_name in get_openai_models() else "mistral" if model_name in get_mistral_models() else "ollama",
         "timestamp": timestamp,
         "session_id": getattr(st.session_state, 'session_id', kwargs.get('session_id', 'unknown')),
         "user_id": getattr(st.session_state, 'user_id', kwargs.get('user_id', 'anonymous')),

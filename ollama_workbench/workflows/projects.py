@@ -7,8 +7,8 @@ import uuid
 from datetime import datetime
 import base64
 from ollama_workbench.providers.ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
-from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS
-from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS
+from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS, get_openai_models
+from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
 from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 from ollama_workbench.core.session_utils import initialize_session_state
 import re
@@ -181,7 +181,7 @@ def get_corpus_context_from_db(corpus_folder, corpus, user_input):
 
 
 def get_all_models():
-    return get_available_models() + OPENAI_MODELS + GROQ_MODELS
+    return get_available_models() + get_openai_models() + get_groq_models()
 
 def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corpus, temperature, max_tokens, previous_responses=[]):
     combined_prompt = ""
@@ -203,9 +203,9 @@ def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corp
 
     api_keys = load_api_keys()  # Load API keys
 
-    if model in OPENAI_MODELS:
+    if model in get_openai_models():
         response = call_openai_api(model, [{"role": "user", "content": final_prompt}], temperature=temperature, max_tokens=max_tokens, openai_api_key=api_keys.get("openai_api_key"))
-    elif model in GROQ_MODELS:
+    elif model in get_groq_models():
         response = call_groq_api(model, final_prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_keys.get("groq_api_key"))
     else:
         response, _, _, _ = call_ollama_endpoint(model, prompt=final_prompt, temperature=temperature, max_tokens=max_tokens)
@@ -317,9 +317,9 @@ class ProjectManagerAgent:
 
         api_keys = load_api_keys()  # Load API keys
 
-        if self.model in OPENAI_MODELS:
+        if self.model in get_openai_models():
             response = call_openai_api(self.model, [{"role": "user", "content": generation_prompt}], temperature=self.temperature, max_tokens=self.max_tokens, openai_api_key=api_keys.get("openai_api_key"))
-        elif self.model in GROQ_MODELS:
+        elif self.model in get_groq_models():
             response = call_groq_api(self.model, generation_prompt, temperature=self.temperature, max_tokens=self.max_tokens, groq_api_key=api_keys.get("groq_api_key"))
         else:
             response = call_ollama_endpoint(

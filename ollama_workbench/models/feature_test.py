@@ -3,8 +3,8 @@ from .model_tests import model_tool_test_ui
 import streamlit as st
 import asyncio
 from ollama_workbench.providers.ollama_utils import get_available_models as get_ollama_models, check_json_handling, check_function_calling, run_tool_test, get_ollama_client, call_ollama_endpoint
-from ollama_workbench.providers.openai_utils import OPENAI_MODELS, call_openai_api
-from ollama_workbench.providers.groq_utils import GROQ_MODELS, call_groq_api
+from ollama_workbench.providers.openai_utils import OPENAI_MODELS, call_openai_api, get_openai_models
+from ollama_workbench.providers.groq_utils import GROQ_MODELS, call_groq_api, get_groq_models
 from ollama_workbench.providers.ollama_utils import load_api_keys
 import ollama
 
@@ -15,8 +15,8 @@ def feature_test():
     # Combining models from all sources
     all_models = {
         "Ollama Models": get_ollama_models(),
-        "OpenAI Models": OPENAI_MODELS,
-        "Groq Models": GROQ_MODELS
+        "OpenAI Models": get_openai_models(),
+        "Groq Models": get_groq_models()
     }
 
     if "selected_model" not in st.session_state:

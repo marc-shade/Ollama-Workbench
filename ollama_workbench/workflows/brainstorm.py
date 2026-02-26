@@ -12,8 +12,8 @@ from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prom
 from .info_brainstorm import display_info_brainstorm
 from ollama_workbench.chat.chat_interface import chat_interface
 from ollama_workbench.providers.ollama_utils import load_api_keys
-from ollama_workbench.providers.groq_utils import GROQ_MODELS
-from ollama_workbench.providers.openai_utils import OPENAI_MODELS
+from ollama_workbench.providers.groq_utils import GROQ_MODELS, get_groq_models
+from ollama_workbench.providers.openai_utils import OPENAI_MODELS, get_openai_models
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -82,7 +82,7 @@ def create_agent(settings):
     print(f"Creating agent with model: {settings['model']}")
     print(f"API keys loaded: {api_keys}")
     
-    if settings['model'] in OPENAI_MODELS:
+    if settings['model'] in get_openai_models():
         print("Using OpenAI model")
         llm_config = {
             "request_timeout": 120,
@@ -91,7 +91,7 @@ def create_agent(settings):
         }
         # Set the OpenAI API key in the environment variable
         os.environ["OPENAI_API_KEY"] = api_keys.get("openai_api_key", "")
-    elif settings['model'] in GROQ_MODELS:
+    elif settings['model'] in get_groq_models():
         print("Using Groq model")
         llm_config = {
             "request_timeout": 120,
