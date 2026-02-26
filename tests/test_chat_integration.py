@@ -39,7 +39,7 @@ try:
     
     # Check if modules are available before importing
     if importlib.util.find_spec("chat_interface"):
-        from chat_interface import load_settings, save_settings
+        from ollama_workbench.chat.chat_interface import load_settings, save_settings
     
     if importlib.util.find_spec("modern_chat_interface"):
         from modern_chat_interface import initialize_session_state

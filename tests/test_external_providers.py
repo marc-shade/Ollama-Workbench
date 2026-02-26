@@ -18,7 +18,7 @@ import os
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from external_providers import (
+from ollama_workbench.providers.external_providers import (
     ADVANCED_GROQ_MODELS,
     external_providers_ui,
     get_available_groq_models

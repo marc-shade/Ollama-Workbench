@@ -28,7 +28,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import modules to test
 try:
     import streamlit as st
-    from chat_interface import extract_code_blocks, extract_content_blocks, count_tokens
+    from ollama_workbench.chat.chat_interface import extract_code_blocks, extract_content_blocks, count_tokens
     from modern_chat_interface import display_message, get_rag_context
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")

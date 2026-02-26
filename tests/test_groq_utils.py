@@ -12,7 +12,7 @@ import numpy as np
 # Import the module to test
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from groq_utils import (
+from ollama_workbench.providers.groq_utils import (
     GROQ_MODELS, load_embedding_model, load_api_keys, save_api_keys,
     get_groq_client, call_groq_api, get_local_embeddings, display_groq_settings
 )

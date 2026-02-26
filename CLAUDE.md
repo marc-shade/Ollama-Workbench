@@ -16,97 +16,158 @@ Ollama Workbench is a Streamlit-based platform for managing, testing, and intera
 streamlit run main.py
 
 # Run all tests
-python run_all_tests.py
+python scripts/run_all_tests.py
 
 # Run pytest suite
 python -m pytest tests/ -v
 python -m pytest tests/test_chat_interfaces.py -v                    # specific file
 python -m pytest tests/test_chat_interfaces.py::TestChatInterface -k "test_session"  # specific test
 
+# Verify all package imports work
+python scripts/test_imports.py
+
 # Lint
 ruff check .
 flake8 .
 
 # Setup from scratch
-python setup_workbench.py
+python scripts/setup_workbench.py
+```
+
+## Package Structure
+
+The codebase is organized into the `ollama_workbench` package with 8 sub-packages. `main.py` is the only Python file at the root — it's the Streamlit entry point.
+
+```
+main.py                          # Streamlit entry point + Flask API
+ollama_workbench/
+    providers/                   # AI provider API clients
+        ollama_utils.py          #   Ollama (primary) - model mgmt, embeddings, monitoring
+        openai_utils.py          #   OpenAI
+        groq_utils.py            #   Groq
+        mistral_utils.py         #   Mistral
+        external_providers.py    #   Provider configuration UI
+    chat/                        # Chat interfaces
+        chat_interface.py        #   Base chat (token counting, RAG, agent prompts, CoT)
+        enhanced_chat_interface.py  # Wraps chat_interface with Open WebUI styling
+        multimodel_chat.py       #   Multi-model simultaneous chat
+        multimodal_chat.py       #   Vision/image chat
+        voice_interface.py       #   Voice chat (requires pyaudio)
+        persona_chat.py          #   Persona group chat
+        collaborative_workspace.py  # Collaborative workspace
+        canvas.py                #   Document canvas for workspace
+        voice_utils.py           #   Voice/TTS utilities
+        tts_utils.py             #   Text-to-speech helpers
+    workflows/                   # AI workflow orchestration
+        build.py                 #   Autonomous software development
+        research.py              #   Multi-source research automation
+        brainstorm.py            #   AI brainstorming with multiple agents
+        projects.py              #   AI-assisted project/task management
+        nodes.py                 #   CEF visual workflow builder
+        agents.py                #   Agent definitions
+        info_brainstorm.py       #   Brainstorm info helpers
+    knowledge/                   # Knowledge management & RAG
+        simplified_rag.py        #   Enhanced RAG interface (active)
+        enhanced_corpus.py       #   GraphRAG corpus management
+        corpus_management.py     #   Basic corpus tools
+        repo_docs.py             #   Repository analysis
+        web_to_corpus.py         #   Web crawling to corpus
+        search_libraries.py      #   Multi-engine web search
+        chroma_client.py         #   ChromaDB client
+    models/                      # Model management & testing
+        model_comparison.py      #   Response quality comparison
+        model_tests.py           #   Performance benchmarks
+        feature_test.py          #   Feature capability tests
+        vision_comparison.py     #   Vision model comparison
+        local_models.py          #   List/manage local models
+        pull_model.py            #   Download new models
+        show_model.py            #   Model details viewer
+        remove_model.py          #   Model removal
+        update_models.py         #   Batch model updates
+        model_management.py      #   Management dashboard
+        model_capabilities.py    #   Capability testing UI
+        model_capability_registry.py  # Capability detection
+        model_onboarding.py      #   Model onboarding tests
+        test_visualization.py    #   Test result visualization
+    server/                      # Server management
+        server_configuration.py  #   Ollama server config
+        server_monitoring.py     #   Resource monitoring
+        performance_metrics.py   #   Performance tracking
+        openai_compatibility.py  #   OpenAI-compatible API
+    core/                        # Core infrastructure
+        config.py                #   Application configuration
+        session_utils.py         #   Session state management
+        db_init.py               #   Database initialization
+        error_handling.py        #   Error handling utilities
+    ui/                          # UI components
+        styles.py                #   Theming (apply_styles -> colors, theme)
+        prompts.py               #   Prompt template management
+        file_management.py       #   File browser/editor
+        structured_output.py     #   JSON schema output UI
+        tool_playground.py       #   Tool calling playground
+        contextual_response.py   #   Contextual response testing
+        welcome.py               #   Help/welcome page
+        global_vrm_loader.py     #   VRM model loader
+tests/                           # All test files
+scripts/                         # Standalone utility scripts
+persona_lab/                     # Persona generation lab
+observability/                   # Optional Opik integration
+tts_server/                      # Standalone TTS Flask server
+prompts/                         # JSON prompt templates
 ```
 
 ## Architecture
 
-### Dual Server Design
-`main.py` runs both a Streamlit app and a Flask API server (in a background thread). The Flask server (`/prompts`, `/openai-key`, `/port`) supports the Chrome extension. The Streamlit app handles all UI.
-
 ### Navigation and Routing
-`main.py` defines `SIDEBAR_SECTIONS` (dict of category -> list of (label, key) tuples) and uses `streamlit_option_menu` for sidebar navigation. `create_sidebar()` sets `st.session_state.selected_test`, and `main_content()` dispatches to the appropriate module's interface function via a long if/elif chain.
+`main.py` defines `SIDEBAR_SECTIONS` (dict of category -> list of (label, key) tuples) and uses `streamlit_option_menu` for sidebar navigation. `create_sidebar()` sets `st.session_state.selected_test`, and `main_content()` dispatches to the appropriate module's interface function.
 
 ### Adding a New Feature
-1. Create `my_feature.py` with a `def my_feature_interface():` function
-2. Add entry to `SIDEBAR_SECTIONS` in `main.py`
-3. Add elif branch in `main_content()` in `main.py`
+1. Create `ollama_workbench/<subpackage>/my_feature.py` with `def my_feature_interface():`
+2. Add import in `main.py`: `from ollama_workbench.<subpackage>.my_feature import my_feature_interface`
+3. Add entry to `SIDEBAR_SECTIONS` in `main.py`
+4. Add elif branch in `main_content()` in `main.py`
 
-### Chat Interface Layering
-There are multiple chat interface implementations with a specific inheritance chain:
-- `chat_interface.py` - Base implementation with all core logic (token counting, code extraction, RAG, agent prompts, adaptive CoT)
-- `enhanced_chat_interface.py` - Wraps and imports from `chat_interface.py`, adds Open WebUI-inspired styling
-- `modern_chat_interface.py`, `simple_modern_interface.py` - Alternative modernized versions
-- `fixed_chat_interface.py`, `fixed_chat_settings.py` - Bug fix overlays
-
-The active chat in production is `enhanced_chat_interface()` imported in `main.py`.
+### Import Conventions
+- Cross-package: `from ollama_workbench.providers.ollama_utils import call_ollama_endpoint`
+- Same package: `from .ollama_utils import load_api_keys` (relative imports)
+- main.py: Always absolute `from ollama_workbench.xxx.yyy import zzz`
 
 ### Provider Abstraction
-Four provider modules with similar interfaces:
-- `ollama_utils.py` - Local Ollama (primary). Key functions: `call_ollama_endpoint()`, `get_available_models()`, `load_api_keys()`
+Four provider modules in `ollama_workbench/providers/` with similar interfaces:
+- `ollama_utils.py` - Local Ollama (primary). Key: `call_ollama_endpoint()`, `get_available_models()`, `load_api_keys()`
 - `openai_utils.py` - `call_openai_api()`
 - `groq_utils.py` - `call_groq_api()`
 - `mistral_utils.py` - `call_mistral_api()`
 
-All accept `model`, `messages`/`prompt`, and `stream` parameters. `ollama_utils.py` also handles model management (pull, remove, list) and system resource monitoring.
+Circular dependency: `ollama_utils` imports from the other three (for model lists and API calls), and they import `load_api_keys`/`save_api_keys` from `ollama_utils`. This works because `load_api_keys` is defined BEFORE the cross-provider imports in `ollama_utils.py`. Do not reorder.
 
 ### Session Management
-`session_utils.py` centralizes session state initialization, settings load/save (`chat-settings.json`), and chat session persistence (`sessions/` directory). Multiple interfaces import from it to stay synchronized. The key session state variables are `selected_model`, `current_model`, `chat_history`, and `messages`.
+`core/session_utils.py` centralizes session state initialization and settings persistence. The canonical model variable is `selected_model` (no `current_model`). Settings files: `chat-settings.json`, `multimodel-chat-settings.json`.
 
 ### Data Storage
-- `ollama_models.db` - SQLite database initialized by `db_init.py` (model metadata)
+- `ollama_models.db` - SQLite (initialized by `core/db_init.py`)
 - `sessions/` - JSON chat session files
-- `prompts/` - Agent, identity, metacognitive, and voice prompt templates (JSON)
-- ChromaDB - Vector storage for RAG (`chroma_client.py`)
-
-### Workflow Modules
-- `research.py` - Multi-source research automation
-- `brainstorm.py` - Collaborative AI brainstorming with multiple agents
-- `build.py` / `build_manager.py` - Autonomous software development agents
-- `projects.py` - AI-assisted project/task management
-- `nodes.py` - Visual workflow builder (CEF - drag-and-drop pipeline designer)
+- `prompts/` - JSON prompt templates (agent, identity, metacognitive, voice)
+- ChromaDB - Vector storage for RAG
 
 ### TTS Server
-`tts_server/app.py` is a separate Flask+CORS app (not part of the main Streamlit process) that provides text-to-speech via gTTS. Run independently with `cd tts_server && python app.py`. The main app communicates with it via `tts_utils.py`.
-
-### Observability
-Optional Opik integration for LLM tracing. The `observability` module is imported by `main.py` and `ollama_utils.py` with try/except fallbacks. When available, `ollama_utils.py` decorates LLM calls with `@trace_llm_call` for request/response tracing and performance metrics.
-
-### Styling
-`styles.py` provides centralized theming via `apply_styles()` which returns color dict and theme name. Supports light/dark mode detection via `streamlit_javascript`.
+`tts_server/app.py` is a separate Flask+CORS app providing text-to-speech via gTTS. Run independently: `cd tts_server && python app.py`.
 
 ### Optional Dependencies Pattern
-The codebase uses try/except imports extensively for optional features (voice, observability, tool playground). When a dependency is missing, a fallback function is defined inline that shows `st.warning()`. Check for this pattern before assuming a feature is broken.
-
-### `fix_*.py` and `fixed_*.py` Files
-These are one-off bug fix scripts and patched module copies accumulated over time. They are NOT loaded in production except `fixed_chat_settings.py` (imported by `enhanced_chat_interface.py` for settings load/save fixes). The rest can be ignored.
+The codebase uses try/except imports for optional features (voice, observability, MCP tools). Missing deps show `st.warning()` via inline fallback functions.
 
 ## Key Dependency Versions
 
-Pinned versions that matter (from `requirements.txt`):
 - `ollama>=0.5.1` - Ollama Python client
 - `streamlit>=1.47.1` - Web framework
 - `chromadb==0.5.5` - Vector DB for RAG
 - `httpx==0.27.0` - Pinned to avoid conflicts
-- Python 3.11 (venv is 3.11)
+- Python 3.12 (venv)
 
 ## Gotchas
 
 - `start_workbench.sh` hardcodes the path `/Volumes/FILES/code/Ollama-Workbench` - update if the repo moves.
-- The app expects Ollama running at `http://localhost:11434`. Check: `curl -s http://localhost:11434/api/tags`
-- `selected_model` and `current_model` in session state must stay synchronized (see `main.py:448-454` and `session_utils.py`). Setting one without the other causes model selection bugs.
-- `multimodel_chat.py` uses its own settings file (`multimodel-chat-settings.json`), separate from the main chat's `chat-settings.json`.
-- The venv is Python 3.11. Do not use the system Python.
-- `ollama_utils.py` uses `from ollama_utils import *` in `main.py`, which pulls many functions into the global namespace. Be aware of name collisions when adding new modules.
+- Ollama must be running at `http://localhost:11434`. Check: `curl -s http://localhost:11434/api/tags`
+- `multimodel_chat.py` uses its own settings file (`multimodel-chat-settings.json`), separate from `chat-settings.json`.
+- The venv is Python 3.12. Do not use the system Python.
+- `main.py` uses `from ollama_workbench.providers.ollama_utils import *` which pulls many functions into scope. Be aware of name collisions.

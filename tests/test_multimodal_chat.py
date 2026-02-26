@@ -3,8 +3,9 @@ import unittest
 from unittest.mock import patch
 import streamlit as st
 
-from multimodal_chat import multimodal_chat_interface  # Absolute import
-import ollama_utils
+from ollama_workbench.chat.multimodal_chat import multimodal_chat_interface  # Absolute import
+import ollama_workbench.providers.ollama_utils as ollama_utils
+
 
 class TestMultimodalChatInterface(unittest.TestCase):
 

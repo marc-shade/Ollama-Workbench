@@ -35,33 +35,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 from streamlit_option_menu import option_menu
-from collaborative_workspace import collaborative_workspace_ui
-from ollama_utils import *
-from model_tests import *
-from session_utils import initialize_session_state
-from model_comparison import model_comparison_test
-from contextual_response import contextual_response_test
-from feature_test import feature_test
-from local_models import list_local_models
-from pull_model import pull_models
-from show_model import show_model_details
-from remove_model import remove_model_ui
-from vision_comparison import vision_comparison_test
-from chat_interface import chat_interface
-from update_models import update_models
-from file_management import files_tab
-from server_configuration import server_configuration
-from server_monitoring import server_monitoring
+from ollama_workbench.chat.collaborative_workspace import collaborative_workspace_ui
+from ollama_workbench.providers.ollama_utils import *
+from ollama_workbench.models.model_tests import *
+from ollama_workbench.core.session_utils import initialize_session_state
+from ollama_workbench.models.model_comparison import model_comparison_test
+from ollama_workbench.ui.contextual_response import contextual_response_test
+from ollama_workbench.models.feature_test import feature_test
+from ollama_workbench.models.local_models import list_local_models
+from ollama_workbench.models.pull_model import pull_models
+from ollama_workbench.models.show_model import show_model_details
+from ollama_workbench.models.remove_model import remove_model_ui
+from ollama_workbench.models.vision_comparison import vision_comparison_test
+from ollama_workbench.chat.chat_interface import chat_interface
+from ollama_workbench.models.update_models import update_models
+from ollama_workbench.ui.file_management import files_tab
+from ollama_workbench.server.server_configuration import server_configuration
+from ollama_workbench.server.server_monitoring import server_monitoring
 # Import the enhanced chat interface that preserves all original functionality
-from enhanced_chat_interface import enhanced_chat_interface
-from styles import apply_styles
-from simplified_rag import enhanced_rag_interface
-from model_onboarding import onboarding_test_process
+from ollama_workbench.chat.enhanced_chat_interface import enhanced_chat_interface
+from ollama_workbench.ui.styles import apply_styles
+from ollama_workbench.knowledge.simplified_rag import enhanced_rag_interface
+from ollama_workbench.models.model_onboarding import onboarding_test_process
 # Multimodal chat functionality is now integrated into the main Chat interface
-from multimodel_chat import multimodel_chat_app
+from ollama_workbench.chat.multimodel_chat import multimodel_chat_app
 # Import voice interface with error handling to prevent UI failures
 try:
-    from voice_interface import voice_chat_interface, voice_settings_ui
+    from ollama_workbench.chat.voice_interface import voice_chat_interface, voice_settings_ui
     voice_interface_available = True
     print("CHECKPOINT: Voice interface successfully loaded")
 except ImportError as e:
@@ -74,38 +74,38 @@ except ImportError as e:
         st.warning("Voice settings are not available. Please install the required dependencies: pip install SpeechRecognition pyaudio gtts pygame")
 # Import tool_playground with error handling to prevent UI failures
 try:
-    from tool_playground import tool_playground
+    from ollama_workbench.ui.tool_playground import tool_playground
 except Exception as e:
     st.error(f"Error loading Tool Playground module: {str(e)}")
     # Define a fallback function
     def tool_playground():
         st.error("Tool Playground is currently unavailable.")
         st.info("Try restarting the application or check the logs for errors.")
-from structured_output import structured_output_ui
-from openai_compatibility import openai_compatibility_ui
-from model_capabilities import model_capabilities_ui
-from test_visualization import test_visualization_ui
-from repo_docs import main as repo_docs_main
-from web_to_corpus import main as web_to_corpus_main
-from welcome import display_welcome_message
-from projects import projects_main, Task
-from prompts import manage_prompts, get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
-from brainstorm import brainstorm_interface
-from ollama_utils import get_ollama_resource_usage
-from research import research_interface
-from enhanced_corpus import enhance_corpus_ui
-from build import build_interface
-from openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
-from groq_utils import display_groq_settings, call_groq_api
-from nodes import nodes_interface  
-from external_providers import external_providers_ui 
+from ollama_workbench.ui.structured_output import structured_output_ui
+from ollama_workbench.server.openai_compatibility import openai_compatibility_ui
+from ollama_workbench.models.model_capabilities import model_capabilities_ui
+from ollama_workbench.models.test_visualization import test_visualization_ui
+from ollama_workbench.knowledge.repo_docs import main as repo_docs_main
+from ollama_workbench.knowledge.web_to_corpus import main as web_to_corpus_main
+from ollama_workbench.ui.welcome import display_welcome_message
+from ollama_workbench.workflows.projects import projects_main, Task
+from ollama_workbench.ui.prompts import manage_prompts, get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
+from ollama_workbench.workflows.brainstorm import brainstorm_interface
+from ollama_workbench.providers.ollama_utils import get_ollama_resource_usage
+from ollama_workbench.workflows.research import research_interface
+from ollama_workbench.knowledge.enhanced_corpus import enhance_corpus_ui
+from ollama_workbench.workflows.build import build_interface
+from ollama_workbench.providers.openai_utils import display_openai_settings, call_openai_api, set_openai_api_key
+from ollama_workbench.providers.groq_utils import display_groq_settings, call_groq_api
+from ollama_workbench.workflows.nodes import nodes_interface  
+from ollama_workbench.providers.external_providers import external_providers_ui 
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_javascript import st_javascript
-from db_init import init_db
-from persona_chat import persona_group_chat
+from ollama_workbench.core.db_init import init_db
+from ollama_workbench.chat.persona_chat import persona_group_chat
 from persona_lab.persona_lab import persona_lab_interface
-from model_management import model_management_dashboard
-from performance_metrics import performance_metrics_interface, record_metrics
+from ollama_workbench.models.model_management import model_management_dashboard
+from ollama_workbench.server.performance_metrics import performance_metrics_interface, record_metrics
 
 # Import enhanced observability
 try:
@@ -126,7 +126,7 @@ init_db()
 
 # Initialize model management database
 try:
-    from model_management import init_db as init_model_db
+    from ollama_workbench.models.model_management import init_db as init_model_db
     init_model_db()
 except ImportError:
     pass  # Model management module not available
@@ -356,7 +356,7 @@ def main_content():
         def model_callback(prompt):
             # Get the currently selected model with dynamic fallback
             try:
-                from ollama_utils import get_dynamic_model_default
+                from ollama_workbench.providers.ollama_utils import get_dynamic_model_default
                 dynamic_default = get_dynamic_model_default()
                 model = st.session_state.get("selected_model", dynamic_default)
             except Exception:
@@ -365,7 +365,7 @@ def main_content():
             # Get provider (default to Ollama)
             provider = st.session_state.get("selected_provider", "ollama")
             # Use the model to generate a response
-            from ollama_utils import get_ollama_client, call_ollama_endpoint
+            from ollama_workbench.providers.ollama_utils import get_ollama_client, call_ollama_endpoint
             try:
                 response, _, _, _ = call_ollama_endpoint(
                     model=model,

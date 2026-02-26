@@ -25,7 +25,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from performance_metrics import (
+from ollama_workbench.server.performance_metrics import (
     performance_metrics_interface,
     display_response_time_metrics,
     display_token_usage_metrics,

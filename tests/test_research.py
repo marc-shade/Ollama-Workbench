@@ -20,7 +20,7 @@ class TestAPIKeyManagement:
     
     def test_load_api_keys_existing_file(self):
         """Test loading API keys from existing file"""
-        from research import load_api_keys
+        from ollama_workbench.workflows.research import load_api_keys
         
         test_keys = {
             "openai_api_key": "test_openai_key",
@@ -43,7 +43,7 @@ class TestAPIKeyManagement:
     
     def test_load_api_keys_nonexistent_file(self):
         """Test loading API keys when file doesn't exist"""
-        from research import load_api_keys
+        from ollama_workbench.workflows.research import load_api_keys
         
         with patch('research.os.path.exists', return_value=False):
             result = load_api_keys()
@@ -51,7 +51,7 @@ class TestAPIKeyManagement:
     
     def test_save_api_keys(self):
         """Test saving API keys to file"""
-        from research import save_api_keys
+        from ollama_workbench.workflows.research import save_api_keys
         
         test_keys = {
             "openai_api_key": "new_key",
@@ -77,7 +77,7 @@ class TestDatabaseFunctions:
     @patch('research.sqlite3.connect')
     def test_init_db(self, mock_connect):
         """Test database initialization"""
-        from research import init_db
+        from ollama_workbench.workflows.research import init_db
         
         mock_conn = Mock()
         mock_cursor = Mock()
@@ -95,7 +95,7 @@ class TestDatabaseFunctions:
     @patch('research.datetime')
     def test_save_report(self, mock_datetime, mock_connect):
         """Test saving report to database"""
-        from research import save_report
+        from ollama_workbench.workflows.research import save_report
         
         # Setup mocks
         mock_datetime.now.return_value.strftime.return_value = "2023-01-01 12:00:00"
@@ -118,7 +118,7 @@ class TestDatabaseFunctions:
     @patch('research.sqlite3.connect')
     def test_get_all_reports(self, mock_connect):
         """Test getting all reports from database"""
-        from research import get_all_reports
+        from ollama_workbench.workflows.research import get_all_reports
         
         # Setup mocks
         mock_conn = Mock()
@@ -141,7 +141,7 @@ class TestDatabaseFunctions:
     @patch('research.sqlite3.connect')
     def test_get_report_content(self, mock_connect):
         """Test getting specific report content"""
-        from research import get_report_content
+        from ollama_workbench.workflows.research import get_report_content
         
         # Setup mocks
         mock_conn = Mock()
@@ -161,7 +161,7 @@ class TestDatabaseFunctions:
     @patch('research.sqlite3.connect')
     def test_delete_report(self, mock_connect):
         """Test deleting report from database"""
-        from research import delete_report
+        from ollama_workbench.workflows.research import delete_report
         
         # Setup mocks
         mock_conn = Mock()
@@ -183,7 +183,7 @@ class TestResearchModelSettings:
     
     def test_load_research_model_settings_existing(self):
         """Test loading research model settings from existing file"""
-        from research import load_research_model_settings
+        from ollama_workbench.workflows.research import load_research_model_settings
         
         test_settings = {
             "manager_model": "gpt-4",
@@ -199,7 +199,7 @@ class TestResearchModelSettings:
     
     def test_load_research_model_settings_nonexistent(self):
         """Test loading research model settings when file doesn't exist"""
-        from research import load_research_model_settings
+        from ollama_workbench.workflows.research import load_research_model_settings
         
         with patch('research.os.path.exists', return_value=False):
             result = load_research_model_settings()
@@ -207,7 +207,7 @@ class TestResearchModelSettings:
     
     def test_save_research_model_settings(self):
         """Test saving research model settings"""
-        from research import save_research_model_settings
+        from ollama_workbench.workflows.research import save_research_model_settings
         
         test_settings = {
             "manager_model": "mixtral-8x7b",
@@ -231,7 +231,7 @@ class TestExportFunctions:
     @patch('research.os.path.join')
     def test_export_to_pdf(self, mock_join, mock_pdf_doc):
         """Test PDF export functionality"""
-        from research import export_to_pdf
+        from ollama_workbench.workflows.research import export_to_pdf
         
         # Setup mocks
         mock_join.return_value = "/path/to/test.pdf"
@@ -261,7 +261,7 @@ Result 2 content"""
     @patch('research.os.path.join')
     def test_export_to_txt(self, mock_join):
         """Test TXT export functionality"""
-        from research import export_to_txt
+        from ollama_workbench.workflows.research import export_to_txt
         
         # Setup mocks
         mock_join.return_value = "/path/to/test.txt"
@@ -288,7 +288,7 @@ class TestResearchInterface:
     def test_research_interface_initialization(self, mock_get_models, mock_load_settings, 
                                              mock_load_keys, mock_init_db, mock_st):
         """Test research interface initialization"""
-        from research import research_interface
+        from ollama_workbench.workflows.research import research_interface
         
         # Setup mocks
         mock_load_keys.return_value = {"openai_api_key": "test_key"}
@@ -322,7 +322,7 @@ class TestResearchInterface:
     def test_api_key_saving(self, mock_get_models, mock_load_settings, 
                            mock_load_keys, mock_init_db, mock_save_keys, mock_st):
         """Test API key saving functionality"""
-        from research import research_interface
+        from ollama_workbench.workflows.research import research_interface
         
         # Setup mocks
         mock_load_keys.return_value = {}
@@ -358,7 +358,7 @@ class TestResearchInterface:
     def test_model_settings_saving(self, mock_get_models, mock_load_settings, 
                                   mock_load_keys, mock_init_db, mock_save_settings, mock_st):
         """Test model settings saving functionality"""
-        from research import research_interface
+        from ollama_workbench.workflows.research import research_interface
         
         # Setup mocks
         mock_load_keys.return_value = {}
@@ -392,7 +392,7 @@ class TestResearchInterface:
                                mock_load_keys, mock_init_db, mock_save_report, 
                                mock_search_manager_class, mock_st):
         """Test research execution functionality"""
-        from research import research_interface
+        from ollama_workbench.workflows.research import research_interface
         
         # Setup mocks
         mock_load_keys.return_value = {"openai_api_key": "test_key"}
@@ -451,7 +451,7 @@ class TestResearchInterface:
                                      mock_export_txt, mock_export_pdf, mock_get_content,
                                      mock_get_reports, mock_st):
         """Test saved reports management functionality"""
-        from research import research_interface
+        from ollama_workbench.workflows.research import research_interface
         
         # Setup mocks
         mock_load_keys.return_value = {}
@@ -492,7 +492,7 @@ class TestResearchInterface:
                                         mock_load_keys, mock_init_db, mock_delete_report,
                                         mock_get_reports, mock_st):
         """Test report deletion functionality"""
-        from research import research_interface
+        from ollama_workbench.workflows.research import research_interface
         
         # Setup mocks
         mock_load_keys.return_value = {}
@@ -534,7 +534,8 @@ class TestFileOperations:
         mock_join.return_value = "/path/to/files"
         
         # Import the module (which should create the directory)
-        import research
+        import ollama_workbench.workflows.research as research
+
         
         # Verify directory creation was attempted
         mock_makedirs.assert_called_with("/path/to/files", exist_ok=True)
@@ -546,7 +547,7 @@ class TestIntegrationScenarios:
     @patch('research.sqlite3.connect')
     def test_full_database_workflow(self, mock_connect):
         """Test complete database workflow"""
-        from research import init_db, save_report, get_all_reports, get_report_content, delete_report
+        from ollama_workbench.workflows.research import init_db, save_report, get_all_reports, get_report_content, delete_report
         
         # Setup in-memory database
         conn = sqlite3.connect(":memory:")
@@ -576,7 +577,7 @@ class TestIntegrationScenarios:
     
     def test_export_functions_integration(self):
         """Test export functions with realistic content"""
-        from research import export_to_txt
+        from ollama_workbench.workflows.research import export_to_txt
         
         content = """Final Report:
 
@@ -611,7 +612,7 @@ class TestErrorHandling:
     @patch('research.sqlite3.connect')
     def test_database_connection_error(self, mock_connect):
         """Test database connection error handling"""
-        from research import save_report
+        from ollama_workbench.workflows.research import save_report
         
         mock_connect.side_effect = sqlite3.Error("Connection failed")
         
@@ -624,7 +625,7 @@ class TestErrorHandling:
     @patch('research.os.path.exists')
     def test_json_loading_error(self, mock_exists, mock_open, mock_json_load):
         """Test JSON loading error handling"""
-        from research import load_api_keys
+        from ollama_workbench.workflows.research import load_api_keys
         
         mock_exists.return_value = True
         mock_json_load.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
@@ -637,7 +638,7 @@ class TestErrorHandling:
     @patch('builtins.open')
     def test_file_writing_error(self, mock_open, mock_join):
         """Test file writing error handling"""
-        from research import export_to_txt
+        from ollama_workbench.workflows.research import export_to_txt
         
         mock_join.return_value = "/invalid/path/test.txt"
         mock_open.side_effect = IOError("Permission denied")

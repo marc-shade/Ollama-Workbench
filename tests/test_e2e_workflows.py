@@ -19,18 +19,18 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all major components
-from chat_interface import enhanced_chat_interface
-from multimodel_chat import MultiModelChat
-from build import BuildWorkflow
-from research import ResearchWorkflow  
-from brainstorm import BrainstormWorkflow
-from projects import ProjectManager
-from corpus_management import CorpusManager
-from voice_interface import VoiceInterface
-from file_management import FileManager
-from external_providers import load_api_keys
-from session_utils import SessionManager
-from performance_metrics import PerformanceTracker
+from ollama_workbench.chat.chat_interface import enhanced_chat_interface
+from ollama_workbench.chat.multimodel_chat import MultiModelChat
+from ollama_workbench.workflows.build import BuildWorkflow
+from ollama_workbench.workflows.research import ResearchWorkflow  
+from ollama_workbench.workflows.brainstorm import BrainstormWorkflow
+from ollama_workbench.workflows.projects import ProjectManager
+from ollama_workbench.knowledge.corpus_management import CorpusManager
+from ollama_workbench.chat.voice_interface import VoiceInterface
+from ollama_workbench.ui.file_management import FileManager
+from ollama_workbench.providers.external_providers import load_api_keys
+from ollama_workbench.core.session_utils import SessionManager
+from ollama_workbench.server.performance_metrics import PerformanceTracker
 
 
 class TestChatWorkflowE2E(TestCase):

@@ -20,7 +20,7 @@ class TestNode:
     
     def test_node_creation(self):
         """Test Node creation"""
-        from nodes import Node
+        from ollama_workbench.workflows.nodes import Node
         
         data = {"content": "Test Node", "input_type": "Text"}
         node = Node("1", "Input", data)
@@ -31,7 +31,7 @@ class TestNode:
     
     def test_node_to_dict(self):
         """Test Node to_dict method"""
-        from nodes import Node
+        from ollama_workbench.workflows.nodes import Node
         
         data = {"content": "Test Node", "model": "gpt-4"}
         node = Node("2", "LLM", data)
@@ -48,7 +48,7 @@ class TestNode:
     @patch('nodes.create_node')
     def test_node_from_dict(self, mock_create_node):
         """Test Node from_dict method"""
-        from nodes import Node
+        from ollama_workbench.workflows.nodes import Node
         
         # Setup mock
         default_node = Mock()
@@ -75,7 +75,7 @@ class TestNode:
     @patch('nodes.create_node')
     def test_node_from_dict_no_data(self, mock_create_node):
         """Test Node from_dict with no data field"""
-        from nodes import Node
+        from ollama_workbench.workflows.nodes import Node
         
         # Setup mock
         default_node = Mock()
@@ -96,7 +96,7 @@ class TestEdge:
     
     def test_edge_creation(self):
         """Test Edge creation"""
-        from nodes import Edge
+        from ollama_workbench.workflows.nodes import Edge
         
         edge = Edge("1-2", "1", "2")
         
@@ -106,7 +106,7 @@ class TestEdge:
     
     def test_edge_to_dict(self):
         """Test Edge to_dict method"""
-        from nodes import Edge
+        from ollama_workbench.workflows.nodes import Edge
         
         edge = Edge("2-3", "2", "3")
         
@@ -121,7 +121,7 @@ class TestEdge:
     
     def test_edge_from_dict(self):
         """Test Edge from_dict method"""
-        from nodes import Edge
+        from ollama_workbench.workflows.nodes import Edge
         
         edge_dict = {
             "id": "3-4",
@@ -137,7 +137,7 @@ class TestEdge:
     
     def test_edge_from_dict_missing_key(self):
         """Test Edge from_dict with missing key"""
-        from nodes import Edge
+        from ollama_workbench.workflows.nodes import Edge
         
         edge_dict = {"id": "5-6", "source": "5"}  # Missing target
         
@@ -151,7 +151,7 @@ class TestUtilityFunctions:
     @patch('nodes.get_available_models')
     def test_get_all_models(self, mock_available):
         """Test get_all_models function"""
-        from nodes import get_all_models, OPENAI_MODELS, GROQ_MODELS
+        from ollama_workbench.workflows.nodes import get_all_models, OPENAI_MODELS, GROQ_MODELS
         
         mock_available.return_value = ["llama3", "mistral"]
         
@@ -162,7 +162,7 @@ class TestUtilityFunctions:
     
     def test_call_api_and_decode_response_success(self):
         """Test successful API call and response decoding"""
-        from nodes import call_api_and_decode_response
+        from ollama_workbench.workflows.nodes import call_api_and_decode_response
         
         # Mock API function
         def mock_api(*args, **kwargs):
@@ -177,7 +177,7 @@ class TestUtilityFunctions:
     
     def test_call_api_and_decode_response_empty_response(self):
         """Test API call with empty response"""
-        from nodes import call_api_and_decode_response
+        from ollama_workbench.workflows.nodes import call_api_and_decode_response
         
         def mock_api(*args, **kwargs):
             return ""
@@ -187,7 +187,7 @@ class TestUtilityFunctions:
     
     def test_call_api_and_decode_response_invalid_json(self):
         """Test API call with invalid JSON"""
-        from nodes import call_api_and_decode_response
+        from ollama_workbench.workflows.nodes import call_api_and_decode_response
         
         def mock_api(*args, **kwargs):
             return "invalid json"
@@ -197,7 +197,7 @@ class TestUtilityFunctions:
     
     def test_call_api_and_decode_response_missing_structure(self):
         """Test API call with missing nodes/edges"""
-        from nodes import call_api_and_decode_response
+        from ollama_workbench.workflows.nodes import call_api_and_decode_response
         
         def mock_api(*args, **kwargs):
             return '{"nodes": []}'  # Missing edges
@@ -207,7 +207,7 @@ class TestUtilityFunctions:
     
     def test_call_api_and_decode_response_invalid_edge(self):
         """Test API call with invalid edge structure"""
-        from nodes import call_api_and_decode_response
+        from ollama_workbench.workflows.nodes import call_api_and_decode_response
         
         def mock_api(*args, **kwargs):
             return '{"nodes": [], "edges": [{"id": "1-2", "source": "1"}]}'  # Missing target
@@ -224,7 +224,7 @@ class TestWorkflowGeneration:
     @patch('nodes.parse_openai_response')
     def test_generate_workflow_openai(self, mock_parse, mock_openai, mock_keys):
         """Test workflow generation with OpenAI"""
-        from nodes import generate_workflow, OPENAI_MODELS
+        from ollama_workbench.workflows.nodes import generate_workflow, OPENAI_MODELS
         
         # Setup mocks
         mock_keys.return_value = {"openai_api_key": "test_key"}
@@ -259,7 +259,7 @@ class TestWorkflowGeneration:
     @patch('nodes.parse_openai_response')
     def test_generate_workflow_groq(self, mock_parse, mock_groq, mock_keys):
         """Test workflow generation with Groq"""
-        from nodes import generate_workflow, GROQ_MODELS
+        from ollama_workbench.workflows.nodes import generate_workflow, GROQ_MODELS
         
         # Setup mocks
         mock_keys.return_value = {"groq_api_key": "test_key"}
@@ -285,7 +285,7 @@ class TestWorkflowGeneration:
     @patch('nodes.parse_ollama_response')
     def test_generate_workflow_ollama(self, mock_parse, mock_ollama, mock_keys):
         """Test workflow generation with Ollama"""
-        from nodes import generate_workflow
+        from ollama_workbench.workflows.nodes import generate_workflow
         
         # Setup mocks
         mock_keys.return_value = {}
@@ -311,7 +311,7 @@ class TestWorkflowGeneration:
     @patch('nodes.call_ollama_endpoint')
     def test_generate_workflow_exception(self, mock_ollama, mock_keys, mock_st):
         """Test workflow generation with exception"""
-        from nodes import generate_workflow
+        from ollama_workbench.workflows.nodes import generate_workflow
         
         # Setup mocks
         mock_keys.return_value = {}
@@ -333,7 +333,7 @@ class TestResponseParsing:
     
     def test_parse_openai_response_success(self):
         """Test successful OpenAI response parsing"""
-        from nodes import parse_openai_response
+        from ollama_workbench.workflows.nodes import parse_openai_response
         
         response = 'Some text before {"nodes": [{"id": "1"}], "edges": [{"id": "1-2", "source": "1", "target": "2"}]} some text after'
         
@@ -346,7 +346,7 @@ class TestResponseParsing:
     
     def test_parse_openai_response_no_json(self):
         """Test OpenAI response with no JSON"""
-        from nodes import parse_openai_response
+        from ollama_workbench.workflows.nodes import parse_openai_response
         
         response = "No JSON here at all"
         
@@ -355,7 +355,7 @@ class TestResponseParsing:
     
     def test_parse_openai_response_invalid_structure(self):
         """Test OpenAI response with invalid structure"""
-        from nodes import parse_openai_response
+        from ollama_workbench.workflows.nodes import parse_openai_response
         
         response = '{"nodes": []}'  # Missing edges
         
@@ -364,7 +364,7 @@ class TestResponseParsing:
     
     def test_parse_ollama_response_success(self):
         """Test successful Ollama response parsing"""
-        from nodes import parse_ollama_response
+        from ollama_workbench.workflows.nodes import parse_ollama_response
         
         response = '''Some conversation
         
@@ -379,7 +379,7 @@ class TestResponseParsing:
     
     def test_parse_ollama_response_missing_edge_fields(self):
         """Test Ollama response with missing edge fields"""
-        from nodes import parse_ollama_response
+        from ollama_workbench.workflows.nodes import parse_ollama_response
         
         response = '{"nodes": [], "edges": [{"id": "1-2"}]}'  # Missing source/target
         
@@ -391,7 +391,7 @@ class TestResponseParsing:
     
     def test_parse_ollama_response_no_json(self):
         """Test Ollama response with no JSON"""
-        from nodes import parse_ollama_response
+        from ollama_workbench.workflows.nodes import parse_ollama_response
         
         response = "No JSON in this response"
         
@@ -404,7 +404,7 @@ class TestWorkflowExecution:
     
     def test_execute_workflow_basic(self):
         """Test basic workflow execution"""
-        from nodes import execute_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import execute_workflow, Node, Edge
         
         # Create simple workflow: Input -> Output
         nodes = [
@@ -423,7 +423,7 @@ class TestWorkflowExecution:
     
     def test_execute_workflow_node_not_found(self):
         """Test workflow execution with missing node"""
-        from nodes import execute_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import execute_workflow, Node, Edge
         
         nodes = [Node("1", "Input", {"input_type": "Text", "input_text": "Test"})]
         edges = [Edge("1-2", "1", "2")]  # Edge points to non-existent node
@@ -435,7 +435,7 @@ class TestWorkflowExecution:
     
     def test_execute_workflow_with_processing_cycle(self):
         """Test workflow execution processes all nodes"""
-        from nodes import execute_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import execute_workflow, Node, Edge
         
         nodes = [
             Node("1", "Input", {"input_type": "Text", "input_text": "Hello"}),
@@ -460,7 +460,7 @@ class TestNodeHandlers:
     
     def test_handle_input_node_text(self):
         """Test input node with text type"""
-        from nodes import handle_input_node, Node
+        from ollama_workbench.workflows.nodes import handle_input_node, Node
         
         node = Node("1", "Input", {
             "input_type": "Text",
@@ -472,7 +472,7 @@ class TestNodeHandlers:
     
     def test_handle_input_node_file(self):
         """Test input node with file type"""
-        from nodes import handle_input_node, Node
+        from ollama_workbench.workflows.nodes import handle_input_node, Node
         
         mock_file = Mock()
         mock_file.getvalue.return_value = b"File content"
@@ -487,7 +487,7 @@ class TestNodeHandlers:
     
     def test_handle_input_node_file_no_upload(self):
         """Test input node with file type but no file"""
-        from nodes import handle_input_node, Node
+        from ollama_workbench.workflows.nodes import handle_input_node, Node
         
         node = Node("1", "Input", {
             "input_type": "File",
@@ -500,7 +500,7 @@ class TestNodeHandlers:
     @patch('nodes.requests.get')
     def test_handle_input_node_api_success(self, mock_get):
         """Test input node with API type"""
-        from nodes import handle_input_node, Node
+        from ollama_workbench.workflows.nodes import handle_input_node, Node
         
         mock_response = Mock()
         mock_response.text = "API response data"
@@ -519,7 +519,7 @@ class TestNodeHandlers:
     @patch('nodes.requests.get')
     def test_handle_input_node_api_error(self, mock_get):
         """Test input node with API error"""
-        from nodes import handle_input_node, Node
+        from ollama_workbench.workflows.nodes import handle_input_node, Node
         
         mock_get.side_effect = Exception("Connection error")
         
@@ -533,7 +533,7 @@ class TestNodeHandlers:
     
     def test_handle_processing_node_preprocessing(self):
         """Test processing node with preprocessing"""
-        from nodes import handle_processing_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_processing_node, Node, Edge
         
         node = Node("2", "Processing", {
             "processing_type": "Preprocessing",
@@ -550,7 +550,7 @@ class TestNodeHandlers:
     
     def test_handle_processing_node_no_input(self):
         """Test processing node without input"""
-        from nodes import handle_processing_node, Node
+        from ollama_workbench.workflows.nodes import handle_processing_node, Node
         
         node = Node("2", "Processing", {"processing_type": "Preprocessing"})
         
@@ -562,7 +562,7 @@ class TestNodeHandlers:
     @patch('nodes.construct_prompt')
     def test_handle_llm_node_ollama(self, mock_construct, mock_ollama, mock_keys):
         """Test LLM node with Ollama"""
-        from nodes import handle_llm_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_llm_node, Node, Edge
         
         # Setup mocks
         mock_keys.return_value = {}
@@ -601,7 +601,7 @@ class TestNodeHandlers:
     @patch('nodes.construct_prompt')
     def test_handle_llm_node_openai(self, mock_construct, mock_openai, mock_keys):
         """Test LLM node with OpenAI"""
-        from nodes import handle_llm_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_llm_node, Node, Edge
         
         # Setup mocks
         mock_keys.return_value = {"openai_api_key": "test_key"}
@@ -629,7 +629,7 @@ class TestNodeHandlers:
     
     def test_handle_output_node_text(self):
         """Test output node with text type"""
-        from nodes import handle_output_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_output_node, Node, Edge
         
         node = Node("3", "Output", {
             "output_type": "Text",
@@ -646,7 +646,7 @@ class TestNodeHandlers:
     
     def test_handle_output_node_file(self):
         """Test output node with file type"""
-        from nodes import handle_output_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_output_node, Node, Edge
         
         node = Node("3", "Output", {"output_type": "File"})
         
@@ -662,7 +662,7 @@ class TestNodeHandlers:
     @patch('nodes.base64.b64encode')
     def test_handle_output_node_visualization(self, mock_b64, mock_plt):
         """Test output node with visualization type"""
-        from nodes import handle_output_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_output_node, Node, Edge
         
         # Setup mocks
         mock_b64.return_value.decode.return_value = "base64_image_data"
@@ -686,7 +686,7 @@ class TestDataRetrievalNode:
     
     def test_handle_data_retrieval_node_database(self):
         """Test data retrieval node with database type"""
-        from nodes import handle_data_retrieval_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
         
         node = Node("2", "DataRetrieval", {
             "retrieval_type": "Database",
@@ -707,7 +707,7 @@ class TestDataRetrievalNode:
     @patch('nodes.requests.get')
     def test_handle_data_retrieval_node_api(self, mock_get):
         """Test data retrieval node with API type"""
-        from nodes import handle_data_retrieval_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
         
         # Setup mock
         mock_response = Mock()
@@ -739,7 +739,7 @@ class TestDataRetrievalNode:
     @patch('nodes.requests.get')
     def test_handle_data_retrieval_node_api_error(self, mock_get):
         """Test data retrieval node with API error"""
-        from nodes import handle_data_retrieval_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
         
         mock_get.side_effect = Exception("Network error")
         
@@ -759,7 +759,7 @@ class TestDataRetrievalNode:
     @patch('builtins.open', mock_open(read_data="File content here"))
     def test_handle_data_retrieval_node_file(self):
         """Test data retrieval node with file type"""
-        from nodes import handle_data_retrieval_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
         
         node = Node("2", "DataRetrieval", {
             "retrieval_type": "File",
@@ -774,7 +774,7 @@ class TestDataRetrievalNode:
     
     def test_handle_data_retrieval_node_file_error(self):
         """Test data retrieval node with file error"""
-        from nodes import handle_data_retrieval_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
         
         node = Node("2", "DataRetrieval", {
             "retrieval_type": "File",
@@ -794,7 +794,7 @@ class TestControlNode:
     
     def test_handle_control_node_conditional_true(self):
         """Test control node with conditional (true case)"""
-        from nodes import handle_control_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
         
         node = Node("2", "Control", {
             "control_type": "Conditional",
@@ -814,7 +814,7 @@ class TestControlNode:
     
     def test_handle_control_node_conditional_false(self):
         """Test control node with conditional (false case)"""
-        from nodes import handle_control_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
         
         node = Node("2", "Control", {
             "control_type": "Conditional",
@@ -834,7 +834,7 @@ class TestControlNode:
     
     def test_handle_control_node_loop(self):
         """Test control node with loop type"""
-        from nodes import handle_control_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
         
         node = Node("2", "Control", {
             "control_type": "Loop",
@@ -855,7 +855,7 @@ class TestControlNode:
     
     def test_handle_control_node_switch_match(self):
         """Test control node with switch (matching case)"""
-        from nodes import handle_control_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
         
         node = Node("2", "Control", {
             "control_type": "Switch",
@@ -877,7 +877,7 @@ class TestControlNode:
     
     def test_handle_control_node_switch_default(self):
         """Test control node with switch (default case)"""
-        from nodes import handle_control_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
         
         node = Node("2", "Control", {
             "control_type": "Switch",
@@ -900,7 +900,7 @@ class TestIntegrationNode:
     
     def test_handle_integration_node_email(self):
         """Test integration node with email type"""
-        from nodes import handle_integration_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_integration_node, Node, Edge
         
         node = Node("2", "Integration", {
             "integration_type": "Email",
@@ -922,7 +922,7 @@ class TestIntegrationNode:
     @patch('nodes.requests.post')
     def test_handle_integration_node_webhook_success(self, mock_post):
         """Test integration node with webhook type"""
-        from nodes import handle_integration_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_integration_node, Node, Edge
         
         # Setup mock
         mock_response = Mock()
@@ -954,7 +954,7 @@ class TestIntegrationNode:
     @patch('nodes.requests.post')
     def test_handle_integration_node_webhook_error(self, mock_post):
         """Test integration node with webhook error"""
-        from nodes import handle_integration_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_integration_node, Node, Edge
         
         mock_post.side_effect = Exception("Connection failed")
         
@@ -973,7 +973,7 @@ class TestIntegrationNode:
     
     def test_handle_integration_node_database(self):
         """Test integration node with database type"""
-        from nodes import handle_integration_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_integration_node, Node, Edge
         
         node = Node("2", "Integration", {
             "integration_type": "Database",
@@ -997,7 +997,7 @@ class TestUtilityNode:
     
     def test_handle_utility_node_format_json(self):
         """Test utility node with JSON formatting"""
-        from nodes import handle_utility_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_utility_node, Node, Edge
         
         node = Node("2", "Utility", {
             "utility_type": "Format",
@@ -1016,7 +1016,7 @@ class TestUtilityNode:
     
     def test_handle_utility_node_format_html(self):
         """Test utility node with HTML formatting"""
-        from nodes import handle_utility_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_utility_node, Node, Edge
         
         node = Node("2", "Utility", {
             "utility_type": "Format",
@@ -1034,7 +1034,7 @@ class TestUtilityNode:
     
     def test_handle_utility_node_transform_uppercase(self):
         """Test utility node with uppercase transform"""
-        from nodes import handle_utility_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_utility_node, Node, Edge
         
         node = Node("2", "Utility", {
             "utility_type": "Transform",
@@ -1052,7 +1052,7 @@ class TestUtilityNode:
     
     def test_handle_utility_node_calculate_basic(self):
         """Test utility node with basic calculation"""
-        from nodes import handle_utility_node, Node, Edge
+        from ollama_workbench.workflows.nodes import handle_utility_node, Node, Edge
         
         node = Node("2", "Utility", {
             "utility_type": "Calculate",
@@ -1075,7 +1075,7 @@ class TestWorkflowValidation:
     
     def test_validate_workflow_valid(self):
         """Test validation of valid workflow"""
-        from nodes import validate_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import validate_workflow, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1094,7 +1094,7 @@ class TestWorkflowValidation:
     
     def test_validate_workflow_no_input(self):
         """Test validation without input node"""
-        from nodes import validate_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import validate_workflow, Node, Edge
         
         nodes = [
             Node("1", "LLM", {}),
@@ -1109,7 +1109,7 @@ class TestWorkflowValidation:
     
     def test_validate_workflow_no_output(self):
         """Test validation without output node"""
-        from nodes import validate_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import validate_workflow, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1124,7 +1124,7 @@ class TestWorkflowValidation:
     
     def test_validate_workflow_invalid_edge(self):
         """Test validation with invalid edge"""
-        from nodes import validate_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import validate_workflow, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1139,7 +1139,7 @@ class TestWorkflowValidation:
     
     def test_validate_workflow_disconnected_nodes(self):
         """Test validation with disconnected nodes"""
-        from nodes import validate_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import validate_workflow, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1155,7 +1155,7 @@ class TestWorkflowValidation:
     
     def test_has_cycle_true(self):
         """Test cycle detection with cycle"""
-        from nodes import has_cycle, Node, Edge
+        from ollama_workbench.workflows.nodes import has_cycle, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1173,7 +1173,7 @@ class TestWorkflowValidation:
     
     def test_has_cycle_false(self):
         """Test cycle detection without cycle"""
-        from nodes import has_cycle, Node, Edge
+        from ollama_workbench.workflows.nodes import has_cycle, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1190,7 +1190,7 @@ class TestWorkflowValidation:
     
     def test_path_exists_input_to_output_true(self):
         """Test path existence with valid path"""
-        from nodes import path_exists_input_to_output, Node, Edge
+        from ollama_workbench.workflows.nodes import path_exists_input_to_output, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1207,7 +1207,7 @@ class TestWorkflowValidation:
     
     def test_path_exists_input_to_output_false(self):
         """Test path existence without valid path"""
-        from nodes import path_exists_input_to_output, Node, Edge
+        from ollama_workbench.workflows.nodes import path_exists_input_to_output, Node, Edge
         
         nodes = [
             Node("1", "Input", {}),
@@ -1231,7 +1231,7 @@ class TestPromptConstruction:
     @patch('nodes.get_identity_prompt')
     def test_construct_prompt_full(self, mock_identity, mock_voice, mock_metacog, mock_agent):
         """Test prompt construction with all components"""
-        from nodes import construct_prompt, Node
+        from ollama_workbench.workflows.nodes import construct_prompt, Node
         
         # Setup mocks
         mock_agent.return_value = {"Analyst": "You are an analyst"}
@@ -1264,7 +1264,7 @@ class TestPromptConstruction:
     @patch('nodes.get_agent_prompt')
     def test_construct_prompt_minimal(self, mock_agent):
         """Test prompt construction with minimal components"""
-        from nodes import construct_prompt, Node
+        from ollama_workbench.workflows.nodes import construct_prompt, Node
         
         mock_agent.return_value = {}
         
@@ -1289,7 +1289,7 @@ class TestFileOperations:
     @patch('nodes.time.time')
     def test_save_workflow(self, mock_time):
         """Test saving workflow"""
-        from nodes import save_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import save_workflow, Node, Edge
         
         # Setup mock
         mock_time.return_value = 1234567890
@@ -1309,7 +1309,7 @@ class TestFileOperations:
     
     def test_load_workflow_success(self):
         """Test successful workflow loading"""
-        from nodes import load_workflow
+        from ollama_workbench.workflows.nodes import load_workflow
         
         workflow_data = {
             "nodes": [{"id": "1", "type": "Input", "data": {"content": "Test"}}],
@@ -1332,7 +1332,7 @@ class TestFileOperations:
     @patch('nodes.st')
     def test_load_workflow_file_not_found(self, mock_st):
         """Test workflow loading with missing file"""
-        from nodes import load_workflow
+        from ollama_workbench.workflows.nodes import load_workflow
         
         mock_st.warning = Mock()
         
@@ -1346,7 +1346,7 @@ class TestFileOperations:
     @patch('nodes.st')
     def test_load_workflow_json_error(self, mock_st):
         """Test workflow loading with JSON error"""
-        from nodes import load_workflow
+        from ollama_workbench.workflows.nodes import load_workflow
         
         mock_st.error = Mock()
         
@@ -1364,7 +1364,7 @@ class TestNodeCreation:
     @patch('nodes.get_all_models')
     def test_create_node_input(self, mock_models):
         """Test creating input node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         mock_models.return_value = ["llama3", "gpt-4"]
         
@@ -1379,7 +1379,7 @@ class TestNodeCreation:
     @patch('nodes.get_all_models')
     def test_create_node_llm(self, mock_models):
         """Test creating LLM node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         mock_models.return_value = ["llama3", "gpt-4"]
         
@@ -1394,7 +1394,7 @@ class TestNodeCreation:
     
     def test_create_node_processing(self):
         """Test creating processing node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         node = create_node("3", "Processing")
         
@@ -1405,7 +1405,7 @@ class TestNodeCreation:
     
     def test_create_node_output(self):
         """Test creating output node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         node = create_node("4", "Output")
         
@@ -1416,7 +1416,7 @@ class TestNodeCreation:
     
     def test_create_node_data_retrieval(self):
         """Test creating data retrieval node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         node = create_node("5", "DataRetrieval")
         
@@ -1427,7 +1427,7 @@ class TestNodeCreation:
     
     def test_create_node_control(self):
         """Test creating control node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         node = create_node("6", "Control")
         
@@ -1438,7 +1438,7 @@ class TestNodeCreation:
     
     def test_create_node_integration(self):
         """Test creating integration node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         node = create_node("7", "Integration")
         
@@ -1449,7 +1449,7 @@ class TestNodeCreation:
     
     def test_create_node_utility(self):
         """Test creating utility node"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         node = create_node("8", "Utility")
         
@@ -1460,7 +1460,7 @@ class TestNodeCreation:
     
     def test_create_node_unavailable_type(self):
         """Test creating node with unavailable type"""
-        from nodes import create_node
+        from ollama_workbench.workflows.nodes import create_node
         
         with patch('nodes.AVAILABLE_NODE_TYPES', {"Input": False}):
             with pytest.raises(ValueError, match="Node type 'Input' is not available"):
@@ -1472,7 +1472,7 @@ class TestScriptExport:
     
     def test_export_workflow_as_script(self):
         """Test exporting workflow as Python script"""
-        from nodes import export_workflow_as_script, Node, Edge
+        from ollama_workbench.workflows.nodes import export_workflow_as_script, Node, Edge
         
         nodes = [
             Node("1", "Input", {"input_text": "Hello World"}),
@@ -1500,7 +1500,7 @@ class TestConstants:
     
     def test_available_node_types(self):
         """Test available node types constant"""
-        from nodes import AVAILABLE_NODE_TYPES
+        from ollama_workbench.workflows.nodes import AVAILABLE_NODE_TYPES
         
         expected_types = [
             "Input", "Processing", "LLM", "Output", 
@@ -1513,7 +1513,7 @@ class TestConstants:
     
     def test_node_colors(self):
         """Test node colors constant"""
-        from nodes import NODE_COLORS, AVAILABLE_NODE_TYPES
+        from ollama_workbench.workflows.nodes import NODE_COLORS, AVAILABLE_NODE_TYPES
         
         # All available node types should have colors
         for node_type in AVAILABLE_NODE_TYPES:
@@ -1522,7 +1522,7 @@ class TestConstants:
     
     def test_node_emojis(self):
         """Test node emojis constant"""
-        from nodes import NODE_EMOJIS, AVAILABLE_NODE_TYPES
+        from ollama_workbench.workflows.nodes import NODE_EMOJIS, AVAILABLE_NODE_TYPES
         
         # All available node types should have emojis
         for node_type in AVAILABLE_NODE_TYPES:
@@ -1535,7 +1535,7 @@ class TestErrorHandling:
     
     def test_execute_workflow_exception_handling(self):
         """Test workflow execution with node exception"""
-        from nodes import execute_workflow, Node, Edge
+        from ollama_workbench.workflows.nodes import execute_workflow, Node, Edge
         
         # Create a node that will cause an exception
         nodes = [
@@ -1553,7 +1553,7 @@ class TestErrorHandling:
     
     def test_handle_llm_node_no_input(self):
         """Test LLM node without input"""
-        from nodes import handle_llm_node, Node
+        from ollama_workbench.workflows.nodes import handle_llm_node, Node
         
         node = Node("1", "LLM", {})
         
@@ -1563,7 +1563,7 @@ class TestErrorHandling:
     
     def test_handle_output_node_no_input(self):
         """Test output node without input"""
-        from nodes import handle_output_node, Node
+        from ollama_workbench.workflows.nodes import handle_output_node, Node
         
         node = Node("1", "Output", {})
         

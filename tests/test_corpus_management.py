@@ -1,7 +1,7 @@
 import pytest
 import os
 import shutil
-from corpus_management import CorpusManager  # Replace with the actual module name
+from ollama_workbench.knowledge.corpus_management import CorpusManager  # Replace with the actual module name
 from langchain.text_splitter import CharacterTextSplitter
 
 CORPUS_NAME = "test_corpus"

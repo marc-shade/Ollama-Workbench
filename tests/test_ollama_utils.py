@@ -13,7 +13,7 @@ import numpy as np
 # Import the module to test
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from ollama_utils import (
+from ollama_workbench.providers.ollama_utils import (
     load_api_keys, save_api_keys, load_model_settings, save_model_settings,
     get_ollama_url, get_ollama_client, get_ollama_resource_usage,
     get_available_models, call_ollama_endpoint, check_json_handling,
@@ -331,7 +331,7 @@ class TestEmbeddings:
         """Test generating embeddings with Groq"""
         mock_groq_embeddings.return_value = [0.4, 0.5, 0.6]
         
-        from ollama_utils import GROQ_MODELS
+        from ollama_workbench.providers.ollama_utils import GROQ_MODELS
         test_model = GROQ_MODELS[0] if GROQ_MODELS else "groq-model"
         with patch('ollama_utils.GROQ_MODELS', [test_model]):
             embedding = generate_embeddings(test_model, "test text")

@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 from typing import Optional
 from persona_lab.persona_model import Persona, PersonaDB
-from ollama_utils import call_ollama_endpoint
-from persona_chat import STARTER_OCCUPATIONS
+from ollama_workbench.providers.ollama_utils import call_ollama_endpoint
+from ollama_workbench.chat.persona_chat import STARTER_OCCUPATIONS
 
 class PersonaLab:
     def __init__(self):

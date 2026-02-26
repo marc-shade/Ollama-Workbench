@@ -21,7 +21,7 @@ class TestCommandExecution:
     @patch('server_monitoring.subprocess.run')
     def test_run_command_success(self, mock_subprocess):
         """Test successful command execution"""
-        from server_monitoring import run_command
+        from ollama_workbench.server.server_monitoring import run_command
         
         # Mock successful subprocess result
         mock_result = Mock()
@@ -40,7 +40,7 @@ class TestCommandExecution:
     @patch('server_monitoring.subprocess.run')
     def test_run_command_failure(self, mock_subprocess, mock_st):
         """Test command execution failure"""
-        from server_monitoring import run_command
+        from ollama_workbench.server.server_monitoring import run_command
         
         # Mock failed subprocess result
         mock_result = Mock()
@@ -57,7 +57,7 @@ class TestCommandExecution:
     @patch('server_monitoring.subprocess.run')
     def test_run_command_exception(self, mock_subprocess, mock_st):
         """Test command execution with exception"""
-        from server_monitoring import run_command
+        from ollama_workbench.server.server_monitoring import run_command
         
         mock_subprocess.side_effect = Exception("Process error")
         
@@ -73,7 +73,7 @@ class TestOllamaProcessInfo:
     @patch('server_monitoring.run_command')
     def test_get_ollama_ps_success(self, mock_run_command):
         """Test successful ollama ps command"""
-        from server_monitoring import get_ollama_ps
+        from ollama_workbench.server.server_monitoring import get_ollama_ps
         
         mock_run_command.return_value = "NAME\t\tID\t\tSIZE\t\tPROCESSOR\nllama3:latest\tabc123\t3.8 GB\t100% CPU"
         
@@ -85,7 +85,7 @@ class TestOllamaProcessInfo:
     @patch('server_monitoring.run_command')
     def test_get_ollama_ps_failure(self, mock_run_command):
         """Test failed ollama ps command"""
-        from server_monitoring import get_ollama_ps
+        from ollama_workbench.server.server_monitoring import get_ollama_ps
         
         mock_run_command.return_value = None
         
@@ -97,7 +97,7 @@ class TestOllamaProcessInfo:
     @patch('server_monitoring.run_command')
     def test_get_ollama_ps_empty(self, mock_run_command):
         """Test ollama ps with no running models"""
-        from server_monitoring import get_ollama_ps
+        from ollama_workbench.server.server_monitoring import get_ollama_ps
         
         mock_run_command.return_value = "NAME\t\tID\t\tSIZE\t\tPROCESSOR\n"
         
@@ -113,7 +113,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.os.path.expanduser')
     def test_get_log_file_path_darwin(self, mock_expanduser, mock_system):
         """Test log file path for macOS"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         mock_system.return_value = "Darwin"
         mock_expanduser.return_value = "/Users/test/.ollama/logs/server.log"
@@ -126,7 +126,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.platform.system')
     def test_get_log_file_path_linux(self, mock_system):
         """Test log file path for Linux"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         mock_system.return_value = "Linux"
         
@@ -138,7 +138,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.os.environ')
     def test_get_log_file_path_windows(self, mock_environ, mock_system):
         """Test log file path for Windows"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         mock_system.return_value = "Windows"
         mock_environ.__getitem__.return_value = "C:\\Users\\test\\AppData\\Local"
@@ -155,7 +155,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.platform.system')
     def test_get_log_file_path_unsupported(self, mock_system, mock_st):
         """Test log file path for unsupported OS"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         mock_system.return_value = "UnsupportedOS"
         
@@ -170,7 +170,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.run_command')
     def test_get_server_logs_success(self, mock_run_command, mock_log_path):
         """Test successful server log retrieval"""
-        from server_monitoring import get_server_logs
+        from ollama_workbench.server.server_monitoring import get_server_logs
         
         mock_log_path.return_value = "/var/log/ollama/server.log"
         mock_run_command.return_value = "2024-01-01 10:00:00 INFO Server started\n2024-01-01 10:01:00 INFO Model loaded"
@@ -185,7 +185,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.run_command')
     def test_get_server_logs_no_path(self, mock_run_command, mock_log_path):
         """Test server log retrieval with no log path"""
-        from server_monitoring import get_server_logs
+        from ollama_workbench.server.server_monitoring import get_server_logs
         
         mock_log_path.return_value = None
         
@@ -198,7 +198,7 @@ class TestLogFileHandling:
     @patch('server_monitoring.run_command')
     def test_get_server_logs_command_failure(self, mock_run_command, mock_log_path):
         """Test server log retrieval with command failure"""
-        from server_monitoring import get_server_logs
+        from ollama_workbench.server.server_monitoring import get_server_logs
         
         mock_log_path.return_value = "/var/log/ollama/server.log"
         mock_run_command.return_value = None
@@ -215,7 +215,7 @@ class TestResourceUsageMonitoring:
     @patch('server_monitoring.psutil.process_iter')
     def test_get_ollama_resource_usage_running(self, mock_process_iter):
         """Test resource usage when Ollama is running"""
-        from server_monitoring import get_ollama_resource_usage
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage
         
         # Mock Ollama process
         mock_ollama_process = Mock()
@@ -242,7 +242,7 @@ class TestResourceUsageMonitoring:
     @patch('server_monitoring.psutil.process_iter')
     def test_get_ollama_resource_usage_not_running(self, mock_process_iter):
         """Test resource usage when Ollama is not running"""
-        from server_monitoring import get_ollama_resource_usage
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage
         
         # Mock only other processes (no Ollama)
         mock_other_process = Mock()
@@ -260,7 +260,7 @@ class TestResourceUsageMonitoring:
     @patch('server_monitoring.psutil.process_iter')
     def test_get_ollama_resource_usage_multiple_processes(self, mock_process_iter):
         """Test resource usage with multiple processes named ollama"""
-        from server_monitoring import get_ollama_resource_usage
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage
         
         # Mock first Ollama process (should be the one selected)
         mock_ollama_process1 = Mock()
@@ -284,7 +284,7 @@ class TestResourceUsageMonitoring:
     @patch('server_monitoring.psutil.process_iter')
     def test_get_ollama_resource_usage_psutil_exception(self, mock_process_iter):
         """Test resource usage with psutil exception"""
-        from server_monitoring import get_ollama_resource_usage
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage
         
         mock_process_iter.side_effect = Exception("psutil error")
         
@@ -299,7 +299,7 @@ class TestResourceUsageMonitoring:
     @patch('server_monitoring.psutil.process_iter')
     def test_get_ollama_resource_usage_process_access_denied(self, mock_process_iter):
         """Test resource usage with process access denied"""
-        from server_monitoring import get_ollama_resource_usage
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage
         
         # Mock Ollama process that throws exception on resource access
         mock_ollama_process = Mock()
@@ -330,7 +330,7 @@ class TestStreamlitInterface:
     def test_server_monitoring_interface_complete(self, mock_file, mock_exists, mock_system,
                                                  mock_logs, mock_ps, mock_usage, mock_st):
         """Test complete server monitoring interface"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         # Setup mocks
         mock_usage.return_value = {
@@ -372,7 +372,7 @@ class TestStreamlitInterface:
     def test_server_monitoring_interface_no_config(self, mock_exists, mock_system,
                                                   mock_logs, mock_ps, mock_usage, mock_st):
         """Test server monitoring interface with no config file"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         # Setup mocks
         mock_usage.return_value = {
@@ -407,7 +407,7 @@ class TestStreamlitInterface:
     def test_server_monitoring_interface_unsupported_os(self, mock_system, mock_logs,
                                                        mock_ps, mock_usage, mock_st):
         """Test server monitoring interface on unsupported OS"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         # Setup mocks
         mock_usage.return_value = {
@@ -445,7 +445,7 @@ class TestStreamlitInterface:
     def test_server_monitoring_refresh_logs(self, mock_file, mock_exists, mock_system,
                                            mock_logs, mock_ps, mock_usage, mock_st):
         """Test refresh logs functionality"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         # Setup mocks
         mock_usage.return_value = {"status": "Running", "cpu_usage": "10%", "memory_usage": "5%", "gpu_usage": "N/A"}
@@ -479,7 +479,7 @@ class TestStreamlitInterface:
     def test_server_monitoring_darwin_config_path(self, mock_expanduser, mock_exists,
                                                  mock_system, mock_logs, mock_ps, mock_usage, mock_st):
         """Test server monitoring with macOS config path"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         # Setup mocks
         mock_usage.return_value = {"status": "Running", "cpu_usage": "5%", "memory_usage": "3%", "gpu_usage": "N/A"}
@@ -514,7 +514,7 @@ class TestStreamlitInterface:
     def test_server_monitoring_windows_config_path(self, mock_environ, mock_exists,
                                                   mock_system, mock_logs, mock_ps, mock_usage, mock_st):
         """Test server monitoring with Windows config path"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         # Setup mocks
         mock_usage.return_value = {"status": "Running", "cpu_usage": "12%", "memory_usage": "7%", "gpu_usage": "N/A"}
@@ -551,7 +551,7 @@ class TestConfigurationHandling:
     @patch('builtins.open', new_callable=mock_open)
     def test_config_file_json_error(self, mock_file, mock_exists, mock_system, mock_st):
         """Test configuration file with JSON parsing error"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         mock_system.return_value = "Linux"
         mock_exists.return_value = True
@@ -584,7 +584,7 @@ class TestConfigurationHandling:
     @patch('builtins.open', new_callable=mock_open, read_data='{"complex": {"nested": {"config": "value"}}}')
     def test_config_file_complex_json(self, mock_file, mock_exists, mock_system, mock_st):
         """Test configuration file with complex JSON structure"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         mock_system.return_value = "Linux"
         mock_exists.return_value = True
@@ -618,7 +618,8 @@ class TestIntegration:
     
     def test_module_imports(self):
         """Test that all required modules can be imported"""
-        import server_monitoring
+        import ollama_workbench.server.server_monitoring as server_monitoring
+
         
         # Test that main functions exist
         assert hasattr(server_monitoring, 'run_command')
@@ -632,7 +633,7 @@ class TestIntegration:
     @patch('server_monitoring.os.path.expanduser')
     def test_log_path_consistency(self, mock_expanduser, mock_system):
         """Test log path consistency across different OS calls"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         mock_system.return_value = "Darwin"
         mock_expanduser.return_value = "/Users/test/.ollama/logs/server.log"
@@ -648,7 +649,7 @@ class TestIntegration:
     @patch('server_monitoring.run_command')
     def test_resource_monitoring_integration(self, mock_run_command, mock_process_iter):
         """Test integration between resource monitoring and command execution"""
-        from server_monitoring import get_ollama_resource_usage, get_ollama_ps
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage, get_ollama_ps
         
         # Setup mocks
         mock_ollama_process = Mock()
@@ -673,7 +674,7 @@ class TestErrorHandling:
     @patch('server_monitoring.subprocess.run')
     def test_command_timeout_handling(self, mock_subprocess):
         """Test command execution with timeout"""
-        from server_monitoring import run_command
+        from ollama_workbench.server.server_monitoring import run_command
         
         mock_subprocess.side_effect = subprocess.TimeoutExpired("cmd", 30)
         
@@ -686,7 +687,7 @@ class TestErrorHandling:
     @patch('server_monitoring.psutil.process_iter')
     def test_process_permission_error(self, mock_process_iter):
         """Test handling of permission errors when accessing process info"""
-        from server_monitoring import get_ollama_resource_usage
+        from ollama_workbench.server.server_monitoring import get_ollama_resource_usage
         
         mock_process = Mock()
         mock_process.info = {'name': 'ollama', 'cpu_percent': 0, 'memory_percent': 0}
@@ -705,7 +706,7 @@ class TestErrorHandling:
     @patch('builtins.open', new_callable=mock_open)
     def test_config_file_permission_error(self, mock_file, mock_exists):
         """Test configuration file access with permission error"""
-        from server_monitoring import server_monitoring
+        from ollama_workbench.server.server_monitoring import server_monitoring
         
         mock_exists.return_value = True
         mock_file.side_effect = PermissionError("Access denied")
@@ -740,7 +741,7 @@ class TestPlatformSpecificBehavior:
     @patch('server_monitoring.platform.system')
     def test_all_supported_platforms_log_paths(self, mock_system):
         """Test log paths for all supported platforms"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         # Test Linux
         mock_system.return_value = "Linux"
@@ -763,7 +764,7 @@ class TestPlatformSpecificBehavior:
     @patch('server_monitoring.platform.system')
     def test_unsupported_platform_behavior(self, mock_system):
         """Test behavior on unsupported platforms"""
-        from server_monitoring import get_log_file_path
+        from ollama_workbench.server.server_monitoring import get_log_file_path
         
         mock_system.return_value = "FreeBSD"
         

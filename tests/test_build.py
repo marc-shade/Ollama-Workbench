@@ -20,7 +20,7 @@ class TestBuildUtilities:
     
     def test_load_json_file_existing(self):
         """Test loading existing JSON file"""
-        from build import load_json_file
+        from ollama_workbench.workflows.build import load_json_file
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
             test_data = {"key": "value", "number": 42}
@@ -35,14 +35,14 @@ class TestBuildUtilities:
     
     def test_load_json_file_nonexistent(self):
         """Test loading non-existent JSON file returns empty dict"""
-        from build import load_json_file
+        from ollama_workbench.workflows.build import load_json_file
         
         result = load_json_file("nonexistent_file.json")
         assert result == {}
     
     def test_save_json_file(self):
         """Test saving JSON file"""
-        from build import save_json_file
+        from ollama_workbench.workflows.build import save_json_file
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
             tmp_path = tmp.name
@@ -62,7 +62,7 @@ class TestBuildUtilities:
     @patch('build.load_json_file')
     def test_api_key_management(self, mock_load, mock_save):
         """Test API key loading and saving"""
-        from build import load_api_keys, save_api_keys, set_openai_api_key
+        from ollama_workbench.workflows.build import load_api_keys, save_api_keys, set_openai_api_key
         
         # Test load_api_keys
         mock_load.return_value = {"existing_key": "value"}
@@ -85,7 +85,7 @@ class TestBuildUtilities:
     @patch('build.load_json_file')
     def test_settings_management(self, mock_load, mock_save):
         """Test settings loading and saving"""
-        from build import load_settings, save_settings
+        from ollama_workbench.workflows.build import load_settings, save_settings
         
         # Test load_settings
         mock_load.return_value = {"setting1": "value1"}
@@ -106,7 +106,7 @@ class TestAPIIntegrations:
     @patch('build.load_api_keys')
     def test_call_openai_api_success(self, mock_load_keys, mock_openai):
         """Test successful OpenAI API call"""
-        from build import call_openai_api
+        from ollama_workbench.workflows.build import call_openai_api
         
         # Setup mocks
         mock_load_keys.return_value = {"openai_api_key": "test_key"}
@@ -125,7 +125,7 @@ class TestAPIIntegrations:
     @patch('build.load_api_keys')
     def test_call_openai_api_missing_key(self, mock_load_keys):
         """Test OpenAI API call with missing key"""
-        from build import call_openai_api
+        from ollama_workbench.workflows.build import call_openai_api
         
         mock_load_keys.return_value = {}
         messages = [{"role": "user", "content": "Hello"}]
@@ -135,7 +135,7 @@ class TestAPIIntegrations:
     
     def test_call_openai_api_invalid_parameters(self):
         """Test OpenAI API call with invalid parameters"""
-        from build import call_openai_api
+        from ollama_workbench.workflows.build import call_openai_api
         
         messages = [{"role": "user", "content": "Hello"}]
         
@@ -145,7 +145,7 @@ class TestAPIIntegrations:
     @patch('build.get_available_groq_models')
     def test_is_groq_model(self, mock_get_groq):
         """Test Groq model detection"""
-        from build import is_groq_model
+        from ollama_workbench.workflows.build import is_groq_model
         
         mock_get_groq.return_value = ["mixtral-8x7b", "llama2-70b"]
         
@@ -159,7 +159,7 @@ class TestSearchFunctionality:
     @patch('build.DDGS')
     def test_perform_search_duckduckgo(self, mock_ddgs):
         """Test DuckDuckGo search"""
-        from build import perform_search
+        from ollama_workbench.workflows.build import perform_search
         
         # Setup mock
         mock_search_instance = Mock()
@@ -182,7 +182,7 @@ class TestSearchFunctionality:
     @patch('build.build')
     def test_perform_search_google(self, mock_build_service):
         """Test Google search"""
-        from build import perform_search
+        from ollama_workbench.workflows.build import perform_search
         
         # Setup mock
         mock_service = Mock()
@@ -210,7 +210,7 @@ class TestSearchFunctionality:
     
     def test_perform_search_missing_keys(self):
         """Test search with missing API keys"""
-        from build import perform_search
+        from ollama_workbench.workflows.build import perform_search
         
         # Test Google without keys
         results = perform_search("test", "google", {}, 5)
@@ -222,7 +222,7 @@ class TestSearchFunctionality:
     
     def test_perform_search_unsupported_method(self):
         """Test search with unsupported method"""
-        from build import perform_search
+        from ollama_workbench.workflows.build import perform_search
         
         results = perform_search("test", "unsupported", {}, 5)
         assert results == []
@@ -233,7 +233,7 @@ class TestAgentTasks:
     
     def test_create_agent_context(self):
         """Test agent context creation"""
-        from build import create_agent_context
+        from ollama_workbench.workflows.build import create_agent_context
         
         project_state = {
             "status": "In Progress",
@@ -253,7 +253,7 @@ class TestAgentTasks:
     @patch('build.load_api_keys')
     def test_manager_agent_task_openai(self, mock_load_keys, mock_openai_class):
         """Test manager agent task with OpenAI"""
-        from build import manager_agent_task
+        from ollama_workbench.workflows.build import manager_agent_task
         
         # Setup mocks
         mock_load_keys.return_value = {"openai_api_key": "test_key"}
@@ -275,7 +275,7 @@ class TestAgentTasks:
     @patch('build.call_groq_api')
     def test_manager_agent_task_groq(self, mock_groq):
         """Test manager agent task with Groq"""
-        from build import manager_agent_task
+        from ollama_workbench.workflows.build import manager_agent_task
         
         # Setup mock
         mock_groq.return_value = '{"analysis": "groq test", "work_plan": "groq plan", "priorities": [], "instructions": "groq task", "create_files": true}'
@@ -291,7 +291,7 @@ class TestAgentTasks:
     @patch('build.call_ollama_endpoint')
     def test_manager_agent_task_ollama(self, mock_ollama):
         """Test manager agent task with Ollama"""
-        from build import manager_agent_task
+        from ollama_workbench.workflows.build import manager_agent_task
         
         # Setup mock
         mock_ollama.return_value = ('{"analysis": "ollama test", "work_plan": "ollama plan", "priorities": [], "instructions": "ollama task", "create_files": false}', None, None, None)
@@ -306,7 +306,7 @@ class TestAgentTasks:
     @patch('build.call_ollama_endpoint')
     def test_manager_agent_task_json_error(self, mock_ollama):
         """Test manager agent task with JSON parsing error"""
-        from build import manager_agent_task
+        from ollama_workbench.workflows.build import manager_agent_task
         
         # Setup mock with invalid JSON
         mock_ollama.return_value = ('invalid json response', None, None, None)
@@ -324,7 +324,7 @@ class TestCodeGeneration:
     @patch('build.call_openai_api')
     def test_coding_agent_task_openai(self, mock_openai):
         """Test coding agent task with OpenAI"""
-        from build import coding_agent_task
+        from ollama_workbench.workflows.build import coding_agent_task
         
         # Setup mock
         mock_openai.return_value = '{"implementation": "code here", "explanation": "This is test code"}'
@@ -349,7 +349,7 @@ class TestCodeGeneration:
     @patch('build.call_groq_api')
     def test_coding_agent_task_groq(self, mock_groq):
         """Test coding agent task with Groq"""
-        from build import coding_agent_task
+        from ollama_workbench.workflows.build import coding_agent_task
         
         # Setup mock
         mock_groq.return_value = '{"code": "groq generated code", "notes": "Groq implementation"}'
@@ -367,7 +367,7 @@ class TestCodeGeneration:
     @patch('build.call_ollama_endpoint')
     def test_coding_agent_task_ollama(self, mock_ollama):
         """Test coding agent task with Ollama"""
-        from build import coding_agent_task
+        from ollama_workbench.workflows.build import coding_agent_task
         
         # Setup mock
         mock_ollama.return_value = ('{"function": "def test(): pass", "description": "Test function"}', None, None, None)
@@ -379,7 +379,7 @@ class TestCodeGeneration:
     
     def test_coding_agent_task_empty_prompt(self):
         """Test coding agent task with empty prompt"""
-        from build import coding_agent_task
+        from ollama_workbench.workflows.build import coding_agent_task
         
         with pytest.raises(ValueError, match="Prompt cannot be empty"):
             coding_agent_task("", "llama3")
@@ -387,7 +387,7 @@ class TestCodeGeneration:
     @patch('build.call_ollama_endpoint')
     def test_coding_agent_task_with_search(self, mock_ollama):
         """Test coding agent task with search results"""
-        from build import coding_agent_task
+        from ollama_workbench.workflows.build import coding_agent_task
         
         mock_ollama.return_value = ('{"code": "enhanced code", "notes": "Used search data"}', None, None, None)
         
@@ -410,7 +410,7 @@ class TestFileOperations:
     
     def test_parse_folder_structure_valid(self):
         """Test parsing valid folder structure"""
-        from build import parse_folder_structure
+        from ollama_workbench.workflows.build import parse_folder_structure
         
         structure_text = '''
         Here is the folder structure:
@@ -439,7 +439,7 @@ class TestFileOperations:
     
     def test_parse_folder_structure_invalid_json(self):
         """Test parsing invalid JSON folder structure"""
-        from build import parse_folder_structure
+        from ollama_workbench.workflows.build import parse_folder_structure
         
         structure_text = '''
         <folder_structure>
@@ -452,7 +452,7 @@ class TestFileOperations:
     
     def test_parse_folder_structure_no_tags(self):
         """Test parsing text without folder structure tags"""
-        from build import parse_folder_structure
+        from ollama_workbench.workflows.build import parse_folder_structure
         
         structure_text = "No folder structure here"
         result = parse_folder_structure(structure_text)
@@ -460,7 +460,7 @@ class TestFileOperations:
     
     def test_extract_code_blocks(self):
         """Test extracting code blocks from text"""
-        from build import extract_code_blocks
+        from ollama_workbench.workflows.build import extract_code_blocks
         
         text = '''
         Here are the files:
@@ -486,7 +486,7 @@ class TestFileOperations:
     
     def test_extract_code_blocks_no_matches(self):
         """Test extracting code blocks with no matches"""
-        from build import extract_code_blocks
+        from ollama_workbench.workflows.build import extract_code_blocks
         
         text = "No code blocks here"
         result = extract_code_blocks(text)
@@ -494,7 +494,7 @@ class TestFileOperations:
     
     def test_save_file(self):
         """Test saving file to project directory"""
-        from build import save_file
+        from ollama_workbench.workflows.build import save_file
         
         with tempfile.TemporaryDirectory() as tmp_dir:
             content = "print('Hello World')"
@@ -508,7 +508,7 @@ class TestFileOperations:
     
     def test_create_repository_files(self):
         """Test creating repository files"""
-        from build import create_repository_files
+        from ollama_workbench.workflows.build import create_repository_files
         
         refined_output = '''
         <folder_structure>
@@ -536,7 +536,7 @@ class TestFileOperations:
     
     def test_dump_repository(self):
         """Test dumping repository contents"""
-        from build import dump_repository
+        from ollama_workbench.workflows.build import dump_repository
         
         with tempfile.TemporaryDirectory() as tmp_dir:
             # Create test files
@@ -561,7 +561,7 @@ class TestProjectBuilding:
     
     def test_build_project_success(self):
         """Test successful project build"""
-        from build import build_project
+        from ollama_workbench.workflows.build import build_project
         
         result = build_project("Create a calculator", {}, "Command-line Tool")
         
@@ -571,7 +571,7 @@ class TestProjectBuilding:
     
     def test_build_project_with_repo_contents(self):
         """Test project build with repository contents"""
-        from build import build_project
+        from ollama_workbench.workflows.build import build_project
         
         repo_contents = {
             "main.py": "print('hello')",
@@ -586,7 +586,7 @@ class TestProjectBuilding:
     @patch('build.call_openai_api')
     def test_generate_readme(self, mock_openai):
         """Test README generation"""
-        from build import generate_readme
+        from ollama_workbench.workflows.build import generate_readme
         
         mock_openai.return_value = "# Test Project\n\nThis is a test README."
         
@@ -604,7 +604,7 @@ class TestProjectBuilding:
     @patch('build.subprocess.run')
     def test_execute_code_command_line(self, mock_run):
         """Test executing command-line code"""
-        from build import execute_code
+        from ollama_workbench.workflows.build import execute_code
         
         mock_run.return_value.stdout = "Command executed successfully"
         
@@ -617,7 +617,7 @@ class TestProjectBuilding:
     @patch('build.subprocess.Popen')
     def test_execute_code_streamlit(self, mock_popen):
         """Test executing Streamlit app"""
-        from build import execute_code
+        from ollama_workbench.workflows.build import execute_code
         
         code = "import streamlit as st\nst.write('Hello')"
         result = execute_code(code, "Streamlit App")
@@ -627,7 +627,7 @@ class TestProjectBuilding:
     
     def test_execute_code_unsupported_type(self):
         """Test executing unsupported project type"""
-        from build import execute_code
+        from ollama_workbench.workflows.build import execute_code
         
         code = "print('test')"
         result = execute_code(code, "Unsupported Type")
@@ -641,7 +641,7 @@ class TestRefinerTasks:
     @patch('build.call_openai_api')
     def test_refine_task_openai(self, mock_openai):
         """Test refine task with OpenAI"""
-        from build import refine_task
+        from ollama_workbench.workflows.build import refine_task
         
         mock_openai.return_value = "Refined output with improved code and structure."
         
@@ -660,7 +660,7 @@ class TestRefinerTasks:
     @patch('build.call_groq_api')
     def test_refine_task_groq(self, mock_groq):
         """Test refine task with Groq"""
-        from build import refine_task
+        from ollama_workbench.workflows.build import refine_task
         
         mock_groq.return_value = "Groq refined output"
         
@@ -679,7 +679,7 @@ class TestRefinerTasks:
     @patch('build.call_ollama_endpoint')
     def test_refine_task_ollama(self, mock_ollama):
         """Test refine task with Ollama"""
-        from build import refine_task
+        from ollama_workbench.workflows.build import refine_task
         
         mock_ollama.return_value = ("Ollama refined output", None, None, None)
         
@@ -696,7 +696,7 @@ class TestRefinerTasks:
     @patch('build.call_ollama_endpoint')
     def test_refine_task_continuation(self, mock_ollama):
         """Test refine task with continuation"""
-        from build import refine_task
+        from ollama_workbench.workflows.build import refine_task
         
         # First call returns long response, second call returns continuation
         mock_ollama.side_effect = [
@@ -724,7 +724,7 @@ class TestStreamlitInterface:
     @patch('build.get_all_models')
     def test_build_interface_initialization(self, mock_get_models, mock_st):
         """Test build interface initialization"""
-        from build import build_interface
+        from ollama_workbench.workflows.build import build_interface
         
         # Setup mocks
         mock_get_models.return_value = ["llama3", "gpt-4", "mixtral-8x7b"]
@@ -758,7 +758,7 @@ class TestErrorHandling:
     @patch('build.call_ollama_endpoint')
     def test_manager_agent_task_exception(self, mock_ollama):
         """Test manager agent task with exception"""
-        from build import manager_agent_task
+        from ollama_workbench.workflows.build import manager_agent_task
         
         mock_ollama.side_effect = Exception("Connection error")
         
@@ -771,7 +771,7 @@ class TestErrorHandling:
     @patch('build.call_ollama_endpoint')
     def test_coding_agent_task_exception(self, mock_ollama):
         """Test coding agent task with exception"""
-        from build import coding_agent_task
+        from ollama_workbench.workflows.build import coding_agent_task
         
         mock_ollama.side_effect = Exception("Model error")
         
@@ -783,7 +783,7 @@ class TestErrorHandling:
     @patch('build.call_ollama_endpoint')
     def test_refine_task_exception(self, mock_ollama):
         """Test refine task with exception"""
-        from build import refine_task
+        from ollama_workbench.workflows.build import refine_task
         
         mock_ollama.side_effect = Exception("Refiner error")
         

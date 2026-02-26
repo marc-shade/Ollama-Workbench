@@ -170,8 +170,8 @@ class TestBuildManager:
     def test_execute_workflow_with_user_input(self, mock_st):
         """Test workflow execution with user input"""
         from build_manager import BuildManager
-        from agents import Agent
-        from projects import Task
+        from ollama_workbench.workflows.agents import Agent
+        from ollama_workbench.workflows.projects import Task
         
         # Setup workflow with user input
         workflow = {
@@ -308,8 +308,8 @@ class TestBuildManager:
     def test_execute_task_data_extractor(self, mock_ollama):
         """Test executing Data Extractor task"""
         from build_manager import BuildManager
-        from agents import Agent
-        from projects import Task
+        from ollama_workbench.workflows.agents import Agent
+        from ollama_workbench.workflows.projects import Task
         
         # Setup mocks
         mock_ollama.return_value = ("col1,col2\nval1,val2", None, None, None)
@@ -343,8 +343,8 @@ class TestBuildManager:
     def test_execute_task_data_analyst(self, mock_ollama):
         """Test executing Data Analyst task"""
         from build_manager import BuildManager
-        from agents import Agent
-        from projects import Task
+        from ollama_workbench.workflows.agents import Agent
+        from ollama_workbench.workflows.projects import Task
         
         # Setup mocks
         mock_ollama.return_value = ('{"mean": 5.5, "count": 10}', None, None, None)
@@ -378,8 +378,8 @@ class TestBuildManager:
     def test_execute_task_data_analyst_invalid_json(self, mock_ollama):
         """Test executing Data Analyst task with invalid JSON"""
         from build_manager import BuildManager
-        from agents import Agent
-        from projects import Task
+        from ollama_workbench.workflows.agents import Agent
+        from ollama_workbench.workflows.projects import Task
         
         # Setup mocks
         mock_ollama.return_value = ("invalid json response", None, None, None)
@@ -412,8 +412,8 @@ class TestBuildManager:
     def test_execute_task_report_writer(self, mock_ollama):
         """Test executing Report Writer task"""
         from build_manager import BuildManager
-        from agents import Agent
-        from projects import Task
+        from ollama_workbench.workflows.agents import Agent
+        from ollama_workbench.workflows.projects import Task
         
         # Setup mocks
         mock_ollama.return_value = ("Generated report content", None, None, None)
@@ -876,8 +876,8 @@ class TestErrorHandlingAndLogging:
     def test_execute_task_error_logging(self, mock_logging, mock_ollama):
         """Test error logging in execute_task"""
         from build_manager import BuildManager
-        from agents import Agent
-        from projects import Task
+        from ollama_workbench.workflows.agents import Agent
+        from ollama_workbench.workflows.projects import Task
         
         # Setup mocks
         mock_ollama.side_effect = Exception("Execution error")

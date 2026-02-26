@@ -18,7 +18,7 @@ class TestDefaultSchemas:
     
     def test_default_schemas_exist(self):
         """Test that default schemas are properly defined"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         expected_schemas = [
             "person_details", "product_info", "event", "article_summary",
@@ -33,7 +33,7 @@ class TestDefaultSchemas:
     
     def test_person_details_schema_structure(self):
         """Test person details schema structure"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         schema = DEFAULT_SCHEMAS["person_details"]
         
@@ -57,7 +57,7 @@ class TestDefaultSchemas:
     
     def test_product_info_schema_structure(self):
         """Test product info schema structure"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         schema = DEFAULT_SCHEMAS["product_info"]
         
@@ -80,7 +80,7 @@ class TestDefaultSchemas:
     
     def test_event_schema_structure(self):
         """Test event schema structure"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         schema = DEFAULT_SCHEMAS["event"]
         
@@ -102,7 +102,7 @@ class TestDefaultSchemas:
     
     def test_recipe_schema_complexity(self):
         """Test complex recipe schema"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         schema = DEFAULT_SCHEMAS["recipe"]
         
@@ -129,7 +129,7 @@ class TestDefaultSchemas:
     
     def test_data_analysis_schema_complexity(self):
         """Test complex data analysis schema"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         schema = DEFAULT_SCHEMAS["data_analysis"]
         
@@ -164,7 +164,7 @@ class TestJSONEditor:
     
     def test_json_editor_valid_json(self, mock_streamlit):
         """Test JSON editor with valid JSON"""
-        from structured_output import json_editor
+        from ollama_workbench.ui.structured_output import json_editor
         
         schema_data = {"type": "object", "properties": {"name": {"type": "string"}}}
         mock_streamlit.text_area.return_value = '{"type": "object", "properties": {"name": {"type": "string"}}}'
@@ -176,7 +176,7 @@ class TestJSONEditor:
     
     def test_json_editor_invalid_json(self, mock_streamlit):
         """Test JSON editor with invalid JSON"""
-        from structured_output import json_editor
+        from ollama_workbench.ui.structured_output import json_editor
         
         schema_data = {"type": "object"}
         mock_streamlit.text_area.return_value = '{"type": "object", invalid json'
@@ -190,7 +190,7 @@ class TestJSONEditor:
     
     def test_json_editor_modified_schema(self, mock_streamlit):
         """Test JSON editor with modified schema"""
-        from structured_output import json_editor
+        from ollama_workbench.ui.structured_output import json_editor
         
         original_schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         modified_schema = {"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "integer"}}}
@@ -220,7 +220,7 @@ class TestSchemaVisualization:
     @patch('structured_output.jsf')
     def test_visualize_schema_with_jsf(self, mock_jsf, mock_streamlit):
         """Test schema visualization with json-schema-for-humans"""
-        from structured_output import visualize_schema
+        from ollama_workbench.ui.structured_output import visualize_schema
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         mock_jsf.generate_from_schema.return_value = "<h1>Schema HTML</h1>"
@@ -234,7 +234,7 @@ class TestSchemaVisualization:
     @patch('structured_output.jsf')
     def test_visualize_schema_jsf_error(self, mock_jsf, mock_streamlit):
         """Test schema visualization with JSF error"""
-        from structured_output import visualize_schema
+        from ollama_workbench.ui.structured_output import visualize_schema
         
         schema = {"type": "object"}
         mock_jsf.generate_from_schema.side_effect = Exception("JSF error")
@@ -248,7 +248,7 @@ class TestSchemaVisualization:
     @patch('structured_output.HAS_JSF', False)
     def test_visualize_schema_no_jsf(self, mock_streamlit):
         """Test schema visualization without json-schema-for-humans"""
-        from structured_output import visualize_schema
+        from ollama_workbench.ui.structured_output import visualize_schema
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         
@@ -266,7 +266,7 @@ class TestJSONGeneration:
     @patch('structured_output.subprocess.run')
     def test_generate_json_cli_success(self, mock_subprocess, mock_logger):
         """Test successful JSON generation via CLI"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         mock_result = Mock()
@@ -284,7 +284,7 @@ class TestJSONGeneration:
     @patch('structured_output.get_ollama_client')
     def test_generate_json_cli_fallback_to_api(self, mock_get_client, mock_subprocess, mock_logger):
         """Test JSON generation falling back from CLI to API"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         
@@ -308,7 +308,7 @@ class TestJSONGeneration:
     def test_generate_json_final_fallback(self, mock_call_endpoint, mock_get_client, 
                                          mock_subprocess, mock_logger):
         """Test JSON generation with final fallback"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         
@@ -329,7 +329,7 @@ class TestJSONGeneration:
     @patch('structured_output.logger')
     def test_generate_json_no_model(self, mock_logger):
         """Test JSON generation with no model"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         
@@ -341,7 +341,7 @@ class TestJSONGeneration:
     @patch('structured_output.subprocess.run')
     def test_generate_json_malformed_response(self, mock_subprocess, mock_logger):
         """Test JSON generation with malformed response"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         mock_result = Mock()
@@ -357,7 +357,7 @@ class TestJSONGeneration:
     @patch('structured_output.subprocess.run')
     def test_generate_json_partial_json(self, mock_subprocess, mock_logger):
         """Test JSON generation with partial JSON in response"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         mock_result = Mock()
@@ -373,7 +373,7 @@ class TestJSONGeneration:
     @patch('structured_output.subprocess.run')
     def test_generate_json_single_quotes_fix(self, mock_subprocess, mock_logger):
         """Test JSON generation with single quotes that get fixed"""
-        from structured_output import generate_json_from_text
+        from ollama_workbench.ui.structured_output import generate_json_from_text
         
         schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         mock_result = Mock()
@@ -418,7 +418,7 @@ class TestStreamlitUI:
     @patch('structured_output.get_available_models')
     def test_structured_output_ui_basic_setup(self, mock_get_models, mock_streamlit):
         """Test basic UI setup"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.return_value = ["llama3", "mistral"]
         mock_streamlit.columns.return_value = [Mock(), Mock()]
@@ -434,7 +434,7 @@ class TestStreamlitUI:
     @patch('structured_output.subprocess.run')
     def test_structured_output_ui_no_models_cli_fallback(self, mock_subprocess, mock_get_models, mock_streamlit):
         """Test UI with no models from API, using CLI fallback"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         # Mock CLI command returning models
         mock_result = Mock()
@@ -456,7 +456,7 @@ class TestStreamlitUI:
     @patch('structured_output.subprocess.run')
     def test_structured_output_ui_no_models_available(self, mock_subprocess, mock_get_models, mock_streamlit):
         """Test UI with no models available"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         # Both API and CLI return no models
         mock_result = Mock()
@@ -474,7 +474,7 @@ class TestStreamlitUI:
     @patch('structured_output.generate_json_from_text')
     def test_structured_output_ui_generation(self, mock_generate, mock_get_models, mock_streamlit):
         """Test output generation in UI"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.return_value = ["llama3"]
         mock_generate.return_value = {"name": "Test User", "age": 30}
@@ -514,7 +514,7 @@ class TestStreamlitUI:
     @patch('structured_output.generate_json_from_text')
     def test_structured_output_ui_table_format(self, mock_generate, mock_get_models, mock_streamlit):
         """Test table format output"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.return_value = ["llama3"]
         mock_generate.return_value = {"name": "Test User", "age": 30, "address": {"city": "New York"}}
@@ -558,7 +558,7 @@ class TestStreamlitUI:
     @patch('structured_output.get_available_models')
     def test_structured_output_ui_history_functionality(self, mock_get_models, mock_streamlit):
         """Test history functionality in UI"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.return_value = ["llama3"]
         
@@ -606,7 +606,7 @@ class TestErrorHandling:
     @patch('structured_output.get_available_models')
     def test_ui_model_fetch_error(self, mock_get_models, mock_logger, mock_st):
         """Test UI error handling when model fetch fails"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.side_effect = Exception("API error")
         
@@ -624,7 +624,7 @@ class TestErrorHandling:
     @patch('structured_output.generate_json_from_text')
     def test_ui_generation_error(self, mock_generate, mock_get_models, mock_logger, mock_st):
         """Test UI error handling during generation"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.return_value = ["llama3"]
         mock_generate.side_effect = Exception("Generation failed")
@@ -663,7 +663,8 @@ class TestIntegration:
     
     def test_module_imports(self):
         """Test that all required modules can be imported"""
-        import structured_output
+        import ollama_workbench.ui.structured_output as structured_output
+
         
         # Test that main functions exist
         assert hasattr(structured_output, 'DEFAULT_SCHEMAS')
@@ -674,7 +675,7 @@ class TestIntegration:
     
     def test_schema_to_generation_workflow(self):
         """Test complete workflow from schema to generation"""
-        from structured_output import DEFAULT_SCHEMAS, generate_json_from_text
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS, generate_json_from_text
         
         schema = DEFAULT_SCHEMAS["person_details"]
         
@@ -699,7 +700,7 @@ class TestIntegration:
     
     def test_json_editor_to_visualization_workflow(self):
         """Test workflow from editing to visualization"""
-        from structured_output import json_editor, visualize_schema
+        from ollama_workbench.ui.structured_output import json_editor, visualize_schema
         
         original_schema = {"type": "object", "properties": {"name": {"type": "string"}}}
         
@@ -732,7 +733,7 @@ class TestPerformance:
     
     def test_large_schema_handling(self):
         """Test handling of large, complex schemas"""
-        from structured_output import json_editor, DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import json_editor, DEFAULT_SCHEMAS
         
         # Use the most complex schema
         complex_schema = DEFAULT_SCHEMAS["data_analysis"]
@@ -748,7 +749,7 @@ class TestPerformance:
     
     def test_history_memory_management(self):
         """Test memory management with large history"""
-        from structured_output import structured_output_ui
+        from ollama_workbench.ui.structured_output import structured_output_ui
         
         # Create large history
         large_history = []
@@ -793,7 +794,7 @@ class TestSchemaValidation:
     
     def test_schema_property_types(self):
         """Test that all default schemas have valid property types"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         valid_types = ["string", "number", "integer", "boolean", "array", "object"]
         
@@ -824,7 +825,7 @@ class TestSchemaValidation:
     
     def test_required_fields_exist(self):
         """Test that required fields exist in properties"""
-        from structured_output import DEFAULT_SCHEMAS
+        from ollama_workbench.ui.structured_output import DEFAULT_SCHEMAS
         
         for schema_name, schema in DEFAULT_SCHEMAS.items():
             if schema_name == "custom":

@@ -29,7 +29,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import modules to test
 try:
     import streamlit as st
-    from chat_interface import chat_interface
+    from ollama_workbench.chat.chat_interface import chat_interface
     from modern_chat_interface import modern_chat_interface, initialize_session_state, save_chat_session, load_chat_session
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")

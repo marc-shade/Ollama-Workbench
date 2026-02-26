@@ -28,8 +28,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import modules to test
 try:
     import streamlit as st
-    from chat_interface import load_settings, save_settings, construct_agent_prompt
-    from prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
+    from ollama_workbench.chat.chat_interface import load_settings, save_settings, construct_agent_prompt
+    from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
 except ImportError as e:
     logger.error(f"Failed to import required modules: {e}")
     raise

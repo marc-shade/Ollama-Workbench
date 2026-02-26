@@ -38,8 +38,9 @@ with patch.dict('sys.modules', {
     'streamlit': Mock()
 }):
     # Import after mocking
-    import web_to_corpus
-    from web_to_corpus import WebsiteCrawler, get_random_user_agent, main
+    import ollama_workbench.knowledge.web_to_corpus as web_to_corpus
+
+    from ollama_workbench.knowledge.web_to_corpus import WebsiteCrawler, get_random_user_agent, main
 
 
 class TestUserAgentUtils(TestCase):

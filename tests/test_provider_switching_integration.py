@@ -17,13 +17,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import modules to test
-from ollama_utils import get_ollama_models, call_ollama_api
-from openai_utils import call_openai_api, get_openai_models
-from groq_utils import call_groq_api, get_groq_models  
-from mistral_utils import call_mistral_api, get_mistral_models
-from external_providers import load_api_keys, save_api_keys
-from chat_interface import enhanced_chat_interface
-from multimodel_chat import MultiModelChat
+from ollama_workbench.providers.ollama_utils import get_ollama_models, call_ollama_api
+from ollama_workbench.providers.openai_utils import call_openai_api, get_openai_models
+from ollama_workbench.providers.groq_utils import call_groq_api, get_groq_models  
+from ollama_workbench.providers.mistral_utils import call_mistral_api, get_mistral_models
+from ollama_workbench.providers.external_providers import load_api_keys, save_api_keys
+from ollama_workbench.chat.chat_interface import enhanced_chat_interface
+from ollama_workbench.chat.multimodel_chat import MultiModelChat
 
 
 class TestProviderSwitchingIntegration(TestCase):

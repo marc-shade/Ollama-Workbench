@@ -22,7 +22,7 @@ import os
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from error_handling import (
+from ollama_workbench.core.error_handling import (
     ErrorLevel, ErrorCategory, WorkbenchError, APIError, NetworkError,
     AuthenticationError, ModelError, ParameterError, handle_requests_error,
     handle_api_error, display_error, capture_exceptions, safe_json_loads,

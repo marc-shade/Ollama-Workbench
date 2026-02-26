@@ -12,7 +12,7 @@ import asyncio
 # Import the module to test
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mistral_utils import (
+from ollama_workbench.providers.mistral_utils import (
     MISTRAL_MODELS, load_api_keys, save_api_keys, get_mistral_client,
     call_mistral_api, call_mistral_api_async, call_mistral_embeddings,
     display_mistral_settings

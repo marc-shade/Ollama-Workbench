@@ -11,7 +11,7 @@ import tempfile
 # Import the module to test
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from openai_utils import (
+from ollama_workbench.providers.openai_utils import (
     OPENAI_MODELS, load_api_keys, save_api_keys, set_openai_api_key,
     call_openai_api, call_openai_embeddings, display_openai_settings
 )

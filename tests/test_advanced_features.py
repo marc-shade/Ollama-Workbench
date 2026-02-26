@@ -28,7 +28,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import modules to test
 try:
     import streamlit as st
-    from chat_interface import (
+    from ollama_workbench.chat.chat_interface import (
         instance_adaptive_cot, advanced_thinking_step, 
         CANDIDATE_PROMPTS, ModelMemoryHandler, EpisodicMemory,
         calculate_modularity, refine_boundaries, get_graphrag_context

@@ -21,7 +21,8 @@ class TestVoiceUtils:
     @patch('voice_utils.sr.Recognizer')
     def test_voice_manager_import(self, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test that voice_utils can be imported"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         # Verify the module loaded
         assert hasattr(voice_utils, 'VoiceManager')
@@ -30,7 +31,8 @@ class TestVoiceUtils:
     
     def test_module_functions_exist(self):
         """Test that all expected functions exist"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         # Check all expected functions
         functions = [
@@ -46,7 +48,8 @@ class TestVoiceUtils:
     @patch('voice_utils.voice_manager')
     def test_text_to_speech_function(self, mock_manager):
         """Test text_to_speech convenience function"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         mock_manager.text_to_speech.return_value = "audio.mp3"
         
@@ -58,7 +61,8 @@ class TestVoiceUtils:
     @patch('voice_utils.voice_manager')
     def test_get_available_voices(self, mock_manager):
         """Test get_available_voices function"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         mock_manager.get_available_voices.return_value = ['default', 'custom']
         
@@ -70,7 +74,8 @@ class TestVoiceUtils:
     @patch('voice_utils.voice_manager')
     def test_start_stop_voice_input(self, mock_manager):
         """Test start and stop voice input functions"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         callback = Mock()
         error_callback = Mock()
@@ -86,7 +91,8 @@ class TestVoiceUtils:
     @patch('voice_utils.voice_manager')
     def test_voice_profile_management(self, mock_manager):
         """Test voice profile management functions"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         # Test add profile
         mock_manager.add_voice_profile.return_value = True
@@ -106,7 +112,8 @@ class TestVoiceUtils:
     @patch('voice_utils.voice_manager')
     def test_play_and_stop_speech(self, mock_manager):
         """Test play and stop speech functions"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         # Test play
         voice_utils.play_speech('/tmp/audio.mp3', block=False)
@@ -130,7 +137,7 @@ class TestVoiceManagerClass:
                                         mock_recognizer, mock_pyaudio, mock_pygame):
         """Test VoiceManager initialization"""
         # Import here to ensure patches are applied
-        from voice_utils import VoiceManager
+        from ollama_workbench.chat.voice_utils import VoiceManager
         
         manager = VoiceManager()
         
@@ -151,7 +158,7 @@ class TestVoiceManagerClass:
     def test_voice_settings_methods(self, mock_exists, mock_recognizer, 
                                    mock_pyaudio, mock_pygame):
         """Test voice settings methods"""
-        from voice_utils import VoiceManager
+        from ollama_workbench.chat.voice_utils import VoiceManager
         
         manager = VoiceManager()
         
@@ -189,7 +196,7 @@ class TestVoiceManagerClass:
     def test_cleanup(self, mock_exists, mock_recognizer, mock_pyaudio,
                     mock_quit, mock_get_init, mock_pygame):
         """Test cleanup method"""
-        from voice_utils import VoiceManager
+        from ollama_workbench.chat.voice_utils import VoiceManager
         
         mock_audio_instance = Mock()
         mock_pyaudio.return_value = mock_audio_instance
@@ -213,7 +220,7 @@ class TestVoiceManagerClass:
     def test_text_to_speech_gtts(self, mock_tempfile, mock_gtts, mock_exists,
                                  mock_recognizer, mock_pyaudio, mock_pygame):
         """Test text-to-speech with gTTS"""
-        from voice_utils import VoiceManager
+        from ollama_workbench.chat.voice_utils import VoiceManager
         
         # Setup mocks
         mock_file = Mock()
@@ -244,7 +251,7 @@ class TestVoiceManagerClass:
     def test_play_speech(self, mock_sleep, mock_get_busy, mock_play, mock_load,
                         mock_exists, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test play speech functionality"""
-        from voice_utils import VoiceManager
+        from ollama_workbench.chat.voice_utils import VoiceManager
         
         mock_get_busy.side_effect = [True, False]  # Busy then not busy
         
@@ -263,7 +270,7 @@ class TestVoiceManagerClass:
     @patch('voice_utils.os.path.exists', return_value=False)
     def test_listening_methods(self, mock_exists, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test start/stop listening methods"""
-        from voice_utils import VoiceManager
+        from ollama_workbench.chat.voice_utils import VoiceManager
         
         mock_audio = Mock()
         mock_stream = Mock()
@@ -297,7 +304,8 @@ class TestConstants:
     
     def test_default_voice_constant(self):
         """Test DEFAULT_VOICE constant"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         assert isinstance(voice_utils.DEFAULT_VOICE, dict)
         assert 'provider' in voice_utils.DEFAULT_VOICE
@@ -306,7 +314,8 @@ class TestConstants:
     
     def test_audio_constants(self):
         """Test audio-related constants"""
-        import voice_utils
+        import ollama_workbench.chat.voice_utils as voice_utils
+
         
         assert hasattr(voice_utils, 'CHUNK_SIZE')
         assert hasattr(voice_utils, 'FORMAT')

@@ -42,7 +42,8 @@ class TestVoiceInterface:
         mock_st.slider.return_value = 1.0
         mock_st.button.return_value = False
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         
         # Test the function runs without error
         voice_interface.voice_settings_ui()
@@ -74,7 +75,8 @@ class TestVoiceInterface:
         mock_st.slider.return_value = 1.0
         mock_st.button.side_effect = [True, False, False, True]  # Delete, Test, Save, Create
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         voice_interface.voice_settings_ui()
         
         # Verify profile operations
@@ -103,7 +105,8 @@ class TestVoiceInterface:
         mock_st.slider.return_value = 1.0
         mock_st.button.side_effect = [True]  # Test Voice button
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         voice_interface.voice_settings_ui()
         
         # Verify test functionality
@@ -124,7 +127,8 @@ class TestVoiceInterface:
         mock_st.button.return_value = False
         mock_st.text_input.return_value = ""
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         
         # Test with no callback
         voice_interface.voice_input_component()
@@ -149,7 +153,8 @@ class TestVoiceInterface:
         mock_st.text_input.return_value = ""
         mock_st.rerun = Mock()
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         
         callback = Mock()
         voice_interface.voice_input_component(callback)
@@ -177,7 +182,8 @@ class TestVoiceInterface:
         # Mock voice utils
         mock_voice_utils.stop_voice_input.return_value = "Hello world"
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         
         callback = Mock()
         voice_interface.voice_input_component(callback)
@@ -212,7 +218,8 @@ class TestVoiceInterface:
         with patch('voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3', 'mixtral']
             
-            import voice_interface
+            import ollama_workbench.chat.voice_interface as voice_interface
+
             voice_interface.voice_chat_interface()
         
         # Verify key components
@@ -256,7 +263,8 @@ class TestVoiceInterface:
         with patch('voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3', 'mixtral']
             
-            import voice_interface
+            import ollama_workbench.chat.voice_interface as voice_interface
+
             voice_interface.voice_chat_interface()
         
         # Verify message processing
@@ -302,7 +310,8 @@ class TestVoiceInterface:
         with patch('voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['🚀 Groq Models mixtral-8x7b']
             
-            import voice_interface
+            import ollama_workbench.chat.voice_interface as voice_interface
+
             voice_interface.voice_chat_interface()
         
         # Verify Groq API was called
@@ -349,7 +358,8 @@ class TestVoiceInterface:
         with patch('voice_interface.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['🤖 OpenAI Models gpt-4']
             
-            import voice_interface
+            import ollama_workbench.chat.voice_interface as voice_interface
+
             voice_interface.voice_chat_interface()
         
         # Verify OpenAI API was called
@@ -394,7 +404,8 @@ class TestVoiceInterface:
             with patch('voice_interface.call_ollama_endpoint') as mock_ollama:
                 mock_ollama.side_effect = Exception("Test error")
                 
-                import voice_interface
+                import ollama_workbench.chat.voice_interface as voice_interface
+
                 voice_interface.voice_chat_interface()
         
         # Verify error handling
@@ -416,7 +427,8 @@ class TestVoiceInterface:
         with patch('voice_interface.voice_chat_interface') as mock_chat:
             with patch('voice_interface.voice_settings_ui') as mock_settings:
                 # Import and run the main block
-                import voice_interface
+                import ollama_workbench.chat.voice_interface as voice_interface
+
                 
                 # Simulate running as main
                 if __name__ == "__main__":
@@ -466,7 +478,8 @@ class TestVoiceInterface:
             with patch('voice_interface.call_ollama_endpoint') as mock_ollama:
                 mock_ollama.return_value = ("Machine learning is...", None, None, None)
                 
-                import voice_interface
+                import ollama_workbench.chat.voice_interface as voice_interface
+
                 voice_interface.voice_chat_interface()
         
         # Verify context was passed correctly
@@ -503,7 +516,8 @@ class TestVoiceInterfaceIntegration:
         mock_st.text_input.return_value = ""
         mock_st.rerun = Mock()
         
-        import voice_interface
+        import ollama_workbench.chat.voice_interface as voice_interface
+
         
         # Test voice input component
         received_text = None

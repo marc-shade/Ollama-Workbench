@@ -20,7 +20,7 @@ class TestTokenCounting:
     @patch('file_management.tiktoken.get_encoding')
     def test_count_tokens_success(self, mock_get_encoding):
         """Test successful token counting"""
-        from file_management import count_tokens
+        from ollama_workbench.ui.file_management import count_tokens
         
         # Mock tiktoken encoding
         mock_encoding = Mock()
@@ -37,7 +37,7 @@ class TestTokenCounting:
     @patch('file_management.logger')
     def test_count_tokens_tiktoken_error(self, mock_logger, mock_get_encoding):
         """Test token counting when tiktoken fails"""
-        from file_management import count_tokens
+        from ollama_workbench.ui.file_management import count_tokens
         
         mock_get_encoding.side_effect = Exception("tiktoken error")
         
@@ -49,7 +49,7 @@ class TestTokenCounting:
     
     def test_count_tokens_empty_string(self):
         """Test token counting with empty string"""
-        from file_management import count_tokens
+        from ollama_workbench.ui.file_management import count_tokens
         
         with patch('file_management.tiktoken.get_encoding') as mock_get_encoding:
             mock_encoding = Mock()
@@ -63,7 +63,7 @@ class TestTokenCounting:
     @patch('file_management.tiktoken.get_encoding')
     def test_count_tokens_long_text(self, mock_get_encoding):
         """Test token counting with long text"""
-        from file_management import count_tokens
+        from ollama_workbench.ui.file_management import count_tokens
         
         mock_encoding = Mock()
         mock_encoding.encode.return_value = list(range(1000))  # 1000 tokens
@@ -80,7 +80,7 @@ class TestFileSplitting:
     
     def test_split_file_success(self):
         """Test successful file splitting"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create test file
@@ -107,7 +107,7 @@ class TestFileSplitting:
     
     def test_split_file_with_extension(self):
         """Test file splitting with extension preservation"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with tempfile.TemporaryDirectory() as temp_dir:
             test_file = os.path.join(temp_dir, "test.txt")
@@ -123,7 +123,7 @@ class TestFileSplitting:
     
     def test_split_file_without_extension(self):
         """Test file splitting without extension preservation"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with tempfile.TemporaryDirectory() as temp_dir:
             test_file = os.path.join(temp_dir, "test.txt")
@@ -139,7 +139,7 @@ class TestFileSplitting:
     
     def test_split_file_encoding_fallback(self):
         """Test file splitting with encoding fallback"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with tempfile.TemporaryDirectory() as temp_dir:
             test_file = os.path.join(temp_dir, "test.txt")
@@ -155,7 +155,7 @@ class TestFileSplitting:
     
     def test_split_file_nonexistent(self):
         """Test splitting non-existent file"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with patch('file_management.logger') as mock_logger:
             result = split_file("/nonexistent/file.txt", 100)
@@ -165,7 +165,7 @@ class TestFileSplitting:
     
     def test_split_file_permission_error(self):
         """Test splitting file with permission error"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with patch('builtins.open', side_effect=PermissionError("Access denied")):
             with patch('file_management.logger') as mock_logger:
@@ -177,7 +177,7 @@ class TestFileSplitting:
     @patch('file_management.split_pdf_file')
     def test_split_pdf_file_fallback(self, mock_split_pdf):
         """Test PDF file splitting fallback"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         mock_split_pdf.return_value = ["/path/chunk1.pdf", "/path/chunk2.pdf"]
         
@@ -207,7 +207,7 @@ class TestPDFSplitting:
     @patch('file_management.logger')
     def test_split_pdf_file_stub(self, mock_logger):
         """Test PDF splitting stub implementation"""
-        from file_management import split_pdf_file
+        from ollama_workbench.ui.file_management import split_pdf_file
         
         result = split_pdf_file("/path/test.pdf", 1000, True)
         
@@ -221,7 +221,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_success(self):
         """Test successful file metadata retrieval"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
             temp_file.write("Test content")
@@ -248,7 +248,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_large_file(self):
         """Test metadata for large file size formatting"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         # Mock a large file
         with patch('file_management.os.path.getsize', return_value=1024*1024*5):  # 5MB
@@ -262,7 +262,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_very_large_file(self):
         """Test metadata for very large file (GB)"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         # Mock a 2GB file
         with patch('file_management.os.path.getsize', return_value=1024*1024*1024*2):
@@ -276,7 +276,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_zero_size(self):
         """Test metadata for zero-size file"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         with tempfile.NamedTemporaryFile(suffix='.empty', delete=False) as temp_file:
             temp_file_path = temp_file.name
@@ -292,7 +292,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_nonexistent_file(self):
         """Test metadata for non-existent file"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         with patch('file_management.logger') as mock_logger:
             metadata = get_file_metadata("/nonexistent/file.txt")
@@ -304,7 +304,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_permission_error(self):
         """Test metadata with permission error"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         with patch('file_management.os.path.getsize', side_effect=PermissionError("Access denied")):
             with patch('file_management.logger') as mock_logger:
@@ -315,7 +315,7 @@ class TestFileMetadata:
     
     def test_get_file_metadata_time_formatting(self):
         """Test metadata time formatting"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         # Mock specific timestamp
         test_timestamp = 1640995200  # 2022-01-01 00:00:00 UTC
@@ -363,7 +363,7 @@ class TestStreamlitInterface:
     def test_files_tab_basic_setup(self, mock_isfile, mock_listdir, mock_makedirs, 
                                   mock_exists, mock_streamlit):
         """Test basic files tab setup"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         mock_exists.return_value = False  # files folder doesn't exist
         mock_listdir.return_value = []
@@ -379,7 +379,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.path.isfile')
     def test_files_tab_with_files(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test files tab with existing files"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         mock_listdir.return_value = ['test.txt', 'document.pdf', 'image.jpg']
         mock_isfile.return_value = True
@@ -395,7 +395,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.path.isfile')
     def test_files_tab_file_filtering(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test file filtering by allowed extensions"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         # Mix of allowed and disallowed files
         mock_listdir.return_value = [
@@ -418,7 +418,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.listdir', side_effect=PermissionError("Access denied"))
     def test_files_tab_directory_error(self, mock_listdir, mock_exists, mock_streamlit):
         """Test files tab with directory access error"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         files_tab()
         
@@ -431,7 +431,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.path.isfile', return_value=True)
     def test_files_tab_view_file(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test viewing a file"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         # Mock file view button being clicked
         mock_streamlit.session_state = {'view_test.txt': True}
@@ -449,7 +449,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.path.isfile', return_value=True)
     def test_files_tab_edit_file(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test editing a file"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         # Mock file edit button being clicked
         mock_streamlit.session_state = {'edit_test.txt': True}
@@ -468,7 +468,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.path.isfile', return_value=True)
     def test_files_tab_download_pdf(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test downloading a PDF file"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         # Mock PDF download button being clicked
         mock_streamlit.session_state = {'download_test.pdf': True}
@@ -488,7 +488,7 @@ class TestStreamlitInterface:
     def test_files_tab_delete_file(self, mock_remove, mock_isfile, mock_listdir, 
                                   mock_exists, mock_streamlit):
         """Test deleting a file"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         # Mock file delete button being clicked
         mock_streamlit.session_state = {'delete_test.txt': True}
@@ -505,7 +505,7 @@ class TestStreamlitInterface:
     @patch('file_management.os.path.isfile', return_value=True)
     def test_files_tab_file_upload(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test file upload functionality"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         # Mock file upload
         mock_uploaded_file = Mock()
@@ -529,7 +529,7 @@ class TestStreamlitInterface:
     def test_files_tab_file_splitting(self, mock_split_file, mock_isfile, mock_listdir, 
                                      mock_exists, mock_streamlit):
         """Test file splitting functionality"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         mock_streamlit.selectbox.return_value = "test.txt"
         mock_streamlit.slider.return_value = 5  # 5MB
@@ -551,7 +551,7 @@ class TestStreamlitInterface:
     def test_files_tab_split_no_file_selected(self, mock_isfile, mock_listdir, 
                                              mock_exists, mock_streamlit):
         """Test file splitting with no file selected"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         mock_streamlit.selectbox.return_value = None
         mock_streamlit.button.return_value = True  # Split button clicked
@@ -570,7 +570,7 @@ class TestFileOperationErrors:
     @patch('file_management.os.path.isfile', return_value=True)
     def test_files_tab_view_unicode_error(self, mock_isfile, mock_listdir, mock_exists):
         """Test viewing file with unicode decode error"""
-        from file_management import files_tab
+        from ollama_workbench.ui.file_management import files_tab
         
         with patch('file_management.st') as mock_st:
             mock_st.title = Mock()
@@ -598,7 +598,8 @@ class TestIntegration:
     
     def test_module_imports(self):
         """Test that all required modules can be imported"""
-        import file_management
+        import ollama_workbench.ui.file_management as file_management
+
         
         # Test that main functions exist
         assert hasattr(file_management, 'count_tokens')
@@ -609,7 +610,7 @@ class TestIntegration:
     
     def test_file_splitting_integration(self):
         """Test complete file splitting workflow"""
-        from file_management import split_file, get_file_metadata
+        from ollama_workbench.ui.file_management import split_file, get_file_metadata
         
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create test file
@@ -639,7 +640,7 @@ class TestIntegration:
     
     def test_logging_integration(self):
         """Test logging integration across functions"""
-        from file_management import split_file, get_file_metadata
+        from ollama_workbench.ui.file_management import split_file, get_file_metadata
         
         with patch('file_management.logger') as mock_logger:
             # Test error logging in split_file
@@ -657,7 +658,7 @@ class TestPerformance:
     
     def test_large_file_splitting_efficiency(self):
         """Test splitting of large file"""
-        from file_management import split_file
+        from ollama_workbench.ui.file_management import split_file
         
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a moderately large test file (1KB)
@@ -678,7 +679,7 @@ class TestPerformance:
     
     def test_metadata_performance(self):
         """Test metadata retrieval performance"""
-        from file_management import get_file_metadata
+        from ollama_workbench.ui.file_management import get_file_metadata
         
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create multiple test files

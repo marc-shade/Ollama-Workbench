@@ -20,7 +20,7 @@ from .opik_integration import is_opik_enabled, OPIK_AVAILABLE
 
 # Import existing performance metrics
 try:
-    from performance_metrics import load_metrics_data, record_metrics
+    from ollama_workbench.server.performance_metrics import load_metrics_data, record_metrics
     LEGACY_METRICS_AVAILABLE = True
 except ImportError:
     LEGACY_METRICS_AVAILABLE = False
@@ -401,7 +401,7 @@ def show_system_health():
     
     # Import system monitoring functions
     try:
-        from ollama_utils import get_ollama_resource_usage
+        from ollama_workbench.providers.ollama_utils import get_ollama_resource_usage
         resource_usage = get_ollama_resource_usage()
     except:
         resource_usage = {}

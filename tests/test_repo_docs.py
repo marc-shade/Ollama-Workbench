@@ -31,7 +31,7 @@ with patch.dict('sys.modules', {
     'radon.metrics': Mock(), 
     'flake8.api.legacy': Mock()
 }):
-    from repo_docs import (
+    from ollama_workbench.knowledge.repo_docs import (
         PDF, call_ollama_endpoint, get_available_models, generate_documentation_stream,
         run_pylint, run_phpstan, run_eslint, get_all_code_files, get_file_info,
         process_file_with_updates, analyze_repository_structure, generate_pdf,
@@ -790,7 +790,8 @@ class TestIntegrationScenarios(TestCase):
             'flake8.api.legacy': None
         }):
             # Should not raise import errors
-            import repo_docs
+            import ollama_workbench.knowledge.repo_docs as repo_docs
+
             
             # Should have dummy implementations
             self.assertIsNotNone(repo_docs.PDF)

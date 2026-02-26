@@ -24,7 +24,7 @@ class SessionStateMock(dict):
         self[key] = value
 
 import streamlit as st
-from multimodel_chat import MultiModelChat
+from ollama_workbench.chat.multimodel_chat import MultiModelChat
 
 
 class TestMultiModelChatInitialization:
