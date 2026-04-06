@@ -8,23 +8,13 @@
 
 # 🦙 Ollama Workbench - Enterprise AI Platform
 
-> ## :rocket: **[Ollama Workbench 2.0 is here!](https://github.com/marc-shade/Ollama-Workbench-2)**
->
-> A complete rewrite with **SvelteKit + Tauri** featuring:
-> - Modern responsive UI with dark/light themes
-> - Native desktop app (macOS, Windows, Linux)
-> - MCP Studio for building and testing MCP servers
-> - Visual multi-agent workflow builder
-> - Tools debugger with model comparison
-> - Prompt Lab with A/B testing and version control
->
-> **[Try Ollama Workbench 2.0 →](https://github.com/marc-shade/Ollama-Workbench-2)**
+> **Looking for the next generation?** Check out [Ollama Workbench 2.0](https://github.com/marc-shade/Ollama-Workbench-2) — a SvelteKit + Tauri rewrite with a native desktop app, MCP Studio, and visual workflow builder.
 
 <img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
 
 **Ollama Workbench** is a comprehensive, enterprise-grade platform for managing, testing, and utilizing AI models from the Ollama library and external providers. Built with security, scalability, and observability at its core, it provides advanced features for AI agent orchestration, workflow automation, and collaborative AI development.
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-green.svg)](#security-features)
 [![Observability](https://img.shields.io/badge/Observability-Opik%20Integration-orange.svg)](#observability-features)
@@ -269,7 +259,7 @@ start_workbench.bat   # Windows
 ## 🔧 Installation
 
 ### 📋 **System Requirements**
-- **Python**: 3.8+ (recommended: 3.11)
+- **Python**: 3.10+
 - **Operating System**: Windows, macOS, Linux
 - **Memory**: 8GB+ RAM (16GB+ recommended)
 - **Storage**: 10GB+ free space
