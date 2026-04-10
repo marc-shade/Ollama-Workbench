@@ -185,8 +185,14 @@ from .openai_utils import (
     call_openai_api,
     OPENAI_MODELS,
 )
-from .groq_utils import get_local_embeddings, GROQ_MODELS
-from .mistral_utils import MISTRAL_MODELS
+try:
+    from .groq_utils import GROQ_MODELS
+except ImportError:
+    GROQ_MODELS = []
+try:
+    from .mistral_utils import MISTRAL_MODELS
+except ImportError:
+    MISTRAL_MODELS = []
 
 # Lazy accessors for dynamic model lists (avoids circular import at module load time)
 def get_openai_models():
@@ -1243,6 +1249,7 @@ def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
             )
             embeddings = np.array(response['data'][0]['embedding'])
         elif model in get_groq_models():
+            from .groq_utils import get_local_embeddings
             embeddings = get_local_embeddings(text)
         else:
             client = get_ollama_client()
@@ -1711,6 +1718,7 @@ def generate_embeddings(model, text):
     try:
         if model in get_groq_models():
             # Use Groq API for embedding
+            from .groq_utils import get_local_embeddings
             embeddings = get_local_embeddings(text)
             
             # Calculate elapsed time
