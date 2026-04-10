@@ -145,32 +145,32 @@ def get_server_status():
         response = requests.get(f"{host}/api/tags", timeout=2)
         if response.status_code == 200:
             return True
-    except:
+    except Exception:
         pass  # Continue to next check if this fails
-    
+
     try:
         # Try the health check endpoint
         response = requests.get(f"{host}/api/version", timeout=2)
         if response.status_code == 200:
             return True
-    except:
+    except Exception:
         pass  # Continue to next check if this fails
-    
+
     # Second check: Look for Ollama process
     try:
         for proc in psutil.process_iter(['name']):
             proc_name = proc.info['name'].lower()
             if proc_name == 'ollama' or proc_name == 'ollama.exe':
                 return True
-    except:
+    except Exception:
         pass  # Continue to next check if this fails
-    
+
     # Third check: Try direct localhost without config
     try:
         direct_response = requests.get("http://localhost:11434/api/tags", timeout=1)
         if direct_response.status_code == 200:
             return True
-    except:
+    except Exception:
         pass  # Continue to final result if this fails
     
     # If all checks fail, the server is likely not running

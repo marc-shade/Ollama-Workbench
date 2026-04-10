@@ -20,93 +20,99 @@ PERFORMANCE_DATA_FILE = "model_performance_data.json"
 
 # Initialize the database if it doesn't exist
 def init_db():
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    # Create table for model usage
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS model_usage (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        model_name TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        tokens_generated INTEGER,
-        response_time REAL,
-        operation_type TEXT
-    )
-    ''')
-    
-    # Create table for model metadata
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS model_metadata (
-        model_name TEXT PRIMARY KEY,
-        size_bytes INTEGER,
-        modified_at DATETIME,
-        params_billion REAL,
-        capabilities TEXT,
-        last_used DATETIME
-    )
-    ''')
-    
-    # Create table for model performance
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS model_performance (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        model_name TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        prompt_text TEXT,
-        tokens_per_second REAL,
-        latency REAL,
-        temperature REAL,
-        max_tokens INTEGER
-    )
-    ''')
-    
-    # Create table for resource utilization
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS resource_utilization (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        model_name TEXT,
-        cpu_usage REAL,
-        memory_usage REAL,
-        gpu_usage REAL
-    )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        # Create table for model usage
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS model_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            model_name TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            tokens_generated INTEGER,
+            response_time REAL,
+            operation_type TEXT
+        )
+        ''')
+
+        # Create table for model metadata
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS model_metadata (
+            model_name TEXT PRIMARY KEY,
+            size_bytes INTEGER,
+            modified_at DATETIME,
+            params_billion REAL,
+            capabilities TEXT,
+            last_used DATETIME
+        )
+        ''')
+
+        # Create table for model performance
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS model_performance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            model_name TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            prompt_text TEXT,
+            tokens_per_second REAL,
+            latency REAL,
+            temperature REAL,
+            max_tokens INTEGER
+        )
+        ''')
+
+        # Create table for resource utilization
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS resource_utilization (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            model_name TEXT,
+            cpu_usage REAL,
+            memory_usage REAL,
+            gpu_usage REAL
+        )
+        ''')
+
+        # Create indexes for commonly queried columns
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_model_usage_model_name ON model_usage (model_name)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_model_usage_timestamp ON model_usage (timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_model_performance_model_name ON model_performance (model_name)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_model_performance_timestamp ON model_performance (timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_resource_utilization_model_name ON resource_utilization (model_name)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_resource_utilization_timestamp ON resource_utilization (timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_model_metadata_model_name ON model_metadata (model_name)')
+
+        conn.commit()
 
 # Function to log model usage
 def log_model_usage(model_name, tokens_generated, response_time, operation_type="generate"):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        "INSERT INTO model_usage (model_name, tokens_generated, response_time, operation_type) VALUES (?, ?, ?, ?)",
-        (model_name, tokens_generated, response_time, operation_type)
-    )
-    
-    # Update last_used in metadata
-    cursor.execute(
-        "UPDATE model_metadata SET last_used = CURRENT_TIMESTAMP WHERE model_name = ?",
-        (model_name,)
-    )
-    
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO model_usage (model_name, tokens_generated, response_time, operation_type) VALUES (?, ?, ?, ?)",
+            (model_name, tokens_generated, response_time, operation_type)
+        )
+
+        # Update last_used in metadata
+        cursor.execute(
+            "UPDATE model_metadata SET last_used = CURRENT_TIMESTAMP WHERE model_name = ?",
+            (model_name,)
+        )
+
+        conn.commit()
 
 # Function to log model performance
 def log_model_performance(model_name, prompt_text, tokens_per_second, latency, temperature, max_tokens):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        "INSERT INTO model_performance (model_name, prompt_text, tokens_per_second, latency, temperature, max_tokens) VALUES (?, ?, ?, ?, ?, ?)",
-        (model_name, prompt_text, tokens_per_second, latency, temperature, max_tokens)
-    )
-    
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO model_performance (model_name, prompt_text, tokens_per_second, latency, temperature, max_tokens) VALUES (?, ?, ?, ?, ?, ?)",
+            (model_name, prompt_text, tokens_per_second, latency, temperature, max_tokens)
+        )
+
+        conn.commit()
 
 # Function to log resource utilization
 def log_resource_utilization(model_name=None):
@@ -116,124 +122,121 @@ def log_resource_utilization(model_name=None):
         memory = float(usage["memory_usage"].strip('%')) if usage["memory_usage"] != "N/A" else 0
         gpu = float(usage["gpu_usage"].strip('%')) if usage["gpu_usage"] != "N/A" else 0
         
-        conn = sqlite3.connect(DATABASE_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute(
-            "INSERT INTO resource_utilization (model_name, cpu_usage, memory_usage, gpu_usage) VALUES (?, ?, ?, ?)",
-            (model_name, cpu, memory, gpu)
-        )
-        
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(DATABASE_PATH) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "INSERT INTO resource_utilization (model_name, cpu_usage, memory_usage, gpu_usage) VALUES (?, ?, ?, ?)",
+                (model_name, cpu, memory, gpu)
+            )
+
+            conn.commit()
     except Exception as e:
         st.error(f"Error logging resource utilization: {str(e)}")
 
 # Function to update model metadata
 def update_model_metadata():
     available_models = get_available_models()
-    
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    for model_name in available_models:
-        # Skip models with 'embed' in the name
-        if 'embed' in model_name.lower():
-            continue
-            
-        # Get model info
-        model_info = show_model_info(model_name)
-        
-        size_bytes = model_info.get('size', 0) if isinstance(model_info, dict) else 0
-        modified_at = model_info.get('modified_at', datetime.now().isoformat()) if isinstance(model_info, dict) else datetime.now().isoformat()
-        
-        # Extract parameter count - this is approximate and based on model name patterns
-        params_billion = 0
-        if model_info and 'details' in model_info and 'parameter_count' in model_info['details']:
-            params_billion = float(model_info['details']['parameter_count']) / 1_000_000_000
-        else:
-            # Attempt to extract from model name
-            for part in model_name.split('-'):
-                if part.endswith('b'):
-                    try:
-                        params_billion = float(part[:-1])
-                        break
-                    except ValueError:
-                        pass
-        
-        # Extract capabilities
-        capabilities = []
-        from .model_capability_registry import get_model_capabilities
-        try:
-            model_caps = get_model_capabilities(model_name)
-            if model_caps.get("vision", False):
-                capabilities.append("Vision")
-            if model_caps.get("tools", False):
-                capabilities.append("Tools")
-            if model_caps.get("embedding", False):
-                capabilities.append("Embeddings")
-        except Exception:
-            pass
-        
-        capabilities_str = ",".join(capabilities) if capabilities else "Text"
-        
-        # Check if model already exists in metadata
-        cursor.execute("SELECT model_name FROM model_metadata WHERE model_name = ?", (model_name,))
-        if cursor.fetchone():
-            # Update existing metadata
-            cursor.execute(
-                "UPDATE model_metadata SET size_bytes = ?, modified_at = ?, params_billion = ?, capabilities = ? WHERE model_name = ?",
-                (size_bytes, modified_at, params_billion, capabilities_str, model_name)
-            )
-        else:
-            # Insert new metadata
-            cursor.execute(
-                "INSERT INTO model_metadata (model_name, size_bytes, modified_at, params_billion, capabilities, last_used) VALUES (?, ?, ?, ?, ?, ?)",
-                (model_name, size_bytes, modified_at, params_billion, capabilities_str, None)
-            )
-    
-    conn.commit()
-    conn.close()
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        for model_name in available_models:
+            # Skip models with 'embed' in the name
+            if 'embed' in model_name.lower():
+                continue
+
+            # Get model info
+            model_info = show_model_info(model_name)
+
+            size_bytes = model_info.get('size', 0) if isinstance(model_info, dict) else 0
+            modified_at = model_info.get('modified_at', datetime.now().isoformat()) if isinstance(model_info, dict) else datetime.now().isoformat()
+
+            # Extract parameter count - this is approximate and based on model name patterns
+            params_billion = 0
+            if model_info and 'details' in model_info and 'parameter_count' in model_info['details']:
+                params_billion = float(model_info['details']['parameter_count']) / 1_000_000_000
+            else:
+                # Attempt to extract from model name
+                for part in model_name.split('-'):
+                    if part.endswith('b'):
+                        try:
+                            params_billion = float(part[:-1])
+                            break
+                        except ValueError:
+                            pass
+
+            # Extract capabilities
+            capabilities = []
+            from .model_capability_registry import get_model_capabilities
+            try:
+                model_caps = get_model_capabilities(model_name)
+                if model_caps.get("vision", False):
+                    capabilities.append("Vision")
+                if model_caps.get("tools", False):
+                    capabilities.append("Tools")
+                if model_caps.get("embedding", False):
+                    capabilities.append("Embeddings")
+            except Exception:
+                pass
+
+            capabilities_str = ",".join(capabilities) if capabilities else "Text"
+
+            # Check if model already exists in metadata
+            cursor.execute("SELECT model_name FROM model_metadata WHERE model_name = ?", (model_name,))
+            if cursor.fetchone():
+                # Update existing metadata
+                cursor.execute(
+                    "UPDATE model_metadata SET size_bytes = ?, modified_at = ?, params_billion = ?, capabilities = ? WHERE model_name = ?",
+                    (size_bytes, modified_at, params_billion, capabilities_str, model_name)
+                )
+            else:
+                # Insert new metadata
+                cursor.execute(
+                    "INSERT INTO model_metadata (model_name, size_bytes, modified_at, params_billion, capabilities, last_used) VALUES (?, ?, ?, ?, ?, ?)",
+                    (model_name, size_bytes, modified_at, params_billion, capabilities_str, None)
+                )
+
+        conn.commit()
 
 # Function to get usage statistics for a model
 def get_model_usage_stats(model_name=None, days=30):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    if model_name:
-        cursor.execute(
-            """
-            SELECT date(timestamp), SUM(tokens_generated), COUNT(*), AVG(response_time)
-            FROM model_usage
-            WHERE model_name = ? AND timestamp >= ?
-            GROUP BY date(timestamp)
-            ORDER BY date(timestamp)
-            """,
-            (model_name, date_limit)
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT date(timestamp), SUM(tokens_generated), COUNT(*), AVG(response_time)
-            FROM model_usage
-            WHERE timestamp >= ?
-            GROUP BY date(timestamp)
-            ORDER BY date(timestamp)
-            """,
-            (date_limit,)
-        )
-    
-    results = cursor.fetchall()
-    conn.close()
-    
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+
+        if model_name:
+            cursor.execute(
+                """
+                SELECT date(timestamp), SUM(tokens_generated), COUNT(*), AVG(response_time)
+                FROM model_usage
+                WHERE model_name = ? AND timestamp >= ?
+                GROUP BY date(timestamp)
+                ORDER BY date(timestamp)
+                """,
+                (model_name, date_limit)
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT date(timestamp), SUM(tokens_generated), COUNT(*), AVG(response_time)
+                FROM model_usage
+                WHERE timestamp >= ?
+                GROUP BY date(timestamp)
+                ORDER BY date(timestamp)
+                """,
+                (date_limit,)
+            )
+
+        results = cursor.fetchall()
+
     # Prepare data for charts
     dates = [row[0] for row in results]
     tokens = [row[1] for row in results]
     requests = [row[2] for row in results]
     avg_response_times = [row[3] for row in results]
-    
+
     return {
         "dates": dates,
         "tokens": tokens,
@@ -243,35 +246,34 @@ def get_model_usage_stats(model_name=None, days=30):
 
 # Function to get performance metrics for a model
 def get_model_performance(model_name=None, days=30):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    if model_name:
-        cursor.execute(
-            """
-            SELECT timestamp, tokens_per_second, latency, temperature, max_tokens
-            FROM model_performance
-            WHERE model_name = ? AND timestamp >= ?
-            ORDER BY timestamp
-            """,
-            (model_name, date_limit)
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT model_name, AVG(tokens_per_second), AVG(latency)
-            FROM model_performance
-            WHERE timestamp >= ?
-            GROUP BY model_name
-            ORDER BY AVG(tokens_per_second) DESC
-            """,
-            (date_limit,)
-        )
-    
-    results = cursor.fetchall()
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+
+        if model_name:
+            cursor.execute(
+                """
+                SELECT timestamp, tokens_per_second, latency, temperature, max_tokens
+                FROM model_performance
+                WHERE model_name = ? AND timestamp >= ?
+                ORDER BY timestamp
+                """,
+                (model_name, date_limit)
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT model_name, AVG(tokens_per_second), AVG(latency)
+                FROM model_performance
+                WHERE timestamp >= ?
+                GROUP BY model_name
+                ORDER BY AVG(tokens_per_second) DESC
+                """,
+                (date_limit,)
+            )
+
+        results = cursor.fetchall()
     
     if model_name:
         # Individual model performance over time
@@ -302,41 +304,40 @@ def get_model_performance(model_name=None, days=30):
 
 # Function to get resource utilization for a model
 def get_resource_utilization(model_name=None, hours=24):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    time_limit = (datetime.now() - timedelta(hours=hours)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    if model_name:
-        cursor.execute(
-            """
-            SELECT timestamp, cpu_usage, memory_usage, gpu_usage
-            FROM resource_utilization
-            WHERE model_name = ? AND timestamp >= ?
-            ORDER BY timestamp
-            """,
-            (model_name, time_limit)
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT timestamp, AVG(cpu_usage), AVG(memory_usage), AVG(gpu_usage)
-            FROM resource_utilization
-            WHERE timestamp >= ?
-            GROUP BY strftime('%Y-%m-%d %H', timestamp)
-            ORDER BY timestamp
-            """,
-            (time_limit,)
-        )
-    
-    results = cursor.fetchall()
-    conn.close()
-    
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        time_limit = (datetime.now() - timedelta(hours=hours)).strftime('%Y-%m-%d %H:%M:%S')
+
+        if model_name:
+            cursor.execute(
+                """
+                SELECT timestamp, cpu_usage, memory_usage, gpu_usage
+                FROM resource_utilization
+                WHERE model_name = ? AND timestamp >= ?
+                ORDER BY timestamp
+                """,
+                (model_name, time_limit)
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT timestamp, AVG(cpu_usage), AVG(memory_usage), AVG(gpu_usage)
+                FROM resource_utilization
+                WHERE timestamp >= ?
+                GROUP BY strftime('%Y-%m-%d %H', timestamp)
+                ORDER BY timestamp
+                """,
+                (time_limit,)
+            )
+
+        results = cursor.fetchall()
+
     timestamps = [row[0] for row in results]
     cpu_usage = [row[1] for row in results]
     memory_usage = [row[2] for row in results]
     gpu_usage = [row[3] for row in results]
-    
+
     return {
         "timestamps": timestamps,
         "cpu_usage": cpu_usage,
@@ -346,29 +347,28 @@ def get_resource_utilization(model_name=None, hours=24):
 
 # Function to get models by usage
 def get_models_by_usage(days=30):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    cursor.execute(
-        """
-        SELECT model_name, COUNT(*) as use_count, SUM(tokens_generated) as total_tokens
-        FROM model_usage
-        WHERE timestamp >= ?
-        GROUP BY model_name
-        ORDER BY use_count DESC
-        """,
-        (date_limit,)
-    )
-    
-    results = cursor.fetchall()
-    conn.close()
-    
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+
+        cursor.execute(
+            """
+            SELECT model_name, COUNT(*) as use_count, SUM(tokens_generated) as total_tokens
+            FROM model_usage
+            WHERE timestamp >= ?
+            GROUP BY model_name
+            ORDER BY use_count DESC
+            """,
+            (date_limit,)
+        )
+
+        results = cursor.fetchall()
+
     model_names = [row[0] for row in results]
     use_counts = [row[1] for row in results]
     total_tokens = [row[2] for row in results]
-    
+
     return {
         "model_names": model_names,
         "use_counts": use_counts,
@@ -377,40 +377,39 @@ def get_models_by_usage(days=30):
 
 # Function to get operation types by model
 def get_operation_types(model_name=None, days=30):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
-    
-    if model_name:
-        cursor.execute(
-            """
-            SELECT operation_type, COUNT(*) as op_count
-            FROM model_usage
-            WHERE model_name = ? AND timestamp >= ?
-            GROUP BY operation_type
-            ORDER BY op_count DESC
-            """,
-            (model_name, date_limit)
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT operation_type, COUNT(*) as op_count
-            FROM model_usage
-            WHERE timestamp >= ?
-            GROUP BY operation_type
-            ORDER BY op_count DESC
-            """,
-            (date_limit,)
-        )
-    
-    results = cursor.fetchall()
-    conn.close()
-    
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        date_limit = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+
+        if model_name:
+            cursor.execute(
+                """
+                SELECT operation_type, COUNT(*) as op_count
+                FROM model_usage
+                WHERE model_name = ? AND timestamp >= ?
+                GROUP BY operation_type
+                ORDER BY op_count DESC
+                """,
+                (model_name, date_limit)
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT operation_type, COUNT(*) as op_count
+                FROM model_usage
+                WHERE timestamp >= ?
+                GROUP BY operation_type
+                ORDER BY op_count DESC
+                """,
+                (date_limit,)
+            )
+
+        results = cursor.fetchall()
+
     operation_types = [row[0] for row in results]
     operation_counts = [row[1] for row in results]
-    
+
     return {
         "operation_types": operation_types,
         "operation_counts": operation_counts
@@ -512,22 +511,20 @@ def model_management_dashboard():
     model_name = None if model_filter == "All Models" else model_filter
     
     # Get data from database
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    
-    # Check if we have real data
-    cursor.execute("SELECT COUNT(*) FROM model_usage")
-    has_usage_data = cursor.fetchone()[0] > 0
-    
-    # Check if we have performance data
-    cursor.execute("SELECT COUNT(*) FROM model_performance")
-    has_performance_data = cursor.fetchone()[0] > 0
-    
-    # Check if we have resource data
-    cursor.execute("SELECT COUNT(*) FROM resource_utilization")
-    has_resource_data = cursor.fetchone()[0] > 0
-    
-    conn.close()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+
+        # Check if we have real data
+        cursor.execute("SELECT COUNT(*) FROM model_usage")
+        has_usage_data = cursor.fetchone()[0] > 0
+
+        # Check if we have performance data
+        cursor.execute("SELECT COUNT(*) FROM model_performance")
+        has_performance_data = cursor.fetchone()[0] > 0
+
+        # Check if we have resource data
+        cursor.execute("SELECT COUNT(*) FROM resource_utilization")
+        has_resource_data = cursor.fetchone()[0] > 0
     
     # If no data, generate simulation data
     if not has_usage_data and not has_performance_data:
@@ -911,24 +908,23 @@ def model_management_dashboard():
         st.subheader("📋 Model Metadata")
         
         # Get model metadata
-        conn = sqlite3.connect(DATABASE_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute(
-            """
-            SELECT model_name, size_bytes, modified_at, params_billion, capabilities, last_used
-            FROM model_metadata
-            ORDER BY
-                CASE
-                    WHEN last_used IS NULL THEN 1
-                    ELSE 0
-                END,
-                last_used DESC
-            """
-        )
-        
-        metadata_results = cursor.fetchall()
-        conn.close()
+        with sqlite3.connect(DATABASE_PATH) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT model_name, size_bytes, modified_at, params_billion, capabilities, last_used
+                FROM model_metadata
+                ORDER BY
+                    CASE
+                        WHEN last_used IS NULL THEN 1
+                        ELSE 0
+                    END,
+                    last_used DESC
+                """
+            )
+
+            metadata_results = cursor.fetchall()
         
         if metadata_results:
             # Create dataframe for metadata

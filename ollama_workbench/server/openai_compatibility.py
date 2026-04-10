@@ -794,7 +794,7 @@ def openai_compatibility_ui():
                 s.settimeout(1)
                 s.connect((host, port))
                 return True
-        except:
+        except Exception:
             return False
     
     server_running = check_server_running(

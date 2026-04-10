@@ -176,7 +176,7 @@ def show_realtime_metrics():
                 item_time = datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
                 if item_time >= cutoff:
                     last_hour_data.append(item)
-            except:
+            except Exception:
                 continue
     else:
         last_hour_data = []
@@ -365,7 +365,7 @@ def show_error_monitoring():
                 item_time = datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
                 if item_time >= cutoff:
                     recent_errors.append(item)
-            except:
+            except Exception:
                 continue
         st.metric("Errors (24h)", len(recent_errors))
     
@@ -403,7 +403,7 @@ def show_system_health():
     try:
         from ollama_workbench.providers.ollama_utils import get_ollama_resource_usage
         resource_usage = get_ollama_resource_usage()
-    except:
+    except Exception:
         resource_usage = {}
     
     # System status

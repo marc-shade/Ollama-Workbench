@@ -611,7 +611,7 @@ def render_document_ui(doc_state: DocumentState, model_callback: Callable = None
         try:
             last_modified = datetime.fromisoformat(doc_state.last_modified)
             st.write(f"Last modified: {last_modified.strftime('%Y-%m-%d %H:%M')}")
-        except:
+        except Exception:
             st.write(f"Last modified: Recently")
     
     # Create a container for all blocks
@@ -726,7 +726,7 @@ def render_document_ui(doc_state: DocumentState, model_callback: Callable = None
                         try:
                             dt = datetime.fromisoformat(block["updated_at"])
                             st.caption(f"Updated: {dt.strftime('%Y-%m-%d %H:%M')}")
-                        except:
+                        except Exception:
                             st.caption("Recently updated")
                 
                 with col3:
@@ -766,7 +766,7 @@ def render_document_ui(doc_state: DocumentState, model_callback: Callable = None
                                 try:
                                     dt = datetime.fromisoformat(version.get("updated_at", ""))
                                     st.caption(f"Version {len(block['version_history'])-j}: {dt.strftime('%Y-%m-%d %H:%M')}")
-                                except:
+                                except Exception:
                                     st.caption(f"Version {len(block['version_history'])-j}")
                             
                             with col2:
@@ -1080,7 +1080,7 @@ def canvas_ui(model_callback: Callable = None) -> None:
                     try:
                         dt = datetime.fromisoformat(doc["last_modified"])
                         last_modified = dt.strftime("%Y-%m-%d %H:%M")
-                    except:
+                    except Exception:
                         pass
                 
                 doc_label = f"{doc['name']} ({doc['block_count']} blocks, {last_modified})"

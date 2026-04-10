@@ -38,5 +38,4 @@ jobs:
           cache: 'pip'
       - run: pip install -r requirements.txt
       - run: pip install pytest pytest-html
-      # TODO: remove || true once remaining test failures are fixed
-      - run: python -m pytest tests/ -q --tb=short -x --ignore=tests/test_tts_server_app.py --ignore=tests/test_semantic_chunking_standalone.py 2>&1 || true
+      - run: python -m pytest tests/ -q --tb=short -x --ignore=tests/test_tts_server_app.py --ignore=tests/test_semantic_chunking_standalone.py

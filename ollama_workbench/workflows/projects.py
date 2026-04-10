@@ -6,7 +6,7 @@ import os
 import uuid
 from datetime import datetime
 import base64
-from ollama_workbench.providers.ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
+from ollama_workbench.providers.ollama_utils import get_available_models, get_all_models, call_ollama_endpoint, load_api_keys
 from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS, get_openai_models
 from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
 from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt
@@ -180,8 +180,6 @@ def get_corpus_context_from_db(corpus_folder, corpus, user_input):
     return "Sample context from the corpus database."
 
 
-def get_all_models():
-    return get_available_models() + get_openai_models() + get_groq_models()
 
 def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corpus, temperature, max_tokens, previous_responses=[]):
     combined_prompt = ""

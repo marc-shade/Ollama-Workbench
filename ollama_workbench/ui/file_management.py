@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 def count_tokens(text: str) -> int:
     """Count the number of tokens in a text using tiktoken."""
+    if not text:
+        return 0
     try:
         encoding = tiktoken.get_encoding("cl100k_base")
         return len(encoding.encode(text))

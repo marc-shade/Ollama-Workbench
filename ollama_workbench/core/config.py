@@ -85,6 +85,9 @@ CONFIG_PATHS = [
     os.path.expanduser("~/.config/ollama-workbench/config.yml"),
 ]
 
+# Current config (singleton) - declared here so get_config() can use it
+_config = None
+
 def load_config_file() -> Dict[str, Any]:
     """
     Load configuration from a config file.
@@ -116,14 +119,19 @@ def load_config_file() -> Dict[str, Any]:
 def get_config() -> Dict[str, Any]:
     """
     Get the application configuration, combining defaults, config files,
-    and environment variables.
-    
+    and environment variables. Uses the module-level _config singleton
+    after first load; call refresh_config() to force a re-read.
+
     Returns:
         Dict[str, Any]: Complete configuration dictionary
     """
+    global _config
+    if _config is not None:
+        return _config
+
     # Start with default config
     config = DEFAULT_CONFIG.copy()
-    
+
     # Update with config file if exists
     file_config = load_config_file()
     config.update(file_config)
@@ -167,6 +175,7 @@ def get_config() -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"Failed to initialize security framework: {e}")
     
+    _config = config
     return config
 
 def save_config(config: Dict[str, Any], path: Optional[str] = None) -> bool:
@@ -689,9 +698,6 @@ def server_config_ui():
                         st.success("Configuration imported and applied successfully")
             except Exception as e:
                 st.error(f"Error importing configuration: {e}")
-
-# Current config (singleton)
-_config = None
 
 def get_current_config() -> Dict[str, Any]:
     """

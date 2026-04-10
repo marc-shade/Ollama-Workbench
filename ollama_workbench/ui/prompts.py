@@ -14,18 +14,30 @@ def get_prompts_file_path(prompt_type):
         os.makedirs(prompts_folder)
     return os.path.join(prompts_folder, f"{prompt_type}_prompts.json")
 
+_prompts_cache = {}  # key: prompt_type, value: (timestamp, data)
+_PROMPTS_CACHE_TTL = 10  # seconds
+
 def load_prompts(prompt_type):
+    import time as _time
+    now = _time.monotonic()
+    cached = _prompts_cache.get(prompt_type)
+    if cached is not None and (now - cached[0]) < _PROMPTS_CACHE_TTL:
+        return cached[1]
     file_path = get_prompts_file_path(prompt_type)
     if os.path.exists(file_path):
         with open(file_path, "r") as f:
-            return json.load(f)
+            data = json.load(f)
     else:
-        return {}
+        data = {}
+    _prompts_cache[prompt_type] = (now, data)
+    return data
 
 def save_prompts(prompt_type, prompts):
     file_path = get_prompts_file_path(prompt_type)
     with open(file_path, "w") as f:
         json.dump(prompts, f, indent=4)
+    # Invalidate cache for this prompt_type
+    _prompts_cache.pop(prompt_type, None)
 
 def get_agent_prompt():
     prompts = load_prompts("agent")

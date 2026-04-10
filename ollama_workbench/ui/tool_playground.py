@@ -977,9 +977,9 @@ def tool_playground():
             if response.status_code == 200:
                 data = response.json()
                 if "models" in data and data["models"]:
-                    available_models = [model["name"] for model in data["models"] 
+                    available_models = [model["name"] for model in data["models"]
                                     if "name" in model and "embed" not in model["name"]]
-        except:
+        except Exception:
             # Fall back to common models
             available_models = ["llama3", "mistral", "mixtral", "phi3", "gemma3", "qwen2"]
     
@@ -1392,7 +1392,7 @@ if __name__ == "__main__":
                             mcp_tools, mcp_schemas = get_available_mcp_tools()
                             st.session_state.mcp_tools = mcp_tools
                             st.session_state.mcp_schemas = mcp_schemas
-                        except:
+                        except Exception:
                             pass
             
             # Update active tools list based on selection

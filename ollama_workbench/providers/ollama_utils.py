@@ -85,18 +85,33 @@ from ollama_workbench.core.config import get_config
 API_KEYS_FILE = "api_keys.json"
 MODEL_SETTINGS_FILE = "model_settings.json"
 
+_api_keys_cache = None
+_api_keys_cache_time = 0
+_API_KEYS_CACHE_TTL = 10  # seconds
+
 def load_api_keys():
-    """Loads API keys from the JSON file."""
+    """Loads API keys from the JSON file. Cached for 10 seconds."""
+    global _api_keys_cache, _api_keys_cache_time
+    now = time.monotonic()
+    if _api_keys_cache is not None and (now - _api_keys_cache_time) < _API_KEYS_CACHE_TTL:
+        return _api_keys_cache
     if os.path.exists(API_KEYS_FILE):
         with open(API_KEYS_FILE, "r") as f:
-            return json.load(f)
-    return {}
+            _api_keys_cache = json.load(f)
+    else:
+        _api_keys_cache = {}
+    _api_keys_cache_time = now
+    return _api_keys_cache
 
 def save_api_keys(api_keys):
     """Saves API keys to the JSON file."""
+    global _api_keys_cache, _api_keys_cache_time
     with open(API_KEYS_FILE, "w") as f:
         json.dump(api_keys, f, indent=4)
     os.chmod(API_KEYS_FILE, 0o600)
+    # Invalidate cache so next load_api_keys() re-reads from disk
+    _api_keys_cache = None
+    _api_keys_cache_time = 0
 
 def load_model_settings():
     """Loads model settings from the JSON file."""

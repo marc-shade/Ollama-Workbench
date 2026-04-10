@@ -83,7 +83,7 @@ def upload_document(file, corpus_name: str):
         # Load or create corpus
         try:
             corpus = GraphRAGCorpus.load(corpus_name, embedder)
-        except:
+        except Exception:
             corpus = GraphRAGCorpus(embedder)
         
         # Determine doc_type from file extension
@@ -113,7 +113,7 @@ def query_corpus(query: str, corpus_name: str, n_results: int = 5):
         # Load corpus
         try:
             corpus = GraphRAGCorpus.load(corpus_name, embedder)
-        except:
+        except Exception:
             # No corpus found
             return []
         

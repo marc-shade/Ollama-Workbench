@@ -233,7 +233,7 @@ def handle_requests_error(e: Exception, api_name: str, endpoint: Optional[str] =
         try:
             status_code = e.response.status_code
             response_body = e.response.text
-        except:
+        except Exception:
             status_code = None
             response_body = None
             

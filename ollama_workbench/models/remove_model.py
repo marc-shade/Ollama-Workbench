@@ -40,7 +40,7 @@ def remove_model_ui():
             if model_info and "size" in model_info:
                 size_mb = model_info["size"] / (1024 * 1024)
                 st.info(f"Model size: {size_mb:.1f} MB")
-    except:
+    except Exception:
         pass  # Silently fail if we can't get model info
 
     # Add warning about removal being permanent

@@ -27,6 +27,7 @@ from ollama_workbench.core.session_utils import (
     save_chat_session, load_chat_session,
     get_agent_prompt, get_rag_context, safe_rerun, log_message
 )
+from ollama_workbench.ui.file_management import count_tokens
 
 # chat_interface.py
 from ollama_workbench.providers.openai_utils import call_openai_api, OPENAI_MODELS, get_openai_models
@@ -1394,17 +1395,5 @@ def extract_content_blocks(text):
     
     return [block.strip('`').strip() for block in code_blocks], [block.strip() for block in article_blocks]
 
-def count_tokens(text):
-    """Count the number of tokens in a text string."""
-    try:
-        if not text:
-            return 0
-        encoding = tiktoken.get_encoding("cl100k_base")
-        return len(encoding.encode(text))
-    except Exception as e:
-        logger.error(f"Error counting tokens: {e}")
-        # Fallback: approximate by word count
-        return len(text.split())
-        
 if __name__ == "__main__":
     chat_interface()

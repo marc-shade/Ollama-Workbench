@@ -388,7 +388,7 @@ class VoiceManager:
                 reload_response = requests.post("http://localhost:8000/reload_profiles", timeout=2)
                 if reload_response.status_code == 200:
                     logger.debug("Voice profiles reloaded on TTS server")
-            except:
+            except Exception:
                 logger.debug("Failed to reload voice profiles on TTS server")
             
             # Now request speech synthesis

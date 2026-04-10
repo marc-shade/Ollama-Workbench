@@ -45,7 +45,7 @@ def list_local_models():
                     response = requests.get(f"{OLLAMA_URL}/tags", timeout=5)
                     response.raise_for_status()
                     models = response.json().get("models", [])
-                except:
+                except Exception:
                     # Final fallback - construct basic info from available_models
                     models = [{"name": model} for model in available_models]
         else:
@@ -80,7 +80,7 @@ def list_local_models():
         if modified_at != 'Unknown':
             try:
                 modified_at = datetime.fromisoformat(modified_at).strftime('%Y-%m-%d %H:%M:%S')
-            except:
+            except Exception:
                 pass  # Keep as is if parsing fails
                 
         # Extract capabilities if available
@@ -94,7 +94,7 @@ def list_local_models():
                 capabilities.append("Tools")
             if model_caps.get("embedding", False):
                 capabilities.append("Embeddings")
-        except:
+        except Exception:
             pass
             
         data.append({

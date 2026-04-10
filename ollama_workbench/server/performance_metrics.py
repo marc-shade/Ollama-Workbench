@@ -266,7 +266,7 @@ def record_metrics(model, response_time, prompt_length=None, input_tokens=None, 
         try:
             with open(metrics_file, "r") as f:
                 metrics_data = json.load(f)
-        except:
+        except Exception:
             # If file exists but can't be loaded, start with empty list
             metrics_data = []
     

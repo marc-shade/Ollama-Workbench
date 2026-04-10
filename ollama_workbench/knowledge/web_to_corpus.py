@@ -25,7 +25,7 @@ def get_random_user_agent() -> str:
     try:
         ua = UserAgent()
         return ua.random
-    except:
+    except Exception:
         # Fallback to a predefined list if fake_useragent fails
         user_agents = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",

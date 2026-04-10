@@ -697,7 +697,7 @@ Respond with ONLY the JSON object, no other text. The JSON should be valid and f
                 json_text = json_text.replace("'", '"')  # Replace single quotes
                 try:
                     return json.loads(json_text)
-                except:
+                except Exception:
                     st.error("Failed to parse JSON from model response")
                     logger.error(f"Failed to parse JSON: {response_text}")
                     return {}

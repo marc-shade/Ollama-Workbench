@@ -69,11 +69,9 @@ ollama_workbench/
     knowledge/                   # Knowledge management & RAG
         simplified_rag.py        #   Enhanced RAG interface (active)
         enhanced_corpus.py       #   GraphRAG corpus management
-        corpus_management.py     #   Basic corpus tools
         repo_docs.py             #   Repository analysis
         web_to_corpus.py         #   Web crawling to corpus
         search_libraries.py      #   Multi-engine web search
-        chroma_client.py         #   ChromaDB client
     models/                      # Model management & testing
         model_comparison.py      #   Response quality comparison
         model_tests.py           #   Performance benchmarks

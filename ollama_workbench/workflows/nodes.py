@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Union, Tuple
-from ollama_workbench.providers.ollama_utils import get_available_models, call_ollama_endpoint, load_api_keys
+from ollama_workbench.providers.ollama_utils import get_available_models, get_all_models, call_ollama_endpoint, load_api_keys
 from ollama_workbench.providers.openai_utils import OPENAI_MODELS, call_openai_api, get_openai_models
 from ollama_workbench.providers.groq_utils import GROQ_MODELS, call_groq_api, get_groq_models
 from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
@@ -188,11 +188,6 @@ class Edge:
         except KeyError as e:
             raise KeyError(f"Missing key {e} in edge data: {data}")
 
-def get_all_models() -> list:
-    """Retrieves a list of all available models."""
-    ollama_models = get_available_models()
-    all_models = ollama_models + get_openai_models() + get_groq_models()
-    return all_models
 
 def call_api_and_decode_response(api_function, *args, **kwargs) -> dict:
     """Calls the specified API function, decodes the JSON response, and validates its structure."""

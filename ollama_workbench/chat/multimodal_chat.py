@@ -67,7 +67,7 @@ def prepare_message_with_image(text: str, image_file) -> List[Dict[str, Any]]:
         try:
             img = Image.open(image_file)
             mime_type = f"image/{img.format.lower()}"
-        except:
+        except Exception:
             mime_type = "image/jpeg"  # Default to JPEG
     
     # Encode the image

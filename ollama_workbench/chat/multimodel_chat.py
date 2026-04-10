@@ -18,6 +18,7 @@ from ollama_workbench.ui.prompts import (
 )
 import tiktoken
 from streamlit_extras.bottom_container import bottom
+from ollama_workbench.ui.file_management import count_tokens as _count_tokens
 from ollama_workbench.knowledge.enhanced_corpus import GraphRAGCorpus, OllamaEmbedder
 import logging
 import time
@@ -147,8 +148,7 @@ class MultiModelChat:
 
     def count_tokens(self, text):
         """Count tokens in text."""
-        encoding = tiktoken.get_encoding("cl100k_base")
-        return len(encoding.encode(text))
+        return _count_tokens(text)
 
     def get_model_display_name(self, model_name):
         """Format model name for display."""

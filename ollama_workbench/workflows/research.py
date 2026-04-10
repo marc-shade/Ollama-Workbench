@@ -30,47 +30,42 @@ os.makedirs(files_dir, exist_ok=True)
 
 # Database functions
 def init_db():
-    conn = sqlite3.connect('research_reports.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS reports
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  title TEXT,
-                  content TEXT,
-                  date TEXT)''')
-    conn.commit()
-    conn.close()
+    with sqlite3.connect('research_reports.db') as conn:
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS reports
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      title TEXT,
+                      content TEXT,
+                      date TEXT)''')
+        conn.commit()
 
 def save_report(title: str, content: str):
-    conn = sqlite3.connect('research_reports.db')
-    c = conn.cursor()
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute("INSERT INTO reports (title, content, date) VALUES (?, ?, ?)",
-              (title, content, date))
-    conn.commit()
-    conn.close()
+    with sqlite3.connect('research_reports.db') as conn:
+        c = conn.cursor()
+        date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("INSERT INTO reports (title, content, date) VALUES (?, ?, ?)",
+                  (title, content, date))
+        conn.commit()
 
 def get_all_reports():
-    conn = sqlite3.connect('research_reports.db')
-    c = conn.cursor()
-    c.execute("SELECT id, title, date FROM reports")
-    reports = c.fetchall()
-    conn.close()
+    with sqlite3.connect('research_reports.db') as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, title, date FROM reports")
+        reports = c.fetchall()
     return reports
 
 def get_report_content(report_id: int):
-    conn = sqlite3.connect('research_reports.db')
-    c = conn.cursor()
-    c.execute("SELECT content FROM reports WHERE id=?", (report_id,))
-    content = c.fetchone()[0]
-    conn.close()
+    with sqlite3.connect('research_reports.db') as conn:
+        c = conn.cursor()
+        c.execute("SELECT content FROM reports WHERE id=?", (report_id,))
+        content = c.fetchone()[0]
     return content
 
 def delete_report(report_id: int):
-    conn = sqlite3.connect('research_reports.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM reports WHERE id=?", (report_id,))
-    conn.commit()
-    conn.close()
+    with sqlite3.connect('research_reports.db') as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM reports WHERE id=?", (report_id,))
+        conn.commit()
 
 # Export functions
 def export_to_pdf(content: str, filename: str):
