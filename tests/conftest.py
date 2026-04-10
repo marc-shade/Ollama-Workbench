@@ -16,6 +16,31 @@ from unittest.mock import MagicMock, patch
 
 
 # ---------------------------------------------------------------------------
+# 0. Auto-clear caches before every test (prevents stale data interference)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _clear_caches():
+    """Clear all module-level caches before and after each test."""
+    def _clear():
+        try:
+            import ollama_workbench.providers.ollama_utils as ou
+            ou._api_keys_cache = None
+            ou._api_keys_cache_time = 0
+        except (ImportError, AttributeError):
+            pass
+        try:
+            from ollama_workbench.ui.prompts import clear_prompts_cache
+            clear_prompts_cache()
+        except (ImportError, AttributeError):
+            pass
+
+    _clear()
+    yield
+    _clear()
+
+
+# ---------------------------------------------------------------------------
 # 1. Mock Streamlit session state
 # ---------------------------------------------------------------------------
 
