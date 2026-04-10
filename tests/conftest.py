@@ -41,6 +41,26 @@ def _clear_caches():
 
 
 # ---------------------------------------------------------------------------
+# 0.5 Attribute-access dict for session state mocking
+# ---------------------------------------------------------------------------
+
+class AttrDict(dict):
+    """Dict that supports attribute-style access like Streamlit's session_state."""
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+    def __setattr__(self, key, value):
+        self[key] = value
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+
+# ---------------------------------------------------------------------------
 # 1. Mock Streamlit session state
 # ---------------------------------------------------------------------------
 
@@ -55,7 +75,7 @@ def mock_session_state():
     The fixture automatically patches streamlit.session_state and restores
     it when the test finishes.
     """
-    state = {}
+    state = AttrDict()
     with patch("streamlit.session_state", state):
         yield state
 

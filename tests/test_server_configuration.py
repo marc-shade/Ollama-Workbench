@@ -599,7 +599,7 @@ class TestStreamlitInterface:
         # Mock Streamlit components
         mock_st.header = Mock()
         mock_st.success = Mock()
-        mock_st.tabs = Mock(return_value=(Mock(), Mock()))
+        mock_st.tabs = Mock(return_value=(MagicMock(), MagicMock()))
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
@@ -638,7 +638,7 @@ class TestStreamlitInterface:
         # Mock Streamlit components
         mock_st.header = Mock()
         mock_st.error = Mock()
-        mock_st.tabs = Mock(return_value=(Mock(), Mock()))
+        mock_st.tabs = Mock(return_value=(MagicMock(), MagicMock()))
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
@@ -677,7 +677,7 @@ class TestStreamlitInterface:
         # Mock Streamlit components
         mock_st.header = Mock()
         mock_st.success = Mock()
-        mock_st.tabs = Mock(return_value=(Mock(), Mock()))
+        mock_st.tabs = Mock(return_value=(MagicMock(), MagicMock()))
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
@@ -719,7 +719,7 @@ class TestStreamlitInterface:
         # Mock Streamlit components
         mock_st.header = Mock()
         mock_st.success = Mock()
-        mock_st.tabs = Mock(return_value=(Mock(), Mock()))
+        mock_st.tabs = Mock(return_value=(MagicMock(), MagicMock()))
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
@@ -759,7 +759,7 @@ class TestStreamlitInterface:
         # Mock Streamlit components
         mock_st.header = Mock()
         mock_st.error = Mock()
-        mock_st.tabs = Mock(return_value=(Mock(), Mock()))
+        mock_st.tabs = Mock(return_value=(MagicMock(), MagicMock()))
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
@@ -802,7 +802,7 @@ class TestStreamlitInterface:
         # Mock Streamlit components
         mock_st.header = Mock()
         mock_st.success = Mock()
-        mock_st.tabs = Mock(return_value=(Mock(), Mock()))
+        mock_st.tabs = Mock(return_value=(MagicMock(), MagicMock()))
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
