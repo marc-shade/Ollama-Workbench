@@ -976,9 +976,22 @@ def tool_playground():
             response = requests.get(api_url, timeout=2)
             if response.status_code == 200:
                 data = response.json()
-                if "models" in data and data["models"]:
-                    available_models = [model["name"] for model in data["models"]
-                                    if "name" in model and "embed" not in model["name"]]
+                # Handle both dict (HTTP API) and ListResponse (v0.4.8+ client)
+                if isinstance(data, dict):
+                    models_list = data.get("models", [])
+                else:
+                    models_list = getattr(data, 'models', [])
+                if models_list:
+                    available_models = []
+                    for m in models_list:
+                        if hasattr(m, 'model'):
+                            name = m.model
+                        elif isinstance(m, dict):
+                            name = m.get("name", "")
+                        else:
+                            name = str(m)
+                        if name and "embed" not in name:
+                            available_models.append(name)
         except Exception:
             # Fall back to common models
             available_models = ["llama3", "mistral", "mixtral", "phi3", "gemma3", "qwen2"]

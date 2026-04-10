@@ -68,15 +68,25 @@ def list_local_models():
     # Prepare data for the dataframe
     data = []
     for model in models:
-        # Handle both detailed model info and basic model info formats
-        model_name = model.get('name', model if isinstance(model, str) else "Unknown")
-        
-        # Extract size if available (with fallback handling)
-        size_bytes = model.get('size', 0) if isinstance(model, dict) else 0
+        # Handle Model objects (v0.4.8+), dicts, and strings
+        if hasattr(model, 'model'):
+            # v0.4.8+ Model object
+            model_name = model.model
+            size_bytes = getattr(model, 'size', 0) or 0
+            modified_at = getattr(model, 'modified_at', 'Unknown') or 'Unknown'
+        elif isinstance(model, dict):
+            model_name = model.get('name', model.get('model', "Unknown"))
+            size_bytes = model.get('size', 0) or 0
+            modified_at = model.get('modified_at', 'Unknown') or 'Unknown'
+        elif isinstance(model, str):
+            model_name = model
+            size_bytes = 0
+            modified_at = 'Unknown'
+        else:
+            model_name = str(model)
+            size_bytes = 0
+            modified_at = 'Unknown'
         size_gb = size_bytes / (1024**3) if size_bytes else 0  # Convert bytes to GB
-        
-        # Extract modified time if available
-        modified_at = model.get('modified_at', 'Unknown') if isinstance(model, dict) else 'Unknown'
         if modified_at != 'Unknown':
             try:
                 modified_at = datetime.fromisoformat(modified_at).strftime('%Y-%m-%d %H:%M:%S')

@@ -46,16 +46,27 @@ class OpenAICompatibilityLayer:
             try:
                 # Get models from Ollama
                 models_response = self.ollama_client.list()
-                models = models_response.get('models', [])
-                
+                # v0.4.8+: ListResponse object with .models attribute
+                # older versions: dict with "models" key
+                models = getattr(models_response, 'models', None)
+                if models is None:
+                    models = models_response.get('models', []) if isinstance(models_response, dict) else []
+
                 # Format as OpenAI response
                 result = {
                     "object": "list",
                     "data": []
                 }
-                
+
                 for model in models:
-                    model_name = model.get('name', '')
+                    # v0.4.8+: Model object with .model attribute
+                    # older versions: dict with "name" key
+                    if hasattr(model, 'model'):
+                        model_name = model.model
+                    elif isinstance(model, dict):
+                        model_name = model.get('name', '')
+                    else:
+                        model_name = str(model)
                     result["data"].append({
                         "id": model_name,
                         "object": "model",
@@ -216,9 +227,17 @@ class OpenAICompatibilityLayer:
             try:
                 # Check if model exists in Ollama
                 models_response = self.ollama_client.list()
-                models = models_response.get('models', [])
-                
-                model = next((m for m in models if m.get('name') == model_id), None)
+                # v0.4.8+: ListResponse object with .models attribute
+                models = getattr(models_response, 'models', None)
+                if models is None:
+                    models = models_response.get('models', []) if isinstance(models_response, dict) else []
+
+                # v0.4.8+: Model object with .model attribute (NO .name)
+                model = next(
+                    (m for m in models
+                     if (getattr(m, 'model', None) or (m.get('name') if isinstance(m, dict) else None)) == model_id),
+                    None
+                )
                 
                 if not model:
                     return jsonify({

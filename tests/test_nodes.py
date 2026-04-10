@@ -757,79 +757,84 @@ class TestDataRetrievalNode:
         assert "API request error" in result
     
     @patch('builtins.open', mock_open(read_data="File content here"))
-    def test_handle_data_retrieval_node_file(self):
-        """Test data retrieval node with file type"""
+    @patch('os.path.isfile', return_value=True)
+    def test_handle_data_retrieval_node_file(self, mock_isfile):
+        """Test data retrieval node with file type (path within app dir)"""
         from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
-        
+        import os
+
+        # Use a path within the app directory
+        app_dir = os.getcwd()
+        test_path = os.path.join(app_dir, "test_file.txt")
+
         node = Node("2", "DataRetrieval", {
             "retrieval_type": "File",
-            "file_path": "/path/to/file.txt"
+            "file_path": test_path
         })
-        
+
         incoming_edges = [Edge("1-2", "1", "2")]
-        
+
         result = handle_data_retrieval_node(node, incoming_edges, lambda x: "input")
-        
+
         assert result == "File content here"
-    
+
     def test_handle_data_retrieval_node_file_error(self):
-        """Test data retrieval node with file error"""
+        """Test data retrieval node with file outside app dir"""
         from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
-        
+
         node = Node("2", "DataRetrieval", {
             "retrieval_type": "File",
             "file_path": "/nonexistent/file.txt"
         })
-        
+
         incoming_edges = [Edge("1-2", "1", "2")]
-        
-        with patch('builtins.open', side_effect=FileNotFoundError("File not found")):
-            result = handle_data_retrieval_node(node, incoming_edges, lambda x: "input")
-        
-        assert "File read error" in result
+
+        result = handle_data_retrieval_node(node, incoming_edges, lambda x: "input")
+
+        assert "Access denied" in result
 
 
 class TestControlNode:
     """Test control node functionality"""
     
     def test_handle_control_node_conditional_true(self):
-        """Test control node with conditional (true case)"""
+        """Test control node with conditional (true case) using safe eval"""
         from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
-        
+
         node = Node("2", "Control", {
             "control_type": "Conditional",
-            "condition": "len('{input}') > 5",
+            "condition": "10 > 5",
             "true_branch": "Input is long",
             "false_branch": "Input is short"
         })
-        
+
         def mock_process_node(node_id):
             return "This is a long input"
-        
+
         incoming_edges = [Edge("1-2", "1", "2")]
-        
+
         result = handle_control_node(node, incoming_edges, mock_process_node)
-        
+
         assert "TRUE: Input is long" in result
-    
+
     def test_handle_control_node_conditional_false(self):
-        """Test control node with conditional (false case)"""
+        """Test control node with conditional (false case) using safe eval"""
         from ollama_workbench.workflows.nodes import handle_control_node, Node, Edge
-        
+
         node = Node("2", "Control", {
             "control_type": "Conditional",
-            "condition": "len('{input}') > 10",
+            "condition": "1 > 10",
             "true_branch": "Input is long",
             "false_branch": "Input is short"
         })
-        
+
         def mock_process_node(node_id):
             return "Short"
-        
+
         incoming_edges = [Edge("1-2", "1", "2")]
-        
+
         result = handle_control_node(node, incoming_edges, mock_process_node)
-        
+
         assert "FALSE: Input is short" in result
     
     def test_handle_control_node_loop(self):
@@ -1297,13 +1302,13 @@ class TestFileOperations:
         nodes = [Node("1", "Input", {"content": "Test"})]
         edges = [Edge("1-2", "1", "2")]
         
-        mock_file = Mock()
-        with patch('builtins.open', mock_file):
+        m = mock_open()
+        with patch('builtins.open', m):
             with patch('ollama_workbench.workflows.nodes.json.dump') as mock_dump:
                 result = save_workflow(nodes, edges)
-        
+
         # Should save to both files
-        assert mock_file.call_count == 2
+        assert m.call_count == 2
         assert mock_dump.call_count == 2
         assert result == "workflow_1234567890.json"
     

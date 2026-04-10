@@ -350,7 +350,15 @@ def model_capabilities_ui():
     
     # Get available models
     local_models = get_local_models()
-    model_names = [model["name"] for model in local_models]
+    # Handle both Model objects (v0.4.8+) and dicts
+    model_names = []
+    for model in local_models:
+        if hasattr(model, 'model'):
+            model_names.append(model.model)
+        elif isinstance(model, dict):
+            model_names.append(model.get("name", str(model)))
+        else:
+            model_names.append(str(model))
     
     if not model_names:
         st.warning("No models found. Please pull some models first.")

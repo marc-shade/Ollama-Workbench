@@ -17,6 +17,61 @@ import os
 
 logger = logging.getLogger(__name__)
 
+
+def _compat_get(obj, key, default=None):
+    """Get a value from an ollama response object or dict, compatible with both
+    old dict-style responses and new v0.4.8+ object-style responses."""
+    # Try attribute access first (v0.4.8+ objects)
+    val = getattr(obj, key, None)
+    if val is not None:
+        return val
+    # Try dict-style access (older versions)
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    # Try __getitem__ (some response objects support it)
+    try:
+        return obj[key]
+    except (KeyError, TypeError, IndexError):
+        pass
+    return default
+
+
+def _normalize_response(obj):
+    """Convert an ollama response object to a dict for backwards compatibility.
+    If already a dict, return as-is. Handles nested response objects recursively."""
+    if obj is None:
+        return {}
+    if isinstance(obj, dict):
+        return obj
+    # Convert object with __dict__ or known attributes to dict
+    result = {}
+    if hasattr(obj, '__dict__'):
+        for key, val in obj.__dict__.items():
+            if not key.startswith('_'):
+                # Recursively normalize nested objects
+                if hasattr(val, '__dict__') and not isinstance(val, (str, int, float, bool, list, dict, type(None))):
+                    result[key] = _normalize_response(val)
+                elif isinstance(val, list):
+                    result[key] = [_normalize_response(item) if hasattr(item, '__dict__') and not isinstance(item, (str, int, float, bool, dict, type(None))) else item for item in val]
+                else:
+                    result[key] = val
+    # Fallback: try common response attributes
+    if not result:
+        for attr in ('models', 'model', 'name', 'modified_at', 'digest', 'size', 'details',
+                     'modelfile', 'template', 'license', 'modelinfo', 'parameters',
+                     'message', 'response', 'context', 'embedding', 'embeddings',
+                     'eval_count', 'eval_duration', 'total_duration', 'load_duration',
+                     'prompt_eval_count', 'prompt_eval_duration', 'done'):
+            val = getattr(obj, attr, None)
+            if val is not None:
+                if hasattr(val, '__dict__') and not isinstance(val, (str, int, float, bool, list, dict, type(None))):
+                    result[attr] = _normalize_response(val)
+                elif isinstance(val, list):
+                    result[attr] = [_normalize_response(item) if hasattr(item, '__dict__') and not isinstance(item, (str, int, float, bool, dict, type(None))) else item for item in val]
+                else:
+                    result[attr] = val
+    return result
+
 # Performance monitoring constants
 PERFORMANCE_THRESHOLDS = {
     "slow_response_time": 5.0,  # seconds
@@ -287,17 +342,25 @@ def get_available_models():
             # Newer version with Client class
             try:
                 models_response = client.list()
-                if "models" in models_response:
-                    for model in models_response["models"]:
-                        if "name" in model and "embed" not in model["name"]:
-                            models.append(model["name"])
-                    
+                # v0.4.8+: ListResponse object with .models attribute
+                # Older versions: dict with "models" key
+                model_list = getattr(models_response, 'models', None)
+                if model_list is None and isinstance(models_response, dict):
+                    model_list = models_response.get('models', [])
+
+                if model_list:
+                    for model in model_list:
+                        # v0.4.8+: Model object with .model attribute (NO .name)
+                        # Older versions: dict with "name" key
+                        name = getattr(model, 'model', None) or (model.get('name') if isinstance(model, dict) else None)
+                        if name and 'embed' not in name:
+                            models.append(name)
+
                     if models:
                         logger.info("Found %d models using client.list()", len(models))
                         return models
-                    
                 else:
-                    errors.append("Missing 'models' key in client response")
+                    errors.append("Missing 'models' key/attribute in client response")
             except Exception as client_error:
                 errors.append(f"Client list error: {str(client_error)}")
                 # Continue to next method
@@ -308,16 +371,25 @@ def get_available_models():
                 if hasattr(ollama, 'list'):
                     try:
                         models_response = ollama.list()
-                        if "models" in models_response:
-                            for model in models_response["models"]:
-                                if "name" in model and "embed" not in model["name"]:
-                                    models.append(model["name"])
-                            
+                        # v0.4.8+: ListResponse object with .models attribute
+                        # Older versions: dict with "models" key
+                        model_list = getattr(models_response, 'models', None)
+                        if model_list is None and isinstance(models_response, dict):
+                            model_list = models_response.get('models', [])
+
+                        if model_list:
+                            for model in model_list:
+                                # v0.4.8+: Model object with .model attribute (NO .name)
+                                # Older versions: dict with "name" key
+                                name = getattr(model, 'model', None) or (model.get('name') if isinstance(model, dict) else None)
+                                if name and 'embed' not in name:
+                                    models.append(name)
+
                             if models:
                                 logger.info("Found %d models using ollama.list()", len(models))
                                 return models
                         else:
-                            errors.append("Missing 'models' key in module response")
+                            errors.append("Missing 'models' key/attribute in module response")
                     except Exception as list_error:
                         errors.append(f"Module list error: {str(list_error)}")
                         # Continue to next method
@@ -797,24 +869,26 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
                         "temperature": temperature,
                         "num_predict": max_tokens
                     })
-                    
+                    # v0.4.8+: ChatResponse object — normalize for dict access
+                    response = _normalize_response(response)
+
                     # Calculate elapsed time
                     elapsed_time = time.time() - start_time
-                    
+
                     # Log model usage for analytics if the module is available
                     try:
                         from ollama_workbench.models.model_management import log_model_usage, log_model_performance
                         # Log usage statistics
                         eval_count = response.get('eval_count', 0)
                         eval_duration = response.get('eval_duration', 0)
-                        
+
                         log_model_usage(
                             model_name=model,
                             tokens_generated=eval_count,
                             response_time=elapsed_time,
                             operation_type="vision"
                         )
-                        
+
                         # Log performance metrics if we have the data
                         if eval_count and eval_duration:
                             tokens_per_second = eval_count / (eval_duration / (10**9))
@@ -828,8 +902,10 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
                             )
                     except (ImportError, Exception) as log_error:
                         logger.debug(f"Could not log model usage: {str(log_error)}")
-                    
-                    return response['message']['content'], response.get('context', None), response.get('eval_count', None), response.get('eval_duration', None)
+
+                    msg = response.get('message', {})
+                    content = msg.get('content', '') if isinstance(msg, dict) else getattr(msg, 'content', '')
+                    return content, response.get('context', None), response.get('eval_count', None), response.get('eval_duration', None)
                 else:
                     # If no prompt is provided, use default "Describe this image"
                     messages = [
@@ -843,17 +919,19 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
                         "temperature": temperature,
                         "num_predict": max_tokens
                     })
-                    
+                    # v0.4.8+: ChatResponse object — normalize for dict access
+                    response = _normalize_response(response)
+
                     # Calculate elapsed time
                     elapsed_time = time.time() - start_time
-                    
+
                     # Log model usage for analytics if the module is available
                     try:
                         from ollama_workbench.models.model_management import log_model_usage, log_model_performance
                         # Log usage statistics
                         eval_count = response.get('eval_count', 0)
                         eval_duration = response.get('eval_duration', 0)
-                        
+
                         log_model_usage(
                             model_name=model,
                             tokens_generated=eval_count,
@@ -875,7 +953,9 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
                     except (ImportError, Exception) as log_error:
                         logger.debug(f"Could not log model usage: {str(log_error)}")
                     
-                    return response['message']['content'], response.get('context', None), response.get('eval_count', None), response.get('eval_duration', None)
+                    msg = response.get('message', {})
+                    content = msg.get('content', '') if isinstance(msg, dict) else getattr(msg, 'content', '')
+                    return content, response.get('context', None), response.get('eval_count', None), response.get('eval_duration', None)
             else:
                 # Older version fallback - use direct API calls
                 st.warning("Using older Ollama package version. Images might not be supported correctly.")
@@ -953,15 +1033,16 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
             context_info = None
             
             for chunk in response:
-                response_parts.append(chunk.get("response", ""))
-                if chunk.get("done", False):
-                    eval_count = chunk.get("eval_count", None)
-                    eval_duration = chunk.get("eval_duration", None)
-                    context_info = chunk.get("context", None)
-            
+                # v0.4.8+: streaming chunks may be GenerateResponse objects
+                response_parts.append(_compat_get(chunk, "response", ""))
+                if _compat_get(chunk, "done", False):
+                    eval_count = _compat_get(chunk, "eval_count", None)
+                    eval_duration = _compat_get(chunk, "eval_duration", None)
+                    context_info = _compat_get(chunk, "context", None)
+
             # Calculate elapsed time
             elapsed_time = time.time() - start_time
-            
+
             # Log model usage for analytics if the module is available
             try:
                 from ollama_workbench.models.model_management import log_model_usage, log_model_performance
@@ -1016,15 +1097,16 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
                     context_info = None
                     
                     for chunk in response:
-                        response_parts.append(chunk.get("response", ""))
-                        if chunk.get("done", False):
-                            eval_count = chunk.get("eval_count", None)
-                            eval_duration = chunk.get("eval_duration", None)
-                            context_info = chunk.get("context", None)
-                    
+                        # v0.4.8+: streaming chunks may be GenerateResponse objects
+                        response_parts.append(_compat_get(chunk, "response", ""))
+                        if _compat_get(chunk, "done", False):
+                            eval_count = _compat_get(chunk, "eval_count", None)
+                            eval_duration = _compat_get(chunk, "eval_duration", None)
+                            context_info = _compat_get(chunk, "context", None)
+
                     # Calculate elapsed time
                     elapsed_time = time.time() - start_time
-                    
+
                     # Log model usage for analytics if the module is available
                     try:
                         from ollama_workbench.models.model_management import log_model_usage, log_model_performance
@@ -1035,7 +1117,7 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
                             response_time=elapsed_time,
                             operation_type="generate"
                         )
-                        
+
                         # Log performance metrics if we have the data
                         if eval_count and eval_duration:
                             tokens_per_second = eval_count / (eval_duration / (10**9))
@@ -1168,13 +1250,16 @@ def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
             if client:
                 # Newer version with Client class
                 response = client.embeddings(model=model, prompt=text)
-                embeddings = np.array(response['embedding'])
+                # v0.4.8+: EmbedResponse object — use _compat_get
+                embedding_data = _compat_get(response, 'embedding')
+                embeddings = np.array(embedding_data)
             else:
                 # Older version fallback - use module level functions
                 try:
                     if hasattr(ollama, 'embeddings'):
                         response = ollama.embeddings(model=model, prompt=text)
-                        embeddings = np.array(response['embedding'])
+                        embedding_data = _compat_get(response, 'embedding')
+                        embeddings = np.array(embedding_data)
                     else:
                         # Last resort: fall back to direct API call
                         url = f"{get_ollama_url()}/embeddings"
@@ -1231,11 +1316,14 @@ def pull_model(model_name):
                     stream_response = client.pull(model=model_name, stream=True)
                     # Process the stream responses
                     for response in stream_response:
+                        # v0.4.8+: ProgressResponse objects, not dicts — normalize
+                        if not isinstance(response, dict):
+                            response = _normalize_response(response)
                         if isinstance(response, dict):
                             if "status" in response:
                                 status_text.text(response["status"])
                                 results.append(response)
-                            
+
                             # Handle progress updates
                             if "completed" in response and "total" in response and response["total"] > 0:
                                 total = response["total"]
@@ -1361,19 +1449,23 @@ def pull_model(model_name):
         return []
 
 def show_model_info(model_name):
+    """Get model info. Always returns a dict for backwards compatibility,
+    converting v0.4.8+ ShowResponse objects as needed."""
     try:
         client = get_ollama_client()
-        
+
         if client:
             # Newer version with Client class
             response = client.show(model=model_name)
-            return response
+            # v0.4.8+: ShowResponse object, not a dict — normalize it
+            return _normalize_response(response)
         else:
             # Older version fallback - use module level functions
             try:
                 if hasattr(ollama, 'show'):
                     response = ollama.show(model=model_name)
-                    return response
+                    # v0.4.8+: ShowResponse object — normalize it
+                    return _normalize_response(response)
                 else:
                     # Last resort: fall back to direct API call
                     url = f"{get_ollama_url()}/show"
@@ -1664,10 +1756,12 @@ def generate_embeddings(model, text):
             if client:
                 # Newer version with Client class
                 response = client.embeddings(model=model, prompt=text)
-                
+                # v0.4.8+: EmbedResponse object — normalize for dict access
+                response = _normalize_response(response)
+
                 # Calculate elapsed time
                 elapsed_time = time.time() - start_time
-                
+
                 # Log usage for embeddings
                 try:
                     from ollama_workbench.models.model_management import log_model_usage, log_model_performance
@@ -1678,7 +1772,7 @@ def generate_embeddings(model, text):
                         response_time=elapsed_time,
                         operation_type="embedding"
                     )
-                    
+
                     # Log performance if duration is available
                     if response.get("total_duration"):
                         total_duration = response.get("total_duration")
@@ -1693,17 +1787,19 @@ def generate_embeddings(model, text):
                         )
                 except (ImportError, Exception) as log_error:
                     logger.debug(f"Could not log embedding usage: {str(log_error)}")
-                
-                return response["embedding"], response.get("total_duration"), response.get("load_duration"), response.get("prompt_eval_count", 0)
+
+                return response.get("embedding", []), response.get("total_duration"), response.get("load_duration"), response.get("prompt_eval_count", 0)
             else:
                 # Older version fallback - use module level functions
                 try:
                     if hasattr(ollama, 'embeddings'):
                         response = ollama.embeddings(model=model, prompt=text)
-                        
+                        # v0.4.8+: EmbedResponse object — normalize for dict access
+                        response = _normalize_response(response)
+
                         # Calculate elapsed time
                         elapsed_time = time.time() - start_time
-                        
+
                         # Log usage for embeddings
                         try:
                             from ollama_workbench.models.model_management import log_model_usage, log_model_performance
@@ -1714,7 +1810,7 @@ def generate_embeddings(model, text):
                                 response_time=elapsed_time,
                                 operation_type="embedding"
                             )
-                            
+
                             # Log performance if duration is available
                             if response.get("total_duration"):
                                 total_duration = response.get("total_duration")
@@ -1729,8 +1825,8 @@ def generate_embeddings(model, text):
                                 )
                         except (ImportError, Exception) as log_error:
                             logger.debug(f"Could not log embedding usage: {str(log_error)}")
-                        
-                        return response["embedding"], response.get("total_duration"), response.get("load_duration"), response.get("prompt_eval_count", 0)
+
+                        return response.get("embedding", []), response.get("total_duration"), response.get("load_duration"), response.get("prompt_eval_count", 0)
                     else:
                         # Last resort: fall back to direct API call
                         api_url = f"{get_ollama_url()}/embeddings"
