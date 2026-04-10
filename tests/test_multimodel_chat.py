@@ -263,7 +263,7 @@ class TestResponseGeneration:
         "shared_context": True,
         "selected_corpus": "None"
     }))
-    @patch('ollama_workbench.chat.multimodel_chat.call_openai_api')
+    @patch('ollama_workbench.providers.openai_utils.call_openai_api')
     def test_generate_response_openai(self, mock_openai):
         """Test response generation from OpenAI model"""
         mock_openai.return_value = "OpenAI response"
@@ -279,7 +279,7 @@ class TestResponseGeneration:
         "api_keys": {"groq_api_key": "test-key"},
         "model_settings": {"llama3-70b": {"temperature": 0.8, "max_tokens": 2000}}
     }))
-    @patch('ollama_workbench.chat.multimodel_chat.call_groq_api')
+    @patch('ollama_workbench.providers.groq_utils.call_groq_api')
     def test_generate_response_groq(self, mock_groq):
         """Test response generation from Groq model"""
         mock_groq.return_value = "Groq response"
@@ -295,7 +295,7 @@ class TestResponseGeneration:
         "api_keys": {"mistral_api_key": "test-key"},
         "model_settings": {"mistral-large": {"temperature": 0.9, "max_tokens": 3000}}
     }))
-    @patch('ollama_workbench.chat.multimodel_chat.call_mistral_api')
+    @patch('ollama_workbench.providers.mistral_utils.call_mistral_api')
     def test_generate_response_mistral(self, mock_mistral):
         """Test response generation from Mistral model"""
         mock_mistral.return_value = "Mistral response"
@@ -311,7 +311,7 @@ class TestResponseGeneration:
         "api_keys": {},
         "model_settings": {"llama2": {"temperature": 0.5, "max_tokens": 4000}}
     }))
-    @patch('ollama_workbench.chat.multimodel_chat.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_generate_response_ollama_with_client(self, mock_get_client):
         """Test response generation from Ollama model with client"""
         mock_client = Mock()
@@ -331,8 +331,8 @@ class TestResponseGeneration:
         "api_keys": {},
         "model_settings": {"llama2": {"temperature": 0.5, "max_tokens": 4000}}
     }))
-    @patch('ollama_workbench.chat.multimodel_chat.get_ollama_client', return_value=None)
-    @patch('ollama_workbench.chat.multimodel_chat.call_ollama_endpoint')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client', return_value=None)
+    @patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
     def test_generate_response_ollama_fallback(self, mock_endpoint, mock_get_client):
         """Test response generation from Ollama model with fallback"""
         mock_endpoint.return_value = ("Ollama fallback response", None, None, None)
@@ -347,7 +347,7 @@ class TestResponseGeneration:
         mock_endpoint.assert_called_once()
     
     @patch('ollama_workbench.chat.multimodel_chat.st.session_state', SessionStateMock({"api_keys": {}, "model_settings": {}}))
-    @patch('ollama_workbench.chat.multimodel_chat.call_openai_api', side_effect=Exception("API Error"))
+    @patch('ollama_workbench.providers.openai_utils.call_openai_api', side_effect=Exception("API Error"))
     def test_generate_response_error(self, mock_openai):
         """Test error handling in response generation"""
         chat = MultiModelChat()

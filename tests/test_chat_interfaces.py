@@ -167,19 +167,19 @@ class TestChatInterfaces(unittest.TestCase):
         """Test saving settings to file"""
         logger.info("Testing save settings")
         
-        # Set session state variables
+        # Set session state variables (use the actual key names from save_settings)
         self.mock_session_state["selected_model"] = "mistral"
-        self.mock_session_state["temperature"] = 0.8
-        
+        self.mock_session_state["temperature_slider_chat"] = 0.8
+
         # Call save_settings
         save_settings()
-        
+
         # Load settings from file and check they were saved
         with open("test-chat-settings.json", "r") as f:
             settings = json.load(f)
-        
+
         self.assertEqual(settings["selected_model"], "mistral")
-        self.assertEqual(settings["temperature"], 0.8)
+        self.assertEqual(settings["temperature_slider_chat"], 0.8)
         
         logger.info("Save settings test passed")
         logger.info("CHECKPOINT: Save settings test completed successfully")

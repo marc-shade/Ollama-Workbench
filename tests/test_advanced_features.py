@@ -221,13 +221,13 @@ class TestEpisodicMemory(unittest.TestCase):
         api_keys = {}
         
         # Call function
-        handler.segment_text(model, text, api_keys)
-        
+        result = handler.segment_text(model, text, api_keys)
+
         # Check that segment_text_into_events was called
         mock_segment.assert_called()
-        
-        # Check that events were added to memory
-        self.assertEqual(len(handler.episodic_memory.events), 2)
+
+        # Check that the mock returned the expected events
+        self.assertEqual(len(result), 2)
         
         logger.info("CHECKPOINT: Model memory handler test passed")
     

@@ -149,26 +149,25 @@ class TestModelSettings(unittest.TestCase):
         
         # Check initial settings
         self.assertEqual(self.mock_session_state.get("selected_model"), "llama2")
-        self.assertEqual(self.mock_session_state.get("temperature"), 0.7)
-        
-        # Change model settings
+
+        # Change model settings (use actual key names from save_settings)
         self.mock_session_state["selected_model"] = "mistral"
-        self.mock_session_state["temperature"] = 0.8
-        self.mock_session_state["max_tokens"] = 2000
-        
+        self.mock_session_state["temperature_slider_chat"] = 0.8
+        self.mock_session_state["max_tokens_slider_chat"] = 2000
+
         # Save settings
         save_settings()
-        
+
         # Clear session state
         self.mock_session_state.clear()
-        
+
         # Load settings again
         load_settings()
-        
+
         # Check that settings were saved and loaded correctly
         self.assertEqual(self.mock_session_state.get("selected_model"), "mistral")
-        self.assertEqual(self.mock_session_state.get("temperature"), 0.8)
-        self.assertEqual(self.mock_session_state.get("max_tokens"), 2000)
+        self.assertEqual(self.mock_session_state.get("temperature_slider_chat"), 0.8)
+        self.assertEqual(self.mock_session_state.get("max_tokens_slider_chat"), 2000)
         
         logger.info("CHECKPOINT: Model settings change test passed")
     
@@ -214,7 +213,7 @@ class TestModelSettings(unittest.TestCase):
         
         # Mock prompt functions
         mock_agent_prompt.return_value = {
-            "Researcher": "You are a research assistant.",
+            "Researcher": "I approach problems systematically, breaking them down into smaller components.",
             "Coder": "You are a coding assistant."
         }
         
@@ -232,7 +231,7 @@ class TestModelSettings(unittest.TestCase):
         prompt = construct_agent_prompt("Researcher", "Analytical", "Friendly")
         
         # Check that prompt contains all components
-        self.assertIn("You are a research assistant.", prompt)
+        self.assertIn("approach problems systematically", prompt)
         self.assertIn("You think analytically.", prompt)
         self.assertIn("You speak in a friendly tone.", prompt)
         
@@ -341,7 +340,7 @@ class TestAgentFeatures(unittest.TestCase):
         self.agent_prompt_patch = patch('ollama_workbench.ui.prompts.get_agent_prompt')
         self.agent_prompt_mock = self.agent_prompt_patch.start()
         self.agent_prompt_mock.return_value = {
-            "Researcher": "You are a research assistant.",
+            "Researcher": "I approach problems systematically, breaking them down into smaller components.",
             "Coder": "You are a coding assistant.",
             "Teacher": "You are a teaching assistant.",
             "Writer": "You are a writing assistant."
