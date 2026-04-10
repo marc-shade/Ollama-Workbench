@@ -177,7 +177,7 @@ class TestDataPersistence:
         
         test_projects = ["Project A", "Project B"]
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_projects(test_projects)
@@ -234,7 +234,7 @@ class TestDataPersistence:
             Task("Task 2", "Description 2", deadline=pd.Timestamp("2024-01-01"))
         ]
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_tasks("test_project", tasks)
@@ -256,7 +256,7 @@ class TestDataPersistence:
             Task("Invalid Task", "Description", deadline=pd.NaT)  # Invalid deadline
         ]
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_tasks("test_project", tasks)
@@ -305,7 +305,7 @@ class TestDataPersistence:
             "Agent 2": {"model": "gpt-4", "temperature": 0.8}
         }
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.projects.json.dump') as mock_dump:
                 save_agents("test_project", agents)

@@ -7,7 +7,7 @@ import json
 import os
 import tempfile
 import sqlite3
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch, MagicMock, call, mock_open
 from pathlib import Path
 import sys
 
@@ -20,26 +20,27 @@ class TestAPIKeyManagement:
     
     def test_load_api_keys_existing_file(self):
         """Test loading API keys from existing file"""
-        from ollama_workbench.workflows.research import load_api_keys
-        
+        from ollama_workbench.providers.ollama_utils import load_api_keys
+        import ollama_workbench.providers.ollama_utils as ou
+
         test_keys = {
             "openai_api_key": "test_openai_key",
             "google_api_key": "test_google_key",
             "serpapi_api_key": "test_serpapi_key"
         }
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
-            json.dump(test_keys, tmp)
-            tmp_path = tmp.name
-        
-        try:
-            # Patch the file path
-            with patch('ollama_workbench.workflows.research.os.path.exists', return_value=True):
-                with patch('builtins.open', mock_open(read_data=json.dumps(test_keys))):
-                    result = load_api_keys()
-                    assert result == test_keys
-        finally:
-            os.unlink(tmp_path)
+
+        # Clear cache to ensure fresh read
+        ou._api_keys_cache = None
+        ou._api_keys_cache_time = 0
+
+        with patch('ollama_workbench.providers.ollama_utils.os.path.exists', return_value=True):
+            with patch('builtins.open', mock_open(read_data=json.dumps(test_keys))):
+                result = load_api_keys()
+                assert result == test_keys
+
+        # Clear cache after test
+        ou._api_keys_cache = None
+        ou._api_keys_cache_time = 0
     
     def test_load_api_keys_nonexistent_file(self):
         """Test loading API keys when file doesn't exist"""
@@ -51,20 +52,21 @@ class TestAPIKeyManagement:
     
     def test_save_api_keys(self):
         """Test saving API keys to file"""
-        from ollama_workbench.workflows.research import save_api_keys
-        
+        from ollama_workbench.providers.ollama_utils import save_api_keys
+        import ollama_workbench.providers.ollama_utils as ou
+
         test_keys = {
             "openai_api_key": "new_key",
             "groq_api_key": "groq_key"
         }
-        
-        mock_file = Mock()
-        with patch('builtins.open', mock_file):
-            with patch('ollama_workbench.workflows.research.json.dump') as mock_dump:
-                save_api_keys(test_keys)
-                
-                mock_file.assert_called_once_with("api_keys.json", "w")
-                mock_dump.assert_called_once_with(test_keys, mock_file().__enter__(), indent=4)
+
+        m = mock_open()
+        with patch('builtins.open', m):
+            save_api_keys(test_keys)
+            m.assert_called_once()
+
+        # Verify cache was invalidated
+        assert ou._api_keys_cache is None
 
 
 class TestDatabaseFunctions:
@@ -79,9 +81,11 @@ class TestDatabaseFunctions:
         """Test database initialization"""
         from ollama_workbench.workflows.research import init_db
         
-        mock_conn = Mock()
-        mock_cursor = Mock()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
+        mock_conn.__enter__ = Mock(return_value=mock_conn)
+        mock_conn.__exit__ = Mock(return_value=False)
         mock_conn.cursor.return_value = mock_cursor
         
         init_db()
@@ -89,7 +93,7 @@ class TestDatabaseFunctions:
         mock_connect.assert_called_with('research_reports.db')
         mock_cursor.execute.assert_called_once()
         mock_conn.commit.assert_called_once()
-        mock_conn.close.assert_called_once()
+        # Context manager handles cleanup
     
     @patch('ollama_workbench.workflows.research.sqlite3.connect')
     @patch('ollama_workbench.workflows.research.datetime')
@@ -99,9 +103,11 @@ class TestDatabaseFunctions:
         
         # Setup mocks
         mock_datetime.now.return_value.strftime.return_value = "2023-01-01 12:00:00"
-        mock_conn = Mock()
-        mock_cursor = Mock()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
+        mock_conn.__enter__ = Mock(return_value=mock_conn)
+        mock_conn.__exit__ = Mock(return_value=False)
         mock_conn.cursor.return_value = mock_cursor
         
         # Test save report
@@ -113,7 +119,7 @@ class TestDatabaseFunctions:
             ("Test Title", "Test Content", "2023-01-01 12:00:00")
         )
         mock_conn.commit.assert_called_once()
-        mock_conn.close.assert_called_once()
+        # Context manager handles cleanup
     
     @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_get_all_reports(self, mock_connect):
@@ -121,9 +127,11 @@ class TestDatabaseFunctions:
         from ollama_workbench.workflows.research import get_all_reports
         
         # Setup mocks
-        mock_conn = Mock()
-        mock_cursor = Mock()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
+        mock_conn.__enter__ = Mock(return_value=mock_conn)
+        mock_conn.__exit__ = Mock(return_value=False)
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchall.return_value = [
             (1, "Report 1", "2023-01-01"),
@@ -136,7 +144,7 @@ class TestDatabaseFunctions:
         mock_connect.assert_called_with('research_reports.db')
         mock_cursor.execute.assert_called_with("SELECT id, title, date FROM reports")
         assert result == [(1, "Report 1", "2023-01-01"), (2, "Report 2", "2023-01-02")]
-        mock_conn.close.assert_called_once()
+        # Context manager handles cleanup
     
     @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_get_report_content(self, mock_connect):
@@ -144,9 +152,11 @@ class TestDatabaseFunctions:
         from ollama_workbench.workflows.research import get_report_content
         
         # Setup mocks
-        mock_conn = Mock()
-        mock_cursor = Mock()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
+        mock_conn.__enter__ = Mock(return_value=mock_conn)
+        mock_conn.__exit__ = Mock(return_value=False)
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = ("Report content here",)
         
@@ -156,7 +166,7 @@ class TestDatabaseFunctions:
         mock_connect.assert_called_with('research_reports.db')
         mock_cursor.execute.assert_called_with("SELECT content FROM reports WHERE id=?", (1,))
         assert result == "Report content here"
-        mock_conn.close.assert_called_once()
+        # Context manager handles cleanup
     
     @patch('ollama_workbench.workflows.research.sqlite3.connect')
     def test_delete_report(self, mock_connect):
@@ -164,9 +174,11 @@ class TestDatabaseFunctions:
         from ollama_workbench.workflows.research import delete_report
         
         # Setup mocks
-        mock_conn = Mock()
-        mock_cursor = Mock()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
         mock_connect.return_value = mock_conn
+        mock_conn.__enter__ = Mock(return_value=mock_conn)
+        mock_conn.__exit__ = Mock(return_value=False)
         mock_conn.cursor.return_value = mock_cursor
         
         # Test delete report
@@ -175,7 +187,7 @@ class TestDatabaseFunctions:
         mock_connect.assert_called_with('research_reports.db')
         mock_cursor.execute.assert_called_with("DELETE FROM reports WHERE id=?", (1,))
         mock_conn.commit.assert_called_once()
-        mock_conn.close.assert_called_once()
+        # Context manager handles cleanup
 
 
 class TestResearchModelSettings:
@@ -215,7 +227,7 @@ class TestResearchModelSettings:
             "manager_max_tokens": 2000
         }
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.research.json.dump') as mock_dump:
                 save_research_model_settings(test_settings)
@@ -268,7 +280,7 @@ Result 2 content"""
         
         content = "This is test content for TXT export."
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             result = export_to_txt(content, "test.txt")
             

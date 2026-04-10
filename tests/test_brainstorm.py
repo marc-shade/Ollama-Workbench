@@ -294,7 +294,7 @@ class TestSettingsManagement:
             ]
         }
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.brainstorm.json.dump') as mock_dump:
                 save_agent_settings(test_settings)
@@ -352,7 +352,7 @@ class TestWorkflowManagement:
         
         agent_sequence = ["Agent 1", "Agent 2", "Agent 3"]
         
-        mock_file = Mock()
+        mock_file = mock_open()
         with patch('builtins.open', mock_file):
             with patch('ollama_workbench.workflows.brainstorm.json.dump') as mock_dump:
                 save_workflow("test_workflow", agent_sequence)
