@@ -17,6 +17,9 @@ def get_prompts_file_path(prompt_type):
 _prompts_cache = {}  # key: prompt_type, value: (timestamp, data)
 _PROMPTS_CACHE_TTL = 10  # seconds
 
+def clear_prompts_cache():
+    _prompts_cache.clear()
+
 def load_prompts(prompt_type):
     import time as _time
     now = _time.monotonic()
