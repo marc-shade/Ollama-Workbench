@@ -52,7 +52,20 @@ class TestChatIntegration(unittest.TestCase):
         logger.info("CHECKPOINT: Beginning test setup")
         
         # Mock streamlit session state
-        self.mock_session_state = {}
+        class AttrDict(dict):
+            def __getattr__(self, key):
+                try:
+                    return self[key]
+                except KeyError:
+                    raise AttributeError(key)
+            def __setattr__(self, key, value):
+                self[key] = value
+            def __delattr__(self, key):
+                try:
+                    del self[key]
+                except KeyError:
+                    raise AttributeError(key)
+        self.mock_session_state = AttrDict()
         
         # Create patch for st.session_state
         self.session_state_patch = patch('streamlit.session_state', self.mock_session_state)
@@ -254,7 +267,7 @@ class TestChatIntegration(unittest.TestCase):
         
         logger.info("CHECKPOINT: chat_interface with model settings test passed")
     
-    @patch('ollama_workbench.chat.enhanced_chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_enhanced_chat_interface_with_agent_features(self):
         """Test enhanced_chat_interface with agent features"""
         logger.info("Testing enhanced_chat_interface with agent features")
@@ -311,7 +324,7 @@ class TestChatIntegration(unittest.TestCase):
         
         logger.info("CHECKPOINT: enhanced_chat_interface with agent features test passed")
     
-    @patch('modern_chat_interface.SETTINGS_FILE', "test-chat-settings.json")
+    @patch('ollama_workbench.chat.chat_interface.SETTINGS_FILE', "test-chat-settings.json")
     def test_modern_chat_interface_with_thinking_types(self):
         """Test modern_chat_interface with thinking types"""
         logger.info("Testing modern_chat_interface with thinking types")
