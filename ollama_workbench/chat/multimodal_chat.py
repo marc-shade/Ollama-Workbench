@@ -168,9 +168,9 @@ def multimodal_chat_interface():
                         logging.error(f"Error in direct CLI: {cli_ex}")
                         available_models = []
                 
+                model_options = []
                 if not available_models:
                     st.warning("No Ollama models found. Please pull some models first.")
-                    model_options = []
                 else:
                     # Filter models using our capability registry
                     vision_models = filter_models_by_capability(available_models, "vision")
