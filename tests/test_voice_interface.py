@@ -36,7 +36,7 @@ class TestVoiceInterface:
         }
         
         # Mock streamlit components
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = 'default'
         mock_st.text_input.return_value = 'en'
         mock_st.slider.return_value = 1.0
@@ -196,7 +196,7 @@ class TestVoiceInterface:
     
     @patch('ollama_workbench.chat.voice_interface.voice_utils')
     @patch('ollama_workbench.chat.voice_interface.st')
-    @patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint')
+    @patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
     def test_voice_chat_interface_basic_structure(self, mock_ollama, mock_st, mock_voice_utils):
         """Test basic structure of voice chat interface"""
         # Mock session state
@@ -205,7 +205,7 @@ class TestVoiceInterface:
         
         # Mock streamlit components
         mock_st.chat_input.return_value = None
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
@@ -215,7 +215,7 @@ class TestVoiceInterface:
         mock_voice_utils.get_available_voices.return_value = ['default']
         
         # Mock get_all_models
-        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3', 'mixtral']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -229,7 +229,7 @@ class TestVoiceInterface:
     
     @patch('ollama_workbench.chat.voice_interface.voice_utils')
     @patch('ollama_workbench.chat.voice_interface.st')
-    @patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint')
+    @patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
     def test_voice_chat_interface_message_handling(self, mock_ollama, mock_st, mock_voice_utils):
         """Test message handling in voice chat interface"""
         # Setup chat history
@@ -246,7 +246,7 @@ class TestVoiceInterface:
         mock_st.chat_message.return_value.__enter__ = Mock()
         mock_st.chat_message.return_value.__exit__ = Mock()
         mock_st.button.return_value = False
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
@@ -260,7 +260,7 @@ class TestVoiceInterface:
         mock_ollama.return_value = ("Generated response", None, None, None)
         
         # Mock get_all_models
-        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3', 'mixtral']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -275,7 +275,7 @@ class TestVoiceInterface:
     
     @patch('ollama_workbench.chat.voice_interface.voice_utils')
     @patch('ollama_workbench.chat.voice_interface.st')
-    @patch('ollama_workbench.chat.voice_interface.call_groq_api')
+    @patch('ollama_workbench.providers.groq_utils.call_groq_api')
     def test_voice_chat_interface_groq_provider(self, mock_groq, mock_st, mock_voice_utils):
         """Test voice chat with Groq provider"""
         # Mock session state with Groq model
@@ -289,7 +289,7 @@ class TestVoiceInterface:
         
         # Mock streamlit components
         mock_st.chat_input.return_value = "Test message"
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "🚀 Groq Models mixtral-8x7b"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
@@ -307,7 +307,7 @@ class TestVoiceInterface:
         }
         
         # Mock get_all_models
-        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['🚀 Groq Models mixtral-8x7b']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -323,7 +323,7 @@ class TestVoiceInterface:
     
     @patch('ollama_workbench.chat.voice_interface.voice_utils')
     @patch('ollama_workbench.chat.voice_interface.st')
-    @patch('ollama_workbench.chat.voice_interface.call_openai_api')
+    @patch('ollama_workbench.providers.openai_utils.call_openai_api')
     def test_voice_chat_interface_openai_provider(self, mock_openai, mock_st, mock_voice_utils):
         """Test voice chat with OpenAI provider"""
         # Mock session state with OpenAI model
@@ -337,7 +337,7 @@ class TestVoiceInterface:
         
         # Mock streamlit components  
         mock_st.chat_input.return_value = "Test OpenAI message"
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "🤖 OpenAI Models gpt-4"
         mock_st.slider.return_value = 0.5
         mock_st.expander.return_value.__enter__ = Mock()
@@ -355,7 +355,7 @@ class TestVoiceInterface:
         }
         
         # Mock get_all_models
-        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['🤖 OpenAI Models gpt-4']
             
             import ollama_workbench.chat.voice_interface as voice_interface
@@ -382,7 +382,7 @@ class TestVoiceInterface:
         
         # Mock streamlit components
         mock_st.chat_input.return_value = "Test error message"
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
@@ -397,11 +397,11 @@ class TestVoiceInterface:
         mock_voice_utils.play_speech.return_value = None
         
         # Mock get_all_models
-        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3']
             
             # Mock ollama call to raise exception
-            with patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint') as mock_ollama:
+            with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_ollama:
                 mock_ollama.side_effect = Exception("Test error")
                 
                 import ollama_workbench.chat.voice_interface as voice_interface
@@ -421,7 +421,7 @@ class TestVoiceInterface:
         """Test main function structure when run as script"""
         # Mock streamlit components
         mock_st.set_page_config.return_value = None
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         
         # Mock the main functions to avoid running full UI
         with patch('ollama_workbench.chat.voice_interface.voice_chat_interface') as mock_chat:
@@ -456,7 +456,7 @@ class TestVoiceInterface:
         
         # Mock streamlit components
         mock_st.chat_input.return_value = "Can you explain machine learning?"
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
@@ -471,11 +471,11 @@ class TestVoiceInterface:
         mock_voice_utils.play_speech.return_value = None
         
         # Mock get_all_models
-        with patch('ollama_workbench.chat.voice_interface.get_all_models') as mock_get_models:
+        with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3']
             
             # Mock ollama call
-            with patch('ollama_workbench.chat.voice_interface.call_ollama_endpoint') as mock_ollama:
+            with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_ollama:
                 mock_ollama.return_value = ("Machine learning is...", None, None, None)
                 
                 import ollama_workbench.chat.voice_interface as voice_interface

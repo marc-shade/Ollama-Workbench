@@ -744,7 +744,7 @@ class TestMainInterface:
         mock_docker_running.return_value = True
         mock_st.title = Mock()
         mock_st.checkbox.return_value = True
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.warning = Mock()
         mock_st.info = Mock()
         mock_st.stop = Mock()
@@ -772,7 +772,7 @@ class TestMainInterface:
         mock_docker_running.return_value = False
         mock_st.title = Mock()
         mock_st.checkbox.return_value = False
-        mock_st.tabs.return_value = [Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         
         brainstorm_interface()
         
