@@ -1,7 +1,12 @@
 # nodes.py
 
+import ast
 import json
 import logging
+import operator
+import os
+import re
+import time
 import streamlit as st
 import requests
 import io
@@ -17,6 +22,74 @@ from ollama_workbench.providers.groq_utils import GROQ_MODELS, call_groq_api, ge
 from ollama_workbench.ui.prompts import get_agent_prompt, get_metacognitive_prompt, get_voice_prompt, get_identity_prompt
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_eval_condition(condition_str, input_data):
+    """Safely evaluate a simple condition like '{input} > 5' or '{input} == "hello"'.
+
+    Supports basic comparison operators only: ==, !=, >=, <=, >, <.
+    No arbitrary code execution.
+    """
+    condition_str = condition_str.replace('{input}', repr(input_data))
+    ops = {
+        '==': operator.eq, '!=': operator.ne,
+        '>=': operator.ge, '<=': operator.le,
+        '>': operator.gt, '<': operator.lt,
+    }
+    for op_str, op_func in sorted(ops.items(), key=lambda x: -len(x[0])):
+        if op_str in condition_str:
+            left, right = condition_str.split(op_str, 1)
+            try:
+                left_val = ast.literal_eval(left.strip())
+                right_val = ast.literal_eval(right.strip())
+                return op_func(left_val, right_val)
+            except (ValueError, SyntaxError):
+                return False
+    # No comparison operator found; try literal eval for truthy check
+    try:
+        return bool(ast.literal_eval(condition_str.strip()))
+    except (ValueError, SyntaxError):
+        return False
+
+
+def _safe_eval_math(expr_str):
+    """Safely evaluate a math expression containing only numeric literals and +, -, *, /.
+
+    Parses the expression into an AST and evaluates it recursively.
+    No eval(), no function calls, no attribute access, no name lookups.
+    """
+    expr_str = expr_str.strip()
+    if not expr_str:
+        raise ValueError("Empty expression")
+    tree = ast.parse(expr_str, mode='eval')
+
+    _OPS = {
+        ast.Add: operator.add, ast.Sub: operator.sub,
+        ast.Mult: operator.mul, ast.Div: operator.truediv,
+    }
+
+    def _eval_node(node):
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        if isinstance(node, ast.Constant):
+            if not isinstance(node.value, (int, float)):
+                raise ValueError(f"Only numeric values allowed, got {type(node.value).__name__}")
+            return node.value
+        if isinstance(node, ast.BinOp):
+            op_func = _OPS.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+            return op_func(_eval_node(node.left), _eval_node(node.right))
+        if isinstance(node, ast.UnaryOp):
+            if isinstance(node.op, ast.USub):
+                return -_eval_node(node.operand)
+            if isinstance(node.op, ast.UAdd):
+                return +_eval_node(node.operand)
+            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+        raise ValueError(f"Unsupported expression element: {type(node).__name__}")
+
+    return _eval_node(tree)
+
 
 # Define available node types
 AVAILABLE_NODE_TYPES = {
@@ -610,10 +683,17 @@ def handle_data_retrieval_node(node: Node, incoming_edges: List[Edge], process_n
         # Read from a file
         file_path = node.data.get('file_path', '')
         if not file_path:
-            return "Error: No file path specified"
-        
+            return "No file path specified"
+        # Restrict file access to the application directory
+        app_dir = os.path.realpath(os.getcwd())
+        real_path = os.path.realpath(file_path)
+        if not real_path.startswith(app_dir):
+            return f"Access denied: file path must be within the application directory ({app_dir})"
+        if not os.path.isfile(real_path):
+            return f"File not found: {file_path}"
+
         try:
-            with open(file_path, 'r') as f:
+            with open(real_path, 'r') as f:
                 content = f.read()
             return content
         except Exception as e:
@@ -651,12 +731,10 @@ def handle_control_node(node: Node, incoming_edges: List[Edge], process_node) ->
         true_branch = node.data.get('true_branch', '')
         false_branch = node.data.get('false_branch', '')
         
-        # Evaluate the condition based on input
+        # Evaluate the condition based on input using safe comparison
         try:
-            # This is a simplified evaluation; in a real implementation,
-            # you'd want to implement a safer condition evaluation
-            condition_result = eval(condition.replace('{input}', repr(input_data)))
-            
+            condition_result = _safe_eval_condition(condition, input_data)
+
             if condition_result:
                 return f"TRUE: {true_branch}"
             else:
@@ -803,9 +881,7 @@ def handle_utility_node(node: Node, incoming_edges: List[Edge], process_node) ->
         
         if calculation_type == 'Basic Math':
             try:
-                # This is a simplified and potentially unsafe evaluation
-                # In a real application, you'd want to implement a safer math evaluation
-                result = eval(formula.replace('{input}', input_data))
+                result = _safe_eval_math(formula.replace('{input}', input_data))
                 return f"Calculation result: {result}"
             except Exception as e:
                 return f"Calculation error: {str(e)}"

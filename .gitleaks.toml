@@ -1,0 +1,30 @@
+title = "Ollama Workbench gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "json-secrets-file"
+description = "JSON file containing secrets, keys, or tokens"
+path = '''(?i)(secrets?|credentials?|tokens?)\.json$'''
+
+[[rules]]
+id = "api-keys-json"
+description = "API keys configuration file"
+path = '''api_keys\.json$'''
+
+[[rules]]
+id = "sqlite-database"
+description = "SQLite database file (may contain sensitive data)"
+path = '''\.db$'''
+[rules.allowlist]
+paths = ['''tests/''', '''\.gitignore''']
+
+[allowlist]
+paths = [
+    '''venv/''',
+    '''.venv/''',
+    '''\.pre-commit-config\.yaml''',
+    '''\.gitleaks\.toml''',
+    '''docs/API_DOCUMENTATION\.md''',
+]

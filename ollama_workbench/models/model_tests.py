@@ -5,11 +5,12 @@ import time
 import json
 import matplotlib.pyplot as plt
 from ollama_workbench.providers.ollama_utils import call_ollama_endpoint
+from ollama_workbench.providers.openai_utils import call_openai_api
+from ollama_workbench.providers.groq_utils import call_groq_api, load_api_keys, GROQ_MODELS, get_groq_models
 import io # Added import
 import asyncio
 from ollama import AsyncClient
 from typing import Callable
-from ollama_workbench.providers.groq_utils import load_api_keys, GROQ_MODELS, get_groq_models
 
 # Set plot style based on Streamlit theme
 if st.get_option("theme.base") == "light":
@@ -32,7 +33,7 @@ def performance_test(models, prompt, temperature=0.7, max_tokens=1000, presence_
                 response_text = result.get('choices')[0].get('text') if result.get('choices') else None
                 results[model] = (response_text, None, None, None)  # Adjust as necessary
             else:
-                result, _, eval_count, eval_duration = call_ollama_endpoint(
+                result, _, eval_count, eval_duration, _ = call_ollama_endpoint(
                     model,
                     prompt,
                     temperature=temperature,
@@ -68,7 +69,7 @@ def vision_test(models, image_file, temperature=0.7, max_tokens=1000, presence_p
         try:
             # Read image data into BytesIO
             image_bytesio = io.BytesIO(image_file.read())
-            result, _, eval_count, eval_duration = call_ollama_endpoint(
+            result, _, eval_count, eval_duration, _ = call_ollama_endpoint(
                 model,
                 image=image_bytesio,
                 temperature=temperature,

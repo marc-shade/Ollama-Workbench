@@ -671,11 +671,9 @@ Respond with ONLY the JSON object, no other text. The JSON should be valid and f
             # Final fallback - try CLI again with simpler approach
             try:
                 import subprocess
-                # Escape quotes in the prompt to avoid shell interpretation issues
-                safe_prompt = prompt.replace('"', '\\"').replace("'", "\\'") 
-                cmd = f"ollama run {model} '{safe_prompt}'"
+                cmd = ['ollama', 'run', model, prompt]
                 logger.info(f"Running final CLI fallback command: {cmd}")
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
                 
                 if result.returncode == 0:
                     response_text = result.stdout.strip()

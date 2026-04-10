@@ -206,10 +206,15 @@ def files_tab():
 
     uploaded_file = st.file_uploader("Upload a file", type=['txt', 'pdf', 'json', 'gif', 'jpg', 'jpeg', 'png', 'md'])
     if uploaded_file is not None:
-        file_path = os.path.join(files_folder, uploaded_file.name)
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"File {uploaded_file.name} uploaded successfully!")
+        safe_name = os.path.basename(uploaded_file.name)
+        file_path = os.path.join(files_folder, safe_name)
+        real_path = os.path.realpath(file_path)
+        if not real_path.startswith(os.path.realpath(files_folder)):
+            st.error("Invalid filename — path traversal detected.")
+        else:
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"File {safe_name} uploaded successfully!")
         st.rerun()
 
     st.subheader("✂️ Split File")

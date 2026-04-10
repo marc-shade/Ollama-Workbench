@@ -417,8 +417,8 @@ class VoiceManager:
             os.chmod(start_script, 0o755)
             
             # Start the server
-            subprocess.Popen([start_script], shell=True, 
-                           stdout=subprocess.PIPE, 
+            subprocess.Popen(['bash', start_script],
+                           stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
             
             logger.info("TTS server started")

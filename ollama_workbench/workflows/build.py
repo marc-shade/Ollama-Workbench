@@ -19,6 +19,11 @@ from openai import OpenAI
 from rich.console import Console
 import streamlit as st
 
+try:
+    from serpapi import GoogleSearch
+except ImportError:
+    GoogleSearch = None
+
 from ollama_workbench.providers.ollama_utils import call_ollama_endpoint, get_all_models, load_api_keys, save_api_keys
 from ollama_workbench.providers.openai_utils import call_openai_api
 from ollama_workbench.providers.groq_utils import call_groq_api, GROQ_MODELS, get_groq_models
@@ -80,6 +85,9 @@ def perform_search(
         return [{"title": item["title"], "url": item["link"]} for item in res.get("items", [])]
 
     elif search_method == "serpapi":
+        if GoogleSearch is None:
+            console.print("[bold red]Error: serpapi package is not installed. Install it with: pip install google-search-results[/bold red]")
+            return []
         if "serpapi_api_key" not in api_keys:
             console.print("[bold red]Error: SerpAPI Key not provided.[/bold red]")
             return []
@@ -440,6 +448,22 @@ def dump_repository(repo_path: str) -> Dict[str, str]:
                     except UnicodeDecodeError:
                         console.print(f"[bold yellow]Skipping binary file: {file_path}[/bold yellow]")
     return repo_contents
+
+def analyze_code(code: str) -> Dict[str, List[str]]:
+    """Analyzes Python source code and extracts function and class names."""
+    functions = []
+    classes = []
+    try:
+        tree = ast.parse(code)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+                functions.append(node.name)
+            elif isinstance(node, ast.ClassDef):
+                classes.append(node.name)
+    except SyntaxError:
+        pass
+    return {"functions": functions, "classes": classes}
+
 
 def generate_test_cases(code_analysis: Dict[str, List[str]]) -> str:
     """Generates test cases based on the analyzed code."""

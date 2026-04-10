@@ -1,5 +1,6 @@
 import streamlit as st
 import subprocess
+import shlex
 import json
 import os
 import platform
@@ -7,7 +8,7 @@ import psutil
 
 def run_command(command):
     try:
-        result = subprocess.run(command, capture_output=True, text=True, shell=True)
+        result = subprocess.run(shlex.split(command), capture_output=True, text=True)
         if result.returncode == 0:
             return result.stdout
         else:

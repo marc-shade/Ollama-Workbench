@@ -80,7 +80,6 @@ def brainstorm_session():
 def create_agent(settings):
     api_keys = load_api_keys()  # Load API keys
     print(f"Creating agent with model: {settings['model']}")
-    print(f"API keys loaded: {api_keys}")
     
     if settings['model'] in get_openai_models():
         print("Using OpenAI model")
@@ -296,7 +295,7 @@ def brainstorm_session(use_docker):
     api_keys = load_api_keys()
     os.environ["OPENAI_API_KEY"] = api_keys.get("openai_api_key", "")
     openai.api_key = api_keys.get("openai_api_key", "")
-    print(f"OpenAI API Key: {os.environ.get('OPENAI_API_KEY')}")
+    print("OpenAI API key configured")
     agents = [create_agent(agent_settings) for agent_settings in settings["agents"]]
 
     if 'group_chat' not in st.session_state:
@@ -400,7 +399,9 @@ def brainstorm_session(use_docker):
         with st.chat_message(message['role']):
             st.markdown(f"**{message['name']}**")
             formatted_content = markdown.markdown(message['content'])
-            st.markdown(formatted_content, unsafe_allow_html=True)
+            import bleach
+            sanitized_content = bleach.clean(formatted_content, tags=['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td'], attributes={'a': ['href', 'title']}, strip=True)
+            st.markdown(sanitized_content, unsafe_allow_html=True)
 
     # Display info about Brainstorm feature
     display_info_brainstorm()

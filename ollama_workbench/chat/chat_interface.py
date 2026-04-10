@@ -746,10 +746,8 @@ def chat_interface():
             # Close the connection
             conn.close()
         except Exception as e:
-            logger.error(f"CHECKPOINT: Error loading model descriptions: {e}")
-            traceback.print_exc()
-            logger.info("CHECKPOINT: Returning empty list due to error in loading model descriptions")
-            return []
+            logger.error(f"Error loading model descriptions: {e}")
+            model_descriptions = {}
         
         # Validate and find index of current model
         model_index = 0

@@ -30,6 +30,11 @@ ollama_models.db
 .env.*
 !.env.example
 api_keys.json
+security/secrets.json
+security/audit.db
+
+# Canvas user data
+canvas/
 
 # IDE specific files
 .idea/

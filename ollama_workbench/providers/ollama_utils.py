@@ -440,6 +440,11 @@ def _call_ollama_with_observability(model, prompt=None, image=None, temperature=
     start_time = time.time()
     operation_id = f"ollama_{int(start_time * 1000)}"
     
+    # Initialize metadata before observability check so it always exists in scope
+    metadata = {
+        "operation_type": "vision" if image else "text_generation",
+    }
+
     # Enhanced metadata for comprehensive observability
     if OBSERVABILITY_AVAILABLE:
         metadata = {
@@ -658,17 +663,9 @@ def call_ollama_cli_verbose(model, prompt, temperature=0.5, max_tokens=150, tool
         if tools_path:
             command.extend(["--tools", tools_path])
             
-        # Add the prompt file as input
-        command.extend(["<", prompt_path])
-        
-        # For Windows compatibility, we need to use shell=True and join the command
-        if os.name == 'nt':  # Windows
-            command_str = " ".join(command)
-            result = subprocess.run(command_str, shell=True, capture_output=True, text=True)
-        else:  # Unix/Linux/MacOS
-            # Use a proper shell redirection
-            command_str = " ".join(command) + " < " + prompt_path
-            result = subprocess.run(command_str, shell=True, capture_output=True, text=True)
+        # Run command with stdin from prompt file (no shell=True needed)
+        with open(prompt_path, 'r') as stdin_file:
+            result = subprocess.run(command, stdin=stdin_file, capture_output=True, text=True)
         
         # Extract the response and metrics
         response_text = ""

@@ -21,7 +21,7 @@ class OpenAICompatibilityLayer:
     work with Ollama models.
     """
     
-    def __init__(self, host: str = "0.0.0.0", port: int = 8000):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8000):
         """
         Initialize the OpenAI compatibility layer.
         
@@ -643,7 +643,7 @@ class OpenAICompatibilityLayer:
 def start_openai_compatibility_server():
     """Start the OpenAI compatibility server in a separate thread."""
     config = get_config()
-    host = config.get("OPENAI_COMPAT_HOST", "0.0.0.0")
+    host = config.get("OPENAI_COMPAT_HOST", "127.0.0.1")
     port = int(config.get("OPENAI_COMPAT_PORT", 8000))
     
     compatibility_layer = OpenAICompatibilityLayer(host=host, port=port)
@@ -673,8 +673,8 @@ def openai_compatibility_ui():
         with col1:
             host = st.text_input(
                 "Host",
-                value=config.get("OPENAI_COMPAT_HOST", "0.0.0.0"),
-                help="The host to bind the server to (0.0.0.0 allows external connections)"
+                value=config.get("OPENAI_COMPAT_HOST", "127.0.0.1"),
+                help="The host to bind the server to (use 127.0.0.1 for local-only access)"
             )
         
         with col2:

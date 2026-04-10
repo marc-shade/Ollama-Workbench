@@ -1,3 +1,4 @@
+import ast
 import streamlit as st
 import json
 import ollama
@@ -22,6 +23,25 @@ except ImportError:
 from ollama_workbench.models.model_capability_registry import filter_models_by_capability, is_tools_capable
 
 logger = logging.getLogger(__name__)
+
+
+def safe_math_eval(expression: str) -> float:
+    """Safely evaluate a math expression string containing only arithmetic operations.
+
+    Parses the expression into an AST and validates that it contains only numeric
+    constants and basic arithmetic operators before evaluation. This prevents
+    arbitrary code execution from LLM-generated expressions.
+    """
+    ALLOWED_NODES = (ast.Expression, ast.Constant, ast.BinOp, ast.UnaryOp,
+                     ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
+                     ast.USub, ast.UAdd)
+    tree = ast.parse(expression, mode='eval')
+    for node in ast.walk(tree):
+        if not isinstance(node, ALLOWED_NODES):
+            raise ValueError(f"Unsafe expression: contains {type(node).__name__}")
+    # Safe: AST has been validated to contain only numeric literals and arithmetic ops
+    code = compile(tree, '<expression>', 'eval')
+    return eval(code)  # noqa: S307 - AST-validated safe expression
 
 
 # Helper function to ensure objects are JSON serializable
@@ -349,10 +369,9 @@ def calculator_impl(operation: str = None, a: float = None, b: float = None, exp
     # MODE 1: Expression evaluation (preferred)
     if expression is not None:
         try:
-            # WARNING: using eval can be dangerous in production; use a safe math parser instead
             # Replace 'x' with '*' for multiplication
             expression_safe = expression.replace('x', '*').replace('X', '*')
-            result = eval(expression_safe)
+            result = safe_math_eval(expression_safe)
             return f"Result: {result}"
         except Exception as e:
             logger.error(f"Error evaluating expression '{expression}': {e}")
@@ -399,7 +418,7 @@ def calculator_impl(operation: str = None, a: float = None, b: float = None, exp
                 logger.info(f"Attempting to evaluate operation as expression: {operation}")
                 # Replace 'x' with '*' for multiplication
                 operation_safe = operation.replace('x', '*').replace('X', '*')
-                result = eval(operation_safe)
+                result = safe_math_eval(operation_safe)
                 return f"Result: {result}"
         except Exception as e:
             logger.error(f"Failed to evaluate as expression: {e}")
