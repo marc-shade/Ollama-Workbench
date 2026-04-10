@@ -33,7 +33,7 @@ class TestCommandExecution:
         
         assert result == "Command output"
         mock_subprocess.assert_called_once_with(
-            "test command", capture_output=True, text=True, shell=True
+            ["test", "command"], capture_output=True, text=True
         )
     
     @patch('ollama_workbench.server.server_monitoring.st')

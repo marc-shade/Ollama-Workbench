@@ -330,7 +330,7 @@ class TestEmbeddings:
         assert total_duration == 1000000000
         assert eval_count == 5
     
-    @patch('ollama_workbench.providers.ollama_utils.get_local_embeddings')
+    @patch('ollama_workbench.providers.groq_utils.get_local_embeddings')
     def test_generate_embeddings_groq(self, mock_groq_embeddings):
         """Test generating embeddings with Groq"""
         mock_groq_embeddings.return_value = [0.4, 0.5, 0.6]

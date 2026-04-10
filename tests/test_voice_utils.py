@@ -6,7 +6,7 @@ import pytest
 import json
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch, MagicMock, call, mock_open
 import sys
 
 # Add the parent directory to the path

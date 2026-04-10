@@ -90,7 +90,11 @@ def call_groq_api(model, messages=None, temperature=0.7, max_tokens=1000, groq_a
                   for backward compatibility.
     """
     # --- backward compat: old callers passed (client, model, messages, ...) ---
-    if isinstance(model, Groq):
+    try:
+        _is_groq_client = isinstance(model, Groq)
+    except TypeError:
+        _is_groq_client = False
+    if _is_groq_client:
         # Shift positional args: model is actually the client, messages is the model, etc.
         _client_ignored = model
         model = messages  # second positional was the real model name

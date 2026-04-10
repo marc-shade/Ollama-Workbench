@@ -1230,7 +1230,7 @@ def _call_ollama_endpoint_impl(model, prompt=None, image=None, temperature=0.5, 
 
 def check_json_handling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Return the following data in JSON format: name: John, age: 30, city: New York"
-    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
+    result, _, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     try:
         json.loads(result)
         return True
@@ -1297,12 +1297,12 @@ def get_token_embeddings(model: str, text: str, api_keys: dict) -> np.ndarray:
 
 def check_function_calling(model, temperature, max_tokens, presence_penalty, frequency_penalty):
     prompt = "Define a function named 'add' that takes two numbers and returns their sum. Then call the function with arguments 5 and 3."
-    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
+    result, _, _, _, _ = call_ollama_endpoint(model, prompt=prompt, temperature=temperature, max_tokens=max_tokens, presence_penalty=presence_penalty, frequency_penalty=frequency_penalty)
     return "8" in result
 
 def run_tool_test(model, tool_description, arguments):
     prompt = f"Test the function: {tool_description}. Arguments: {arguments}"
-    result, _, _, _ = call_ollama_endpoint(model, prompt=prompt)
+    result, _, _, _, _ = call_ollama_endpoint(model, prompt=prompt)
     return result
 
 def pull_model(model_name):
