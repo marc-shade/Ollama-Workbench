@@ -780,7 +780,7 @@ class TestStreamlitInterface:
     @patch('ollama_workbench.server.server_configuration.get_server_status')
     @patch('ollama_workbench.server.server_configuration.stop_server')
     @patch('ollama_workbench.server.server_configuration.start_server')
-    @patch('ollama_workbench.server.server_configuration.time.sleep')
+    @patch('time.sleep')
     @patch('ollama_workbench.server.server_configuration.get_default_model_dir')
     @patch('ollama_workbench.server.server_configuration.get_default_max_loaded_models')
     @patch('ollama_workbench.server.server_configuration.get_config')
