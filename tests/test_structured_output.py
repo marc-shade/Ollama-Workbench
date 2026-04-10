@@ -413,7 +413,7 @@ class TestStreamlitUI:
             mock_st.markdown = Mock()
             mock_st.expander = Mock()
             mock_st.rerun = Mock()
-            mock_st.session_state = {}
+            mock_st.session_state = type("AttrDict", (dict,), {"__getattr__": lambda s,k: s[k], "__setattr__": dict.__setitem__, "__delattr__": dict.__delitem__})()
             yield mock_st
     
     @patch('ollama_workbench.ui.structured_output.get_available_models')
@@ -639,7 +639,7 @@ class TestErrorHandling:
         ]
         mock_st.slider.return_value = 0.7
         mock_st.button.return_value = True
-        mock_st.session_state = {}
+        mock_st.session_state = type("AttrDict", (dict,), {"__getattr__": lambda s,k: s[k], "__setattr__": dict.__setitem__, "__delattr__": dict.__delitem__})()
         
         # Mock spinner context manager
         mock_spinner = Mock()

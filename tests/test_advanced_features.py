@@ -46,7 +46,7 @@ class TestThinkingTypes(unittest.TestCase):
         logger.info("CHECKPOINT: Beginning test setup")
         
         # Mock streamlit session state
-        self.mock_session_state = {}
+        self.mock_session_state = type('AttrDict', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         
         # Create patch for st.session_state
         self.session_state_patch = patch('streamlit.session_state', self.mock_session_state)
@@ -318,7 +318,7 @@ class TestRAGFeatures(unittest.TestCase):
         logger.info("Setting up test environment for RAG features tests")
         
         # Mock streamlit session state
-        self.mock_session_state = {}
+        self.mock_session_state = type('AttrDict', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         
         # Create patch for st.session_state
         self.session_state_patch = patch('streamlit.session_state', self.mock_session_state)
