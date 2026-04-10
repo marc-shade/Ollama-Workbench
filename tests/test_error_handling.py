@@ -783,7 +783,7 @@ class TestSafeHTTPClient(TestCase):
 class TestCreateOllamaClient(TestCase):
     """Test create_ollama_client function"""
     
-    @patch('config.get_config')
+    @patch('ollama_workbench.core.config.get_config')
     def test_create_ollama_client_default_host(self, mock_get_config):
         """Test creating Ollama client with default host"""
         mock_get_config.return_value = {"OLLAMA_HOST": "http://localhost:11434"}
@@ -793,7 +793,7 @@ class TestCreateOllamaClient(TestCase):
         self.assertIsInstance(client, SafeHTTPClient)
         self.assertEqual(client.base_url, "http://localhost:11434")
     
-    @patch('config.get_config')
+    @patch('ollama_workbench.core.config.get_config')
     def test_create_ollama_client_custom_host(self, mock_get_config):
         """Test creating Ollama client with custom host"""
         mock_get_config.return_value = {}
@@ -802,7 +802,7 @@ class TestCreateOllamaClient(TestCase):
         
         self.assertEqual(client.base_url, "http://custom:11434")
     
-    @patch('config.get_config')
+    @patch('ollama_workbench.core.config.get_config')
     def test_create_ollama_client_host_without_http(self, mock_get_config):
         """Test creating Ollama client with host without http prefix"""
         mock_get_config.return_value = {}
