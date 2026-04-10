@@ -31,9 +31,9 @@ if not os.path.exists('projects'):
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, obj):
+        if pd.isna(obj) if isinstance(obj, (pd.Timestamp, type(pd.NaT))) else False:
+            return None
         if isinstance(obj, pd.Timestamp):
-            if pd.isna(obj):
-                return None
             return obj.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(obj, Task):
             return obj.__dict__
