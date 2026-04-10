@@ -21,23 +21,40 @@ from unittest.mock import MagicMock, patch
 
 @pytest.fixture(autouse=True)
 def _clear_caches():
-    """Clear all module-level caches before and after each test."""
-    def _clear():
-        try:
-            import ollama_workbench.providers.ollama_utils as ou
-            ou._api_keys_cache = None
-            ou._api_keys_cache_time = 0
-        except (ImportError, AttributeError):
-            pass
-        try:
-            from ollama_workbench.ui.prompts import clear_prompts_cache
-            clear_prompts_cache()
-        except (ImportError, AttributeError):
-            pass
+    """Pre-populate caches with safe defaults so tests never hit the filesystem.
 
-    _clear()
+    This prevents cascading 'Mock does not support context manager' errors
+    when UI integration tests trigger load_api_keys() -> open() internally.
+    """
+    import time as _time
+    try:
+        import ollama_workbench.providers.ollama_utils as ou
+        # Pre-fill the cache so load_api_keys() returns immediately without open()
+        if ou._api_keys_cache is None:
+            ou._api_keys_cache = {}
+            ou._api_keys_cache_time = _time.monotonic()
+    except (ImportError, AttributeError):
+        pass
+    try:
+        from ollama_workbench.ui.prompts import clear_prompts_cache
+        clear_prompts_cache()
+    except (ImportError, AttributeError):
+        pass
+
     yield
-    _clear()
+
+    # Reset after test
+    try:
+        import ollama_workbench.providers.ollama_utils as ou
+        ou._api_keys_cache = None
+        ou._api_keys_cache_time = 0
+    except (ImportError, AttributeError):
+        pass
+    try:
+        from ollama_workbench.ui.prompts import clear_prompts_cache
+        clear_prompts_cache()
+    except (ImportError, AttributeError):
+        pass
 
 
 # ---------------------------------------------------------------------------
