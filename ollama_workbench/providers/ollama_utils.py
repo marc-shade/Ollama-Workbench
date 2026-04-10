@@ -1996,16 +1996,19 @@ def log_model_stats(model_name, tokens_generated, response_time, operation_type=
         )
         
         # Enhanced structured logging
-        logger.info(f"Model usage logged", extra={
-            "operation_id": operation_id,
-            "model_name": model_name,
-            "tokens_generated": tokens_generated,
-            "response_time": response_time,
-            "operation_type": operation_type,
-            "tokens_per_second": tokens_generated / response_time if response_time > 0 else 0,
-            "user_id": kwargs.get('user_id', 'unknown'),
-            "session_id": kwargs.get('session_id', 'unknown')
-        })
+        try:
+            logger.info("Model usage logged", extra={
+                "operation_id": operation_id,
+                "model_name": model_name,
+                "tokens_generated": tokens_generated,
+                "response_time": response_time,
+                "operation_type": operation_type,
+                "tokens_per_second": tokens_generated / response_time if response_time > 0 else 0,
+                "user_id": kwargs.get('user_id', 'unknown'),
+                "session_id": kwargs.get('session_id', 'unknown')
+            })
+        except (KeyError, Exception):
+            pass  # Logging failures should not affect functionality
         
         # Log to observability system if available
         if OBSERVABILITY_AVAILABLE:
