@@ -729,7 +729,7 @@ class TestStreamlitInterface:
         
         # Setup mocks
         mock_get_models.return_value = ["llama3", "gpt-4", "mixtral-8x7b"]
-        mock_st.session_state = {}
+        mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         mock_st.title.return_value = None
         mock_st.progress.return_value = Mock()
         mock_st.empty.return_value = Mock()

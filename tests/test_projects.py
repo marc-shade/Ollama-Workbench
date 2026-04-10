@@ -820,7 +820,7 @@ class TestSessionStateManagement:
         # Setup mocks
         mock_load_projects.return_value = ["Project 1", "Project 2"]
         mock_models.return_value = ["llama3", "gpt-4"]
-        mock_st.session_state = {}
+        mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         
         initialize_session_state()
         
@@ -850,7 +850,7 @@ class TestSessionStateManagement:
         # Setup mocks
         mock_load_projects.return_value = []
         mock_models.return_value = []  # No models available
-        mock_st.session_state = {}
+        mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         
         initialize_session_state()
         

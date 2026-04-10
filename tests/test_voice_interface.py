@@ -68,7 +68,7 @@ class TestVoiceInterface:
         mock_voice_utils.add_voice_profile.return_value = True
         
         # Mock streamlit components
-        mock_tabs = [Mock(), Mock()]
+        mock_tabs = [MagicMock(), MagicMock()]
         mock_st.tabs.return_value = mock_tabs
         mock_st.selectbox.side_effect = ['test_profile', 'gtts', 'elevenlabs']
         mock_st.text_input.side_effect = ['TestProfile', 'en', 'test_voice', 'en', 'test_voice']
@@ -98,7 +98,7 @@ class TestVoiceInterface:
         mock_voice_utils.play_speech.return_value = None
         
         # Mock streamlit components
-        mock_tabs = [Mock(), Mock()]
+        mock_tabs = [MagicMock(), MagicMock()]
         mock_st.tabs.return_value = mock_tabs
         mock_st.selectbox.return_value = 'default'
         mock_st.text_input.return_value = 'Test speech'
@@ -118,7 +118,7 @@ class TestVoiceInterface:
     def test_voice_input_component_basic(self, mock_st, mock_voice_utils):
         """Test basic voice input component functionality"""
         # Mock session state
-        mock_session_state = {}
+        mock_session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         mock_st.session_state = mock_session_state
         
         # Mock streamlit components
@@ -233,12 +233,13 @@ class TestVoiceInterface:
     def test_voice_chat_interface_message_handling(self, mock_ollama, mock_st, mock_voice_utils):
         """Test message handling in voice chat interface"""
         # Setup chat history
-        mock_session_state = {
+        AD = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})
+        mock_session_state = AD({
             'voice_chat_history': [
                 {"role": "user", "content": "Hello"},
                 {"role": "assistant", "content": "Hi there!"}
             ]
-        }
+        })
         mock_st.session_state = mock_session_state
         
         # Mock streamlit components

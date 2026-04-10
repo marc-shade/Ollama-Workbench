@@ -591,7 +591,7 @@ class TestBrainstormSession:
         mock_workflows.return_value = ["workflow1", "workflow2"]
         
         # Mock Streamlit components
-        mock_st.session_state = {}
+        mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         mock_st.columns.return_value = [Mock(), Mock(), Mock()]
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = ""
@@ -630,7 +630,7 @@ class TestBrainstormSession:
         mock_load_workflow.return_value = ["Agent 1", "Agent 2"]
         
         # Mock Streamlit components
-        mock_st.session_state = {}
+        mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
         mock_st.columns.return_value = [Mock(), Mock(), Mock()]
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "test_workflow"

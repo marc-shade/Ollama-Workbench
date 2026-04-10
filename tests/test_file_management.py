@@ -353,7 +353,7 @@ class TestStreamlitInterface:
             mock_st.checkbox = Mock(return_value=True)
             mock_st.subheader = Mock()
             mock_st.download_button = Mock()
-            mock_st.session_state = {}
+            mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
             yield mock_st
     
     @patch('ollama_workbench.ui.file_management.os.path.exists')
