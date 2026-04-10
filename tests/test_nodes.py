@@ -474,7 +474,7 @@ class TestNodeHandlers:
         """Test input node with file type"""
         from ollama_workbench.workflows.nodes import handle_input_node, Node
         
-        mock_file = Mock()
+        mock_file = mock_open()
         mock_file.getvalue.return_value = b"File content"
         
         node = Node("1", "Input", {

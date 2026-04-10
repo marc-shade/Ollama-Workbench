@@ -588,7 +588,7 @@ class TestProjectSummaryGeneration(TestCase):
             }
         }
         
-        mock_file = Mock()
+        mock_file = mock_open()
         write_file_details(mock_file, file_info)
         
         # Verify various writes were called

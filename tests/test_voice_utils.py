@@ -223,7 +223,7 @@ class TestVoiceManagerClass:
         from ollama_workbench.chat.voice_utils import VoiceManager
         
         # Setup mocks
-        mock_file = Mock()
+        mock_file = mock_open()
         mock_file.name = '/tmp/test.mp3'
         mock_tempfile.return_value.__enter__.return_value = mock_file
         
