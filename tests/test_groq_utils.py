@@ -27,7 +27,7 @@ class TestConstants:
         assert len(GROQ_MODELS) > 0
         
         # Check some expected models are present
-        expected_models = ["llama3-70b-8192", "mixtral-8x7b-32768", "gemma-7b-it"]
+        expected_models = ["llama3-70b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
         for model in expected_models:
             assert model in GROQ_MODELS
         
@@ -44,26 +44,30 @@ class TestAPIKeyManagement:
         api_file = tmp_path / "api_keys.json"
         with open(api_file, "w") as f:
             json.dump(test_keys, f)
-        
-        with patch('ollama_workbench.providers.groq_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
             assert loaded_keys["groq_api_key"] == "gsk_test123"
-    
+
     def test_load_api_keys_not_exists(self):
         """Test loading API keys when file doesn't exist"""
-        with patch('os.path.exists', return_value=False):
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', '/nonexistent/api_keys.json'), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == {}
-    
+
     def test_save_api_keys(self, tmp_path):
         """Test saving API keys to file"""
         test_keys = {"groq_api_key": "gsk_test456", "another_key": "another_value"}
         api_file = tmp_path / "api_keys.json"
-        
-        with patch('ollama_workbench.providers.groq_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
-            
+
             # Verify file was saved correctly
             with open(api_file, "r") as f:
                 saved_keys = json.load(f)

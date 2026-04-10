@@ -110,7 +110,16 @@ def get_available_models() -> List[str]:
         response = requests.get("http://localhost:11434/api/tags")
         if response.status_code == 200:
             data = response.json()
-            return [model["name"] for model in data.get("models", [])]
+            models_list = data.get("models", [])
+            result = []
+            for model in models_list:
+                if hasattr(model, 'model'):
+                    result.append(model.model)
+                elif isinstance(model, dict):
+                    result.append(model.get("name", str(model)))
+                else:
+                    result.append(str(model))
+            return result
         else:
             logger.error(f"Error getting models: {response.status_code}")
             return []

@@ -62,9 +62,13 @@ def check_environment():
     # Check if Ollama is running
     try:
         import ollama
-        models = ollama.list()
-        logger.info(f"Ollama is running with {len(models['models'])} models")
-        print(f"Ollama is running with {len(models['models'])} models")
+        models_response = ollama.list()
+        # v0.4.8+: ListResponse object with .models attribute
+        models_list = getattr(models_response, 'models', None)
+        if models_list is None:
+            models_list = models_response.get('models', []) if isinstance(models_response, dict) else []
+        logger.info(f"Ollama is running with {len(models_list)} models")
+        print(f"Ollama is running with {len(models_list)} models")
     except Exception as e:
         logger.error(f"Error connecting to Ollama: {e}")
         print(f"Error: Could not connect to Ollama: {e}")

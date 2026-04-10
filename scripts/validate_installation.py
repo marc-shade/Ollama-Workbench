@@ -154,7 +154,14 @@ def check_ollama_server():
                 # Check available models
                 models = response.json().get('models', [])
                 if models:
-                    model_names = [model.get('name', 'unknown') for model in models]
+                    model_names = []
+                    for model in models:
+                        if hasattr(model, 'model'):
+                            model_names.append(model.model)
+                        elif isinstance(model, dict):
+                            model_names.append(model.get('name', 'unknown'))
+                        else:
+                            model_names.append(str(model))
                     print_success(f"Available models: {', '.join(model_names)}")
                 else:
                     print_warning("No models found. You might need to pull models.")
