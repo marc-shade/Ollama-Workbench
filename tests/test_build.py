@@ -742,7 +742,7 @@ class TestStreamlitInterface:
         mock_st.radio.return_value = "Enter Project Request"
         mock_st.text_area.return_value = ""
         mock_st.checkbox.return_value = False
-        mock_st.tabs.return_value = [Mock(), Mock(), Mock()]
+        mock_st.tabs.return_value = [MagicMock(), MagicMock(), MagicMock()]
         
         # Test interface initialization
         build_interface()
