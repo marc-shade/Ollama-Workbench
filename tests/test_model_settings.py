@@ -204,9 +204,9 @@ class TestModelSettings(unittest.TestCase):
         
         logger.info("CHECKPOINT: Agent settings change test passed")
     
-    @patch('ollama_workbench.ui.prompts.get_agent_prompt')
-    @patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
-    @patch('ollama_workbench.ui.prompts.get_voice_prompt')
+    @patch('ollama_workbench.chat.chat_interface.get_agent_prompt')
+    @patch('ollama_workbench.chat.chat_interface.get_metacognitive_prompt')
+    @patch('ollama_workbench.chat.chat_interface.get_voice_prompt')
     def test_construct_agent_prompt(self, mock_voice_prompt, mock_metacog_prompt, mock_agent_prompt):
         """Test constructing agent prompt from different types"""
         logger.info("Testing agent prompt construction")
@@ -337,7 +337,7 @@ class TestAgentFeatures(unittest.TestCase):
     def mock_prompts(self):
         """Mock prompts module"""
         # Create mock for prompts functions
-        self.agent_prompt_patch = patch('ollama_workbench.ui.prompts.get_agent_prompt')
+        self.agent_prompt_patch = patch('ollama_workbench.chat.chat_interface.get_agent_prompt')
         self.agent_prompt_mock = self.agent_prompt_patch.start()
         self.agent_prompt_mock.return_value = {
             "Researcher": "I approach problems systematically, breaking them down into smaller components.",
@@ -346,7 +346,7 @@ class TestAgentFeatures(unittest.TestCase):
             "Writer": "You are a writing assistant."
         }
         
-        self.metacog_prompt_patch = patch('ollama_workbench.ui.prompts.get_metacognitive_prompt')
+        self.metacog_prompt_patch = patch('ollama_workbench.chat.chat_interface.get_metacognitive_prompt')
         self.metacog_prompt_mock = self.metacog_prompt_patch.start()
         self.metacog_prompt_mock.return_value = {
             "Analytical": "You think analytically.",
@@ -355,7 +355,7 @@ class TestAgentFeatures(unittest.TestCase):
             "Reflective": "You think reflectively."
         }
         
-        self.voice_prompt_patch = patch('ollama_workbench.ui.prompts.get_voice_prompt')
+        self.voice_prompt_patch = patch('ollama_workbench.chat.chat_interface.get_voice_prompt')
         self.voice_prompt_mock = self.voice_prompt_patch.start()
         self.voice_prompt_mock.return_value = {
             "Friendly": "You speak in a friendly tone.",

@@ -119,6 +119,7 @@ def multimodal_chat_interface():
             
             # Log provider selection for debugging
             logger.info(f"Selected provider: {selected_provider}")
+            model_options = []  # Initialize before provider-specific logic
             
             # Get models based on provider
             if selected_provider == "Ollama":
