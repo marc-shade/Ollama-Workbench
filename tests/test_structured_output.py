@@ -264,7 +264,7 @@ class TestJSONGeneration:
     """Test JSON generation from text"""
     
     @patch('ollama_workbench.ui.structured_output.logger')
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('subprocess.run')
     def test_generate_json_cli_success(self, mock_subprocess, mock_logger):
         """Test successful JSON generation via CLI"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -281,8 +281,8 @@ class TestJSONGeneration:
         mock_subprocess.assert_called_once()
     
     @patch('ollama_workbench.ui.structured_output.logger')
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
-    @patch('ollama_workbench.ui.structured_output.get_ollama_client')
+    @patch('subprocess.run')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_generate_json_cli_fallback_to_api(self, mock_get_client, mock_subprocess, mock_logger):
         """Test JSON generation falling back from CLI to API"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -303,9 +303,9 @@ class TestJSONGeneration:
         mock_client.generate.assert_called_once()
     
     @patch('ollama_workbench.ui.structured_output.logger')
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
-    @patch('ollama_workbench.ui.structured_output.get_ollama_client')
-    @patch('ollama_workbench.ui.structured_output.call_ollama_endpoint')
+    @patch('subprocess.run')
+    @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
+    @patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
     def test_generate_json_final_fallback(self, mock_call_endpoint, mock_get_client, 
                                          mock_subprocess, mock_logger):
         """Test JSON generation with final fallback"""
@@ -339,7 +339,7 @@ class TestJSONGeneration:
         assert result == {}
     
     @patch('ollama_workbench.ui.structured_output.logger')
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('subprocess.run')
     def test_generate_json_malformed_response(self, mock_subprocess, mock_logger):
         """Test JSON generation with malformed response"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -355,7 +355,7 @@ class TestJSONGeneration:
         assert result == {}
     
     @patch('ollama_workbench.ui.structured_output.logger')
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('subprocess.run')
     def test_generate_json_partial_json(self, mock_subprocess, mock_logger):
         """Test JSON generation with partial JSON in response"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -371,7 +371,7 @@ class TestJSONGeneration:
         assert result == {"name": "Alice"}
     
     @patch('ollama_workbench.ui.structured_output.logger')
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('subprocess.run')
     def test_generate_json_single_quotes_fix(self, mock_subprocess, mock_logger):
         """Test JSON generation with single quotes that get fixed"""
         from ollama_workbench.ui.structured_output import generate_json_from_text
@@ -432,7 +432,7 @@ class TestStreamlitUI:
         mock_get_models.assert_called_once()
     
     @patch('ollama_workbench.ui.structured_output.get_available_models', return_value=[])
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('subprocess.run')
     def test_structured_output_ui_no_models_cli_fallback(self, mock_subprocess, mock_get_models, mock_streamlit):
         """Test UI with no models from API, using CLI fallback"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -454,7 +454,7 @@ class TestStreamlitUI:
         mock_streamlit.error.assert_not_called()
     
     @patch('ollama_workbench.ui.structured_output.get_available_models', return_value=[])
-    @patch('ollama_workbench.ui.structured_output.subprocess.run')
+    @patch('subprocess.run')
     def test_structured_output_ui_no_models_available(self, mock_subprocess, mock_get_models, mock_streamlit):
         """Test UI with no models available"""
         from ollama_workbench.ui.structured_output import structured_output_ui
@@ -612,7 +612,7 @@ class TestErrorHandling:
         mock_get_models.side_effect = Exception("API error")
         
         # Mock subprocess to also fail
-        with patch('ollama_workbench.ui.structured_output.subprocess.run', side_effect=Exception("CLI error")):
+        with patch('subprocess.run', side_effect=Exception("CLI error")):
             structured_output_ui()
         
         mock_st.error.assert_called()
@@ -681,7 +681,7 @@ class TestIntegration:
         schema = DEFAULT_SCHEMAS["person_details"]
         
         # Mock the generation process
-        with patch('ollama_workbench.ui.structured_output.subprocess.run') as mock_subprocess:
+        with patch('subprocess.run') as mock_subprocess:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_result.stdout = '{"name": "Integration Test", "age": 25, "email": "test@example.com"}'

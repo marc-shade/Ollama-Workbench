@@ -432,7 +432,7 @@ class TestServerStatus:
     """Test server status checking"""
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('requests.get')
     def test_get_server_status_api_success(self, mock_get, mock_config):
         """Test server status check via API (successful)"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -448,7 +448,7 @@ class TestServerStatus:
         mock_get.assert_called_with("http://localhost:11434/api/tags", timeout=2)
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('requests.get')
     def test_get_server_status_api_version_success(self, mock_get, mock_config):
         """Test server status check via version API (successful)"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -472,8 +472,8 @@ class TestServerStatus:
         assert mock_get.call_count == 2
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
-    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
+    @patch('requests.get')
+    @patch('psutil.process_iter')
     def test_get_server_status_process_check(self, mock_process_iter, mock_get, mock_config):
         """Test server status check via process detection"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -491,8 +491,8 @@ class TestServerStatus:
         assert result is True
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
-    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
+    @patch('requests.get')
+    @patch('psutil.process_iter')
     def test_get_server_status_process_check_windows(self, mock_process_iter, mock_get, mock_config):
         """Test server status check via process detection on Windows"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -510,8 +510,8 @@ class TestServerStatus:
         assert result is True
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
-    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
+    @patch('requests.get')
+    @patch('psutil.process_iter')
     def test_get_server_status_localhost_fallback(self, mock_process_iter, mock_get, mock_config):
         """Test server status check with localhost fallback"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -539,8 +539,8 @@ class TestServerStatus:
         mock_get.assert_any_call("http://localhost:11434/api/tags", timeout=1)
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
-    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
+    @patch('requests.get')
+    @patch('psutil.process_iter')
     def test_get_server_status_all_checks_fail(self, mock_process_iter, mock_get, mock_config):
         """Test server status check when all checks fail"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -558,7 +558,7 @@ class TestServerStatus:
         assert result is False
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
+    @patch('requests.get')
     def test_get_server_status_host_without_protocol(self, mock_get, mock_config):
         """Test server status check with host without protocol"""
         from ollama_workbench.server.server_configuration import get_server_status
@@ -897,8 +897,8 @@ class TestErrorHandling:
         assert "Failed to apply server settings" in mock_st.error.call_args[0][0]
     
     @patch('ollama_workbench.server.server_configuration.get_config')
-    @patch('ollama_workbench.server.server_configuration.requests.get')
-    @patch('ollama_workbench.server.server_configuration.psutil.process_iter')
+    @patch('requests.get')
+    @patch('psutil.process_iter')
     def test_server_status_all_exceptions(self, mock_process_iter, mock_get, mock_config):
         """Test server status when all detection methods throw exceptions"""
         from ollama_workbench.server.server_configuration import get_server_status
