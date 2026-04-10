@@ -13,6 +13,15 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+@pytest.fixture(autouse=True)
+def clear_prompts_cache_fixture():
+    """Clear the prompts cache before and after each test to avoid stale data."""
+    from ollama_workbench.ui.prompts import clear_prompts_cache
+    clear_prompts_cache()
+    yield
+    clear_prompts_cache()
+
+
 class TestFilePathManagement:
     """Test prompt file path management"""
     
@@ -754,7 +763,7 @@ class TestDefaultPromptContent:
         
         # Check structure and content
         general = result["General Assistant"]
-        assert "helpful AI assistant" in general["prompt"].lower()
+        assert "helpful ai assistant" in general["prompt"].lower()
         assert general["model_voice"] == "en-US-Wavenet-A"
         
         code = result["Code Assistant"]

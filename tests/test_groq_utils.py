@@ -113,13 +113,15 @@ class TestGroqClient:
 
 class TestGroqAPI:
     """Test Groq API calling functions"""
-    
-    def test_call_groq_api_no_client(self):
-        """Test API call with no client"""
-        result = call_groq_api(None, "llama3-70b-8192", [{"role": "user", "content": "Test"}])
-        assert result is None
-    
-    def test_call_groq_api_success(self):
+
+    def test_call_groq_api_no_messages(self):
+        """Test API call with no messages returns None"""
+        with patch('ollama_workbench.providers.groq_utils.load_api_keys', return_value={"groq_api_key": "gsk_test"}):
+            result = call_groq_api("llama3-70b-8192", messages=None)
+            assert result is None
+
+    @patch('ollama_workbench.providers.groq_utils.Groq')
+    def test_call_groq_api_success(self, mock_groq_class):
         """Test successful Groq API call"""
         # Mock client and response
         mock_client = Mock()
@@ -129,19 +131,20 @@ class TestGroqAPI:
         mock_choice.message = mock_message
         mock_completion = Mock()
         mock_completion.choices = [mock_choice]
-        
+
         mock_client.chat.completions.create.return_value = mock_completion
-        
+        mock_groq_class.return_value = mock_client
+
         # Test the function
         messages = [{"role": "user", "content": "Hello"}]
         result = call_groq_api(
-            mock_client,
             "llama3-70b-8192",
-            messages,
+            messages=messages,
             temperature=0.7,
-            max_tokens=100
+            max_tokens=100,
+            groq_api_key="gsk_test_key"
         )
-        
+
         assert result == "Hello from Groq!"
         mock_client.chat.completions.create.assert_called_once_with(
             model="llama3-70b-8192",
@@ -149,19 +152,21 @@ class TestGroqAPI:
             temperature=0.7,
             max_tokens=100
         )
-    
+
     @patch('streamlit.warning')
-    def test_call_groq_api_error(self, mock_warning):
+    @patch('ollama_workbench.providers.groq_utils.Groq')
+    def test_call_groq_api_error(self, mock_groq_class, mock_warning):
         """Test Groq API call error handling"""
         mock_client = Mock()
         mock_client.chat.completions.create.side_effect = Exception("API Error")
-        
+        mock_groq_class.return_value = mock_client
+
         result = call_groq_api(
-            mock_client,
             "llama3-70b-8192",
-            [{"role": "user", "content": "Test"}]
+            messages=[{"role": "user", "content": "Test"}],
+            groq_api_key="gsk_test_key"
         )
-        
+
         assert result is None
         mock_warning.assert_called_once()
         warning_message = mock_warning.call_args[0][0]
@@ -321,21 +326,26 @@ class TestIntegration:
     def test_complete_api_flow(self, mock_groq_class, tmp_path):
         """Test complete flow: save key, load, create client, and use API"""
         api_file = tmp_path / "api_keys.json"
-        
-        with patch('ollama_workbench.providers.groq_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             # Save API key
             save_api_keys({"groq_api_key": "gsk_integration_test"})
-            
+
+            # Clear the cache so load picks up the new file
+            import ollama_workbench.providers.ollama_utils as _ou
+            _ou._api_keys_cache = None
+            _ou._api_keys_cache_time = 0
+
             # Load and verify
             keys = load_api_keys()
             assert keys["groq_api_key"] == "gsk_integration_test"
-            
+
             # Create client
             mock_client = Mock()
             mock_groq_class.return_value = mock_client
             client = get_groq_client(keys["groq_api_key"])
             assert client == mock_client
-            
+
             # Use API
             mock_message = Mock()
             mock_message.content = "Integration test response"
@@ -344,13 +354,13 @@ class TestIntegration:
             mock_completion = Mock()
             mock_completion.choices = [mock_choice]
             mock_client.chat.completions.create.return_value = mock_completion
-            
+
             result = call_groq_api(
-                client,
                 "llama3-70b-8192",
-                [{"role": "user", "content": "Test"}]
+                messages=[{"role": "user", "content": "Test"}],
+                groq_api_key=keys["groq_api_key"]
             )
-            
+
             assert result == "Integration test response"
     
     @patch('ollama_workbench.providers.groq_utils.SentenceTransformer')

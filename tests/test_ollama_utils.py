@@ -38,26 +38,30 @@ class TestFileOperations:
         api_file = tmp_path / "api_keys.json"
         with open(api_file, "w") as f:
             json.dump(test_keys, f)
-        
-        # Mock the file path
-        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
+
+        # Mock the file path and clear cache
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
-    
+
     def test_load_api_keys_not_exists(self):
         """Test loading API keys when file doesn't exist"""
-        with patch('os.path.exists', return_value=False):
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', '/nonexistent/api_keys.json'), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == {}
-    
+
     def test_save_api_keys(self, tmp_path):
         """Test saving API keys"""
         test_keys = {"openai": "test-key-123"}
         api_file = tmp_path / "api_keys.json"
-        
+
         with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
-            
+
             # Verify file was saved correctly
             with open(api_file, "r") as f:
                 saved_keys = json.load(f)
@@ -254,18 +258,18 @@ class TestCallOllamaEndpoint:
         ]
         mock_client.generate.return_value = mock_stream
         mock_get_client.return_value = mock_client
-        
-        response, context, eval_count, eval_duration = call_ollama_endpoint(
+
+        response, context, eval_count, eval_duration, metrics = call_ollama_endpoint(
             model="llama2",
             prompt="Say hello",
             temperature=0.5,
             max_tokens=10
         )
-        
+
         assert response == "Hello world"
         assert eval_count == 2
         assert eval_duration == 1000000000
-    
+
     @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_call_endpoint_with_image(self, mock_get_client):
         """Test multimodal processing with image"""
@@ -276,14 +280,14 @@ class TestCallOllamaEndpoint:
             "eval_duration": 2000000000
         }
         mock_get_client.return_value = mock_client
-        
-        response, context, eval_count, eval_duration = call_ollama_endpoint(
+
+        response, context, eval_count, eval_duration, metrics = call_ollama_endpoint(
             model="llava",
             prompt="What's in this image?",
             image="base64encodedimage",
             temperature=0.5
         )
-        
+
         assert response == "I see an image"
         assert eval_count == 10
     
@@ -405,22 +409,22 @@ class TestUtilityFunctions:
         """Test JSON handling check"""
         with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_call:
             # Valid JSON response
-            mock_call.return_value = ('{"name": "John", "age": 30, "city": "New York"}', None, None, None)
+            mock_call.return_value = ('{"name": "John", "age": 30, "city": "New York"}', None, None, None, {})
             assert check_json_handling("llama2", 0.5, 100, 0, 0) is True
-            
+
             # Invalid JSON response
-            mock_call.return_value = ('This is not JSON', None, None, None)
+            mock_call.return_value = ('This is not JSON', None, None, None, {})
             assert check_json_handling("llama2", 0.5, 100, 0, 0) is False
-    
+
     def test_check_function_calling(self):
         """Test function calling check"""
         with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_call:
             # Response contains "8" (5 + 3)
-            mock_call.return_value = ('def add(a, b): return a + b\nresult = add(5, 3)\nprint(result)  # 8', None, None, None)
+            mock_call.return_value = ('def add(a, b): return a + b\nresult = add(5, 3)\nprint(result)  # 8', None, None, None, {})
             assert check_function_calling("llama2", 0.5, 100, 0, 0) is True
-            
+
             # Response doesn't contain "8"
-            mock_call.return_value = ('def add(a, b): return a + b', None, None, None)
+            mock_call.return_value = ('def add(a, b): return a + b', None, None, None, {})
             assert check_function_calling("llama2", 0.5, 100, 0, 0) is False
     
     def test_save_and_load_chat_history(self, tmp_path):

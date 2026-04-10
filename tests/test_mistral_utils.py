@@ -45,26 +45,30 @@ class TestAPIKeyManagement:
         api_file = tmp_path / "api_keys.json"
         with open(api_file, "w") as f:
             json.dump(test_keys, f)
-        
-        with patch('ollama_workbench.providers.mistral_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
             assert loaded_keys["mistral_api_key"] == "msk_test123"
-    
+
     def test_load_api_keys_not_exists(self):
         """Test loading API keys when file doesn't exist"""
-        with patch('os.path.exists', return_value=False):
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', '/nonexistent/api_keys.json'), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == {}
-    
+
     def test_save_api_keys(self, tmp_path):
         """Test saving API keys to file"""
         test_keys = {"mistral_api_key": "msk_test456", "another_key": "another_value"}
         api_file = tmp_path / "api_keys.json"
-        
-        with patch('ollama_workbench.providers.mistral_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
-            
+
             # Verify file was saved correctly
             with open(api_file, "r") as f:
                 saved_keys = json.load(f)
@@ -460,11 +464,16 @@ class TestIntegration:
     def test_complete_api_flow(self, mock_mistral_class, tmp_path):
         """Test complete flow: save key, load, create client, and use API"""
         api_file = tmp_path / "api_keys.json"
-        
-        with patch('ollama_workbench.providers.mistral_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             # Save API key
             save_api_keys({"mistral_api_key": "msk_integration_test"})
-            
+
+            # Clear cache so load picks up new data
+            import ollama_workbench.providers.ollama_utils as _ou
+            _ou._api_keys_cache = None
+            _ou._api_keys_cache_time = 0
+
             # Load and verify
             keys = load_api_keys()
             assert keys["mistral_api_key"] == "msk_integration_test"

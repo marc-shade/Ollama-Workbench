@@ -27,51 +27,57 @@ class TestAPIKeyManagement:
         api_file = tmp_path / "api_keys.json"
         with open(api_file, "w") as f:
             json.dump(test_keys, f)
-        
-        # Mock the file path
-        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
+
+        # Mock the file path and clear cache
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == test_keys
             assert loaded_keys["openai_api_key"] == "sk-test-123"
-    
+
     def test_load_api_keys_not_exists(self):
         """Test loading API keys when file doesn't exist"""
-        with patch('os.path.exists', return_value=False):
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', '/nonexistent/api_keys.json'), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             loaded_keys = load_api_keys()
             assert loaded_keys == {}
-    
+
     def test_save_api_keys(self, tmp_path):
         """Test saving API keys to file"""
         test_keys = {"openai_api_key": "sk-test-456", "another_key": "another_value"}
         api_file = tmp_path / "api_keys.json"
-        
-        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)):
             save_api_keys(test_keys)
-            
+
             # Verify file was saved correctly
             with open(api_file, "r") as f:
                 saved_keys = json.load(f)
             assert saved_keys == test_keys
             assert saved_keys["openai_api_key"] == "sk-test-456"
-    
+
     @patch('streamlit.success')
     def test_set_openai_api_key(self, mock_success, tmp_path):
         """Test setting OpenAI API key"""
         api_file = tmp_path / "api_keys.json"
         initial_keys = {"other_key": "value"}
-        
+
         with open(api_file, "w") as f:
             json.dump(initial_keys, f)
-        
-        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             set_openai_api_key("sk-new-key-789")
-            
+
             # Verify key was saved
             with open(api_file, "r") as f:
                 saved_keys = json.load(f)
             assert saved_keys["openai_api_key"] == "sk-new-key-789"
             assert saved_keys["other_key"] == "value"  # Other keys preserved
-            
+
             # Verify success message
             mock_success.assert_called_once_with("OpenAI API key has been set.")
 
@@ -290,12 +296,19 @@ class TestIntegration:
     def test_complete_api_flow(self, mock_openai_class, tmp_path):
         """Test complete flow: set key, save, load, and use API"""
         api_file = tmp_path / "api_keys.json"
-        
-        with patch('ollama_workbench.providers.openai_utils.API_KEYS_FILE', str(api_file)):
+
+        with patch('ollama_workbench.providers.ollama_utils.API_KEYS_FILE', str(api_file)), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache', None), \
+             patch('ollama_workbench.providers.ollama_utils._api_keys_cache_time', 0):
             # Set API key
             with patch('streamlit.success'):
                 set_openai_api_key("sk-integration-test")
-            
+
+            # Clear cache after save so load picks up new data
+            import ollama_workbench.providers.ollama_utils as _ou
+            _ou._api_keys_cache = None
+            _ou._api_keys_cache_time = 0
+
             # Verify key was saved
             keys = load_api_keys()
             assert keys["openai_api_key"] == "sk-integration-test"
@@ -327,8 +340,8 @@ class TestIntegration:
         for model in OPENAI_MODELS:
             assert isinstance(model, str)
             assert len(model) > 0
-            # Most OpenAI models contain "gpt" or "text"
-            assert any(substr in model.lower() for substr in ["gpt", "text", "embedding"])
+            # OpenAI models contain "gpt", "text", "embedding", or reasoning prefixes like "o3-", "o4-"
+            assert any(substr in model.lower() for substr in ["gpt", "text", "embedding", "o3-", "o4-", "o1-"])
 
 
 if __name__ == "__main__":

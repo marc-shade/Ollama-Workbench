@@ -348,9 +348,9 @@ class TestStreamlitInterface:
             mock_st.warning = Mock()
             mock_st.rerun = Mock()
             mock_st.file_uploader = Mock(return_value=None)
-            mock_st.selectbox = Mock()
-            mock_st.slider = Mock()
-            mock_st.checkbox = Mock()
+            mock_st.selectbox = Mock(return_value=None)
+            mock_st.slider = Mock(return_value=20)
+            mock_st.checkbox = Mock(return_value=True)
             mock_st.subheader = Mock()
             mock_st.download_button = Mock()
             mock_st.session_state = {}
@@ -447,18 +447,24 @@ class TestStreamlitInterface:
     @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
     @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.txt'])
     @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
-    def test_files_tab_edit_file(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
+    @patch('ollama_workbench.ui.file_management.os.remove')
+    def test_files_tab_edit_file(self, mock_remove, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test editing a file"""
         from ollama_workbench.ui.file_management import files_tab
-        
+
         # Mock file edit button being clicked
         mock_streamlit.session_state = {'edit_test.txt': True}
         mock_streamlit.text_area.return_value = "Modified content"
-        mock_streamlit.button.return_value = True  # Save button clicked
-        
+        # Only save button should trigger
+        def button_side_effect(*args, **kwargs):
+            if args and "Save Changes" in str(args[0]):
+                return True
+            return False
+        mock_streamlit.button.side_effect = button_side_effect
+
         with patch('builtins.open', mock_open(read_data="Original content")) as mock_file:
             files_tab()
-        
+
         # Should read and write file
         assert mock_file.call_count >= 2  # At least read and write
         mock_streamlit.success.assert_called()
@@ -503,20 +509,21 @@ class TestStreamlitInterface:
     @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
     @patch('ollama_workbench.ui.file_management.os.listdir', return_value=[])
     @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
-    def test_files_tab_file_upload(self, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
+    @patch('ollama_workbench.ui.file_management.os.path.realpath', side_effect=lambda p: os.path.abspath(p))
+    def test_files_tab_file_upload(self, mock_realpath, mock_isfile, mock_listdir, mock_exists, mock_streamlit):
         """Test file upload functionality"""
         from ollama_workbench.ui.file_management import files_tab
-        
+
         # Mock file upload
         mock_uploaded_file = Mock()
         mock_uploaded_file.name = "uploaded.txt"
         mock_uploaded_file.getbuffer.return_value = b"Uploaded content"
         mock_streamlit.file_uploader.return_value = mock_uploaded_file
-        
+
         with patch('builtins.open', mock_open()) as mock_file:
             files_tab()
-        
-        # Should save uploaded file
+
+        # Should save uploaded file (os.path.basename is applied to the name)
         mock_file.assert_called_with('files/uploaded.txt', 'wb')
         mock_file().write.assert_called_with(b"Uploaded content")
         mock_streamlit.success.assert_called()
@@ -526,20 +533,29 @@ class TestStreamlitInterface:
     @patch('ollama_workbench.ui.file_management.os.listdir', return_value=['test.txt', 'doc.md'])
     @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
     @patch('ollama_workbench.ui.file_management.split_file')
-    def test_files_tab_file_splitting(self, mock_split_file, mock_isfile, mock_listdir, 
+    @patch('ollama_workbench.ui.file_management.os.remove')
+    def test_files_tab_file_splitting(self, mock_remove, mock_split_file, mock_isfile, mock_listdir,
                                      mock_exists, mock_streamlit):
         """Test file splitting functionality"""
         from ollama_workbench.ui.file_management import files_tab
-        
+
         mock_streamlit.selectbox.return_value = "test.txt"
         mock_streamlit.slider.return_value = 5  # 5MB
         mock_streamlit.checkbox.return_value = True
-        mock_streamlit.button.return_value = True  # Split button clicked
-        
+        # Only the split button should trigger; use side_effect to control
+        # Buttons are called for: per-file view/edit/delete (2 files x ~3 buttons = ~6),
+        # then per-file save (skipped), then split button
+        def button_side_effect(*args, **kwargs):
+            if args and "Split File" in str(args[0]):
+                return True
+            return False
+        mock_streamlit.button.side_effect = button_side_effect
+
         mock_split_file.return_value = ["chunk1.txt", "chunk2.txt"]
-        
+        mock_streamlit.file_uploader.return_value = None
+
         files_tab()
-        
+
         # Should call split_file with correct parameters
         mock_split_file.assert_called_once_with('files/test.txt', 5*1024*1024, True)
         mock_streamlit.success.assert_called()
@@ -548,16 +564,21 @@ class TestStreamlitInterface:
     @patch('ollama_workbench.ui.file_management.os.path.exists', return_value=True)
     @patch('ollama_workbench.ui.file_management.os.listdir', return_value=[])
     @patch('ollama_workbench.ui.file_management.os.path.isfile', return_value=True)
-    def test_files_tab_split_no_file_selected(self, mock_isfile, mock_listdir, 
+    def test_files_tab_split_no_file_selected(self, mock_isfile, mock_listdir,
                                              mock_exists, mock_streamlit):
         """Test file splitting with no file selected"""
         from ollama_workbench.ui.file_management import files_tab
-        
+
         mock_streamlit.selectbox.return_value = None
-        mock_streamlit.button.return_value = True  # Split button clicked
-        
+        # Only the split button should trigger
+        def button_side_effect(*args, **kwargs):
+            if args and "Split File" in str(args[0]):
+                return True
+            return False
+        mock_streamlit.button.side_effect = button_side_effect
+
         files_tab()
-        
+
         # Should show warning
         mock_streamlit.warning.assert_called_with("Please select a file to split.")
 
@@ -571,7 +592,7 @@ class TestFileOperationErrors:
     def test_files_tab_view_unicode_error(self, mock_isfile, mock_listdir, mock_exists):
         """Test viewing file with unicode decode error"""
         from ollama_workbench.ui.file_management import files_tab
-        
+
         with patch('ollama_workbench.ui.file_management.st') as mock_st:
             mock_st.title = Mock()
             mock_st.write = Mock()
@@ -579,15 +600,15 @@ class TestFileOperationErrors:
             mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock(), Mock()])
             mock_st.error = Mock()
             mock_st.file_uploader = Mock(return_value=None)
-            mock_st.selectbox = Mock()
-            mock_st.slider = Mock()
-            mock_st.checkbox = Mock()
+            mock_st.selectbox = Mock(return_value=None)
+            mock_st.slider = Mock(return_value=20)
+            mock_st.checkbox = Mock(return_value=True)
             mock_st.subheader = Mock()
             mock_st.session_state = {'view_corrupted.txt': True}
-            
+
             with patch('builtins.open', side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")):
                 files_tab()
-            
+
             mock_st.error.assert_called()
             error_message = mock_st.error.call_args[0][0]
             assert "Unable to decode file" in error_message
