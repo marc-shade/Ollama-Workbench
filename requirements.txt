@@ -2,7 +2,9 @@
 # Generated and cleaned for production use
 
 # Core Dependencies
-streamlit>=1.47.1
+# <1.59: streamlit 1.59+ requires a starlette newer than fastapi 0.115's
+# pin allows (ImportError on DEFAULT_EXCLUDED_CONTENT_TYPES)
+streamlit>=1.47.1,<1.59
 ollama>=0.5.1
 
 # External AI Providers

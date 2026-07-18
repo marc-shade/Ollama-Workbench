@@ -1,0 +1,27 @@
+# Ollama Workbench theme (Streamlit >= 1.47)
+# All widget styling flows from here; ui/styles.py only adds layout tweaks
+# that the theme system cannot express.
+
+[theme]
+base = "dark"
+primaryColor = "#E85A1A"
+backgroundColor = "#101418"
+secondaryBackgroundColor = "#1A2027"
+textColor = "#E8EAED"
+linkColor = "#FF8A50"
+borderColor = "#2A323C"
+showWidgetBorder = true
+baseRadius = "0.75rem"
+buttonRadius = "0.5rem"
+codeBackgroundColor = "#161C23"
+font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+baseFontSize = 15
+chartCategoricalColors = ["#E85A1A", "#4C9AFF", "#57D9A3", "#F7C948", "#B37FEB", "#FF7A9E"]
+
+[theme.sidebar]
+backgroundColor = "#0B0F13"
+secondaryBackgroundColor = "#161C23"
+borderColor = "#242C36"
+
+[server]
+headless = true
