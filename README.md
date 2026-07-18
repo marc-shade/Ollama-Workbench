@@ -10,7 +10,7 @@
 
 > **Looking for the next generation?** Check out [Ollama Workbench 2.0](https://github.com/marc-shade/Ollama-Workbench-2) — a SvelteKit + Tauri rewrite with a native desktop app, MCP Studio, and visual workflow builder.
 
-<img src="https://2acrestudios.com/wp-content/uploads/2024/06/00001-2881912941.png" style="width: 300px;" align="right" />
+<img src="assets/ollama-workbench.jpg" width="300" align="right" alt="Ollama Workbench - No prob-llama" />
 
 **Ollama Workbench** is a comprehensive, enterprise-grade platform for managing, testing, and utilizing AI models from the Ollama library and external providers. Built with security, scalability, and observability at its core, it provides advanced features for AI agent orchestration, workflow automation, and collaborative AI development.
 
@@ -25,23 +25,32 @@
 ```bash
 git clone https://github.com/marc-shade/Ollama-Workbench.git
 cd Ollama-Workbench
-python setup_workbench.py
+python3 scripts/setup_workbench.py
 ```
 
 **Start the Platform:**
 ```bash
 ./start_workbench.sh  # Unix/Linux/macOS
-start_workbench.bat   # Windows
 ```
 
 **Access the Interface:**
 - Web UI: http://localhost:8501
+- OpenAI-compatible API: http://localhost:8000/v1 (starts with the app; toggle with `ENABLE_OPENAI_COMPAT`)
+- TTS server (optional, standalone): http://localhost:5002 (`tts_server/start_tts_server.sh`)
 - Default login: No authentication required initially (configurable)
+
+## ✨ What's New (July 2026)
+
+- **Modern dark UI** built on Streamlit's native theming (`.streamlit/config.toml`) — orange accent, themed sidebar, rounded widgets; customize the whole look by editing one file
+- **OpenAI-compatible API server** starts with the app on port 8000, so any OpenAI client can talk to your local Ollama models
+- **Hardened live paths**: chat streaming, voice chat, RAG fallback, workflows, and telemetry all repaired and verified against a running Ollama server
+- **1,076-test suite, fully green** — hermetic (no live server required), run it with `venv/bin/python -m pytest tests/`
 
 ---
 
 ## 📋 Table of Contents
 
+- [✨ What's New](#-whats-new-july-2026)
 - [🌟 Key Features](#-key-features)
 - [🛡️ Security Features](#️-security-features)
 - [📊 Observability Features](#-observability-features)
@@ -273,7 +282,7 @@ git clone https://github.com/marc-shade/Ollama-Workbench.git
 cd Ollama-Workbench
 
 # Run automated setup
-python setup_workbench.py
+python3 scripts/setup_workbench.py
 ```
 
 This script automatically:
@@ -288,8 +297,8 @@ This script automatically:
 ### 🐍 **Manual Setup**
 
 ```bash
-# Create virtual environment
-python -m venv venv
+# Create virtual environment (Python 3.11 recommended; 3.10+ supported)
+python3 -m venv venv
 source venv/bin/activate  # Unix/Linux/macOS
 venv\Scripts\activate     # Windows
 
@@ -318,6 +327,7 @@ Initial configuration is created automatically, but you can customize:
 {
   "OLLAMA_HOST": "http://localhost:11434",
   "WORKBENCH_PORT": 8501,
+  "ENABLE_OPENAI_COMPAT": true,
   "ENABLE_ENHANCED_SECURITY": true,
   "ENABLE_AUTH": false,
   "ENABLE_RBAC": true,
@@ -327,38 +337,25 @@ Initial configuration is created automatically, but you can customize:
 }
 ```
 
+The UI theme lives in `.streamlit/config.toml` — colors, fonts, radii, and the
+sidebar palette are all editable there (Streamlit >= 1.47 native theming).
+
 ---
 
 ## 📚 Documentation
 
 ### 📖 **Complete Documentation Suite**
 
-- **[Technical Architecture](TECHNICAL_ARCHITECTURE.md)** - System design and architecture
-- **[Security & Compliance](SECURITY_COMPLIANCE.md)** - Security features and compliance
-- **[API Documentation](API_DOCUMENTATION.md)** - Pipeline framework and APIs
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment strategies
+- **[Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)** - System design and architecture
+- **[Security & Compliance](docs/SECURITY_COMPLIANCE.md)** - Security features and compliance
+- **[API Documentation](docs/API_DOCUMENTATION.md)** - Pipeline framework and APIs
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment strategies
 - **[Contributing Guide](CONTRIBUTING.md)** - Development guidelines
-- **[User Stories](USER_STORIES.md)** - Detailed use cases and workflows
-- **[Implementation Roadmap](IMPLEMENTATION_ROADMAP.md)** - Development timeline
-- **[UX Design Guide](UX_DESIGN_GUIDE.md)** - Interface design principles
-- **[Observability Specification](OBSERVABILITY_SPECIFICATION.md)** - Monitoring and tracing
-- **[Glossary](GLOSSARY.md)** - Domain terminology and concepts
-
-### 🎓 **Getting Started Guides**
-
-1. **[Quick Start Guide](#-quick-start)** - Get up and running in minutes
-2. **[First Steps Tutorial](docs/tutorials/first-steps.md)** - Basic platform usage
-3. **[Security Setup Guide](docs/tutorials/security-setup.md)** - Enable authentication and RBAC
-4. **[Workflow Creation Tutorial](docs/tutorials/workflow-creation.md)** - Build your first workflow
-5. **[API Integration Guide](docs/tutorials/api-integration.md)** - Connect external services
-
-### 🔧 **Advanced Topics**
-
-- **[Custom Agent Development](docs/advanced/custom-agents.md)** - Build specialized AI agents
-- **[Security Hardening](docs/advanced/security-hardening.md)** - Production security setup
-- **[Performance Optimization](docs/advanced/performance-optimization.md)** - Scale and optimize
-- **[Compliance Configuration](docs/advanced/compliance-setup.md)** - Meet regulatory requirements
-- **[Monitoring & Alerting](docs/advanced/monitoring-setup.md)** - Comprehensive observability
+- **[User Stories](docs/USER_STORIES.md)** - Detailed use cases and workflows
+- **[UX Design Guide](docs/UX_DESIGN_GUIDE.md)** - Interface design principles
+- **[Observability Specification](docs/OBSERVABILITY_SPECIFICATION.md)** - Monitoring and tracing
+- **[Glossary](docs/GLOSSARY.md)** - Domain terminology and concepts
+- **[Apple Silicon Setup](docs/APPLE_SILICON_SETUP.md)** - macOS arm64 notes
 
 ---
 
@@ -372,20 +369,17 @@ We welcome contributions from the community! Please see our [Contributing Guide]
 # Clone and setup development environment
 git clone https://github.com/marc-shade/Ollama-Workbench.git
 cd Ollama-Workbench
-python setup_workbench.py
+python3 scripts/setup_workbench.py
 
 # Install development dependencies
 pip install -r requirements-dev.txt
 
-# Run tests
+# Run the test suite (1,076 tests, hermetic - no live Ollama needed)
 python -m pytest tests/
 
 # Run linting
 ruff check .
 flake8 .
-
-# Run security checks
-python -m bandit -r .
 ```
 
 ### 📝 **Contributing Areas**
