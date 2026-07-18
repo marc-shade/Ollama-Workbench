@@ -164,6 +164,10 @@ class TestModelOperations:
     @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
     def test_get_available_models_with_client(self, mock_get_client):
         """Test getting models using client"""
+        # Clear the st.cache_data cache: other test files may have populated
+        # it with live-server results within its 5-second TTL
+        get_available_models.clear()
+
         mock_client = Mock()
         mock_client.list.return_value = {
             "models": [

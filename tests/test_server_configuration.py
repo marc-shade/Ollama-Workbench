@@ -50,9 +50,14 @@ class TestDefaultConfiguration:
         
         mock_system.return_value = "Windows"
         mock_environ.__getitem__.return_value = "C:\\Users\\test"
-        
-        result = get_default_model_dir()
-        
+
+        # os.path.join is patched so the Windows branch is testable on POSIX
+        # hosts, where the real join would use forward slashes.
+        with patch('ollama_workbench.server.server_configuration.os.path.join') as mock_join:
+            mock_join.return_value = "C:\\Users\\test\\.ollama\\models"
+            result = get_default_model_dir()
+
+        mock_join.assert_called_once_with("C:\\Users\\test", ".ollama", "models")
         assert result == "C:\\Users\\test\\.ollama\\models"
     
     @patch('ollama_workbench.server.server_configuration.platform.system')
@@ -290,11 +295,15 @@ class TestServerControl:
         from ollama_workbench.server.server_configuration import start_server
         
         mock_system.return_value = "Windows"
-        
-        start_server()
-        
+
+        # subprocess.CREATE_NEW_PROCESS_GROUP only exists on Windows (value
+        # 0x200); inject it so the Windows branch is testable on POSIX hosts.
+        with patch('ollama_workbench.server.server_configuration.subprocess.CREATE_NEW_PROCESS_GROUP',
+                   0x200, create=True):
+            start_server()
+
         mock_popen.assert_called_once_with(
-            ["ollama", "serve"], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+            ["ollama", "serve"], creationflags=0x200
         )
         mock_st.success.assert_called_once_with("Ollama server has been started.")
     
@@ -396,9 +405,13 @@ class TestServerSettings:
         
         with patch('builtins.open', mock_open()) as mock_file:
             with patch('ollama_workbench.server.server_configuration.json.dump') as mock_json_dump:
-                with patch('ollama_workbench.server.server_configuration.os.path.join') as mock_join:
+                with patch('ollama_workbench.server.server_configuration.os.path.join') as mock_join, \
+                     patch('ollama_workbench.server.server_configuration.os.path.dirname',
+                           return_value="C:\\Users\\test\\.ollama"):
+                    # dirname is patched because the real POSIX dirname cannot
+                    # split the mocked backslash path.
                     mock_join.return_value = "C:\\Users\\test\\.ollama\\config.json"
-                    
+
                     apply_server_settings(
                         "localhost:11434",
                         "*",
@@ -603,7 +616,7 @@ class TestStreamlitInterface:
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
-        mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock()])
+        mock_st.columns = Mock(side_effect=lambda n: [MagicMock() for _ in range(n)])
         mock_st.button = Mock(return_value=False)
         mock_st.info = Mock()
         
@@ -642,7 +655,7 @@ class TestStreamlitInterface:
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
-        mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock()])
+        mock_st.columns = Mock(side_effect=lambda n: [MagicMock() for _ in range(n)])
         mock_st.button = Mock(return_value=False)
         mock_st.info = Mock()
         
@@ -681,7 +694,7 @@ class TestStreamlitInterface:
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
-        mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock()])
+        mock_st.columns = Mock(side_effect=lambda n: [MagicMock() for _ in range(n)])
         
         # Mock "Apply Settings" button being clicked
         mock_st.button = Mock(side_effect=[True, False, False])  # Apply button clicked
@@ -723,7 +736,7 @@ class TestStreamlitInterface:
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
-        mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock()])
+        mock_st.columns = Mock(side_effect=lambda n: [MagicMock() for _ in range(n)])
         
         # Mock "Stop Server" button being clicked
         mock_st.button = Mock(side_effect=[False, True, False])  # Stop button clicked
@@ -763,7 +776,7 @@ class TestStreamlitInterface:
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
-        mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock()])
+        mock_st.columns = Mock(side_effect=lambda n: [MagicMock() for _ in range(n)])
         
         # Mock "Start Server" button being clicked
         mock_st.button = Mock(side_effect=[False, True, False])  # Start button clicked
@@ -806,7 +819,7 @@ class TestStreamlitInterface:
         mock_st.subheader = Mock()
         mock_st.text_input = Mock(side_effect=["127.0.0.1", "127.0.0.1, 0.0.0.0", "/models", "5m"])
         mock_st.number_input = Mock(side_effect=[3, 4, 512])
-        mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock()])
+        mock_st.columns = Mock(side_effect=lambda n: [MagicMock() for _ in range(n)])
         
         # Mock "Restart Server" button being clicked
         mock_st.button = Mock(side_effect=[False, False, True])  # Restart button clicked

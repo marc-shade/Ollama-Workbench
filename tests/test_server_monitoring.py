@@ -251,12 +251,12 @@ class TestResourceUsageMonitoring:
         mock_process_iter.return_value = [mock_other_process]
         
         result = get_ollama_resource_usage()
-        
+
         assert result["status"] == "Not Running"
-        assert result["cpu_usage"] == "0%"
-        assert result["memory_usage"] == "0%"
+        assert result["cpu_usage"] == "0.00%"
+        assert result["memory_usage"] == "0.00%"
         assert result["gpu_usage"] == "N/A"
-    
+
     @patch('ollama_workbench.server.server_monitoring.psutil.process_iter')
     def test_get_ollama_resource_usage_multiple_processes(self, mock_process_iter):
         """Test resource usage with multiple processes named ollama"""
@@ -290,10 +290,10 @@ class TestResourceUsageMonitoring:
         
         # Should handle exception gracefully
         result = get_ollama_resource_usage()
-        
+
         assert result["status"] == "Not Running"
-        assert result["cpu_usage"] == "0%"
-        assert result["memory_usage"] == "0%"
+        assert result["cpu_usage"] == "0.00%"
+        assert result["memory_usage"] == "0.00%"
         assert result["gpu_usage"] == "N/A"
     
     @patch('ollama_workbench.server.server_monitoring.psutil.process_iter')
@@ -311,10 +311,10 @@ class TestResourceUsageMonitoring:
         
         # Should handle exception gracefully
         result = get_ollama_resource_usage()
-        
+
         assert result["status"] == "Not Running"
-        assert result["cpu_usage"] == "0%"
-        assert result["memory_usage"] == "0%"
+        assert result["cpu_usage"] == "0.00%"
+        assert result["memory_usage"] == "0.00%"
 
 
 class TestStreamlitInterface:
@@ -699,8 +699,8 @@ class TestErrorHandling:
         
         # Should handle permission error gracefully
         assert result["status"] == "Not Running"
-        assert result["cpu_usage"] == "0%"
-        assert result["memory_usage"] == "0%"
+        assert result["cpu_usage"] == "0.00%"
+        assert result["memory_usage"] == "0.00%"
     
     @patch('ollama_workbench.server.server_monitoring.os.path.exists')
     @patch('builtins.open', new_callable=mock_open)

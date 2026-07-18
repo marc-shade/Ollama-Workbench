@@ -22,9 +22,9 @@ logger = logging.getLogger('test_semantic_chunking')
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 
-# Create test directory
+# Output directory for the standalone-script plots (created lazily so that
+# importing this module under pytest does not touch the filesystem)
 TEST_DIR = "test_results"
-os.makedirs(TEST_DIR, exist_ok=True)
 
 class DocumentTypes:
     """Enumeration of supported document types."""
@@ -302,8 +302,13 @@ def create_test_document(text: str, doc_type: str = DocumentTypes.TEXT) -> Docum
         doc_type=doc_type
     )
 
-def test_chunking_methods(text: str, doc_type: str = DocumentTypes.TEXT) -> Dict[str, List[Dict[str, Any]]]:
-    """Test different chunking methods on the same document."""
+def run_chunking_methods(text: str, doc_type: str = DocumentTypes.TEXT) -> Dict[str, List[Dict[str, Any]]]:
+    """Run all chunking methods on the same document (standalone-script helper).
+
+    Not named test_* because it takes parameters and needs a live Ollama server;
+    pytest must not collect it. The hermetic pytest tests live in
+    TestDocumentChunker below.
+    """
     document = create_test_document(text, doc_type)
     
     # Create document chunker with default config
@@ -332,6 +337,7 @@ def test_chunking_methods(text: str, doc_type: str = DocumentTypes.TEXT) -> Dict
 
 def compare_chunk_sizes(results: Dict[str, List[Dict[str, Any]]]) -> None:
     """Compare the sizes of chunks created by different methods."""
+    os.makedirs(TEST_DIR, exist_ok=True)
     chunk_sizes = {}
     
     for method, chunks in results.items():
@@ -357,8 +363,13 @@ def compare_chunk_sizes(results: Dict[str, List[Dict[str, Any]]]) -> None:
     plt.savefig(plot_path)
     logger.info(f"Plot saved to {plot_path}")
 
-def test_embedded_similarity(results: Dict[str, List[Dict[str, Any]]]) -> None:
-    """Test the semantic coherence of chunks by calculating similarity between consecutive chunks."""
+def analyze_embedded_similarity(results: Dict[str, List[Dict[str, Any]]]) -> None:
+    """Analyze the semantic coherence of chunks by calculating similarity between consecutive chunks.
+
+    Standalone-script helper (needs a live Ollama server); not named test_* so
+    pytest does not collect it.
+    """
+    os.makedirs(TEST_DIR, exist_ok=True)
     # Try to get embeddings from Ollama
     try:
         model = "nomic-embed-text"
@@ -411,6 +422,111 @@ def test_embedded_similarity(results: Dict[str, List[Dict[str, Any]]]) -> None:
         
     except Exception as e:
         logger.error(f"Error in similarity analysis: {str(e)}")
+
+
+class TestDocumentChunker:
+    """Hermetic pytest tests for the standalone DocumentChunker.
+
+    ollama.embeddings is always mocked - these tests must pass with no Ollama
+    server running.
+    """
+
+    def test_fixed_chunking_single_chunk_when_text_fits(self):
+        chunker = DocumentChunker({"method": "fixed", "size": 50, "overlap": 10,
+                                   "unit": "characters", "respect_boundaries": True})
+        doc = create_test_document("One two three. Four five six. Seven eight nine.")
+
+        chunks = chunker.chunk_document(doc)
+
+        assert [c["content"] for c in chunks] == [
+            "One two three. Four five six. Seven eight nine."
+        ]
+
+    def test_fixed_chunking_splits_at_size_and_carries_word_overlap(self):
+        chunker = DocumentChunker({"method": "fixed", "size": 20, "overlap": 10,
+                                   "unit": "characters", "respect_boundaries": True})
+        doc = create_test_document("One two three. Four five six. Seven eight nine.")
+
+        chunks = chunker.chunk_document(doc)
+
+        # overlap=10 chars ~ 2 words, so each chunk repeats the previous tail
+        assert [c["content"] for c in chunks] == [
+            "One two three.",
+            "two three. Four five six.",
+            "five six. Seven eight nine.",
+        ]
+
+    def test_sliding_window_chunking_steps_by_size_minus_overlap(self):
+        chunker = DocumentChunker({"method": "sliding", "size": 10, "overlap": 4})
+        doc = create_test_document("abcdefghijklmnopqrst")
+
+        chunks = chunker.chunk_document(doc)
+
+        assert [c["content"] for c in chunks] == [
+            "abcdefghij", "ghijklmnop", "mnopqrst", "st"
+        ]
+
+    def test_paragraph_chunking_flushes_at_size_limit(self):
+        chunker = DocumentChunker({"method": "paragraph", "size": 20})
+        doc = create_test_document(
+            "alpha alpha alpha\n\nbeta beta beta\n\ngamma gamma"
+        )
+
+        chunks = chunker.chunk_document(doc)
+
+        assert [c["content"] for c in chunks] == [
+            "alpha alpha alpha", "beta beta beta", "gamma gamma"
+        ]
+
+    def test_chunk_document_attaches_metadata(self):
+        chunker = DocumentChunker({"method": "paragraph", "size": 20})
+        doc = create_test_document("alpha alpha alpha\n\nbeta beta beta")
+
+        chunks = chunker.chunk_document(doc)
+
+        assert len(chunks) == 2
+        for i, chunk in enumerate(chunks):
+            assert chunk["doc_id"] == doc.doc_id
+            assert chunk["chunk_id"] == f"{doc.doc_id}-{i}"
+            assert chunk["document_title"] == doc.title
+            assert chunk["position"] == i
+
+    def test_semantic_chunking_merges_similar_paragraphs(self):
+        from unittest.mock import patch
+
+        paragraphs = ["cats are great", "cats are wonderful", "quantum physics"]
+        doc = create_test_document("\n\n".join(paragraphs))
+        chunker = DocumentChunker({"method": "semantic", "size": 1000,
+                                   "overlap": 200, "respect_boundaries": True})
+
+        fake_embeddings = [
+            {"embedding": [1.0, 0.0]},
+            {"embedding": [1.0, 0.0]},
+            {"embedding": [0.0, 1.0]},
+        ]
+        with patch("ollama.embeddings", side_effect=fake_embeddings) as mock_emb:
+            chunks = chunker.chunk_document(doc)
+
+        assert mock_emb.call_count == 3
+        assert [c["content"] for c in chunks] == [
+            "cats are great\n\ncats are wonderful",
+            "quantum physics",
+        ]
+
+    def test_semantic_chunking_keeps_all_content_when_embeddings_fail(self):
+        from unittest.mock import patch
+
+        paragraphs = ["first topic", "second topic", "third topic"]
+        doc = create_test_document("\n\n".join(paragraphs))
+        chunker = DocumentChunker({"method": "semantic", "size": 1000})
+
+        with patch("ollama.embeddings", side_effect=Exception("ollama unavailable")):
+            chunks = chunker.chunk_document(doc)
+
+        # Failed embeddings become zero vectors (similarity 0), so nothing
+        # merges - but no paragraph may be lost
+        assert [c["content"] for c in chunks] == paragraphs
+
 
 def main():
     """Run tests with different document types."""
@@ -465,9 +581,9 @@ def main():
     
     Machine learning continues to evolve rapidly, with new techniques and applications emerging regularly. As datasets grow larger and computing power increases, the potential applications of machine learning will continue to expand across industries.
     """
-    coherent_results = test_chunking_methods(coherent_text, DocumentTypes.MARKDOWN)
+    coherent_results = run_chunking_methods(coherent_text, DocumentTypes.MARKDOWN)
     compare_chunk_sizes(coherent_results)
-    test_embedded_similarity(coherent_results)
+    analyze_embedded_similarity(coherent_results)
     
     # Test with disjointed text - paragraphs on different topics
     logger.info("\nTesting with disjointed text document...")
@@ -496,9 +612,9 @@ def main():
     
     Classical music is art music produced or rooted in the traditions of Western culture, including both liturgical (religious) and secular music. While a more precise term is also used to refer to the period from 1750 to 1820 (the Classical period), this article is about the broad span of time from before the 6th century AD to the present day.
     """
-    disjointed_results = test_chunking_methods(disjointed_text, DocumentTypes.MARKDOWN)
+    disjointed_results = run_chunking_methods(disjointed_text, DocumentTypes.MARKDOWN)
     compare_chunk_sizes(disjointed_results)
-    test_embedded_similarity(disjointed_results)
+    analyze_embedded_similarity(disjointed_results)
     
     # Test with code document
     logger.info("\nTesting with code document...")
@@ -629,9 +745,9 @@ def main():
         
         return arr
     """
-    code_results = test_chunking_methods(code_text, DocumentTypes.CODE)
+    code_results = run_chunking_methods(code_text, DocumentTypes.CODE)
     compare_chunk_sizes(code_results)
-    test_embedded_similarity(code_results)
+    analyze_embedded_similarity(code_results)
     
     logger.info("All tests completed.")
 

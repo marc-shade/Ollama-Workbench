@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import base64
+import requests
 from unittest.mock import Mock, patch, MagicMock, call, mock_open
 from pathlib import Path
 import sys
@@ -148,17 +149,26 @@ class TestEdge:
 class TestUtilityFunctions:
     """Test utility functions"""
     
-    @patch('ollama_workbench.workflows.nodes.get_available_models')
-    def test_get_all_models(self, mock_available):
-        """Test get_all_models function"""
-        from ollama_workbench.workflows.nodes import get_all_models, OPENAI_MODELS, GROQ_MODELS
-        
+    @patch('ollama_workbench.providers.ollama_utils.get_mistral_models')
+    @patch('ollama_workbench.providers.ollama_utils.get_openai_models')
+    @patch('ollama_workbench.providers.ollama_utils.get_groq_models')
+    @patch('ollama_workbench.providers.ollama_utils.get_available_models')
+    def test_get_all_models(self, mock_available, mock_groq, mock_openai, mock_mistral):
+        """Test get_all_models function.
+
+        get_all_models lives in providers.ollama_utils (nodes re-exports it)
+        and aggregates ollama + groq + openai + mistral models, in that order.
+        """
+        from ollama_workbench.workflows.nodes import get_all_models
+
         mock_available.return_value = ["llama3", "mistral"]
-        
+        mock_groq.return_value = ["groq-model"]
+        mock_openai.return_value = ["gpt-4"]
+        mock_mistral.return_value = ["mistral-large"]
+
         result = get_all_models()
-        
-        expected = ["llama3", "mistral"] + OPENAI_MODELS + GROQ_MODELS
-        assert result == expected
+
+        assert result == ["llama3", "mistral", "groq-model", "gpt-4", "mistral-large"]
     
     def test_call_api_and_decode_response_success(self):
         """Test successful API call and response decoding"""
@@ -269,11 +279,12 @@ class TestWorkflowGeneration:
             "edges": []
         }
         
-        with patch('ollama_workbench.workflows.nodes.GROQ_MODELS', ["mixtral-8x7b"]):
+        # generate_workflow routes via get_groq_models(), not GROQ_MODELS
+        with patch('ollama_workbench.workflows.nodes.get_groq_models', return_value=["mixtral-8x7b"]):
             with patch('ollama_workbench.workflows.nodes.Node.from_dict') as mock_node:
                 with patch('ollama_workbench.workflows.nodes.Edge.from_dict') as mock_edge:
                     mock_node.return_value = Mock()
-                    
+
                     nodes, edges = generate_workflow("Generate text", "mixtral-8x7b")
         
         # Verify API was called
@@ -289,7 +300,7 @@ class TestWorkflowGeneration:
         
         # Setup mocks
         mock_keys.return_value = {}
-        mock_ollama.return_value = ('{"nodes": [], "edges": []}', None, None, None)
+        mock_ollama.return_value = ('{"nodes": [], "edges": []}', None, None, None, {})
         mock_parse.return_value = {
             "nodes": [{"id": "1", "type": "Processing", "data": {"content": "Process"}}],
             "edges": []
@@ -474,9 +485,10 @@ class TestNodeHandlers:
         """Test input node with file type"""
         from ollama_workbench.workflows.nodes import handle_input_node, Node
         
-        mock_file = mock_open()
+        # Emulate a Streamlit UploadedFile, which exposes getvalue() -> bytes
+        mock_file = Mock()
         mock_file.getvalue.return_value = b"File content"
-        
+
         node = Node("1", "Input", {
             "input_type": "File",
             "file_upload": mock_file
@@ -521,8 +533,10 @@ class TestNodeHandlers:
         """Test input node with API error"""
         from ollama_workbench.workflows.nodes import handle_input_node, Node
         
-        mock_get.side_effect = Exception("Connection error")
-        
+        # requests raises RequestException subclasses for network failures,
+        # which is what the handler catches
+        mock_get.side_effect = requests.RequestException("Connection error")
+
         node = Node("1", "Input", {
             "input_type": "API",
             "api_endpoint": "https://api.example.com/data"
@@ -566,7 +580,7 @@ class TestNodeHandlers:
         
         # Setup mocks
         mock_keys.return_value = {}
-        mock_ollama.return_value = ("LLM response", None, None, None)
+        mock_ollama.return_value = ("LLM response", None, None, None, {})
         mock_construct.return_value = "Complete prompt"
         
         node = Node("2", "LLM", {
@@ -741,8 +755,8 @@ class TestDataRetrievalNode:
         """Test data retrieval node with API error"""
         from ollama_workbench.workflows.nodes import handle_data_retrieval_node, Node, Edge
         
-        mock_get.side_effect = Exception("Network error")
-        
+        mock_get.side_effect = requests.RequestException("Network error")
+
         node = Node("2", "DataRetrieval", {
             "retrieval_type": "API",
             "api_endpoint": "https://api.example.com/data",
@@ -961,8 +975,8 @@ class TestIntegrationNode:
         """Test integration node with webhook error"""
         from ollama_workbench.workflows.nodes import handle_integration_node, Node, Edge
         
-        mock_post.side_effect = Exception("Connection failed")
-        
+        mock_post.side_effect = requests.RequestException("Connection failed")
+
         node = Node("2", "Integration", {
             "integration_type": "Webhook",
             "webhook_url": "https://webhook.example.com",

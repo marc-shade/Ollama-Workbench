@@ -126,13 +126,17 @@ class TestDataPersistence:
     @patch('ollama_workbench.workflows.projects.os.makedirs')
     @patch('ollama_workbench.workflows.projects.os.path.exists')
     def test_directory_creation(self, mock_exists, mock_makedirs):
-        """Test projects directory creation"""
-        mock_exists.return_value = False
-        
-        # Import should trigger directory creation
-        import ollama_workbench.workflows.projects as projects
+        """Test projects directory creation.
 
-        
+        The module is already imported by the time this test runs, so a plain
+        re-import would be a no-op; reload it to re-run the import-time check.
+        """
+        mock_exists.return_value = False
+
+        import importlib
+        import ollama_workbench.workflows.projects as projects
+        importlib.reload(projects)
+
         mock_makedirs.assert_called_with('projects')
     
     def test_load_projects_existing_file(self):
@@ -335,16 +339,21 @@ class TestCorpusManagement:
         assert result == ["None", "corpus1", "corpus2"]
         mock_exists.assert_called_with("corpus")
     
+    @patch('ollama_workbench.workflows.projects.os.listdir', return_value=[])
     @patch('ollama_workbench.workflows.projects.os.makedirs')
     @patch('ollama_workbench.workflows.projects.os.path.exists')
-    def test_get_corpus_options_no_directory(self, mock_exists, mock_makedirs):
-        """Test getting corpus options when directory doesn't exist"""
+    def test_get_corpus_options_no_directory(self, mock_exists, mock_makedirs, mock_listdir):
+        """Test getting corpus options when directory doesn't exist.
+
+        listdir must be mocked too: a freshly created corpus dir is empty
+        (and the repo's real corpus/ dir must not leak into the result).
+        """
         from ollama_workbench.workflows.projects import get_corpus_options
-        
+
         mock_exists.return_value = False
-        
+
         result = get_corpus_options()
-        
+
         mock_makedirs.assert_called_with("corpus")
         assert result == ["None"]
     
@@ -412,7 +421,8 @@ class TestAIAgentIntegration:
         mock_groq.return_value = "Groq response"
         mock_agent.return_value = {"Creative": "Be creative"}
         
-        with patch('ollama_workbench.workflows.projects.GROQ_MODELS', ["mixtral-8x7b"]):
+        # ai_agent routes via get_groq_models(), not GROQ_MODELS
+        with patch('ollama_workbench.workflows.projects.get_groq_models', return_value=["mixtral-8x7b"]):
             result = ai_agent(
                 user_input="Creative task",
                 model="mixtral-8x7b",
@@ -715,7 +725,8 @@ class TestProjectManagerAgent:
         mock_st.write = Mock()
         
         # Create agent and generate workflow
-        with patch('ollama_workbench.workflows.projects.GROQ_MODELS', ["mixtral-8x7b"]):
+        # _generate_workflow routes via get_groq_models(), not GROQ_MODELS
+        with patch('ollama_workbench.workflows.projects.get_groq_models', return_value=["mixtral-8x7b"]):
             agent = ProjectManagerAgent("mixtral-8x7b", "Task Planner", 0.6, 3500)
             tasks, agents = agent.generate_workflow("Analyze dataset")
         

@@ -216,50 +216,53 @@ class TestVoiceManagerClass:
     @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
     @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
     @patch('ollama_workbench.chat.voice_utils.gTTS')
-    @patch('tempfile.NamedTemporaryFile')
-    def test_text_to_speech_gtts(self, mock_tempfile, mock_gtts, mock_exists,
+    def test_text_to_speech_gtts(self, mock_gtts, mock_exists,
                                  mock_recognizer, mock_pyaudio, mock_pygame):
         """Test text-to-speech with gTTS"""
         from ollama_workbench.chat.voice_utils import VoiceManager
-        
+
         # Setup mocks
-        mock_file = mock_open()
-        mock_file.name = '/tmp/test.mp3'
-        mock_tempfile.return_value.__enter__.return_value = mock_file
-        
         mock_tts_instance = Mock()
         mock_gtts.return_value = mock_tts_instance
-        
+
         manager = VoiceManager()
-        
+
         # Test TTS
         result = manager.text_to_speech("Hello world")
-        
-        # Verify
+
+        # Verify: with no output_file given, a speech_<ts>.mp3 path is generated
+        # in the temp directory, passed to gTTS.save, and returned.
         mock_gtts.assert_called_once_with(text="Hello world", lang='en', slow=False)
-        mock_tts_instance.save.assert_called_once()
-        assert result == mock_file.name
+        mock_tts_instance.save.assert_called_once_with(result)
+        assert result.startswith(tempfile.gettempdir())
+        assert os.path.basename(result).startswith('speech_')
+        assert result.endswith('.mp3')
     
     @patch('ollama_workbench.chat.voice_utils.pygame.mixer.init')
     @patch('ollama_workbench.chat.voice_utils.pyaudio.PyAudio')
     @patch('ollama_workbench.chat.voice_utils.sr.Recognizer')
     @patch('ollama_workbench.chat.voice_utils.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.voice_utils.pygame.mixer.get_init', return_value=True)
     @patch('ollama_workbench.chat.voice_utils.pygame.mixer.music.load')
     @patch('ollama_workbench.chat.voice_utils.pygame.mixer.music.play')
     @patch('ollama_workbench.chat.voice_utils.pygame.mixer.music.get_busy')
-    @patch('ollama_workbench.chat.voice_utils.time.sleep')
-    def test_play_speech(self, mock_sleep, mock_get_busy, mock_play, mock_load,
+    def test_play_speech(self, mock_get_busy, mock_play, mock_load, mock_get_init,
                         mock_exists, mock_recognizer, mock_pyaudio, mock_pygame):
         """Test play speech functionality"""
         from ollama_workbench.chat.voice_utils import VoiceManager
-        
+
         mock_get_busy.side_effect = [True, False]  # Busy then not busy
-        
+
         manager = VoiceManager()
-        
+
+        # The audio file must "exist" for playback (init above needed it absent
+        # so the manager creates default profiles instead of reading a file)
+        mock_exists.return_value = True
+
         # Test blocking play
-        manager.play_speech('/tmp/audio.mp3', block=True)
-        
+        result = manager.play_speech('/tmp/audio.mp3', block=True)
+
+        assert result is True
         mock_load.assert_called_once_with('/tmp/audio.mp3')
         mock_play.assert_called_once()
         assert mock_get_busy.call_count >= 1
@@ -283,13 +286,16 @@ class TestVoiceManagerClass:
         with patch('threading.Thread') as mock_thread:
             callback = Mock()
             error_callback = Mock()
-            
+
             manager.start_listening(callback, error_callback)
-            
+
             assert manager.is_listening is True
             assert manager.speech_callback == callback
             assert manager.error_callback == error_callback
-            assert mock_thread.call_count == 2  # Two threads created
+            # Recording is driven by the PyAudio stream callback; the only
+            # thread the manager spawns is the audio-queue processor.
+            mock_thread.assert_called_once_with(target=manager._process_audio_queue)
+            mock_thread.return_value.start.assert_called_once()
         
         # Test stop listening
         manager.stop_listening()

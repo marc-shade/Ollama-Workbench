@@ -14,6 +14,24 @@ import pandas as pd
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+class _AttrDict(dict):
+    """Attribute-access dict mirroring Streamlit's session_state (same shape as conftest.AttrDict)."""
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+
 class TestDefaultSchemas:
     """Test default JSON schemas"""
     
@@ -319,8 +337,9 @@ class TestJSONGeneration:
         # Client API fails
         mock_get_client.return_value = None
         
-        # Final fallback succeeds
-        mock_call_endpoint.return_value = ('{"name": "Bob Wilson"}', None, None, None)
+        # Final fallback succeeds (call_ollama_endpoint returns a 5-tuple:
+        # response_text, context, eval_count, eval_duration, metrics_dict)
+        mock_call_endpoint.return_value = ('{"name": "Bob Wilson"}', None, None, None, None)
         
         result = generate_json_from_text("Bob Wilson is a person", schema, "llama3")
         
@@ -413,7 +432,7 @@ class TestStreamlitUI:
             mock_st.markdown = Mock()
             mock_st.expander = Mock()
             mock_st.rerun = Mock()
-            mock_st.session_state = type("AttrDict", (dict,), {"__getattr__": lambda s,k: s[k], "__setattr__": dict.__setitem__, "__delattr__": dict.__delitem__})()
+            mock_st.session_state = _AttrDict()
             yield mock_st
     
     @patch('ollama_workbench.ui.structured_output.get_available_models')
@@ -422,12 +441,19 @@ class TestStreamlitUI:
         from ollama_workbench.ui.structured_output import structured_output_ui
         
         mock_get_models.return_value = ["llama3", "mistral"]
-        mock_streamlit.columns.return_value = [Mock(), Mock()]
+        # Columns are used as context managers; MagicMock supports the protocol.
+        mock_streamlit.columns.return_value = [MagicMock(), MagicMock()]
         mock_streamlit.expander.return_value.__enter__ = Mock()
         mock_streamlit.expander.return_value.__exit__ = Mock()
-        
+        mock_streamlit.selectbox.side_effect = ["person_details", "llama3"]
+        mock_streamlit.text_area.side_effect = [
+            '{"title": "Person Details", "type": "object", "properties": {"name": {"type": "string"}}}',
+            ""  # No input text: generation stays untriggered
+        ]
+        mock_streamlit.button.return_value = False
+
         structured_output_ui()
-        
+
         mock_streamlit.title.assert_called_once_with("🔍 Structured Output Generator")
         mock_get_models.assert_called_once()
     
@@ -442,11 +468,17 @@ class TestStreamlitUI:
         mock_result.stdout = "NAME\nllama3:latest\nmistral:latest\n"
         mock_result.returncode = 0
         mock_subprocess.return_value = mock_result
-        
-        mock_streamlit.columns.return_value = [Mock(), Mock()]
+
+        mock_streamlit.columns.return_value = [MagicMock(), MagicMock()]
         mock_streamlit.expander.return_value.__enter__ = Mock()
         mock_streamlit.expander.return_value.__exit__ = Mock()
-        
+        mock_streamlit.selectbox.side_effect = ["person_details", "llama3:latest"]
+        mock_streamlit.text_area.side_effect = [
+            '{"title": "Person Details", "type": "object", "properties": {"name": {"type": "string"}}}',
+            ""
+        ]
+        mock_streamlit.button.return_value = False
+
         structured_output_ui()
         
         # Should continue with CLI-discovered models
@@ -481,14 +513,16 @@ class TestStreamlitUI:
         mock_generate.return_value = {"name": "Test User", "age": 30}
         
         # Mock UI interactions
-        mock_streamlit.columns.return_value = [Mock(), Mock()]
+        mock_streamlit.columns.return_value = [MagicMock(), MagicMock()]
         mock_streamlit.selectbox.side_effect = ["person_details", "llama3"]
         mock_streamlit.text_area.side_effect = [
-            '{"type": "object", "properties": {"name": {"type": "string"}}}',  # Schema editor
+            '{"title": "Person Details", "type": "object", "properties": {"name": {"type": "string"}}}',  # Schema editor
             "Test user information"  # Input text
         ]
         mock_streamlit.slider.return_value = 0.7
-        mock_streamlit.button.return_value = True  # Generate button clicked
+        # Click only the Generate button; other buttons (Save as Custom Schema,
+        # Copy JSON, View Result) must stay unclicked.
+        mock_streamlit.button.side_effect = lambda label, *a, **k: label == "Generate Structured Output"
         mock_streamlit.radio.return_value = "JSON"
         
         # Mock expander context manager
@@ -521,21 +555,21 @@ class TestStreamlitUI:
         mock_generate.return_value = {"name": "Test User", "age": 30, "address": {"city": "New York"}}
         
         # Mock UI interactions for table format
-        mock_streamlit.columns.return_value = [Mock(), Mock()]
+        mock_streamlit.columns.return_value = [MagicMock(), MagicMock()]
         mock_streamlit.selectbox.side_effect = ["person_details", "llama3"]
         mock_streamlit.text_area.side_effect = [
-            '{"type": "object", "properties": {"name": {"type": "string"}}}',
+            '{"title": "Person Details", "type": "object", "properties": {"name": {"type": "string"}}}',
             "Test user"
         ]
         mock_streamlit.slider.return_value = 0.7
-        mock_streamlit.button.return_value = True
+        mock_streamlit.button.side_effect = lambda label, *a, **k: label == "Generate Structured Output"
         mock_streamlit.radio.return_value = "Table"
-        
-        # Mock session state with result
-        mock_streamlit.session_state = {
+
+        # Mock session state with result (attribute-access dict like st.session_state)
+        mock_streamlit.session_state = _AttrDict({
             "structured_output_result": {"name": "Test User", "age": 30, "address": {"city": "New York"}},
             "structured_output_history": []
-        }
+        })
         
         # Mock expander and spinner
         mock_expander = Mock()
@@ -563,8 +597,8 @@ class TestStreamlitUI:
         
         mock_get_models.return_value = ["llama3"]
         
-        # Mock session state with history
-        mock_streamlit.session_state = {
+        # Mock session state with history (attribute-access dict like st.session_state)
+        mock_streamlit.session_state = _AttrDict({
             "structured_output_result": {"name": "Current User"},
             "structured_output_history": [
                 {
@@ -574,16 +608,17 @@ class TestStreamlitUI:
                     "timestamp": "2024-01-01 12:00:00"
                 }
             ]
-        }
-        
-        mock_streamlit.columns.return_value = [Mock(), Mock()]
+        })
+
+        mock_streamlit.columns.return_value = [MagicMock(), MagicMock()]
         mock_streamlit.selectbox.side_effect = ["person_details", "llama3"]
         mock_streamlit.text_area.side_effect = [
-            '{"type": "object", "properties": {"name": {"type": "string"}}}',
+            '{"title": "Person Details", "type": "object", "properties": {"name": {"type": "string"}}}',
             ""
         ]
         mock_streamlit.slider.return_value = 0.7
-        mock_streamlit.button.side_effect = [False, True]  # Generate=False, View=True
+        # Click only the history View button; Generate and the other buttons stay unclicked.
+        mock_streamlit.button.side_effect = lambda label, *a, **k: label == "View Result"
         mock_streamlit.radio.return_value = "JSON"
         
         # Mock expander context manager
@@ -631,15 +666,15 @@ class TestErrorHandling:
         mock_generate.side_effect = Exception("Generation failed")
         
         # Mock UI state for generation
-        mock_st.columns.return_value = [Mock(), Mock()]
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.side_effect = ["person_details", "llama3"]
         mock_st.text_area.side_effect = [
-            '{"type": "object", "properties": {"name": {"type": "string"}}}',
+            '{"title": "Person Details", "type": "object", "properties": {"name": {"type": "string"}}}',
             "Test text"
         ]
         mock_st.slider.return_value = 0.7
-        mock_st.button.return_value = True
-        mock_st.session_state = type("AttrDict", (dict,), {"__getattr__": lambda s,k: s[k], "__setattr__": dict.__setitem__, "__delattr__": dict.__delitem__})()
+        mock_st.button.side_effect = lambda label, *a, **k: label == "Generate Structured Output"
+        mock_st.session_state = _AttrDict()
         
         # Mock spinner context manager
         mock_spinner = Mock()
@@ -764,11 +799,11 @@ class TestPerformance:
         
         with patch('ollama_workbench.ui.structured_output.st') as mock_st:
             with patch('ollama_workbench.ui.structured_output.get_available_models', return_value=["llama3"]):
-                mock_st.session_state = {
+                mock_st.session_state = _AttrDict({
                     "structured_output_history": large_history,
                     "structured_output_result": {}
-                }
-                mock_st.columns.return_value = [Mock(), Mock()]
+                })
+                mock_st.columns.return_value = [MagicMock(), MagicMock()]
                 mock_st.selectbox.side_effect = ["person_details", "llama3"]
                 mock_st.text_area.side_effect = ['{"type": "object"}', ""]
                 mock_st.slider.return_value = 0.7

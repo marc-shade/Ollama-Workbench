@@ -4,12 +4,21 @@ Test suite for tts_server/app.py - Text-to-Speech server functionality
 
 import pytest
 import json
+import importlib
+import logging
 import os
 import tempfile
 import time
 import io
 from unittest.mock import Mock, patch, MagicMock, mock_open, call
 import sys
+
+from flask import Response
+
+
+def fake_audio_response(*args, **kwargs):
+    """Stand-in for flask.send_file: a real Response so Flask can serve it."""
+    return Response(b"fake audio data", mimetype="audio/mpeg")
 
 # Add the parent directory to the path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -349,7 +358,7 @@ class TestSpeechSynthesis:
         """Test synthesis with cached audio"""
         mock_profiles.get.return_value = {"provider": "gtts", "language": "en"}
         mock_get_cached.return_value = "/tmp/cached_audio.mp3"
-        mock_send_file.return_value = Mock()
+        mock_send_file.side_effect = fake_audio_response
         
         response = client.post('/synthesize', 
                               json={'text': 'Hello world', 'voice': 'default'})
@@ -369,7 +378,7 @@ class TestSpeechSynthesis:
         mock_profiles.get.return_value = {"provider": "gtts", "language": "en"}
         mock_get_cached.return_value = None  # No cached audio
         mock_save_cache.return_value = "/tmp/new_audio.mp3"
-        mock_send_file.return_value = Mock()
+        mock_send_file.side_effect = fake_audio_response
         
         # Mock gTTS
         mock_tts_instance = Mock()
@@ -396,7 +405,7 @@ class TestSpeechSynthesis:
         mock_profiles.get.return_value = {"provider": "unknown", "language": "en"}
         mock_get_cached.return_value = None
         mock_save_cache.return_value = "/tmp/fallback_audio.mp3"
-        mock_send_file.return_value = Mock()
+        mock_send_file.side_effect = fake_audio_response
         
         # Mock gTTS
         mock_tts_instance = Mock()
@@ -449,7 +458,7 @@ class TestSpeechSynthesis:
                     with patch('tts_server.app.send_file') as mock_send_file:
                         mock_get_cached.return_value = None
                         mock_save_cache.return_value = "/tmp/custom_audio.mp3"
-                        mock_send_file.return_value = Mock()
+                        mock_send_file.side_effect = fake_audio_response
                         mock_tts_instance = Mock()
                         mock_gtts.return_value = mock_tts_instance
                         
@@ -552,16 +561,21 @@ class TestOpenAICompatibleAPI:
 class TestLogging:
     """Test logging functionality"""
     
-    @patch('tts_server.app.logging.basicConfig')
-    @patch('tts_server.app.logging.getLogger')
-    def test_logging_configuration(self, mock_get_logger, mock_basic_config):
+    def test_logging_configuration(self):
         """Test logging is configured correctly"""
-        # Import to trigger logging setup
-        import tts_server.app
-        
-        # Verify logging was configured
-        mock_basic_config.assert_called_once()
-        mock_get_logger.assert_called_with('tts_server')
+        # The module is already cached by earlier tests, so reload it to
+        # re-trigger the import-time logging setup with the mocks in place.
+        import tts_server.app as tts_app
+        try:
+            with patch('logging.basicConfig') as mock_basic_config, \
+                 patch('logging.getLogger') as mock_get_logger:
+                importlib.reload(tts_app)
+
+            mock_basic_config.assert_called_once()
+            mock_get_logger.assert_called_with('tts_server')
+        finally:
+            # Restore the real module state for the rest of the suite
+            importlib.reload(tts_app)
     
     @patch('tts_server.app.logger')
     def test_logging_in_error_scenarios(self, mock_logger):
@@ -578,40 +592,52 @@ class TestLogging:
 class TestInitialization:
     """Test application initialization"""
     
-    @patch('tts_server.app.os.makedirs')
-    @patch('tts_server.app.CACHE_DIR')
-    def test_cache_directory_creation(self, mock_cache_dir, mock_makedirs):
+    def test_cache_directory_creation(self):
         """Test cache directory is created on startup"""
-        # Import to trigger initialization
-        import tts_server.app
-        
-        # Cache directory should be created
-        mock_makedirs.assert_called()
-    
-    @patch('tts_server.app.load_voice_profiles')
-    @patch('tts_server.app.clean_cache')
-    def test_startup_initialization(self, mock_clean_cache, mock_load_profiles):
-        """Test startup initialization calls"""
-        # Import to trigger initialization
-        import tts_server.app
-        
-        # Both functions should be called during startup
-        mock_load_profiles.assert_called()
-        mock_clean_cache.assert_called()
-    
-    @patch('tts_server.app.load_voice_profiles')
-    @patch('tts_server.app.logger')
-    def test_initialization_error_handling(self, mock_logger, mock_load_profiles):
-        """Test error handling during initialization"""
-        mock_load_profiles.side_effect = Exception("Initialization error")
-        
-        # Should handle initialization errors gracefully
+        # The module is already cached, so reload it to re-run the
+        # import-time initialization with os.makedirs observable.
+        import tts_server.app as tts_app
         try:
-            import tts_server.app
-        except Exception:
-            pass  # Should not raise unhandled exceptions
-        
-        mock_logger.error.assert_called()
+            with patch('tts_server.app.os.makedirs') as mock_makedirs:
+                importlib.reload(tts_app)
+
+            # Cache directory should be created
+            assert call(tts_app.CACHE_DIR, exist_ok=True) in mock_makedirs.call_args_list
+        finally:
+            importlib.reload(tts_app)
+
+    def test_startup_initialization(self):
+        """Test startup initialization calls"""
+        # Reload the cached module to re-run startup. The startup calls
+        # invoke the function objects defined during the reload itself, so
+        # they cannot be intercepted by patching the module attributes;
+        # verify their observable effects instead.
+        import tts_server.app as tts_app
+        try:
+            with patch('tts_server.app.os.listdir', return_value=[]) as mock_listdir:
+                importlib.reload(tts_app)
+
+            # clean_cache() ran during startup: it listed the cache directory
+            assert call(tts_app.CACHE_DIR) in mock_listdir.call_args_list
+            # load_voice_profiles() ran during startup: profiles are populated
+            assert 'default' in tts_app.VOICE_PROFILES
+        finally:
+            importlib.reload(tts_app)
+
+    def test_initialization_error_handling(self):
+        """Test error handling during initialization"""
+        import tts_server.app as tts_app
+        try:
+            # Make clean_cache() blow up during startup; the module-level
+            # try/except must swallow it, log it, and finish importing.
+            with patch('tts_server.app.os.listdir',
+                       side_effect=OSError("Initialization error")), \
+                 patch.object(logging.getLogger('tts_server'), 'error') as mock_error:
+                importlib.reload(tts_app)  # must not raise
+
+            mock_error.assert_called()
+        finally:
+            importlib.reload(tts_app)
 
 
 class TestThreadSafety:
@@ -705,15 +731,16 @@ class TestIntegration:
         assert hasattr(tts_server.app, 'save_to_cache')
         assert hasattr(tts_server.app, 'clean_cache')
     
-    @patch('tts_server.app.load_voice_profiles')
-    @patch('tts_server.app.clean_cache')
-    def test_flask_app_configuration(self, mock_clean, mock_load):
+    def test_flask_app_configuration(self):
         """Test Flask app is properly configured"""
-        from tts_server.app import app
-        
-        assert app.config.get('TESTING') is not True  # Should be False by default
+        # Earlier fixtures flip TESTING on the shared app object; reload to
+        # get an app with its genuine default configuration.
+        import tts_server.app as tts_app
+        importlib.reload(tts_app)
+
+        assert tts_app.app.config.get('TESTING') is not True  # Should be False by default
         # CORS should be enabled
-        assert hasattr(app, 'after_request')
+        assert hasattr(tts_app.app, 'after_request')
     
     @patch('tts_server.app.get_cached_audio')
     @patch('tts_server.app.save_to_cache')
@@ -733,7 +760,7 @@ class TestIntegration:
         with patch('tts_server.app.send_file') as mock_send_file:
             with patch('tts_server.app.VOICE_PROFILES') as mock_profiles:
                 mock_profiles.get.return_value = {"provider": "gtts", "language": "en"}
-                mock_send_file.return_value = Mock()
+                mock_send_file.side_effect = fake_audio_response
                 
                 response1 = client.post('/synthesize',
                                        json={'text': 'Test integration', 'voice': 'default'})
@@ -747,7 +774,7 @@ class TestIntegration:
         mock_gtts.reset_mock()
         
         with patch('tts_server.app.send_file') as mock_send_file2:
-            mock_send_file2.return_value = Mock()
+            mock_send_file2.side_effect = fake_audio_response
             response2 = client.post('/synthesize',
                                    json={'text': 'Test integration', 'voice': 'default'})
         

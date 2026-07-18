@@ -12,6 +12,17 @@ import streamlit as st
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+class AttrDict(dict):
+    """Minimal stand-in for streamlit's session_state: dict + attribute access."""
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError as exc:
+            raise AttributeError(key) from exc
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 class TestVoiceInterface:
     """Test voice interface UI components"""
     
@@ -71,7 +82,10 @@ class TestVoiceInterface:
         mock_tabs = [MagicMock(), MagicMock()]
         mock_st.tabs.return_value = mock_tabs
         mock_st.selectbox.side_effect = ['test_profile', 'gtts', 'elevenlabs']
-        mock_st.text_input.side_effect = ['TestProfile', 'en', 'test_voice', 'en', 'test_voice']
+        # Call order: language_edit, voice_id_edit, test_text_edit,
+        # profile_name_new, language_new, voice_id_new
+        mock_st.text_input.side_effect = ['en', 'test_voice', 'A test sentence',
+                                          'TestProfile', 'en', 'test_voice']
         mock_st.slider.return_value = 1.0
         mock_st.button.side_effect = [True, False, False, True]  # Delete, Test, Save, Create
         
@@ -103,7 +117,9 @@ class TestVoiceInterface:
         mock_st.selectbox.return_value = 'default'
         mock_st.text_input.return_value = 'Test speech'
         mock_st.slider.return_value = 1.0
-        mock_st.button.side_effect = [True]  # Test Voice button
+        # The Delete button is skipped for the 'default' profile, so the
+        # buttons rendered are: Test Voice, Save Changes, Create Profile
+        mock_st.button.side_effect = [True, False, False]
         
         import ollama_workbench.chat.voice_interface as voice_interface
 
@@ -118,11 +134,11 @@ class TestVoiceInterface:
     def test_voice_input_component_basic(self, mock_st, mock_voice_utils):
         """Test basic voice input component functionality"""
         # Mock session state
-        mock_session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
+        mock_session_state = AttrDict()
         mock_st.session_state = mock_session_state
-        
-        # Mock streamlit components
-        mock_columns = [Mock(), Mock()]
+
+        # Mock streamlit components (columns are used as context managers)
+        mock_columns = [MagicMock(), MagicMock()]
         mock_st.columns.return_value = mock_columns
         mock_st.button.return_value = False
         mock_st.text_input.return_value = ""
@@ -143,11 +159,11 @@ class TestVoiceInterface:
     def test_voice_input_component_start_listening(self, mock_st, mock_voice_utils):
         """Test starting voice input listening"""
         # Mock session state
-        mock_session_state = {'is_listening': False}
+        mock_session_state = AttrDict({'is_listening': False})
         mock_st.session_state = mock_session_state
-        
-        # Mock streamlit components
-        mock_columns = [Mock(), Mock()]
+
+        # Mock streamlit components (columns are used as context managers)
+        mock_columns = [MagicMock(), MagicMock()]
         mock_st.columns.return_value = mock_columns
         mock_st.button.return_value = True  # Button clicked
         mock_st.text_input.return_value = ""
@@ -169,11 +185,11 @@ class TestVoiceInterface:
     def test_voice_input_component_stop_listening(self, mock_st, mock_voice_utils):
         """Test stopping voice input listening"""
         # Mock session state
-        mock_session_state = {'is_listening': True}
+        mock_session_state = AttrDict({'is_listening': True})
         mock_st.session_state = mock_session_state
-        
-        # Mock streamlit components
-        mock_columns = [Mock(), Mock()]
+
+        # Mock streamlit components (columns are used as context managers)
+        mock_columns = [MagicMock(), MagicMock()]
         mock_st.columns.return_value = mock_columns
         mock_st.button.return_value = True  # Button clicked
         mock_st.text_input.return_value = ""
@@ -200,16 +216,18 @@ class TestVoiceInterface:
     def test_voice_chat_interface_basic_structure(self, mock_ollama, mock_st, mock_voice_utils):
         """Test basic structure of voice chat interface"""
         # Mock session state
-        mock_session_state = {'voice_chat_history': []}
+        mock_session_state = AttrDict({'voice_chat_history': []})
         mock_st.session_state = mock_session_state
-        
+
         # Mock streamlit components
         mock_st.chat_input.return_value = None
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.button.return_value = False
         mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
+        mock_st.expander.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         
         # Mock voice utils
         mock_voice_utils.get_available_voices.return_value = ['default']
@@ -233,32 +251,34 @@ class TestVoiceInterface:
     def test_voice_chat_interface_message_handling(self, mock_ollama, mock_st, mock_voice_utils):
         """Test message handling in voice chat interface"""
         # Setup chat history
-        AD = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})
-        mock_session_state = AD({
+        mock_session_state = AttrDict({
             'voice_chat_history': [
                 {"role": "user", "content": "Hello"},
                 {"role": "assistant", "content": "Hi there!"}
             ]
         })
         mock_st.session_state = mock_session_state
-        
+
         # Mock streamlit components
         mock_st.chat_input.return_value = "New message"
         mock_st.chat_message.return_value.__enter__ = Mock()
-        mock_st.chat_message.return_value.__exit__ = Mock()
+        mock_st.chat_message.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.button.return_value = False
         mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
+        mock_st.expander.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         mock_st.rerun = Mock()
         
         # Mock voice and model utilities
         mock_voice_utils.get_available_voices.return_value = ['default']
         mock_voice_utils.text_to_speech.return_value = '/tmp/response.mp3'
         mock_voice_utils.play_speech.return_value = None
-        mock_ollama.return_value = ("Generated response", None, None, None)
+        # call_ollama_endpoint returns a 5-tuple:
+        # (response, context, eval_count, eval_duration, metrics_dict)
+        mock_ollama.return_value = ("Generated response", None, None, None, {})
         
         # Mock get_all_models
         with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
@@ -280,24 +300,26 @@ class TestVoiceInterface:
     def test_voice_chat_interface_groq_provider(self, mock_groq, mock_st, mock_voice_utils):
         """Test voice chat with Groq provider"""
         # Mock session state with Groq model
-        mock_session_state = {
+        mock_session_state = AttrDict({
             'voice_chat_history': [],
             'voice_chat_model': '🚀 Groq Models mixtral-8x7b',
             'voice_chat_temperature': 0.7,
             'voice_chat_max_tokens': 500
-        }
+        })
         mock_st.session_state = mock_session_state
-        
+
         # Mock streamlit components
         mock_st.chat_input.return_value = "Test message"
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.button.return_value = False
         mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "🚀 Groq Models mixtral-8x7b"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
+        mock_st.expander.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         mock_st.rerun = Mock()
         mock_st.spinner.return_value.__enter__ = Mock()
-        mock_st.spinner.return_value.__exit__ = Mock()
+        mock_st.spinner.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         
         # Mock APIs
         mock_voice_utils.get_available_voices.return_value = ['default']
@@ -328,24 +350,26 @@ class TestVoiceInterface:
     def test_voice_chat_interface_openai_provider(self, mock_openai, mock_st, mock_voice_utils):
         """Test voice chat with OpenAI provider"""
         # Mock session state with OpenAI model
-        mock_session_state = {
+        mock_session_state = AttrDict({
             'voice_chat_history': [],
             'voice_chat_model': '🤖 OpenAI Models gpt-4',
             'voice_chat_temperature': 0.5,
             'voice_chat_max_tokens': 1000
-        }
+        })
         mock_st.session_state = mock_session_state
-        
-        # Mock streamlit components  
+
+        # Mock streamlit components
         mock_st.chat_input.return_value = "Test OpenAI message"
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.button.return_value = False
         mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "🤖 OpenAI Models gpt-4"
         mock_st.slider.return_value = 0.5
         mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
+        mock_st.expander.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         mock_st.rerun = Mock()
         mock_st.spinner.return_value.__enter__ = Mock()
-        mock_st.spinner.return_value.__exit__ = Mock()
+        mock_st.spinner.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         
         # Mock APIs
         mock_voice_utils.get_available_voices.return_value = ['default']
@@ -375,22 +399,24 @@ class TestVoiceInterface:
     def test_voice_chat_interface_error_handling(self, mock_st, mock_voice_utils):
         """Test error handling in voice chat interface"""
         # Mock session state
-        mock_session_state = {
+        mock_session_state = AttrDict({
             'voice_chat_history': [],
             'voice_chat_model': 'llama3'
-        }
+        })
         mock_st.session_state = mock_session_state
-        
+
         # Mock streamlit components
         mock_st.chat_input.return_value = "Test error message"
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.button.return_value = False
         mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
+        mock_st.expander.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         mock_st.rerun = Mock()
         mock_st.spinner.return_value.__enter__ = Mock()
-        mock_st.spinner.return_value.__exit__ = Mock()
+        mock_st.spinner.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         
         # Mock voice utils
         mock_voice_utils.get_available_voices.return_value = ['default']
@@ -446,25 +472,27 @@ class TestVoiceInterface:
     def test_voice_chat_conversation_context(self, mock_st, mock_voice_utils):
         """Test conversation context handling in voice chat"""
         # Setup conversation history
-        mock_session_state = {
+        mock_session_state = AttrDict({
             'voice_chat_history': [
                 {"role": "user", "content": "What is AI?"},
                 {"role": "assistant", "content": "AI is artificial intelligence."},
                 {"role": "user", "content": "Tell me more"}
             ]
-        }
+        })
         mock_st.session_state = mock_session_state
-        
+
         # Mock streamlit components
         mock_st.chat_input.return_value = "Can you explain machine learning?"
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.button.return_value = False
         mock_st.tabs.return_value = [MagicMock(), MagicMock()]
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
+        mock_st.expander.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         mock_st.rerun = Mock()
         mock_st.spinner.return_value.__enter__ = Mock()
-        mock_st.spinner.return_value.__exit__ = Mock()
+        mock_st.spinner.return_value.__exit__ = Mock(return_value=False)  # do not suppress exceptions
         
         # Mock voice and model utilities
         mock_voice_utils.get_available_voices.return_value = ['default']
@@ -475,9 +503,9 @@ class TestVoiceInterface:
         with patch('ollama_workbench.providers.ollama_utils.get_all_models') as mock_get_models:
             mock_get_models.return_value = ['llama3']
             
-            # Mock ollama call
+            # Mock ollama call (5-tuple contract)
             with patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint') as mock_ollama:
-                mock_ollama.return_value = ("Machine learning is...", None, None, None)
+                mock_ollama.return_value = ("Machine learning is...", None, None, None, {})
                 
                 import ollama_workbench.chat.voice_interface as voice_interface
 
@@ -497,9 +525,9 @@ class TestVoiceInterfaceIntegration:
     def test_complete_voice_workflow(self, mock_st, mock_voice_utils):
         """Test complete voice workflow from input to output"""
         # Mock session state
-        mock_session_state = {'voice_chat_history': []}
+        mock_session_state = AttrDict({'voice_chat_history': []})
         mock_st.session_state = mock_session_state
-        
+
         # Mock voice utils
         mock_voice_utils.get_available_voices.return_value = ['default', 'female']
         mock_voice_utils.get_voice_settings.return_value = {
@@ -508,12 +536,15 @@ class TestVoiceInterfaceIntegration:
         }
         mock_voice_utils.text_to_speech.return_value = '/tmp/test.mp3'
         mock_voice_utils.play_speech.return_value = None
-        mock_voice_utils.start_voice_input.return_value = None
+        # start_voice_input(speech_callback, error_callback) delivers recognized
+        # speech through the callback; simulate a successful recognition.
+        mock_voice_utils.start_voice_input.side_effect = \
+            lambda speech_cb, error_cb: speech_cb("Hello AI")
         mock_voice_utils.stop_voice_input.return_value = "Hello AI"
-        
-        # Mock streamlit
+
+        # Mock streamlit (columns are used as context managers)
         mock_st.button.side_effect = [True, False]  # Voice button clicked, then not
-        mock_st.columns.return_value = [Mock(), Mock()]
+        mock_st.columns.return_value = [MagicMock(), MagicMock()]
         mock_st.text_input.return_value = ""
         mock_st.rerun = Mock()
         

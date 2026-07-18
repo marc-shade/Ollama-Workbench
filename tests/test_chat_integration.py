@@ -89,8 +89,11 @@ class TestChatIntegration(unittest.TestCase):
         """Clean up after tests"""
         logger.info("Cleaning up test environment")
         
-        # Stop patches
-        self.session_state_patch.stop()
+        # Stop ALL patchers started via .start() in setUp. Stopping only
+        # session_state_patch leaked ~14 active patchers (streamlit widgets,
+        # a stale call_ollama_endpoint mock, prompt mocks) into every test
+        # that ran after this file, corrupting the rest of the suite.
+        patch.stopall()
         
         # Remove test settings file
         if os.path.exists("test-chat-settings.json"):
@@ -155,9 +158,10 @@ class TestChatIntegration(unittest.TestCase):
                                       return_value=["llama2", "mistral", "llama3", "phi3"])
         self.get_models_mock = self.get_models_patch.start()
         
-        # Mock call_ollama_endpoint
-        self.call_ollama_patch = patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint', 
-                                       return_value=("Test response", 0, 0, 0))
+        # Mock call_ollama_endpoint (real contract is a 5-tuple:
+        # response, context, eval_count, eval_duration, metrics_dict)
+        self.call_ollama_patch = patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint',
+                                       return_value=("Test response", None, 0, 0, {}))
         self.call_ollama_mock = self.call_ollama_patch.start()
         
         logger.info("CHECKPOINT: Ollama client mocked successfully")

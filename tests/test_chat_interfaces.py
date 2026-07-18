@@ -61,8 +61,9 @@ class TestChatInterfaces(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests"""
         logger.info("Cleaning up test environment")
-        # Stop patches
-        self.session_state_patch.stop()
+        # Stop ALL patchers started in setUp - stopping only one leaked the
+        # rest (streamlit widgets, ollama mocks) into the remaining suite.
+        patch.stopall()
         
         # Remove test settings file
         if os.path.exists("test-chat-settings.json"):

@@ -62,8 +62,10 @@ class TestAPIKeyManagement:
 
         m = mock_open()
         with patch('builtins.open', m):
-            save_api_keys(test_keys)
-            m.assert_called_once()
+            with patch('ollama_workbench.providers.ollama_utils.os.chmod') as mock_chmod:
+                save_api_keys(test_keys)
+                m.assert_called_once()
+                mock_chmod.assert_called_once_with("api_keys.json", 0o600)
 
         # Verify cache was invalidated
         assert ou._api_keys_cache is None
@@ -292,23 +294,23 @@ Result 2 content"""
 class TestResearchInterface:
     """Test research interface components"""
     
+    @patch('ollama_workbench.workflows.research.get_all_reports', return_value=[])
     @patch('ollama_workbench.workflows.research.st')
     @patch('ollama_workbench.workflows.research.init_db')
     @patch('ollama_workbench.workflows.research.load_api_keys')
     @patch('ollama_workbench.workflows.research.load_research_model_settings')
     @patch('ollama_workbench.workflows.research.get_available_models')
-    def test_research_interface_initialization(self, mock_get_models, mock_load_settings, 
-                                             mock_load_keys, mock_init_db, mock_st):
+    def test_research_interface_initialization(self, mock_get_models, mock_load_settings,
+                                             mock_load_keys, mock_init_db, mock_st,
+                                             mock_get_reports):
         """Test research interface initialization"""
         from ollama_workbench.workflows.research import research_interface
-        
+
         # Setup mocks
         mock_load_keys.return_value = {"openai_api_key": "test_key"}
         mock_load_settings.return_value = {"manager_model": "gpt-4"}
         mock_get_models.return_value = ["llama3", "gpt-4", "mixtral-8x7b"]
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
+        mock_st.sidebar = MagicMock()
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "gpt-4"
         mock_st.slider.return_value = 0.7
@@ -325,25 +327,25 @@ class TestResearchInterface:
         mock_get_models.assert_called()
         mock_st.title.assert_called()
     
+    @patch('ollama_workbench.workflows.research.get_all_reports', return_value=[])
     @patch('ollama_workbench.workflows.research.st')
     @patch('ollama_workbench.workflows.research.save_api_keys')
     @patch('ollama_workbench.workflows.research.init_db')
     @patch('ollama_workbench.workflows.research.load_api_keys')
     @patch('ollama_workbench.workflows.research.load_research_model_settings')
     @patch('ollama_workbench.workflows.research.get_available_models')
-    def test_api_key_saving(self, mock_get_models, mock_load_settings, 
-                           mock_load_keys, mock_init_db, mock_save_keys, mock_st):
+    def test_api_key_saving(self, mock_get_models, mock_load_settings,
+                           mock_load_keys, mock_init_db, mock_save_keys, mock_st,
+                           mock_get_reports):
         """Test API key saving functionality"""
         from ollama_workbench.workflows.research import research_interface
-        
+
         # Setup mocks
         mock_load_keys.return_value = {}
         mock_load_settings.return_value = {}
         mock_get_models.return_value = ["llama3"]
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
-        
+        mock_st.sidebar = MagicMock()
+
         # Mock text inputs for API keys
         def text_input_side_effect(label, **kwargs):
             if "API Key" in label:
@@ -361,24 +363,24 @@ class TestResearchInterface:
         # Verify save_api_keys was called
         mock_save_keys.assert_called_once()
     
+    @patch('ollama_workbench.workflows.research.get_all_reports', return_value=[])
     @patch('ollama_workbench.workflows.research.st')
     @patch('ollama_workbench.workflows.research.save_research_model_settings')
     @patch('ollama_workbench.workflows.research.init_db')
     @patch('ollama_workbench.workflows.research.load_api_keys')
     @patch('ollama_workbench.workflows.research.load_research_model_settings')
     @patch('ollama_workbench.workflows.research.get_available_models')
-    def test_model_settings_saving(self, mock_get_models, mock_load_settings, 
-                                  mock_load_keys, mock_init_db, mock_save_settings, mock_st):
+    def test_model_settings_saving(self, mock_get_models, mock_load_settings,
+                                  mock_load_keys, mock_init_db, mock_save_settings, mock_st,
+                                  mock_get_reports):
         """Test model settings saving functionality"""
         from ollama_workbench.workflows.research import research_interface
-        
+
         # Setup mocks
         mock_load_keys.return_value = {}
         mock_load_settings.return_value = {}
         mock_get_models.return_value = ["llama3", "gpt-4"]
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
+        mock_st.sidebar = MagicMock()
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "gpt-4"
         mock_st.slider.return_value = 0.8
@@ -393,6 +395,7 @@ class TestResearchInterface:
         assert "manager_model" in call_args
         assert "agent_model" in call_args
     
+    @patch('ollama_workbench.workflows.research.get_all_reports', return_value=[])
     @patch('ollama_workbench.workflows.research.st')
     @patch('ollama_workbench.workflows.research.SearchManager')
     @patch('ollama_workbench.workflows.research.save_report')
@@ -400,9 +403,9 @@ class TestResearchInterface:
     @patch('ollama_workbench.workflows.research.load_api_keys')
     @patch('ollama_workbench.workflows.research.load_research_model_settings')
     @patch('ollama_workbench.workflows.research.get_available_models')
-    def test_research_execution(self, mock_get_models, mock_load_settings, 
-                               mock_load_keys, mock_init_db, mock_save_report, 
-                               mock_search_manager_class, mock_st):
+    def test_research_execution(self, mock_get_models, mock_load_settings,
+                               mock_load_keys, mock_init_db, mock_save_report,
+                               mock_search_manager_class, mock_st, mock_get_reports):
         """Test research execution functionality"""
         from ollama_workbench.workflows.research import research_interface
         
@@ -428,18 +431,12 @@ class TestResearchInterface:
         mock_search_manager_class.return_value = mock_search_manager
         
         # Mock Streamlit components
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
+        mock_st.sidebar = MagicMock()
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "medium"
         mock_st.slider.return_value = 0.7
         mock_st.button.side_effect = [False, False, True]  # Start Research button clicked
         mock_st.text_area.return_value = "Research climate change impacts"
-        mock_st.spinner.return_value.__enter__ = Mock()
-        mock_st.spinner.return_value.__exit__ = Mock()
-        mock_st.expander.return_value.__enter__ = Mock()
-        mock_st.expander.return_value.__exit__ = Mock()
         
         research_interface()
         
@@ -478,20 +475,20 @@ class TestResearchInterface:
         mock_export_txt.return_value = "/path/to/report.txt"
         
         # Mock Streamlit components
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
+        mock_st.sidebar = MagicMock()
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "short"
         mock_st.slider.return_value = 0.7
-        mock_st.columns.return_value = [Mock(), Mock(), Mock(), Mock(), Mock()]
-        mock_st.button.side_effect = [False, False, False, True, False, False, False, False, False, False]  # View button clicked
+        mock_st.columns.return_value = [MagicMock() for _ in range(5)]
+        # 3 top-level buttons + 4 buttons per report (2 reports); View clicked on report 1
+        mock_st.button.side_effect = [False, False, False, True] + [False] * 7
         mock_st.text_area.return_value = ""
-        
+
         research_interface()
-        
+
         # Verify report management functions were called
         mock_get_reports.assert_called_once()
+        mock_get_content.assert_called_with(1)
     
     @patch('ollama_workbench.workflows.research.st')
     @patch('ollama_workbench.workflows.research.get_all_reports')
@@ -513,14 +510,13 @@ class TestResearchInterface:
         mock_get_reports.return_value = [(1, "Report 1", "2023-01-01")]
         
         # Mock Streamlit components
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
+        mock_st.sidebar = MagicMock()
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "short"
         mock_st.slider.return_value = 0.7
-        mock_st.columns.return_value = [Mock(), Mock(), Mock(), Mock(), Mock()]
-        mock_st.button.side_effect = [False, False, False, False, False, True]  # Delete button clicked
+        mock_st.columns.return_value = [MagicMock() for _ in range(5)]
+        # 3 top-level buttons + view/pdf/txt/delete for the single report; Delete clicked
+        mock_st.button.side_effect = [False] * 6 + [True]
         mock_st.text_area.return_value = ""
         mock_st.rerun = Mock()
         
@@ -534,58 +530,63 @@ class TestResearchInterface:
 class TestFileOperations:
     """Test file operations and directory management"""
     
-    @patch('ollama_workbench.workflows.research.os.makedirs')
-    @patch('ollama_workbench.workflows.research.os.path.join')
-    @patch('ollama_workbench.workflows.research.os.path.dirname')
-    @patch('ollama_workbench.workflows.research.os.path.abspath')
-    def test_files_directory_creation(self, mock_abspath, mock_dirname, mock_join, mock_makedirs):
-        """Test files directory creation on module import"""
-        # Setup mocks
-        mock_abspath.return_value = "/path/to/research.py"
-        mock_dirname.return_value = "/path/to"
-        mock_join.return_value = "/path/to/files"
-        
-        # Import the module (which should create the directory)
+    def test_files_directory_creation(self):
+        """Test files directory creation on module import.
+
+        The module is already imported by the time this test runs, so a plain
+        re-import would be a no-op; reload the module with os.makedirs patched
+        to observe the import-time side effect.
+        """
+        import importlib
         import ollama_workbench.workflows.research as research
 
-        
-        # Verify directory creation was attempted
-        mock_makedirs.assert_called_with("/path/to/files", exist_ok=True)
+        with patch('os.makedirs') as mock_makedirs:
+            importlib.reload(research)
+
+        expected_dir = os.path.join(
+            os.path.dirname(os.path.abspath(research.__file__)), 'files'
+        )
+        mock_makedirs.assert_called_with(expected_dir, exist_ok=True)
 
 
 class TestIntegrationScenarios:
     """Test integration scenarios"""
     
-    @patch('ollama_workbench.workflows.research.sqlite3.connect')
-    def test_full_database_workflow(self, mock_connect):
-        """Test complete database workflow"""
+    def test_full_database_workflow(self):
+        """Test complete database workflow.
+
+        The in-memory connection must be created BEFORE sqlite3.connect is
+        patched (research.sqlite3 is the shared stdlib module, so the patch
+        would otherwise intercept this test's own connect call too).
+        """
         from ollama_workbench.workflows.research import init_db, save_report, get_all_reports, get_report_content, delete_report
-        
-        # Setup in-memory database
+
         conn = sqlite3.connect(":memory:")
-        mock_connect.return_value = conn
-        
-        # Initialize database
-        init_db()
-        
-        # Save a report
-        with patch('ollama_workbench.workflows.research.datetime') as mock_datetime:
-            mock_datetime.now.return_value.strftime.return_value = "2023-01-01 12:00:00"
-            save_report("Test Report", "Test Content")
-        
-        # Get all reports
-        reports = get_all_reports()
-        assert len(reports) == 1
-        assert reports[0][1] == "Test Report"
-        
-        # Get specific report content
-        content = get_report_content(reports[0][0])
-        assert content == "Test Content"
-        
-        # Delete report
-        delete_report(reports[0][0])
-        reports_after_delete = get_all_reports()
-        assert len(reports_after_delete) == 0
+        try:
+            with patch('ollama_workbench.workflows.research.sqlite3.connect', return_value=conn):
+                # Initialize database
+                init_db()
+
+                # Save a report
+                with patch('ollama_workbench.workflows.research.datetime') as mock_datetime:
+                    mock_datetime.now.return_value.strftime.return_value = "2023-01-01 12:00:00"
+                    save_report("Test Report", "Test Content")
+
+                # Get all reports
+                reports = get_all_reports()
+                assert len(reports) == 1
+                assert reports[0][1] == "Test Report"
+
+                # Get specific report content
+                content = get_report_content(reports[0][0])
+                assert content == "Test Content"
+
+                # Delete report
+                delete_report(reports[0][0])
+                reports_after_delete = get_all_reports()
+                assert len(reports_after_delete) == 0
+        finally:
+            conn.close()
     
     def test_export_functions_integration(self):
         """Test export functions with realistic content"""
@@ -632,16 +633,25 @@ class TestErrorHandling:
         with pytest.raises(sqlite3.Error):
             save_report("Test", "Content")
     
-    @patch('ollama_workbench.workflows.research.json.load')
-    @patch('builtins.open')
-    @patch('ollama_workbench.workflows.research.os.path.exists')
-    def test_json_loading_error(self, mock_exists, mock_open, mock_json_load):
-        """Test JSON loading error handling"""
+    @patch('ollama_workbench.providers.ollama_utils.json.load')
+    @patch('builtins.open', new_callable=mock_open)
+    @patch('ollama_workbench.providers.ollama_utils.os.path.exists')
+    def test_json_loading_error(self, mock_exists, mock_open_fn, mock_json_load):
+        """Test JSON loading error handling.
+
+        load_api_keys lives in providers.ollama_utils (research re-exports it),
+        so the patches must target that module. The read-through cache must be
+        cleared or the cached value short-circuits the file read.
+        """
         from ollama_workbench.workflows.research import load_api_keys
-        
+        import ollama_workbench.providers.ollama_utils as ou
+
+        ou._api_keys_cache = None
+        ou._api_keys_cache_time = 0
+
         mock_exists.return_value = True
         mock_json_load.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
-        
+
         # Should raise the error (no explicit error handling in current implementation)
         with pytest.raises(json.JSONDecodeError):
             load_api_keys()
@@ -658,11 +668,6 @@ class TestErrorHandling:
         # Should raise the error (no explicit error handling in current implementation)
         with pytest.raises(IOError):
             export_to_txt("content", "test.txt")
-
-
-def mock_open(read_data=""):
-    """Mock file open function"""
-    return Mock(return_value=Mock(__enter__=Mock(return_value=Mock(read=Mock(return_value=read_data)))))
 
 
 if __name__ == "__main__":

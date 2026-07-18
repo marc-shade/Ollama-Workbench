@@ -46,15 +46,16 @@ class TestMultiModelChatInitialization:
         assert "model_settings" in st.session_state
         assert "shared_context" in st.session_state
         assert st.session_state.shared_context is True
-        assert "total_tokens" in st.session_state
-        assert isinstance(st.session_state.total_tokens, dict)
+        assert "multimodel_total_tokens" in st.session_state
+        assert isinstance(st.session_state.multimodel_total_tokens, dict)
     
     @patch('ollama_workbench.chat.multimodel_chat.st.session_state', SessionStateMock())
     @patch('ollama_workbench.chat.multimodel_chat.load_api_keys', return_value={"test": "key"})
+    @patch('ollama_workbench.chat.multimodel_chat.get_all_models', return_value=["gpt-4", "llama2"])
     @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=True)
     @patch('builtins.open', create=True)
     @patch('ollama_workbench.chat.multimodel_chat.json.load')
-    def test_init_with_settings_file(self, mock_json_load, mock_open, mock_exists, mock_load_keys):
+    def test_init_with_settings_file(self, mock_json_load, mock_open, mock_exists, mock_get_all_models, mock_load_keys):
         """Test initialization when settings file exists"""
         test_settings = {
             "selected_models": ["gpt-4", "llama2"],
@@ -71,15 +72,15 @@ class TestMultiModelChatInitialization:
         assert st.session_state.shared_context is False
         assert st.session_state.api_keys == {"test": "key"}
     
-    @patch('ollama_workbench.chat.multimodel_chat.st.session_state', SessionStateMock({"total_tokens": "invalid"}))
+    @patch('ollama_workbench.chat.multimodel_chat.st.session_state', SessionStateMock({"multimodel_total_tokens": "invalid"}))
     @patch('ollama_workbench.chat.multimodel_chat.load_api_keys', return_value={})
     def test_init_fixes_invalid_total_tokens(self, mock_load_keys):
         """Test that initialization fixes invalid total_tokens type"""
         with patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False):
             chat = MultiModelChat()
-            
-            # Verify total_tokens was converted to dict
-            assert isinstance(st.session_state.total_tokens, dict)
+
+            # Verify multimodel_total_tokens was converted to dict
+            assert isinstance(st.session_state.multimodel_total_tokens, dict)
 
 
 class TestSettingsManagement:
@@ -91,10 +92,14 @@ class TestSettingsManagement:
         "model_settings": {"model1": {"temp": 0.5}},
         "shared_context": True
     }))
+    @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.multimodel_chat.load_api_keys', return_value={})
+    @patch('ollama_workbench.chat.multimodel_chat.get_all_models', return_value=["model1", "model2"])
     @patch('builtins.open', create=True)
     @patch('ollama_workbench.chat.multimodel_chat.json.dump')
     @patch('ollama_workbench.chat.multimodel_chat.st.success')
-    def test_save_settings_success(self, mock_success, mock_json_dump, mock_open):
+    def test_save_settings_success(self, mock_success, mock_json_dump, mock_open,
+                                   mock_get_all_models, mock_load_keys, mock_exists):
         """Test successful settings save"""
         chat = MultiModelChat()
         chat.save_settings()
@@ -279,15 +284,17 @@ class TestResponseGeneration:
         "api_keys": {"groq_api_key": "test-key"},
         "model_settings": {"llama3-70b": {"temperature": 0.8, "max_tokens": 2000}}
     }))
+    @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.multimodel_chat.get_openai_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_groq_models', return_value=["llama3-70b"])
     @patch('ollama_workbench.providers.groq_utils.call_groq_api')
-    def test_generate_response_groq(self, mock_groq):
+    def test_generate_response_groq(self, mock_groq, mock_groq_models, mock_openai_models, mock_exists):
         """Test response generation from Groq model"""
         mock_groq.return_value = "Groq response"
-        
+
         chat = MultiModelChat()
-        with patch('ollama_workbench.chat.multimodel_chat.GROQ_MODELS', ["llama3-70b"]):
-            response = chat.generate_model_response("llama3-70b", "Hello")
-        
+        response = chat.generate_model_response("llama3-70b", "Hello")
+
         assert response == "Groq response"
         mock_groq.assert_called_once()
     
@@ -295,15 +302,19 @@ class TestResponseGeneration:
         "api_keys": {"mistral_api_key": "test-key"},
         "model_settings": {"mistral-large": {"temperature": 0.9, "max_tokens": 3000}}
     }))
+    @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.multimodel_chat.get_openai_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_groq_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_mistral_models', return_value=["mistral-large"])
     @patch('ollama_workbench.providers.mistral_utils.call_mistral_api')
-    def test_generate_response_mistral(self, mock_mistral):
+    def test_generate_response_mistral(self, mock_mistral, mock_mistral_models,
+                                       mock_groq_models, mock_openai_models, mock_exists):
         """Test response generation from Mistral model"""
         mock_mistral.return_value = "Mistral response"
-        
+
         chat = MultiModelChat()
-        with patch('ollama_workbench.chat.multimodel_chat.MISTRAL_MODELS', ["mistral-large"]):
-            response = chat.generate_model_response("mistral-large", "Hello")
-        
+        response = chat.generate_model_response("mistral-large", "Hello")
+
         assert response == "Mistral response"
         mock_mistral.assert_called_once()
     
@@ -311,19 +322,26 @@ class TestResponseGeneration:
         "api_keys": {},
         "model_settings": {"llama2": {"temperature": 0.5, "max_tokens": 4000}}
     }))
+    @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.multimodel_chat.get_openai_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_groq_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_mistral_models', return_value=[])
     @patch('ollama_workbench.providers.ollama_utils.get_ollama_client')
-    def test_generate_response_ollama_with_client(self, mock_get_client):
+    def test_generate_response_ollama_with_client(self, mock_get_client, mock_mistral_models,
+                                                  mock_groq_models, mock_openai_models, mock_exists):
         """Test response generation from Ollama model with client"""
         mock_client = Mock()
-        mock_client.generate.return_value = {"response": "Ollama response"}
+        # call_ollama_endpoint consumes the client's generate() output as a
+        # stream of chunk dicts, with eval stats on the final "done" chunk.
+        mock_client.generate.return_value = [
+            {"response": "Ollama response"},
+            {"done": True, "eval_count": 2, "eval_duration": 1000000000}
+        ]
         mock_get_client.return_value = mock_client
-        
+
         chat = MultiModelChat()
-        with patch('ollama_workbench.chat.multimodel_chat.OPENAI_MODELS', []), \
-             patch('ollama_workbench.chat.multimodel_chat.GROQ_MODELS', []), \
-             patch('ollama_workbench.chat.multimodel_chat.MISTRAL_MODELS', []):
-            response = chat.generate_model_response("llama2", "Hello")
-        
+        response = chat.generate_model_response("llama2", "Hello")
+
         assert response == "Ollama response"
         mock_client.generate.assert_called_once()
     
@@ -331,18 +349,23 @@ class TestResponseGeneration:
         "api_keys": {},
         "model_settings": {"llama2": {"temperature": 0.5, "max_tokens": 4000}}
     }))
+    @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.multimodel_chat.get_openai_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_groq_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_mistral_models', return_value=[])
     @patch('ollama_workbench.providers.ollama_utils.get_ollama_client', return_value=None)
     @patch('ollama_workbench.providers.ollama_utils.call_ollama_endpoint')
-    def test_generate_response_ollama_fallback(self, mock_endpoint, mock_get_client):
+    def test_generate_response_ollama_fallback(self, mock_endpoint, mock_get_client,
+                                               mock_mistral_models, mock_groq_models,
+                                               mock_openai_models, mock_exists):
         """Test response generation from Ollama model with fallback"""
-        mock_endpoint.return_value = ("Ollama fallback response", None, None, None)
-        
+        # call_ollama_endpoint returns a 5-tuple:
+        # (response_text, context, eval_count, eval_duration, metrics_dict)
+        mock_endpoint.return_value = ("Ollama fallback response", None, None, None, {})
+
         chat = MultiModelChat()
-        with patch('ollama_workbench.chat.multimodel_chat.OPENAI_MODELS', []), \
-             patch('ollama_workbench.chat.multimodel_chat.GROQ_MODELS', []), \
-             patch('ollama_workbench.chat.multimodel_chat.MISTRAL_MODELS', []):
-            response = chat.generate_model_response("llama2", "Hello")
-        
+        response = chat.generate_model_response("llama2", "Hello")
+
         assert response == "Ollama fallback response"
         mock_endpoint.assert_called_once()
     
@@ -460,15 +483,22 @@ class TestModelSettings:
     
     @patch('ollama_workbench.chat.multimodel_chat.st.sidebar.tabs')
     @patch('ollama_workbench.chat.multimodel_chat.st.sidebar.subheader')
+    @patch('ollama_workbench.chat.multimodel_chat.os.path.exists', return_value=False)
+    @patch('ollama_workbench.chat.multimodel_chat.load_api_keys', return_value={})
+    @patch('ollama_workbench.chat.multimodel_chat.get_all_models', return_value=["model1", "model2"])
+    @patch('ollama_workbench.chat.multimodel_chat.get_groq_models', return_value=[])
+    @patch('ollama_workbench.chat.multimodel_chat.get_mistral_models', return_value=[])
     @patch('ollama_workbench.chat.multimodel_chat.st.session_state', SessionStateMock({
         "selected_models": ["model1", "model2"],
         "model_settings": {
             "model1": {"temperature": 0.7, "max_tokens": 2000, "presence_penalty": 0.0, "frequency_penalty": 0.0},
             "model2": {"temperature": 0.5, "max_tokens": 4000, "presence_penalty": 0.0, "frequency_penalty": 0.0}
         },
-        "total_tokens": {"model1": 100, "model2": 200}
+        "multimodel_total_tokens": {"model1": 100, "model2": 200}
     }))
-    def test_model_settings_ui(self, mock_subheader, mock_tabs):
+    def test_model_settings_ui(self, mock_mistral_models, mock_groq_models,
+                               mock_get_all_models, mock_load_keys, mock_exists,
+                               mock_subheader, mock_tabs):
         """Test model settings UI creation"""
         # Mock tab context managers
         mock_tab1 = MagicMock()
@@ -511,16 +541,16 @@ class TestIntegration:
         required_keys = [
             "models", "multimodel_chat_history", "selected_models",
             "comparison_mode", "model_settings", "shared_context",
-            "total_tokens", "api_keys", "response_comparisons"
+            "multimodel_total_tokens", "api_keys", "response_comparisons"
         ]
-        
+
         for key in required_keys:
             assert key in st.session_state
-        
+
         # Verify defaults
         assert st.session_state.comparison_mode == "side-by-side"
         assert st.session_state.shared_context is True
-        assert isinstance(st.session_state.total_tokens, dict)
+        assert isinstance(st.session_state.multimodel_total_tokens, dict)
         assert isinstance(st.session_state.model_settings, dict)
 
 

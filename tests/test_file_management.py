@@ -341,7 +341,8 @@ class TestStreamlitInterface:
             mock_st.title = Mock()
             mock_st.write = Mock()
             mock_st.button = Mock(return_value=False)
-            mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock(), Mock()])
+            # Columns are used as context managers; MagicMock supports the protocol.
+            mock_st.columns = Mock(return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()])
             mock_st.text_area = Mock()
             mock_st.error = Mock()
             mock_st.success = Mock()
@@ -597,7 +598,7 @@ class TestFileOperationErrors:
             mock_st.title = Mock()
             mock_st.write = Mock()
             mock_st.button = Mock(return_value=False)
-            mock_st.columns = Mock(return_value=[Mock(), Mock(), Mock(), Mock()])
+            mock_st.columns = Mock(return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()])
             mock_st.error = Mock()
             mock_st.file_uploader = Mock(return_value=None)
             mock_st.selectbox = Mock(return_value=None)

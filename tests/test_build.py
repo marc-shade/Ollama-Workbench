@@ -7,7 +7,7 @@ import json
 import os
 import tempfile
 import shutil
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch, MagicMock, call, mock_open
 from pathlib import Path
 import sys
 
@@ -58,29 +58,45 @@ class TestBuildUtilities:
         finally:
             os.unlink(tmp_path)
     
-    @patch('ollama_workbench.workflows.build.save_json_file')
-    @patch('ollama_workbench.workflows.build.load_json_file')
-    def test_api_key_management(self, mock_load, mock_save):
-        """Test API key loading and saving"""
-        from ollama_workbench.workflows.build import load_api_keys, save_api_keys
-        from ollama_workbench.providers.openai_utils import set_openai_api_key
-        
-        # Test load_api_keys
-        mock_load.return_value = {"existing_key": "value"}
-        result = load_api_keys()
-        mock_load.assert_called_with("api_keys.json")
-        assert result == {"existing_key": "value"}
-        
-        # Test save_api_keys
-        test_keys = {"openai_api_key": "test_key"}
-        save_api_keys(test_keys)
-        mock_save.assert_called_with("api_keys.json", test_keys)
-        
-        # Test set_openai_api_key
-        mock_load.return_value = {}
-        set_openai_api_key("new_key")
-        expected_keys = {"openai_api_key": "new_key"}
-        mock_save.assert_called_with("api_keys.json", expected_keys)
+    def test_api_key_management(self):
+        """Test API key loading and saving.
+
+        build.py no longer has its own JSON-wrapper implementations; it
+        re-exports load_api_keys/save_api_keys from providers.ollama_utils
+        (cached read, chmod-0600 write). Test that real contract.
+        """
+        from ollama_workbench.workflows import build
+        from ollama_workbench.providers import openai_utils
+        import ollama_workbench.providers.ollama_utils as ou
+
+        # build re-exports the provider-layer implementations
+        assert build.load_api_keys is ou.load_api_keys
+        assert build.save_api_keys is ou.save_api_keys
+
+        # Test load_api_keys (clear the read-through cache first)
+        test_keys = {"existing_key": "value"}
+        ou._api_keys_cache = None
+        ou._api_keys_cache_time = 0
+        with patch('ollama_workbench.providers.ollama_utils.os.path.exists', return_value=True), \
+             patch('builtins.open', mock_open(read_data=json.dumps(test_keys))):
+            assert build.load_api_keys() == test_keys
+        ou._api_keys_cache = None
+        ou._api_keys_cache_time = 0
+
+        # Test save_api_keys: writes api_keys.json and restricts permissions
+        m = mock_open()
+        with patch('builtins.open', m), \
+             patch('ollama_workbench.providers.ollama_utils.os.chmod') as mock_chmod:
+            build.save_api_keys({"openai_api_key": "test_key"})
+        m.assert_called_once_with("api_keys.json", "w")
+        mock_chmod.assert_called_once_with("api_keys.json", 0o600)
+
+        # Test set_openai_api_key: round-trips through load + save
+        with patch('ollama_workbench.providers.openai_utils.load_api_keys', return_value={}), \
+             patch('ollama_workbench.providers.openai_utils.save_api_keys') as mock_save, \
+             patch('ollama_workbench.providers.openai_utils.st'):
+            openai_utils.set_openai_api_key("new_key")
+        mock_save.assert_called_once_with({"openai_api_key": "new_key"})
     
     @patch('ollama_workbench.workflows.build.save_json_file')
     @patch('ollama_workbench.workflows.build.load_json_file')
@@ -103,45 +119,70 @@ class TestBuildUtilities:
 class TestAPIIntegrations:
     """Test API integration functions"""
     
-    @patch('ollama_workbench.workflows.build.openai.ChatCompletion.create')
-    @patch('ollama_workbench.workflows.build.load_api_keys')
-    def test_call_openai_api_success(self, mock_load_keys, mock_openai):
-        """Test successful OpenAI API call"""
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
+    def test_call_openai_api_success(self, mock_openai_class):
+        """Test successful OpenAI API call.
+
+        build.py re-exports call_openai_api from providers.openai_utils,
+        which uses the v1 OpenAI client (not the legacy openai.ChatCompletion).
+        """
         from ollama_workbench.workflows.build import call_openai_api
-        
+
         # Setup mocks
-        mock_load_keys.return_value = {"openai_api_key": "test_key"}
+        mock_client = Mock()
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message = {'content': 'Test response'}
-        mock_openai.return_value = mock_response
-        
+        mock_response.choices[0].message.content = 'Test response'
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_openai_class.return_value = mock_client
+
         # Test API call
         messages = [{"role": "user", "content": "Hello"}]
-        result = call_openai_api("gpt-4", messages)
-        
+        result = call_openai_api("gpt-4", messages, openai_api_key="test_key")
+
         assert result == "Test response"
-        mock_openai.assert_called_once()
-    
-    @patch('ollama_workbench.workflows.build.load_api_keys')
-    def test_call_openai_api_missing_key(self, mock_load_keys):
-        """Test OpenAI API call with missing key"""
+        mock_openai_class.assert_called_once_with(api_key="test_key")
+        mock_client.chat.completions.create.assert_called_once()
+
+    def test_call_openai_api_missing_key(self):
+        """Test OpenAI API call with missing key.
+
+        Current contract: client construction happens outside the try block,
+        so with no key argument and no OPENAI_API_KEY env var the OpenAI SDK
+        raises OpenAIError.
+        """
         from ollama_workbench.workflows.build import call_openai_api
-        
-        mock_load_keys.return_value = {}
+        import openai
+
         messages = [{"role": "user", "content": "Hello"}]
-        
-        with pytest.raises(ValueError, match="Invalid or missing OpenAI API key"):
-            call_openai_api("gpt-4", messages)
-    
-    def test_call_openai_api_invalid_parameters(self):
-        """Test OpenAI API call with invalid parameters"""
+
+        with patch.dict(os.environ):
+            os.environ.pop("OPENAI_API_KEY", None)
+            with pytest.raises(openai.OpenAIError):
+                call_openai_api("gpt-4", messages)
+
+    @patch('ollama_workbench.providers.openai_utils.st')
+    @patch('ollama_workbench.providers.openai_utils.OpenAI')
+    def test_call_openai_api_invalid_parameters(self, mock_openai_class, mock_st):
+        """Test OpenAI API call with invalid parameters.
+
+        Current contract: parameter validation is delegated to the API; the
+        resulting exception is caught, surfaced via st.error, and None is
+        returned.
+        """
         from ollama_workbench.workflows.build import call_openai_api
-        
+
+        mock_client = Mock()
+        mock_client.chat.completions.create.side_effect = TypeError(
+            "Invalid value for one of the numerical parameters"
+        )
+        mock_openai_class.return_value = mock_client
+
         messages = [{"role": "user", "content": "Hello"}]
-        
-        with pytest.raises(ValueError, match="Invalid value for one of the numerical parameters"):
-            call_openai_api("gpt-4", messages, temperature="invalid")
+        result = call_openai_api("gpt-4", messages, temperature="invalid", openai_api_key="test_key")
+
+        assert result is None
+        mock_st.error.assert_called_once()
     
     @patch('ollama_workbench.workflows.build.get_available_groq_models')
     def test_is_groq_model(self, mock_get_groq):
@@ -278,10 +319,10 @@ class TestAgentTasks:
         """Test manager agent task with Groq"""
         from ollama_workbench.workflows.build import manager_agent_task
         
-        # Setup mock
+        # Setup mock: manager_agent_task routes via get_groq_models(), not GROQ_MODELS
         mock_groq.return_value = '{"analysis": "groq test", "work_plan": "groq plan", "priorities": [], "instructions": "groq task", "create_files": true}'
-        
-        with patch('ollama_workbench.workflows.build.GROQ_MODELS', ["mixtral-8x7b"]):
+
+        with patch('ollama_workbench.workflows.build.get_groq_models', return_value=["mixtral-8x7b"]):
             context = {"project_state": {"status": "active"}, "current_task": "test"}
             result, error = manager_agent_task(context, "mixtral-8x7b", 0.7, 1000)
             
@@ -295,7 +336,7 @@ class TestAgentTasks:
         from ollama_workbench.workflows.build import manager_agent_task
         
         # Setup mock
-        mock_ollama.return_value = ('{"analysis": "ollama test", "work_plan": "ollama plan", "priorities": [], "instructions": "ollama task", "create_files": false}', None, None, None)
+        mock_ollama.return_value = ('{"analysis": "ollama test", "work_plan": "ollama plan", "priorities": [], "instructions": "ollama task", "create_files": false}', None, None, None, {})
         
         context = {"project_state": {"status": "active"}, "current_task": "test"}
         result, error = manager_agent_task(context, "llama3", 0.7, 1000)
@@ -310,7 +351,7 @@ class TestAgentTasks:
         from ollama_workbench.workflows.build import manager_agent_task
         
         # Setup mock with invalid JSON
-        mock_ollama.return_value = ('invalid json response', None, None, None)
+        mock_ollama.return_value = ('invalid json response', None, None, None, {})
         
         context = {"project_state": {"status": "active"}, "current_task": "test"}
         result, error = manager_agent_task(context, "llama3", 0.7, 1000)
@@ -352,10 +393,10 @@ class TestCodeGeneration:
         """Test coding agent task with Groq"""
         from ollama_workbench.workflows.build import coding_agent_task
         
-        # Setup mock
+        # Setup mock: coding_agent_task routes via get_groq_models(), not GROQ_MODELS
         mock_groq.return_value = '{"code": "groq generated code", "notes": "Groq implementation"}'
-        
-        with patch('ollama_workbench.workflows.build.GROQ_MODELS', ["mixtral-8x7b"]):
+
+        with patch('ollama_workbench.workflows.build.get_groq_models', return_value=["mixtral-8x7b"]):
             result = coding_agent_task(
                 "Create a class",
                 "mixtral-8x7b",
@@ -371,7 +412,7 @@ class TestCodeGeneration:
         from ollama_workbench.workflows.build import coding_agent_task
         
         # Setup mock
-        mock_ollama.return_value = ('{"function": "def test(): pass", "description": "Test function"}', None, None, None)
+        mock_ollama.return_value = ('{"function": "def test(): pass", "description": "Test function"}', None, None, None, {})
         
         result = coding_agent_task("Write a test function", "llama3")
         
@@ -390,7 +431,7 @@ class TestCodeGeneration:
         """Test coding agent task with search results"""
         from ollama_workbench.workflows.build import coding_agent_task
         
-        mock_ollama.return_value = ('{"code": "enhanced code", "notes": "Used search data"}', None, None, None)
+        mock_ollama.return_value = ('{"code": "enhanced code", "notes": "Used search data"}', None, None, None, {})
         
         search_results = [{"title": "Example", "url": "http://example.com"}]
         result = coding_agent_task(
@@ -460,30 +501,35 @@ class TestFileOperations:
         assert result is None
     
     def test_extract_code_blocks(self):
-        """Test extracting code blocks from text"""
+        """Test extracting code blocks from text.
+
+        Fences must be flush-left, matching the format refine_task instructs
+        the model to produce (Filename: <name> followed by a fenced block).
+        """
         from ollama_workbench.workflows.build import extract_code_blocks
-        
-        text = '''
-        Here are the files:
-        
-        Filename: main.py
-        ```python
-        def main():
-            print("Hello World")
-        ```
-        
-        Filename: config.json
-        ```json
-        {"key": "value"}
-        ```
-        '''
-        
+
+        text = (
+            "Here are the files:\n"
+            "\n"
+            "Filename: main.py\n"
+            "```python\n"
+            "def main():\n"
+            '    print("Hello World")\n'
+            "```\n"
+            "\n"
+            "Filename: config.json\n"
+            "```json\n"
+            '{"key": "value"}\n'
+            "```\n"
+        )
+
         result = extract_code_blocks(text)
-        
+
         assert "main.py" in result
-        assert "def main():" in result["main.py"]
+        # Language identifier must not leak into the file contents
+        assert result["main.py"] == 'def main():\n    print("Hello World")'
         assert "config.json" in result
-        assert '{"key": "value"}' in result["config.json"]
+        assert result["config.json"] == '{"key": "value"}'
     
     def test_extract_code_blocks_no_matches(self):
         """Test extracting code blocks with no matches"""
@@ -511,17 +557,17 @@ class TestFileOperations:
         """Test creating repository files"""
         from ollama_workbench.workflows.build import create_repository_files
         
-        refined_output = '''
-        <folder_structure>
-        {"src": {"main.py": null}}
-        </folder_structure>
-        
-        Filename: src/main.py
-        ```python
-        def hello():
-            return "Hello World"
-        ```
-        '''
+        refined_output = (
+            "<folder_structure>\n"
+            '{"src": {"main.py": null}}\n'
+            "</folder_structure>\n"
+            "\n"
+            "Filename: src/main.py\n"
+            "```python\n"
+            "def hello():\n"
+            '    return "Hello World"\n'
+            "```\n"
+        )
         
         with tempfile.TemporaryDirectory() as tmp_dir:
             project_dir = Path(tmp_dir)
@@ -682,7 +728,7 @@ class TestRefinerTasks:
         """Test refine task with Ollama"""
         from ollama_workbench.workflows.build import refine_task
         
-        mock_ollama.return_value = ("Ollama refined output", None, None, None)
+        mock_ollama.return_value = ("Ollama refined output", None, None, None, {})
         
         result = refine_task(
             "Create an app",
@@ -701,8 +747,8 @@ class TestRefinerTasks:
         
         # First call returns long response, second call returns continuation
         mock_ollama.side_effect = [
-            ("A" * 8000, None, None, None),  # Long response triggers continuation
-            ("Continuation text", None, None, None)
+            ("A" * 8000, None, None, None, {}),  # Long response triggers continuation
+            ("Continuation text", None, None, None, {})
         ]
         
         result = refine_task(
@@ -733,9 +779,7 @@ class TestStreamlitInterface:
         mock_st.title.return_value = None
         mock_st.progress.return_value = Mock()
         mock_st.empty.return_value = Mock()
-        mock_st.sidebar = Mock()
-        mock_st.sidebar.expander.return_value.__enter__ = Mock()
-        mock_st.sidebar.expander.return_value.__exit__ = Mock()
+        mock_st.sidebar = MagicMock()
         mock_st.selectbox.return_value = "llama3"
         mock_st.slider.return_value = 0.7
         mock_st.button.return_value = False

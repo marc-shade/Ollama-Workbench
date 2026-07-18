@@ -91,7 +91,11 @@ class TestCustomConversableAgent:
             frequency_penalty=0.0,
             db_path="./test_db"
         )
-        
+
+        # ConversableAgent.__init__ is mocked out, so set the private attribute
+        # the real constructor would have set (the .name property reads it).
+        agent._name = "Test Agent"
+
         # Test generate_reply
         messages = [
             {"role": "user", "name": "User", "content": "Hello"},
@@ -412,9 +416,9 @@ class TestAgentEditing:
         mock_metacog.return_value = {"Logical": "prompt1", "Intuitive": "prompt2"}
         mock_corpus.return_value = ["Tech", "Business"]
         
-        # Mock Streamlit components
+        # Mock Streamlit components (columns are used as context managers)
         mock_st.subheader = Mock()
-        mock_st.columns.return_value = [Mock(), Mock(), Mock()]
+        mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock()]
         mock_st.text_input.return_value = "Updated Agent"
         mock_st.selectbox.side_effect = ["🐱", "gpt-4", "Formal", "Analyst", "Professional", "Logical", "Tech"]
         mock_st.slider.side_effect = [0.8, 2000, 0.2, 0.1]
@@ -586,13 +590,15 @@ class TestBrainstormSession:
         mock_load_keys.return_value = {"openai_api_key": "test_key"}
         mock_create_agent.return_value = Mock()
         mock_user_proxy.return_value = Mock()
-        mock_group_chat.return_value = Mock()
+        # MagicMock so group_chat.messages is iterable in the history section
+        mock_group_chat.return_value = MagicMock(messages=[])
         mock_manager.return_value = Mock()
         mock_workflows.return_value = ["workflow1", "workflow2"]
-        
+
         # Mock Streamlit components
         mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
-        mock_st.columns.return_value = [Mock(), Mock(), Mock()]
+        # st.columns is called with different specs; return one CM per column
+        mock_st.columns.side_effect = lambda spec, **kwargs: [MagicMock() for _ in spec]
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = ""
         mock_st.subheader = Mock()
@@ -628,10 +634,11 @@ class TestBrainstormSession:
         mock_create_agent.return_value = Mock()
         mock_workflows.return_value = ["test_workflow"]
         mock_load_workflow.return_value = ["Agent 1", "Agent 2"]
-        
+
         # Mock Streamlit components
         mock_st.session_state = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})()
-        mock_st.columns.return_value = [Mock(), Mock(), Mock()]
+        # st.columns is called with different specs; return one CM per column
+        mock_st.columns.side_effect = lambda spec, **kwargs: [MagicMock() for _ in spec]
         mock_st.text_input.return_value = ""
         mock_st.selectbox.return_value = "test_workflow"
         mock_st.subheader = Mock()
@@ -664,12 +671,17 @@ class TestBrainstormSession:
         mock_load_keys.return_value = {}
         mock_create_agent.return_value = Mock()
         mock_workflows.return_value = []
-        
-        # Mock Streamlit components
-        mock_st.session_state = {"agent_sequence": ["Agent 1", "Agent 2"]}
-        mock_st.columns.return_value = [Mock(), Mock(), Mock()]
+
+        # Mock Streamlit components. session_state must support attribute
+        # assignment (the session stores group_chat/group_chat_manager on it).
+        attr_dict = type('AD', (dict,), {'__getattr__': lambda s,k: s[k], '__setattr__': dict.__setitem__, '__delattr__': dict.__delitem__})
+        mock_st.session_state = attr_dict(agent_sequence=["Agent 1", "Agent 2"])
+        # st.columns is called with different specs; return one CM per column
+        mock_st.columns.side_effect = lambda spec, **kwargs: [MagicMock() for _ in spec]
         mock_st.text_input.return_value = "new_workflow"
-        mock_st.selectbox.return_value = ""
+        # First selectbox is "Load an Existing Workflow"; the rest are the
+        # per-slot agent dropdowns re-rendering the existing sequence.
+        mock_st.selectbox.side_effect = ["", "Agent 1", "Agent 2"]
         mock_st.subheader = Mock()
         mock_st.write = Mock()
         mock_st.number_input.return_value = 2
@@ -797,10 +809,13 @@ class TestMainInterface:
         mock_st.checkbox.return_value = True  # User wants Docker but it's not running
         mock_st.warning = Mock()
         mock_st.info = Mock()
-        mock_st.stop = Mock()
-        
-        brainstorm_interface()
-        
+        # The real st.stop() raises to halt script execution; emulate that so
+        # the code after st.stop() is (correctly) never reached.
+        mock_st.stop = Mock(side_effect=RuntimeError("streamlit stop"))
+
+        with pytest.raises(RuntimeError, match="streamlit stop"):
+            brainstorm_interface()
+
         # Verify warning and stop
         mock_st.warning.assert_called_once()
         mock_st.info.assert_called_once()
@@ -852,18 +867,27 @@ class TestImportHandling:
         assert result == ["Tech", "Business", "Science"]
     
     def test_corpus_options_import_failure(self):
-        """Test fallback when get_corpus_options import fails"""
-        # This tests the fallback function defined in the try/except block
-        with patch.dict('sys.modules', {'files_management': None}):
-            # Force a re-import to trigger the ImportError
-            import importlib
-            import ollama_workbench.workflows.brainstorm as brainstorm
+        """Test fallback when get_corpus_options import fails.
 
+        brainstorm.py imports get_corpus_options from
+        ollama_workbench.workflows.projects; blank out THAT module (setting a
+        sys.modules entry to None makes its import raise ImportError) and
+        reload to trigger the fallback. Reload again afterwards so the real
+        implementation is restored for the rest of the suite.
+        """
+        import importlib
+        import ollama_workbench.workflows.brainstorm as brainstorm
+
+        try:
+            with patch.dict('sys.modules', {'ollama_workbench.workflows.projects': None}):
+                importlib.reload(brainstorm)
+
+                # The fallback function should return an empty list
+                result = brainstorm.get_corpus_options()
+                assert result == []
+        finally:
+            # Restore the real projects-backed implementation
             importlib.reload(brainstorm)
-            
-            # The fallback function should return an empty list
-            result = brainstorm.get_corpus_options()
-            assert result == []
 
 
 class TestErrorHandling:

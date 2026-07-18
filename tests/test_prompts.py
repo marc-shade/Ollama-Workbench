@@ -474,8 +474,10 @@ class TestStreamlitInterface:
         from ollama_workbench.ui.prompts import manage_prompts
         
         mock_streamlit.selectbox.return_value = "Agent"
-        mock_streamlit.button.return_value = True  # Save button clicked
-        
+        # Click only the Save button; the Agent branch also renders an
+        # "Add New Agent Prompt" button that must stay unclicked.
+        mock_streamlit.button.side_effect = lambda label, *a, **k: label == "Save Prompts"
+
         test_prompts = {
             "Agent1": {
                 "prompt": "Test prompt",
