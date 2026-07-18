@@ -6,17 +6,17 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Ollama](https://img.shields.io/badge/Ollama-000000?style=flat-square&logo=ollama&logoColor=white)](https://ollama.ai)
 
-# 🦙 Ollama Workbench - Enterprise AI Platform
+# 🦙 Ollama Workbench - Local AI Workbench
 
 > **Looking for the next generation?** Check out [Ollama Workbench 2.0](https://github.com/marc-shade/Ollama-Workbench-2) — a SvelteKit + Tauri rewrite with a native desktop app, MCP Studio, and visual workflow builder.
 
 <img src="assets/ollama-workbench.jpg" width="300" align="right" alt="Ollama Workbench - No prob-llama" />
 
-**Ollama Workbench** is a comprehensive, enterprise-grade platform for managing, testing, and utilizing AI models from the Ollama library and external providers. Built with security, scalability, and observability at its core, it provides advanced features for AI agent orchestration, workflow automation, and collaborative AI development.
+**Ollama Workbench** is a comprehensive platform for managing, testing, and using AI models from the Ollama library and external providers (OpenAI, Groq, Mistral). It bundles chat (text, voice, vision), retrieval-augmented generation, multi-agent workflows, model management and benchmarking, and an OpenAI-compatible API - all running locally against your own Ollama server.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-green.svg)](#security-features)
+[![Security](https://img.shields.io/badge/Security-Hardening%20Toolkit-green.svg)](#security-features)
 [![Observability](https://img.shields.io/badge/Observability-Opik%20Integration-orange.svg)](#observability-features)
 
 ## 🚀 Quick Start
@@ -67,12 +67,11 @@ python3 scripts/setup_workbench.py
 
 ## 🌟 Key Features
 
-### 🏢 **Enterprise-Ready Architecture**
-- **Zero-Trust Security** with comprehensive RBAC system
-- **End-to-End Encryption** for data at rest and in transit
-- **Comprehensive Audit Logging** for compliance (GDPR, HIPAA, SOX, ISO27001)
-- **Advanced Observability** with Opik integration and performance monitoring
-- **Scalable Microservices** architecture with FastAPI and Streamlit
+### 🏢 **Solid Foundations**
+- **Encrypted API-key storage** (AES-256-GCM) and integrity-hashed audit logging
+- **Security toolkit included**: JWT auth, RBAC, and encryption modules ready to wire up (see [Security Features](#️-security-features) for what's active by default)
+- **Observability** with optional Opik integration and local performance monitoring
+- **Streamlit UI + Flask API services** with an OpenAI-compatible endpoint
 
 ### 🤖 **Multi-Provider AI Integration**
 - **Ollama Models** - Local LLM execution with full privacy
@@ -92,26 +91,45 @@ python3 scripts/setup_workbench.py
 
 ## 🛡️ Security Features
 
-### 🔐 **Authentication & Authorization**
-- **JWT-based Authentication** with configurable session management
-- **Multi-Factor Authentication** support (foundation ready)
-- **Role-Based Access Control (RBAC)** with granular permissions
-- **Account Lockout Protection** with rate limiting
-- **Password Policy Enforcement** with complexity requirements
+An honest map of what ships in the `security/` package: what runs by default,
+what is included but must be wired up, and what is not implemented.
 
-### 🔒 **Data Protection**
-- **AES-256-GCM Encryption** for sensitive data
-- **RSA Encryption** for key exchange and secrets
-- **Automatic Key Rotation** with configurable intervals
-- **Secure API Key Storage** with encryption at rest
-- **Data Classification** and loss prevention
+### ✅ **Active by default**
+- **Encrypted API-key storage** - provider keys are encrypted at rest with
+  AES-256-GCM (`cryptography` library) when `ENABLE_ENCRYPTION` is on
+- **Security audit logging** - configuration changes and security events are
+  written as structured audit records, each with a SHA-256 integrity hash
+  (`ENABLE_AUDIT_LOGGING`)
+- **Security framework self-check** - configuration validation plus a
+  self-assessment report that scores the current settings against GDPR /
+  HIPAA / SOX / ISO27001 checklists (a gap report, not a compliance
+  certification)
 
-### 📋 **Compliance & Auditing**
-- **Comprehensive Audit Trails** with tamper-proof logging
-- **Compliance Templates** for GDPR, HIPAA, SOX, ISO27001
-- **Real-time Security Monitoring** with threat detection
-- **Automated Compliance Reporting** with violation alerts
-- **Data Retention Policies** with automated cleanup
+### 🧰 **Included, but not wired into the UI yet**
+The app currently runs **without authentication** - these modules exist in
+`security/` and are importable, but no login gate protects the Streamlit UI:
+- **JWT authentication** (`security/authentication.py`) - bcrypt password
+  hashing, JWT sessions, and account lockout after configurable failed
+  attempts. The Streamlit auth UI hook exists but is disabled by default.
+- **Role-Based Access Control** (`security/access_control.py`) - role and
+  permission model (guest/user/admin) ready to enforce, currently not
+  called by any UI path
+- **Key rotation** (`security/encryption.py`, `security/security_config.py`) -
+  `rotate_keys()` / `rotate_secrets()` methods with a rotation-interval
+  setting; rotation is manual (nothing schedules it automatically)
+
+### ❌ **Not implemented (do not rely on these)**
+- Multi-factor authentication - the user model has MFA fields, but there is
+  no TOTP generation or verification code
+- Transport encryption - the app serves plain HTTP on localhost; put a TLS
+  proxy in front for remote access
+- Tamper-proof logs - audit events carry integrity hashes but are not
+  chained or signed
+- Virus scanning of uploads, intrusion detection, data-loss prevention
+
+**Deployment guidance**: bind to localhost (the default), treat the app as a
+single-user local tool, and wire up the auth module before exposing it to a
+network you do not control.
 
 ---
 
@@ -203,7 +221,7 @@ python3 scripts/setup_workbench.py
 - **Web Scraping** with respect for robots.txt
 - **API Data Integration** from external services
 - **Database Connectivity** for structured data
-- **File Upload System** with virus scanning
+- **File Upload System** for corpus ingestion
 - **Real-time Data Feeds** for dynamic knowledge
 
 ### 🔍 **Search & Discovery**
@@ -422,4 +440,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the Ollama Workbench Community**
 
-*Transform your AI development with enterprise-grade tools, security, and observability.*
+*A local-first workbench for serious work with open models.*
