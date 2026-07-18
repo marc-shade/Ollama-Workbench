@@ -132,29 +132,35 @@ class OpikIntegration:
         opik_url = os.getenv('OPIK_URL')
         workspace = os.getenv('OPIK_WORKSPACE')
         
-        # Configure Opik if credentials are available
+        # Configure Opik only when credentials or a (self-hosted) URL are
+        # provided. Without either, the opik SDK buffers spans and posts them
+        # to the Comet cloud, which answers 401 on every batch - pure noise
+        # and added latency on each traced call.
         try:
-            if self.api_key:
-                configure_kwargs = {
-                    'api_key': self.api_key,
-                    'project_name': self.project_name
-                }
-                
+            if self.api_key or opik_url:
+                configure_kwargs = {'project_name': self.project_name}
+
+                if self.api_key:
+                    configure_kwargs['api_key'] = self.api_key
                 if opik_url:
                     configure_kwargs['url'] = opik_url
                 if workspace:
                     configure_kwargs['workspace'] = workspace
-                    
+
                 configure(**configure_kwargs)
                 logger.info(f"Opik configured for project: {self.project_name}")
+
+                self.enabled = True
+
+                # Start background monitoring
+                self._start_background_monitoring()
             else:
-                logger.info("Opik available but no API key provided - will configure on first use")
-                
-            self.enabled = True
-            
-            # Start background monitoring
-            self._start_background_monitoring()
-            
+                logger.info(
+                    "Opik package present but neither OPIK_API_KEY nor OPIK_URL "
+                    "is set - Opik tracing disabled (local metrics still collected)"
+                )
+                self.enabled = False
+
         except Exception as e:
             logger.error(f"Failed to initialize Opik: {e}")
             self.enabled = False
@@ -393,8 +399,12 @@ class OpikIntegration:
             
             self._alert_cooldown[alert_key] = current_time
             
-            # Log alert
-            logger.warning(f"Performance Alert: {alert['message']}", extra=alert)
+            # Log alert. LogRecord reserves the "message" attribute, so the
+            # alert dict keys must be prefixed before being passed as extra.
+            logger.warning(
+                f"Performance Alert: {alert['message']}",
+                extra={f"alert_{k}": v for k, v in alert.items()},
+            )
             
             # Call registered alert callbacks
             for callback in self._alert_callbacks:

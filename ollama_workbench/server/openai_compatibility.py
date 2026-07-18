@@ -659,19 +659,32 @@ class OpenAICompatibilityLayer:
         """
         self.app.run(host=self.host, port=self.port, debug=debug)
 
+# Set by start_openai_compatibility_server(); guards against binding the port twice.
+_compatibility_server: Optional[OpenAICompatibilityLayer] = None
+
 def start_openai_compatibility_server():
-    """Start the OpenAI compatibility server in a separate thread."""
+    """Start the OpenAI compatibility server in a separate thread.
+
+    Idempotent per process: a second call returns the already-running
+    instance instead of trying to bind the port again.
+    """
+    global _compatibility_server
+    if _compatibility_server is not None:
+        logger.info("OpenAI compatibility server already running; reusing existing instance")
+        return _compatibility_server
+
     config = get_config()
     host = config.get("OPENAI_COMPAT_HOST", "127.0.0.1")
     port = int(config.get("OPENAI_COMPAT_PORT", 8000))
-    
+
     compatibility_layer = OpenAICompatibilityLayer(host=host, port=port)
-    
+
     # Start in a separate thread
     server_thread = threading.Thread(target=compatibility_layer.run)
     server_thread.daemon = True
     server_thread.start()
-    
+
+    _compatibility_server = compatibility_layer
     logger.info(f"OpenAI compatibility server started on {host}:{port}")
     return compatibility_layer
 
@@ -838,10 +851,3 @@ def openai_compatibility_ui():
                 st.success("Server started! Refresh the page to see updated status.")
             else:
                 st.warning("Please enable the server in the configuration first.")
-
-# Start the server on import if enabled
-if CONFIG.get("ENABLE_OPENAI_COMPAT", True):
-    try:
-        start_openai_compatibility_server()
-    except Exception as e:
-        logger.error(f"Error starting OpenAI compatibility server: {str(e)}")

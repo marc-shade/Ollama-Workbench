@@ -133,7 +133,8 @@ def multimodal_chat_interface():
                     if not available_models:
                         try:
                             # Run ollama list command to get models
-                            import subprocess
+                            # (subprocess is imported at module level; a local
+                            # import here would shadow it for the whole function)
                             result = subprocess.run(['ollama', 'list'], capture_output=True, text=True, check=True)
                             lines = result.stdout.strip().split('\n')[1:]  # Skip header line
                             available_models = []
@@ -153,7 +154,6 @@ def multimodal_chat_interface():
                     # Try CLI approach as fallback
                     try:
                         # Run ollama list command to get models
-                        import subprocess
                         result = subprocess.run(['ollama', 'list'], capture_output=True, text=True, check=True)
                         lines = result.stdout.strip().split('\n')[1:]  # Skip header line
                         available_models = []
@@ -480,7 +480,7 @@ def multimodal_chat_interface():
                                     prompt = user_input if user_input else "Describe this image:"
                                     # Reset file pointer to beginning
                                     uploaded_file.seek(0)
-                                    response_text, _, _, _ = call_ollama_endpoint(
+                                    response_text, _, _, _, _ = call_ollama_endpoint(
                                         model=model,
                                         prompt=prompt,
                                         image=uploaded_file,
@@ -502,12 +502,14 @@ def multimodal_chat_interface():
                                             tmp_file.write(uploaded_file.read())
                                             tmp_path = tmp_file.name
                                         
-                                        # Build CLI command for image processing
+                                        # Build CLI command for image processing.
+                                        # `ollama run` has no --image flag; multimodal models
+                                        # take image file paths embedded in the prompt text.
                                         prompt_text = user_input if user_input else "Describe this image:"
-                                        
+
                                         # Run ollama CLI with image
                                         result = subprocess.run(
-                                            ["ollama", "run", model, prompt_text, "--image", tmp_path],
+                                            ["ollama", "run", model, f"{prompt_text} {tmp_path}"],
                                             capture_output=True,
                                             text=True,
                                             check=True
@@ -526,7 +528,7 @@ def multimodal_chat_interface():
                                 # Text-only fallback for clients that don't support chat API
                                 logger.warning(f"Client doesn't support chat API: {e}, trying text-only endpoint")
                                 try:
-                                    response_text, _, _, _ = call_ollama_endpoint(
+                                    response_text, _, _, _, _ = call_ollama_endpoint(
                                         model=model,
                                         prompt=user_input,
                                         temperature=st.session_state.temperature_slider,

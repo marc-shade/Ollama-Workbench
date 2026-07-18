@@ -94,7 +94,7 @@ def run_test_suite(model: str, categories: List[str], prompts_per_category: int 
                     result_text = response["response"]
                 else:
                     # Fallback to version-independent function
-                    result_text, _, _, _ = call_ollama_endpoint(
+                    result_text, _, _, _, _ = call_ollama_endpoint(
                         model=model,
                         prompt=prompt,
                         temperature=0.7,

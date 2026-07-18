@@ -97,6 +97,11 @@ class WebsiteCrawler:
         except requests.RequestException as e:
             st.error(f"Failed to fetch {url}: {e}")
             return None
+        except Exception as e:
+            # A single bad page (e.g. undecodable body) must not kill the
+            # whole crawl; returning None lets crawl() fall back to Selenium.
+            st.error(f"Unexpected error fetching {url}: {e}")
+            return None
 
     def fetch_page_selenium(self, url):
         try:

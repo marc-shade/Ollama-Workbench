@@ -21,11 +21,14 @@ from ollama_workbench.providers.ollama_utils import (
     call_ollama_endpoint, get_dynamic_model_default, validate_model_exists
 )
 
-# Import session utilities for consistent session handling
+# Import session utilities for consistent session handling.
+# NOTE: load_settings/save_settings are defined locally in this module and
+# get_agent_prompt comes from ollama_workbench.ui.prompts below - importing
+# them here as well silently shadowed those definitions (ruff F811).
 from ollama_workbench.core.session_utils import (
-    initialize_session_state, load_settings, save_settings,
+    initialize_session_state,
     save_chat_session, load_chat_session,
-    get_agent_prompt, get_rag_context, safe_rerun, log_message
+    get_rag_context, safe_rerun, log_message
 )
 from ollama_workbench.ui.file_management import count_tokens
 
@@ -483,7 +486,7 @@ def instance_adaptive_cot(prompt: str, model: str, api_keys: dict) -> str:
         return response
     else:
         logger.info(f"CHECKPOINT: Calling Ollama API with model {model}")
-        response, _, _, _ = call_ollama_endpoint(model=model, prompt=full_prompt)
+        response, _, _, _, _ = call_ollama_endpoint(model=model, prompt=full_prompt)
         return response
 
 def construct_agent_prompt(agent_type, metacognitive_type, voice_type, selected_prompt=None):
@@ -539,7 +542,7 @@ def advanced_thinking_step(prompt: str, model: str, api_keys: dict, step: str) -
             response = call_mistral_api(model=model.replace("mistral/", ""), prompt=thinking_prompt, mistral_api_key=api_keys.get("mistral_api_key"))
         else:
             logger.info(f"CHECKPOINT: Calling Ollama API with model {model}")
-            response, _, _, _ = call_ollama_endpoint(model=model, prompt=thinking_prompt)
+            response, _, _, _, _ = call_ollama_endpoint(model=model, prompt=thinking_prompt)
         
         logger.info(f"CHECKPOINT: Received response for thinking step: {step}")
         return f"**{step}**\n\n{response}\n\n"
@@ -549,18 +552,32 @@ def advanced_thinking_step(prompt: str, model: str, api_keys: dict, step: str) -
         return f"**{step}**\n\n{error_message}\n\n"
 
 def load_settings():
-    """Load settings with better error handling and default values."""
+    """Load settings with better error handling and default values.
+
+    Saved settings are applied ONCE per session: on the first call they
+    take precedence over auto-seeded defaults (initialize_session_state
+    runs earlier and fills e.g. selected_model with a dynamic default),
+    but on later reruns the live session values win. chat_interface()
+    calls this on every Streamlit rerun, and the old always-overwrite
+    behavior stomped the user's in-session choices (model dropdown,
+    agent type, ...) with the file contents on each rerun, making
+    sidebar selections impossible to change.
+    """
+    if st.session_state.get("_chat_settings_applied"):
+        return True
     if os.path.exists(SETTINGS_FILE):
         try:
             with open(SETTINGS_FILE, "r") as f:
                 settings = json.load(f)
-                
-            # Process each setting individually
+
+            # Apply saved settings (first call this session: file wins
+            # over auto-seeded defaults). The literal string "None" is a
+            # valid saved choice (e.g. agent_type "None") and is applied.
             for key, value in settings.items():
-                # Only set if not already in session state or value is not None
-                if key not in st.session_state or (value != "None" and value is not None):
+                if value is not None:
                     st.session_state[key] = value
                     logger.debug(f"Loaded setting: {key}={value}")
+            st.session_state._chat_settings_applied = True
             
             # Ensure basic settings exist with dynamic default
             if "selected_model" not in st.session_state or not st.session_state.selected_model:
@@ -1284,50 +1301,54 @@ def chat_interface():
                             
                         else:
                             # Ollama model - streaming version
-                        # Use the model name from selected_model, falling back to dynamic default
+                            # Use the model name from selected_model, falling back to dynamic default
                             dynamic_default = get_dynamic_model_default()
                             model_to_use = st.session_state.get("selected_model", dynamic_default)
                             logger.info(f"Using model: {model_to_use}")
-                            
+
                             # Check if we have an image for vision models
                             image_data = None
-                        if is_vision_model and 'uploaded_image' in st.session_state and st.session_state.uploaded_image:
-                            # Convert uploaded file to base64
-                            import base64
-                            image_bytes = st.session_state.uploaded_image.read()
-                            image_data = base64.b64encode(image_bytes).decode('utf-8')
-                            st.session_state.uploaded_image.seek(0)  # Reset file pointer
-                            
-                            response, _, _, _ = call_ollama_endpoint(
+                            if is_vision_model and 'uploaded_image' in st.session_state and st.session_state.uploaded_image:
+                                # Convert uploaded file to base64
+                                import base64
+                                image_bytes = st.session_state.uploaded_image.read()
+                                image_data = base64.b64encode(image_bytes).decode('utf-8')
+                                st.session_state.uploaded_image.seek(0)  # Reset file pointer
+
+                            response, _, _, _, _ = call_ollama_endpoint(
                                 model=model_to_use,
                                 prompt=prompt,
                                 image=image_data,
                                 temperature=st.session_state.temperature_slider_chat,
                                 max_tokens=st.session_state.max_tokens_slider_chat,
-                            presence_penalty=st.session_state.presence_penalty_slider_chat,
-                            frequency_penalty=st.session_state.frequency_penalty_slider_chat,
+                                presence_penalty=st.session_state.presence_penalty_slider_chat,
+                                frequency_penalty=st.session_state.frequency_penalty_slider_chat,
                                 stream=True
-                        )
-                            
-                        if isinstance(response, str):
-                            # Non-streaming fallback
-                            full_response = response
-                            message_placeholder.markdown(full_response)
-                        else:
-                            # Process streaming response
-                            for chunk in response:
-                                if hasattr(chunk, 'choices') and chunk.choices:
-                                    content = chunk.choices[0].delta.content
-                                    if content is not None:
-                                        full_response += content
-                                        message_placeholder.markdown(full_response + "▌")
-                                elif isinstance(chunk, dict) and 'response' in chunk:
-                                    content = chunk.get('response', '')
-                                    full_response += content
-                                    message_placeholder.markdown(full_response + "▌")
-                            
-                            # Final update without cursor
-                            message_placeholder.markdown(full_response)
+                            )
+
+                            if isinstance(response, str):
+                                # Non-streaming fallback
+                                full_response = response
+                                message_placeholder.markdown(full_response)
+                            else:
+                                # Process streaming response. Ollama client
+                                # v0.4.8+ yields GenerateResponse objects, older
+                                # versions yield dicts - _compat_get handles both.
+                                from ollama_workbench.providers.ollama_utils import _compat_get
+                                for chunk in response:
+                                    if hasattr(chunk, 'choices') and chunk.choices:
+                                        content = chunk.choices[0].delta.content
+                                        if content is not None:
+                                            full_response += content
+                                            message_placeholder.markdown(full_response + "▌")
+                                    else:
+                                        content = _compat_get(chunk, 'response', '')
+                                        if content:
+                                            full_response += content
+                                            message_placeholder.markdown(full_response + "▌")
+
+                                # Final update without cursor
+                                message_placeholder.markdown(full_response)
                         
                         # Store response in chat history
                         st.session_state.chat_history.append({"role": "assistant", "content": full_response})
@@ -1337,9 +1358,9 @@ def chat_interface():
                             from ollama_workbench.server.performance_metrics import record_metrics
                             record_metrics(
                                 model=st.session_state.selected_model,
-                                prompt_tokens=count_tokens(prompt),
-                                completion_tokens=count_tokens(full_response),
-                                latency=0  # actual latency would need to be measured
+                                response_time=0,  # actual latency would need to be measured
+                                input_tokens=count_tokens(prompt),
+                                output_tokens=count_tokens(full_response),
                             )
                         except Exception as e:
                             logger.error(f"Error recording metrics: {e}")

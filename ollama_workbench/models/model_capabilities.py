@@ -280,7 +280,7 @@ def test_model_capability(model: str, test: Dict[str, Any]) -> Dict[str, Any]:
         
         # Use version-independent call_ollama_endpoint function
         from ollama_workbench.providers.ollama_utils import call_ollama_endpoint
-        response_text, _, _, _ = call_ollama_endpoint(
+        response_text, _, _, _, _ = call_ollama_endpoint(
             model=model,
             prompt=prompt,
             temperature=0.7,

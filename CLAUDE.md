@@ -160,12 +160,13 @@ The codebase uses try/except imports for optional features (voice, observability
 - `streamlit>=1.47.1` - Web framework
 - `chromadb==0.5.5` - Vector DB for RAG
 - `httpx==0.27.0` - Pinned to avoid conflicts
-- Python 3.12 (venv)
+- Python 3.11 (venv; built from the `ollamaworkbench` miniconda env)
 
 ## Gotchas
 
-- `start_workbench.sh` hardcodes the path `/Volumes/FILES/code/Ollama-Workbench` - update if the repo moves.
+- `start_workbench.sh` derives the repo path from its own location (the drive has mounted as both `/Volumes/FILES` and `/Volumes/FILES 1`).
+- The venv's `bin/` entry-point scripts (pip, streamlit, pytest, ...) have shebangs baked to the old `/Volumes/FILES/...` mount path and a shebang cannot contain a space, so they break when the drive mounts as `FILES 1`. Always invoke via `venv/bin/python -m <tool>`.
 - Ollama must be running at `http://localhost:11434`. Check: `curl -s http://localhost:11434/api/tags`
 - `multimodel_chat.py` uses its own settings file (`multimodel-chat-settings.json`), separate from `chat-settings.json`.
-- The venv is Python 3.12. Do not use the system Python.
+- The venv is Python 3.11. Do not use the system Python.
 - `main.py` uses `from ollama_workbench.providers.ollama_utils import *` which pulls many functions into scope. Be aware of name collisions.

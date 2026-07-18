@@ -206,8 +206,8 @@ def ai_agent(user_input, model, agent_type, metacognitive_type, voice_type, corp
     elif model in get_groq_models():
         response = call_groq_api(model, final_prompt, temperature=temperature, max_tokens=max_tokens, groq_api_key=api_keys.get("groq_api_key"))
     else:
-        response, _, _, _ = call_ollama_endpoint(model, prompt=final_prompt, temperature=temperature, max_tokens=max_tokens)
-    
+        response = call_ollama_endpoint(model, prompt=final_prompt, temperature=temperature, max_tokens=max_tokens)[0]
+
     return response
 
 def define_agent_block(name, agent_data=None):

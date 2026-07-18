@@ -85,7 +85,7 @@ Respond ONLY with the JSON object, no other text."""
     
     try:
         # Use the proper call_ollama_endpoint function
-        response, _, _, _ = call_ollama_endpoint(
+        response, _, _, _, _ = call_ollama_endpoint(
             model="mistral:instruct",
             prompt=prompt,
             temperature=0.7,
@@ -250,7 +250,7 @@ def persona_group_chat():
             """
             
             try:
-                response, _, _, _ = call_ollama_endpoint(
+                response, _, _, _, _ = call_ollama_endpoint(
                     model=persona.model,
                     prompt=context,
                     temperature=persona.temperature,

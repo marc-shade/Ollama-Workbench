@@ -78,7 +78,7 @@ def feature_test():
                         st.error(f"Unexpected response structure: {response}")
                 else:
                     # Use call_ollama_endpoint for older versions
-                    tool_result, _, _, _ = call_ollama_endpoint(model=selected_model, prompt=prompt)
+                    tool_result, _, _, _, _ = call_ollama_endpoint(model=selected_model, prompt=prompt)
                     st.markdown(f"### 🧰 Ollama Tool Test Result: {tool_result}")
             except Exception as e:
                 st.error(f"An error occurred during the Ollama tool test: {e}")

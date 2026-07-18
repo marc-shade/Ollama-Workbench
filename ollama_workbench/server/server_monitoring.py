@@ -41,20 +41,30 @@ def get_log_file_path():
         return None
 
 def get_ollama_resource_usage():
+    # psutil can raise (AccessDenied, NoSuchProcess, ...) at any point;
+    # the monitoring page must degrade to "Not Running" instead of crashing.
     ollama_process = None
-    for proc in psutil.process_iter(['name', 'cpu_percent', 'memory_percent']):
-        if proc.info['name'] == 'ollama':
-            ollama_process = proc
-            break
+    try:
+        for proc in psutil.process_iter(['name', 'cpu_percent', 'memory_percent']):
+            if proc.info['name'] == 'ollama':
+                ollama_process = proc
+                break
+    except Exception:
+        ollama_process = None
+
+    cpu_usage = 0
+    memory_usage = 0
+    status = "Not Running"
 
     if ollama_process:
-        cpu_usage = ollama_process.cpu_percent(interval=1)
-        memory_usage = ollama_process.memory_percent()
-        status = "Running"
-    else:
-        cpu_usage = 0
-        memory_usage = 0
-        status = "Not Running"
+        try:
+            cpu_usage = ollama_process.cpu_percent(interval=1)
+            memory_usage = ollama_process.memory_percent()
+            status = "Running"
+        except Exception:
+            cpu_usage = 0
+            memory_usage = 0
+            status = "Not Running"
 
     # GPU usage (this is a placeholder, as getting GPU usage is more complex and system-dependent)
     gpu_usage = "N/A"
@@ -104,11 +114,12 @@ def server_monitoring():
         st.warning("Unsupported operating system. Unable to fetch server configuration.")
         config_path = None
 
-    if config_path and os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-            st.json(config)
-        
-        st.download_button("Download Config", json.dumps(config, indent=4), file_name="ollama_config.json")
-    else:
-        st.warning("Configuration file not found.")
+    if config_path:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                st.json(config)
+
+            st.download_button("Download Config", json.dumps(config, indent=4), file_name="ollama_config.json")
+        else:
+            st.warning("Configuration file not found.")

@@ -283,7 +283,7 @@ def generate_workflow(user_request: str, model: str) -> Tuple[List[Node], List[E
             # Groq models might need similar parsing as OpenAI
             workflow_data = parse_openai_response(response)
         else:
-            response, _, _, _ = call_ollama_endpoint(
+            response, _, _, _, _ = call_ollama_endpoint(
                 model,
                 prompt=prompt,
                 temperature=0.7,
@@ -357,7 +357,8 @@ def execute_workflow(nodes: List[Node], edges: List[Edge]) -> Dict[str, str]:
 
         if node_id not in node_map:
             logger.error(f"Node {node_id} not found in workflow")
-            return f"Error: Node {node_id} not found"
+            results[node_id] = f"Error: Node {node_id} not found"
+            return results[node_id]
 
         node = node_map[node_id]
         incoming_edges = [edge for edge in edges if edge.target == node_id]
@@ -397,6 +398,12 @@ def execute_workflow(nodes: List[Node], edges: List[Edge]) -> Dict[str, str]:
     for node in nodes:
         if node.id not in results:
             process_node(node.id)
+
+    # Surface edges that reference nodes missing from the workflow
+    for edge in edges:
+        for ref in (edge.source, edge.target):
+            if ref not in results:
+                process_node(ref)
 
     return results
 
@@ -477,7 +484,7 @@ def handle_llm_node(node: Node, incoming_edges: List[Edge], process_node, api_ke
             groq_api_key=api_keys.get("groq_api_key")
         )
     else:
-        response, _, _, _ = call_ollama_endpoint(
+        response, _, _, _, _ = call_ollama_endpoint(
             node.data['model_name'],
             prompt=complete_prompt,
             temperature=node.data['temperature'],

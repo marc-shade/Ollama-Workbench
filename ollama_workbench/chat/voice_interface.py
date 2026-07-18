@@ -227,8 +227,8 @@ def voice_chat_interface():
                 # Get the selected model from session state or use a default
                 selected_model = st.session_state.get("voice_chat_model", "llama3")
                 
-                # Determine the provider
-                provider_prefix = ""
+                # Determine the provider; un-prefixed model names are local Ollama models
+                provider = "ollama"
                 if "🦙 Ollama Models" in selected_model:
                     selected_model = selected_model.replace("🦙 Ollama Models ", "")
                     provider = "ollama"
@@ -263,7 +263,7 @@ def voice_chat_interface():
                 # Generate response based on provider
                 if provider == "ollama":
                     with st.spinner("Generating response..."):
-                        response, _, _, _ = call_ollama_endpoint(
+                        response, _, _, _, _ = call_ollama_endpoint(
                             model=selected_model,
                             prompt=text,
                             temperature=temperature,
@@ -299,7 +299,7 @@ def voice_chat_interface():
                 else:
                     # Default fallback to Ollama if provider not recognized
                     with st.spinner("Generating response..."):
-                        response, _, _, _ = call_ollama_endpoint(
+                        response, _, _, _, _ = call_ollama_endpoint(
                             model="llama3",
                             prompt=text,
                             temperature=temperature,

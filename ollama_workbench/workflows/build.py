@@ -179,7 +179,7 @@ def manager_agent_task(
             )
         else:
             # Assume it's an Ollama model
-            response_content, _, _, _ = call_ollama_endpoint(
+            response_content, _, _, _, _ = call_ollama_endpoint(
                 model=model,
                 prompt=prompt,
                 temperature=temperature,
@@ -241,7 +241,10 @@ def coding_agent_task(
     openai_api_key=None
 ) -> Dict[str, Any]:
     """Handles the coding agent task based on the provided prompt and context."""
-    
+
+    if not continuation and (prompt is None or not prompt.strip()):
+        raise ValueError("Prompt cannot be empty")
+
     if previous_tasks is None:
         previous_tasks = []
 
@@ -267,9 +270,6 @@ def coding_agent_task(
     full_prompt = f"{previous_tasks_summary}\n\n{prompt}"
     if use_search and search_results:
         full_prompt += f"\n\nSearch Results:\n{json.dumps(search_results, indent=2)}"
-
-    if not full_prompt.strip():
-        raise ValueError("Prompt cannot be empty")
 
     full_prompt += "\n\nRespond with a JSON object containing your implementation details and any necessary explanations. Your response must be a valid JSON object."
 
@@ -299,7 +299,7 @@ def coding_agent_task(
             )
         else:
             # Assume it's an Ollama model
-            response_content, _, _, _ = call_ollama_endpoint(
+            response_content, _, _, _, _ = call_ollama_endpoint(
                 model=model,
                 prompt=full_prompt,
                 temperature=temperature,
@@ -413,9 +413,13 @@ def parse_folder_structure(structure_string: str) -> dict:
         return None
 
 def extract_code_blocks(refined_output: str) -> Dict[str, str]:
-    """Extracts code blocks from the refined output."""
+    """Extracts code blocks from the refined output.
+
+    The language identifier on the opening fence (e.g. ```python) is not
+    part of the file contents and is excluded.
+    """
     code_blocks = {}
-    pattern = r"Filename: (.*?)\n```(.*?)\n```"
+    pattern = r"Filename: (.*?)\n```[^\n]*\n(.*?)\n```"
     matches = re.finditer(pattern, refined_output, re.DOTALL)
     for match in matches:
         filename = match.group(1).strip()

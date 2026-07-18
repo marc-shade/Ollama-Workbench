@@ -45,7 +45,7 @@ Make the persona feel like a real person with:
 Respond ONLY with the JSON object, no other text."""
 
         try:
-            response, _, _, _ = call_ollama_endpoint(
+            response, _, _, _, _ = call_ollama_endpoint(
                 model="mistral:instruct",
                 prompt=prompt,
                 temperature=0.7,

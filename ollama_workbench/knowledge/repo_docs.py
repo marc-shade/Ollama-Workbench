@@ -433,24 +433,21 @@ def get_file_info(file_path):
                     style_guide = flake8.get_style_guide()
                     report = style_guide.check_files([file_path])
                     style_violations = []
+                    for error in report.get_statistics(''):
+                        try:
+                            if isinstance(error, str):
+                                style_violations.append(error)
+                            else:
+                                style_violations.append(f"{error.code} ({error.text}): line {error.line}")
+                        except AttributeError:
+                            style_violations.append(f"Unexpected error format: {error}")
+                    file_info['Style Violations'] = style_violations
                 except Exception as e:
                     print(f"CHECKPOINT: Error analyzing code style: {str(e)}")
                     file_info['Style Violations'] = [f"Error analyzing code style: {str(e)}"]
-                    style_violations = []
             else:
                 print(f"CHECKPOINT: Flake8 not available, skipping code style analysis for {file_path}")
                 file_info['Style Violations'] = ["Code style analysis not available (flake8 module not installed)"]
-                style_violations = []
-            for error in report.get_statistics(''):
-                try:
-                    if isinstance(error, str):
-                        style_violations.append(error)
-                    else:
-                        style_violations.append(f"{error.code} ({error.text}): line {error.line}")
-                except AttributeError:
-                    style_violations.append(f"Unexpected error format: {error}")
-
-            file_info['Style Violations'] = style_violations
 
         elif language == "php":
             file_info['PHPStan Report'] = run_phpstan(file_path)

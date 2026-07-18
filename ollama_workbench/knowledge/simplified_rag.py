@@ -344,7 +344,7 @@ def enhanced_rag_interface():
                         message_placeholder.markdown(full_response)
                     else:
                         # Use non-streaming fallback
-                        full_response, _, _, _ = call_ollama_endpoint(
+                        full_response, _, _, _, _ = call_ollama_endpoint(
                             model=st.session_state.rag_llm_model,
                             prompt=prompt,
                             temperature=st.session_state.rag_temperature

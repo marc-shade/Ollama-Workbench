@@ -29,6 +29,12 @@ DEFAULT_VOICE = {
     'pitch': 1.0
 }
 
+# Repository root (this file lives at <root>/ollama_workbench/chat/voice_utils.py);
+# voice_settings.json and tts_server/ are anchored there so behavior does not
+# depend on the current working directory. tts_server/app.py reads the same file.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+VOICE_SETTINGS_FILE = os.path.join(PROJECT_ROOT, "voice_settings.json")
+
 # Constants
 CHUNK_SIZE = 1024
 FORMAT = pyaudio.paInt16
@@ -66,7 +72,7 @@ class VoiceManager:
         
     def _load_voice_settings(self):
         """Load voice settings from file."""
-        voice_settings_file = "voice_settings.json"
+        voice_settings_file = VOICE_SETTINGS_FILE
         voices = {}
         
         if os.path.exists(voice_settings_file):
@@ -109,7 +115,7 @@ class VoiceManager:
     
     def save_voice_settings(self):
         """Save voice settings to file."""
-        voice_settings_file = "voice_settings.json"
+        voice_settings_file = VOICE_SETTINGS_FILE
         try:
             with open(voice_settings_file, 'w') as f:
                 json.dump(self.voices, f, indent=4)
@@ -363,7 +369,7 @@ class VoiceManager:
         
         # Check if server is running by pinging healthcheck endpoint
         try:
-            healthcheck_response = requests.get("http://localhost:8000/healthcheck", timeout=2)
+            healthcheck_response = requests.get("http://localhost:5002/healthcheck", timeout=2)
             if healthcheck_response.status_code != 200:
                 logger.warning("TTS server healthcheck failed, starting server...")
                 self._start_tts_server()
@@ -374,7 +380,7 @@ class VoiceManager:
             time.sleep(2)  # Wait for server to start
         
         # Try to synthesize speech
-        url = "http://localhost:8000/synthesize"
+        url = "http://localhost:5002/synthesize"
         data = {
             "text": text,
             "voice": voice_name,
@@ -385,7 +391,7 @@ class VoiceManager:
         try:
             # First, try to reload profiles to ensure server has the latest
             try:
-                reload_response = requests.post("http://localhost:8000/reload_profiles", timeout=2)
+                reload_response = requests.post("http://localhost:5002/reload_profiles", timeout=2)
                 if reload_response.status_code == 200:
                     logger.debug("Voice profiles reloaded on TTS server")
             except Exception:
@@ -408,9 +414,8 @@ class VoiceManager:
     def _start_tts_server(self):
         """Start the TTS server if it's not running."""
         try:
-            # Get path to TTS server directory
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            tts_server_dir = os.path.join(script_dir, "tts_server")
+            # Get path to TTS server directory (lives at the repository root)
+            tts_server_dir = os.path.join(PROJECT_ROOT, "tts_server")
             start_script = os.path.join(tts_server_dir, "start_tts_server.sh")
             
             # Make sure start script is executable

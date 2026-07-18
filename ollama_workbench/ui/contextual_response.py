@@ -43,7 +43,7 @@ def contextual_response_test():
         tokens_per_second_list = []
         for i, prompt in enumerate(prompt_list):
             start_time = time.time()
-            result, context, eval_count, eval_duration = call_ollama_endpoint(
+            result, context, eval_count, eval_duration, _metrics = call_ollama_endpoint(
                 selected_model,
                 prompt=prompt,
                 temperature=temperature,

@@ -634,7 +634,7 @@ Respond with ONLY the JSON object, no other text. The JSON should be valid and f
             except Exception as cli_error:
                 # CLI method failed, try API methods
                 logger.warning(f"CLI method failed: {cli_error}, trying API methods")
-                
+
                 client = get_ollama_client()
                 if client:
                     # New Client API
@@ -653,19 +653,15 @@ Respond with ONLY the JSON object, no other text. The JSON should be valid and f
                     response_text = response.get("response", "")
                     logger.info("Client API request completed successfully")
                 else:
-                    # Client unavailable, try version-independent function
-                    logger.info(f"Using call_ollama_endpoint for model {model}")
-                    raise Exception("No client available, triggering fallback")
-            else:
-                # Fallback to version-independent function
-                logger.info("Client not available, using call_ollama_endpoint")
-                response_text, _, _, _ = call_ollama_endpoint(
-                    model=model,
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=2048
-                )
-                logger.info("Successfully received response using call_ollama_endpoint")
+                    # Client unavailable, fall back to version-independent function
+                    logger.info("Client not available, using call_ollama_endpoint")
+                    response_text, _, _, _, _ = call_ollama_endpoint(
+                        model=model,
+                        prompt=prompt,
+                        temperature=temperature,
+                        max_tokens=2048
+                    )
+                    logger.info("Successfully received response using call_ollama_endpoint")
         except Exception as api_error:
             logger.warning(f"Error using API methods: {api_error}, trying final CLI fallback")
             # Final fallback - try CLI again with simpler approach
@@ -891,7 +887,7 @@ def structured_output_ui():
                             if result:
                                 history_item = {
                                     "input": input_text[:100] + "..." if len(input_text) > 100 else input_text,
-                                    "schema": edited_schema["title"],
+                                    "schema": edited_schema.get("title", "Untitled Schema"),
                                     "result": result,
                                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                                 }

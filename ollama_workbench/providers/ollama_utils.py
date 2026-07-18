@@ -618,10 +618,15 @@ def _call_ollama_with_observability(model, prompt=None, image=None, temperature=
             "is_very_low_throughput": tokens_per_second < PERFORMANCE_THRESHOLDS["very_low_tokens_per_second"]
         }
         
-        # Log performance metrics to observability system
+        # Log performance metrics to observability system. The response is
+        # already in hand at this point - a telemetry failure must never turn
+        # a successful generation into a user-facing error.
         if OBSERVABILITY_AVAILABLE:
-            log_performance_metrics(**performance_data)
-            
+            try:
+                log_performance_metrics(**performance_data)
+            except Exception as telemetry_error:
+                logger.warning(f"Observability logging failed (response unaffected): {telemetry_error}")
+
         # Log performance alerts for slow operations
         if performance_data["is_very_slow_response"]:
             logger.warning(f"Very slow response detected", extra={

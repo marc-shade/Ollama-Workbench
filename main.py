@@ -76,7 +76,10 @@ except Exception as e:
         st.error("Tool Playground is currently unavailable.")
         st.info("Try restarting the application or check the logs for errors.")
 from ollama_workbench.ui.structured_output import structured_output_ui
-from ollama_workbench.server.openai_compatibility import openai_compatibility_ui
+from ollama_workbench.server.openai_compatibility import (
+    openai_compatibility_ui,
+    start_openai_compatibility_server,
+)
 from ollama_workbench.models.model_capabilities import model_capabilities_ui
 from ollama_workbench.models.test_visualization import test_visualization_ui
 from ollama_workbench.knowledge.repo_docs import main as repo_docs_main
@@ -349,7 +352,7 @@ def main_content():
             # Use the model to generate a response
             from ollama_workbench.providers.ollama_utils import call_ollama_endpoint
             try:
-                response, _, _, _ = call_ollama_endpoint(
+                response, _, _, _, _ = call_ollama_endpoint(
                     model=model,
                     prompt=prompt,
                     temperature=0.7,
@@ -367,7 +370,18 @@ def main_content():
 def main():
     # Initialize session state
     initialize_session_state()
-    
+
+    # Start the OpenAI-compatible API server with the app when enabled.
+    # (It used to start as an import side effect of openai_compatibility;
+    # the start function is idempotent, so calling it on every Streamlit
+    # rerun is safe.)
+    try:
+        from ollama_workbench.core.config import get_config
+        if get_config().get("ENABLE_OPENAI_COMPAT", True):
+            start_openai_compatibility_server()
+    except Exception as e:
+        logger.warning(f"OpenAI-compatible API server failed to start: {e}")
+
     # Initialize observability system
     if ENHANCED_OBSERVABILITY_AVAILABLE:
         try:

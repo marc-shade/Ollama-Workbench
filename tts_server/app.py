@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from werkzeug.exceptions import BadRequest
 from gtts import gTTS
 from gtts.lang import tts_langs
 import base64
@@ -12,12 +13,17 @@ from flask_cors import CORS
 import tempfile
 from threading import Lock
 
+# Resolve paths relative to this file so the server works regardless of CWD
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(os.path.dirname(BASE_DIR), 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('../logs/tts_server.log'),
+        logging.FileHandler(os.path.join(LOG_DIR, 'tts_server.log')),
         logging.StreamHandler()
     ]
 )
@@ -171,6 +177,9 @@ def synthesize():
             cache_path,
             mimetype='audio/mpeg'
         )
+    except BadRequest:
+        # Malformed request payload is a client error, not a server error
+        raise
     except Exception as e:
         logger.error(f"Error in synthesize: {e}")
         return jsonify({'error': str(e)}), 500
@@ -183,8 +192,9 @@ def text_to_speech():
         text = data.get('input', '')
         voice = data.get('voice', 'en-US-Wavenet-A')
         
-        # Extract language from voice (e.g., 'en-US-Wavenet-A' -> 'en')
-        lang = voice.split('-')[0] if '-' in voice else 'en'
+        # Extract language from voice (e.g., 'en-US-Wavenet-A' -> 'en');
+        # a bare language code like 'fr' is used as-is
+        lang = voice.split('-')[0] if '-' in voice else (voice or 'en')
         
         # Create a bytes buffer for the audio
         audio_buffer = io.BytesIO()
@@ -198,6 +208,9 @@ def text_to_speech():
         audio_base64 = base64.b64encode(audio_buffer.read()).decode('utf-8')
         
         return jsonify({'audio': audio_base64})
+    except BadRequest:
+        # Malformed request payload is a client error, not a server error
+        raise
     except Exception as e:
         logger.error(f"Error in text_to_speech: {e}")
         return jsonify({'error': str(e)}), 500
@@ -245,8 +258,7 @@ except Exception as e:
     logger.error(f"Error cleaning cache on startup: {e}")
 
 if __name__ == '__main__':
-    # Ensure logs directory exists
-    os.makedirs('../logs', exist_ok=True)
-    
-    # Run the Flask app
-    app.run(host='127.0.0.1', port=8000)
+    # Run the Flask app. Port 5002 - port 8000 belongs to the OpenAI
+    # compatibility server started by the main Streamlit app; the two
+    # collided when both used 8000.
+    app.run(host='127.0.0.1', port=int(os.environ.get('TTS_SERVER_PORT', 5002)))
