@@ -1210,19 +1210,42 @@ def tool_playground():
             
             # MCP Tools Integration
             with tool_tabs[2]:
+                st.caption(
+                    "MCP servers are discovered from the configs of Claude Code "
+                    "(`~/.claude.json`, `./.mcp.json`), Codex (`~/.codex/config.toml`), "
+                    "and Gemini CLI (`~/.gemini/settings.json`)."
+                )
                 if st.button("Refresh MCP Tools"):
-                    # Rediscover MCP tools
+                    # Rediscover MCP servers and list their tools (spawns each
+                    # configured server briefly - can take a moment)
                     try:
-                        mcp_tools, mcp_schemas = get_available_mcp_tools()
+                        with st.spinner("Discovering MCP servers and listing tools..."):
+                            mcp_tools, mcp_schemas = get_available_mcp_tools()
                         st.session_state.mcp_tools = mcp_tools
                         st.session_state.mcp_schemas = mcp_schemas
-                        st.success("MCP tools refreshed!")
+                        try:
+                            from ollama_workbench.ui.mcp_tools import get_mcp_discovery_report
+                            st.session_state.mcp_discovery_report = get_mcp_discovery_report()
+                        except ImportError:
+                            st.session_state.mcp_discovery_report = []
                         st.rerun()
                     except Exception as e:
                         st.error(f"Error refreshing MCP tools: {str(e)}")
                         st.session_state.mcp_tools = {}
                         st.session_state.mcp_schemas = []
-                
+
+                # Per-server status of the last discovery run
+                report = st.session_state.get("mcp_discovery_report") or []
+                if report:
+                    ok = [s for s in report if not s["error"]]
+                    failed = [s for s in report if s["error"]]
+                    st.success(
+                        f"Found {sum(s['tools'] for s in ok)} tools from "
+                        f"{len(ok)} MCP servers ({len(failed)} unreachable)"
+                    )
+                    for s in failed:
+                        st.warning(f"{s['name']} ({s['source']}): {s['error']}")
+
                 if "mcp_tools" in st.session_state and st.session_state.mcp_tools:
                     st.write("These are MCP tools found on your local system")
                     
@@ -1257,7 +1280,15 @@ def tool_playground():
                                 st.markdown(f"**Path:** {tool_info['path']}")
                             
                             # Display additional information based on tool type
-                            if tool_info["type"] == "json" and "manifest" in tool_info:
+                            if tool_info["type"] == "mcp":
+                                if tool_info.get("description"):
+                                    st.markdown(f"**Description:** {tool_info['description']}")
+                                if tool_info.get("input_schema"):
+                                    with st.container():
+                                        st.markdown("**Input schema:**")
+                                        st.json(tool_info["input_schema"])
+
+                            elif tool_info["type"] == "json" and "manifest" in tool_info:
                                 if "description" in tool_info["manifest"]:
                                     st.markdown(f"**Description:** {tool_info['manifest']['description']}")
                                 if "schema" in tool_info["manifest"]:
@@ -1278,136 +1309,13 @@ def tool_playground():
                     # Update active MCP tools list
                     st.session_state.active_mcp_tools = selected_mcp_tools
                 else:
-                    st.info("No MCP tools found on this system. Add tools to an MCP folder in your Documents directory.")
-                    
-                    # Create example MCP tool (this part remains unchanged)
-                    if st.button("Create Example MCP Tool"):
-                        import os
-                        
-                        # Create directories if they don't exist
-                        mcp_dir = os.path.expanduser("~/Documents/Cline/MCP")
-                        os.makedirs(mcp_dir, exist_ok=True)
-                        
-                        example_tool_dir = os.path.join(mcp_dir, "example_tool")
-                        os.makedirs(example_tool_dir, exist_ok=True)
-                        
-                        # Create manifest.json
-                        manifest_content = {
-                            "name": "example_tool",
-                            "description": "An example MCP tool for demonstration",
-                            "version": "1.0",
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "text": {
-                                        "type": "string",
-                                        "description": "The text to process"
-                                    },
-                                    "operation": {
-                                        "type": "string",
-                                        "enum": ["uppercase", "lowercase", "reverse"],
-                                        "description": "The operation to perform on the text"
-                                    }
-                                },
-                                "required": ["text", "operation"]
-                            },
-                            "executable": "example_tool.py"
-                        }
-                        
-                        with open(os.path.join(example_tool_dir, "manifest.json"), "w") as f:
-                            json.dump(manifest_content, f, indent=2)
-                        
-                        # Create example_tool.py
-                        tool_script = '''#!/usr/bin/env python3
-import json
-import sys
+                    st.info(
+                        "No MCP tools found. Configure MCP servers in Claude Code "
+                        "(`claude mcp add ...` or `~/.claude.json` / `./.mcp.json`), "
+                        "Codex (`~/.codex/config.toml`), or Gemini CLI "
+                        "(`~/.gemini/settings.json`), then click Refresh MCP Tools."
+                    )
 
-def process_text(text, operation):
-    """Process text based on the specified operation."""
-    if operation == "uppercase":
-        return text.upper()
-    elif operation == "lowercase":
-        return text.lower()
-    elif operation == "reverse":
-        return text[::-1]
-    else:
-        return f"Unknown operation: {operation}"
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        # Check if this is an info request
-        if sys.argv[1] == "--info":
-            # Return tool info as JSON
-            info = {
-                "name": "example_tool",
-                "description": "An example MCP tool that processes text",
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "The text to process"
-                        },
-                        "operation": {
-                            "type": "string",
-                            "enum": ["uppercase", "lowercase", "reverse"],
-                            "description": "The operation to perform on the text"
-                        }
-                    },
-                    "required": ["text", "operation"]
-                }
-            }
-            print(json.dumps(info))
-            sys.exit(0)
-        
-        # Check if this is an execution request
-        if sys.argv[1] == "--execute" and len(sys.argv) > 2:
-            try:
-                # Parse the arguments
-                args = json.loads(sys.argv[2])
-                
-                # Extract parameters
-                text = args.get("text", "")
-                operation = args.get("operation", "")
-                
-                # Process the text
-                result = process_text(text, operation)
-                
-                # Return the result as JSON
-                print(json.dumps({
-                    "result": result,
-                    "original_text": text,
-                    "operation": operation
-                }))
-                sys.exit(0)
-            except json.JSONDecodeError:
-                print(json.dumps({"error": "Invalid JSON arguments"}))
-                sys.exit(1)
-            except Exception as e:
-                print(json.dumps({"error": str(e)}))
-                sys.exit(1)
-    
-    # Return error for invalid usage
-    print(json.dumps({"error": "Invalid arguments. Use --info or --execute"}))
-    sys.exit(1)
-'''
-                        
-                        with open(os.path.join(example_tool_dir, "example_tool.py"), "w") as f:
-                            f.write(tool_script)
-                        
-                        # Make the script executable
-                        os.chmod(os.path.join(example_tool_dir, "example_tool.py"), 0o755)
-                        
-                        st.success("Example MCP tool created! Click 'Refresh MCP Tools' to see it.")
-                        
-                        # Try to rediscover MCP tools
-                        try:
-                            mcp_tools, mcp_schemas = get_available_mcp_tools()
-                            st.session_state.mcp_tools = mcp_tools
-                            st.session_state.mcp_schemas = mcp_schemas
-                        except Exception:
-                            pass
-            
             # Update active tools list based on selection
             st.session_state.active_tools = selected_predefined_tools + list(st.session_state.custom_tools.keys())
         
