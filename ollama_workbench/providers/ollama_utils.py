@@ -1498,8 +1498,18 @@ def show_model_info(model_name):
                     logger.error(f"API error: {response.text}")
                     return {}
     except Exception as e:
-        logger.error(f"Error fetching model info: {str(e)}")
-        st.error(f"Error fetching model info: {str(e)}")
+        logger.error(f"Error fetching model info for {model_name}: {str(e)}")
+        if "size overflow" in str(e):
+            # Ollama's /api/show 500s on some MoE models (e.g. gpt-oss) with
+            # 'tensor ... size overflow' - a server-side metadata bug, not a
+            # problem with the model itself. The model still runs fine.
+            st.warning(
+                f"Ollama cannot report details for '{model_name}' "
+                f"(server-side 'size overflow' bug on some MoE models). "
+                f"The model itself still works; try updating Ollama for the fix."
+            )
+        else:
+            st.error(f"Error fetching model info for {model_name}: {str(e)}")
         return {}
 
 def remove_model(model_name):
